@@ -57,7 +57,7 @@ That had been my issue for a while. Every time I cam back to writing a Trie, I w
 
 ## The Highest Order
 
-"Rewrite `dropWhile`{.haskell} using `foldr`{.haskell}"
+> Rewrite `dropWhile`{.haskell} using `foldr`{.haskell}
  
 It's a (semi) well-known puzzle, that's maybe a little more difficult than it seems at first. Here, for instance, was my first attempt at it:
 
@@ -92,7 +92,7 @@ dropWhile' p l = (foldr f id l) l where
         | otherwise = id
 ```
             
-A quick visit to [http://pointfree.io](pointfree.io) can generate some monadic pointsfree magic:
+A quick visit to [pointfree.io](http://pointfree.io) can generate some monadic pointsfree magic:
 
 ```haskell
 dropWhile' :: (a -> Bool) -> [a] -> [a]
