@@ -3,21 +3,35 @@ table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode, table.sourceCode
    { margin: 0; padding: 0; border: 0; vertical-align: baseline; border: none; }
 td.lineNumbers { border-right: 1px solid #AAAAAA; text-align: right; color: #AAAAAA; padding-right: 5px; padding-left: 5px; }
 td.sourceCode { padding-left: 5px; }
-
-/* Default */
-.sourceCode span.kw { color: #AA0D91; } /* keyword              */
-.sourceCode span.dt { color: #26474B; } /* datatype             */
-.sourceCode span.dv { color: #2403D5; } /* decimal literals     */
-.sourceCode span.bn { color: #2403D5; } /* non-base-10 literals */
-.sourceCode span.fl { color: #2403D5; } /* float literal        */
-.sourceCode span.ch { color: #2403D5; } /* character literal    */
-.sourceCode span.st { color: #BB1D0B; } /* string literal       */
-.sourceCode span.co { color: #408000; } /* comment              */
-.sourceCode span.ot { color: #5C2699; } /* declaration (other)  */
+/* Low key */
+.sourceCode span.kw { color: #262C6A; } /* keyword              */
+.sourceCode span.dt { color: #476A97; } /* datatype             */
+.sourceCode span.dv { color: #262C6A; } /* decimal literals     */
+.sourceCode span.bn { color: #262C6A; } /* non-base-10 literals */
+.sourceCode span.fl { color: #262C6A; } /* float literal        */
+.sourceCode span.ch { color: #262C6A; } /* character literal    */
+.sourceCode span.st { color: #702C51; } /* string literal       */
+.sourceCode span.co { color: #435138; } /* comment              */
+.sourceCode span.ot { color: #262C6A; } /* declaration (other)  */
 .sourceCode span.al { color: red;     } /* warnings             */
 .sourceCode span.fu { color: #000000; } /* Syntax symbol        */
 .sourceCode span.re { color: #000000; } /* region marker        */
 .sourceCode span.er { color: red;     } /* error                */
+
+/* Default */
+/* .sourceCode span.kw { color: #AA0D91; } /\* keyword              *\/ */
+/* .sourceCode span.dt { color: #26474B; } /\* datatype             *\/ */
+/* .sourceCode span.dv { color: #2403D5; } /\* decimal literals     *\/ */
+/* .sourceCode span.bn { color: #2403D5; } /\* non-base-10 literals *\/ */
+/* .sourceCode span.fl { color: #2403D5; } /\* float literal        *\/ */
+/* .sourceCode span.ch { color: #2403D5; } /\* character literal    *\/ */
+/* .sourceCode span.st { color: #BB1D0B; } /\* string literal       *\/ */
+/* .sourceCode span.co { color: #408000; } /\* comment              *\/ */
+/* .sourceCode span.ot { color: #5C2699; } /\* declaration (other)  *\/ */
+/* .sourceCode span.al { color: red;     } /\* warnings             *\/ */
+/* .sourceCode span.fu { color: #000000; } /\* Syntax symbol        *\/ */
+/* .sourceCode span.re { color: #000000; } /\* region marker        *\/ */
+/* .sourceCode span.er { color: red;     } /\* error                *\/ */
 
 /* Basic */
 /* .sourceCode span.kw { color: #1B4AFB; } /\* keyword              *\/ */
@@ -29,21 +43,6 @@ td.sourceCode { padding-left: 5px; }
 /* .sourceCode span.st { color: #A31515; } /\* string literal       *\/ */
 /* .sourceCode span.co { color: #008000; } /\* comment              *\/ */
 /* .sourceCode span.ot { color: #01168A; } /\* declaration (other)  *\/ */
-/* .sourceCode span.al { color: red;     } /\* warnings             *\/ */
-/* .sourceCode span.fu { color: #000000; } /\* Syntax symbol        *\/ */
-/* .sourceCode span.re { color: #000000; } /\* region marker        *\/ */
-/* .sourceCode span.er { color: red;     } /\* error                *\/ */
-
-/* Low key */
-/* .sourceCode span.kw { color: #262C6A; } /\* keyword              *\/ */
-/* .sourceCode span.dt { color: #476A97; } /\* datatype             *\/ */
-/* .sourceCode span.dv { color: #262C6A; } /\* decimal literals     *\/ */
-/* .sourceCode span.bn { color: #262C6A; } /\* non-base-10 literals *\/ */
-/* .sourceCode span.fl { color: #262C6A; } /\* float literal        *\/ */
-/* .sourceCode span.ch { color: #262C6A; } /\* character literal    *\/ */
-/* .sourceCode span.st { color: #702C51; } /\* string literal       *\/ */
-/* .sourceCode span.co { color: #435138; } /\* comment              *\/ */
-/* .sourceCode span.ot { color: #262C6A; } /\* declaration (other)  *\/ */
 /* .sourceCode span.al { color: red;     } /\* warnings             *\/ */
 /* .sourceCode span.fu { color: #000000; } /\* Syntax symbol        *\/ */
 /* .sourceCode span.re { color: #000000; } /\* region marker        *\/ */
