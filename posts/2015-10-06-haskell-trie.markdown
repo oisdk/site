@@ -21,7 +21,7 @@ Now, inserting into the Trie is easy. You just `uncons`{.haskell} on a list, and
 ```haskell
 empty :: Trie a
 empty = Trie False M.empty
-               
+
 insert :: Ord a => [a] -> Trie a -> Trie a
 insert [] (Trie _ m)     = Trie True m
 insert (x:xs) (Trie e m) = Trie e (M.alter (Just . insert xs . fromMaybe empty) x m)

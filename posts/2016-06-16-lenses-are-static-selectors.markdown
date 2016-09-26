@@ -71,9 +71,9 @@ let localName: Lens<LocalPerson,String> = Lens(
 ```
 And you'd use it like this:
 ```scala
-let caoimhe = LocalPerson(age: 46, name: &quot;caoimhe&quot;)
+let caoimhe = LocalPerson(age: 46, name: "caoimhe")
 localName.get(caoimhe) // 46
-localName.set(caoimhe, &quot;breifne&quot;) // LocalPerson(age: 46, name: &quot;breifne&quot;)
+localName.set(caoimhe, "breifne") // LocalPerson(age: 46, name: "breifne")
 ```
 Straight away, we're able to do (something) like the `checkThenUpdate`{.scala} function:
 ```scala
@@ -91,7 +91,7 @@ And it could be called pretty tersely:
 checkThenUpdate(localName, serverLens: serverName)
 ```
 The biggest problem with this approach, obviously, is the boilerplate. In Haskell, that's solved with Template Haskell, so the lens code is generated for you. (I'd love to see something like that in Swift)
-There's a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called &quot;classy-lenses&quot;. That's where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:
+There's a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called "classy-lenses". That's where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:
 ```scala
 struct Place {
   var name: String
