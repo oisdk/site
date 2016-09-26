@@ -3,7 +3,7 @@ body {
     font-family: Verdana, Helvetica, Arial, sans-serif;
     font-size: 13px;
     margin: 0px auto 0px auto;
-    width: 600px;
+    width: 500px;
 }
 
 div#header {
@@ -54,4 +54,13 @@ div.info {
     color: #555;
     font-size: 14px;
     font-style: italic;
+}
+
+a {
+    color: black;
+}
+
+ul {
+    margin-left: 0px;
+    padding-left: 0px;
 }
