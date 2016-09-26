@@ -258,9 +258,7 @@ chanceOfCar 8 3 Switch // 7 % 32
 
 The advantage gets less and less, but never goes away.
 
-If you check out the [Wikipedia](https://en.wikipedia.org/wiki/Monty_Hall_problem#N_doors) entry on the problem, the formula for $N$-doors is given:
-
-> $(N−1) / [N(N−p−1)]$
+If you check out the [Wikipedia](https://en.wikipedia.org/wiki/Monty_Hall_problem#N_doors) entry on the problem, the formula for $N$-doors is given: $\frac{N−1}{N(N−p−1)}$.
 
 We can plug that straight in to our versions, to see if they're correct:
 
