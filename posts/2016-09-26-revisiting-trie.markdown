@@ -1,0 +1,229 @@
+---
+title: Revisiting a Trie in Haskell
+---
+
+This post is a part-2 from [this](2015-10-06-haskell-trie.html) post.
+
+# Conforming to Foldable
+
+When I ended the last post, I had a nice `Trie`{.haskell} datatype, with plenty of functions, but I couldn't get it to conform to the standard Haskell classes. The problem was to do with the type variables in the Trie:
+
+```haskell
+import qualified Data.Map.Strict as Map
+import Data.Map.Strict (Map)
+import Data.Foldable
+
+data Trie a = Trie
+  { endHere  :: Bool
+  , children :: Map a (Trie a) }
+```
+
+Although the type variable is `a`{.haskell}, the trie really contains *lists* of `a`{.haskell}s. At least, that's what's reflected in functions like `insert`{.haskell}, `member`{.haskell}, etc.:
+
+```haskell
+member :: (Foldable f, Ord a) => f a -> Trie a -> Bool
+member = foldr f endHere where
+  f e a = maybe False a . Map.lookup e . children
+  
+insert :: (Foldable f, Ord a) => f a -> Trie a -> Trie a
+insert = foldr f b where
+  b (Trie _ c) = Trie True c
+  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c)
+  
+instance Ord a => Monoid (Trie a) where
+  mempty = Trie False mempty
+  Trie v c `mappend` Trie t d = 
+    Trie (v || t) (Map.unionWith mappend c d)
+```
+
+Realistically, the type which the trie contains is more like:
+
+```haskell
+Foldable f => Trie (f a)
+```
+
+That signature strongly hints at GADTs, as was indicated by [this stackoverflow answer](http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set). The particular GADT which is applicable here is this:
+
+```haskell
+{-# language GADTs, FlexibleInstances #-}
+
+data Trie a where Trie :: Bool -> Map a (Trie [a]) -> Trie [a]
+
+endHere :: Trie [a] -> Bool
+endHere (Trie e _) = e
+
+children :: Trie [a] -> Map a (Trie [a])
+children (Trie _ c) = c
+```
+
+Why lists and not a general `Foldable`{.haskell}? Well, for the particular use I had in mind (conforming to the `Foldable`{.haskell} typeclass), I need `(:)`{.haskell}.
+
+```haskell
+instance Foldable Trie where
+  foldr f b (Trie e c) = if e then f [] r else r where
+    r = Map.foldrWithKey (flip . g . (:)) b c
+    g k = foldr (f . k)
+```
+
+With some more helper functions, the interface becomes pretty nice:
+
+```haskell
+instance Show a => Show (Trie [a]) where
+  showsPrec d t = 
+    showParen (d > 10) (showString "fromList " . shows (toList t))
+
+fromList :: (Ord a, Foldable f, Foldable g) => f (g a) -> Trie [a]
+fromList = foldr insert mempty
+```
+
+The trie has the side-effect of lexicographically sorting what it's given:
+
+```haskell
+fromList ["ced", "abc", "ced", "cb", "ab"]
+-- fromList ["ab","abc","cb","ced"]
+```
+
+# Further Generalizing
+
+Most implementations of tries that I've seen are map-like data structures, rather than set-like. In other words, instead of holding a `Bool`{.haskell} at the value position, it holds a `Maybe`{.haskell} something. 
+
+```haskell
+{-# language DeriveFoldable, DeriveFunctor, DeriveTraversable #-}
+
+data Trie a b = Trie
+  { endHere  :: b
+  , children :: Map a (Trie a b) 
+  } deriving (Eq, Ord, Show, Functor, Foldable, Traversable)
+```
+
+This is a much more straightforward datatype. `Foldable`{.haskell} can even be automatically derived. 
+
+However, I haven't made the `endHere`{.haskell} field a `Maybe a`{.haskell}. I want to be able to write something like this:
+
+```haskell
+type TrieSet [a] = Trie a Bool
+type TrieMap a b = Trie a (Maybe b)
+```
+
+And have it automatically choose the implementation of the functions I need[^1].
+
+To do that, though, I'll need to write the base functions, agnostic of the type of `b`. I *can* rely on something like `Monoid`{.haskell}, though:
+
+```haskell
+import Data.Monoid
+import Data.Foldable
+
+instance (Ord a, Monoid b) => Monoid (Trie a b) where
+  mempty = Trie mempty Map.empty
+  mappend (Trie x c) (Trie b d) = Trie (a <> b) (Map.unionWith (<>) c d)
+```
+
+In fact, quite a lot of functions naturally lend themselves to this fold + monoid style:
+
+```haskell
+lookup :: (Ord a, Monoid b, Foldable f) => f a -> Trie a b -> b
+lookup = foldr f endHere where
+  f e a = foldMap a . Map.lookup e . children
+
+insert :: (Foldable f, Ord a, Monoid b) => f a -> b -> Trie a b -> Trie a b
+insert xs v = foldr f b xs where
+  b (Trie p c) = Trie (v <> p) c
+  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c) 
+```
+
+A monoid is needed for the values, though, and neither `Bool`{.haskell} nor `∀ a. Maybe a`{.haskell} conform to `Monoid`{.haskell}. Looking back to the implementation of the trie-set, the `(||)`{.haskell} function has been replaced by `mappend`{.haskell}. There *is* a newtype wrapper in `Data.Monoid`{.haskell} which has exactly this behaviour, though: `Any`{.haskell}.
+
+Using that, the type signatures specialize to:
+
+```haskell
+type TrieSet a = Trie a Any
+lookup :: (Ord a, Foldable f) => f a -> TrieSet a -> Any
+insert :: (Ord a, Foldable f) => f a -> Any -> TrieSet a -> TrieSet a
+```
+
+Similarly, for `Maybe`{.haskell}, there's both `First`{.haskell} and `Last`{.haskell}. They have the behaviour:
+
+```haskell
+First (Just x) <> First (Just y) = First (Just x)
+Last  (Just x) <> Last  (Just y) = Last  (Just y)
+```
+
+I think it makes more sense for a value inserted into a map to overwrite whatever was there before. Since the newer value is on the left in the `mappend`{haskell}, then, `First`{.haskell} makes most sense.
+
+```haskell
+type TrieMap a b = Trie a (First b)
+lookup :: (Ord a, Foldable f) => f a -> TrieMap a b -> First b
+insert :: (Ord a, Foldable f) => f a -> First b -> TrieMap a b -> TrieMap a b
+```
+
+There are some other ways that you can interpret the monoid. For instance, subbing in `Sum Int`{.haskell} gives you a bag-like trie:
+
+```haskell
+type TrieBag a = Trie a (Sum Int)
+lookup :: (Ord a, Foldable f) => f a -> TrieBag a -> Sum Int
+insert :: (Ord a, Foldable f) => f a -> Sum Int -> TrieBag a -> TrieBag a
+```
+
+This is a set which can store multiple copies of each member. Turned the other way around, a map which stores many values for each key looks like this:
+
+```haskell
+type TrieBin a b = Trie a [b]
+lookup :: (Ord a, Foldable f) => f a -> TrieBin a b -> [b]
+insert :: (Ord a, Foldable f) => f a -> [b] -> TrieBin a b -> TrieBin a b
+```
+
+This method so far isn't really satisfying, though. Really, the `insert`{.haskell} signatures should look like this:
+
+```haskell
+insert :: (Ord a, Foldable f) => f a -> b -> TrieMap a b -> TrieMap a b
+insert :: (Ord a, Foldable f) => f a -> b -> TrieBin a b -> TrieBin a b
+```
+
+Modifying insert slightly, you can get exactly that:
+
+```haskell
+insert :: (Foldable f, Ord a, Applicative c, Monoid (c b)) 
+       => f a -> b -> Trie a (c b) -> Trie a (c b)
+insert xs v = foldr f b xs where
+  b (Trie p c) = Trie (pure v <> p) c
+  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c)
+```
+
+`pure`{.haskell} from `Applicative`{.haskell} is needed for the "embedding".
+
+
+Similarly, the "inserting" for the set-like types isn't really right. The value argument is out of place. This should be the signature:
+
+```haskell
+add :: (Ord a, Foldable f) => f a -> TrieSet a -> TrieSet a
+add :: (Ord a, Foldable f) => f a -> TrieBin a -> TrieBin a
+```
+
+In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring[^2] gives this exact method:
+
+```haskell
+class Semiring a where
+  one   :: a
+  zero  :: a
+  (<+>) :: a -> a -> a
+  (<.>) :: a -> a -> a
+  
+instance Semiring Int where
+  one   = 1
+  zero  = 0
+  (<+>) = (+)
+  (<.>) = (*)
+  
+instance Semiring Bool where
+  one   = True
+  zero  = False
+  (<+>) = (||)
+  (<.>) = (&&)
+```
+
+
+
+
+
+[^1]: Kind of like [program inference in lieu of type inference](https://www.youtube.com/watch?v=3U3lV5VPmOU)
+[^2]: While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)
