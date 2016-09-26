@@ -64,8 +64,10 @@ public extension CollectionType {
     
     var ar: [Generator.Element] = []
     
-    for var i = startIndex; indices.contains(i) ;i = advance(i, n) {
-      ar.append(self[i])
+    for var i = startIndex; 
+        indices.contains(i); 
+        i = advance(i, n) {
+          ar.append(self[i])
     }
     
     return ar
@@ -168,7 +170,8 @@ func bSearch<
 
     let midInd = list.endIndex / 2
 
-    let midEl: S.Generator.Element = list[midInd] // type inference giving me some bugs here
+    let midEl: S.Generator.Element = list[midInd] 
+    // type inference giving me some bugs here
 
     if midEl == el {
       return el
@@ -215,7 +218,9 @@ That's no good. You shouldn't have to erase types - your methods and functions s
 
 
 ```scala
-extension LazySequenceType where Self: CollectionType, Index: RandomAccessIndexType
+extension LazySequenceType where 
+  Self: CollectionType, 
+  Index: RandomAccessIndexType
 ```
 
 I really don't know why it's not this way. Again, the Swift team may well *want* to do it, but just hasn't got round to it. I hope so. A very optimistic voice in my mind does keep whispering, though: "_they're just waiting for recursive enums, so they can introduce lazy lists... they've been working on a whole load of lazy sequence functions... pattern matching... uncons..._"

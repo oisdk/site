@@ -78,7 +78,8 @@ extension Prob {
 ```haskell
 instance Monad Prob where
   return = pure
-  (Prob xs) >>= f = Prob [(y,px*py)|(x,px) <- xs, (y,py) <- getProb(f x)]
+  Prob xs >>= f = 
+    Prob [(y,px*py)|(x,px) <- xs, (y,py) <- getProb(f x)]
 ```
 
 Hey look! The M-word. Never mind that. Anyway...
@@ -122,7 +123,8 @@ public enum Ordering { case LT, EQ, GT }
 
 extension SequenceType {
   private typealias A = Generator.Element
-  public func mergeBy(comp: (A, A) -> Ordering, _ merge: (A, A) -> A) -> [A] {
+  public func mergeBy( comp: (A, A) -> Ordering
+                     , _ merge: (A, A) -> A) -> [A] {
     var result: [A] = []
     for h in sort({ e in comp(e) == .LT }) {
       if case .EQ? = result.last.map({e in comp(h,e)}) {
@@ -136,9 +138,11 @@ extension SequenceType {
 }
 
 extension Prob {
-  public func mergeProbs(comp: (Element,Element) -> Ordering) -> Prob {
-    return Prob(contents:
-      contents.mergeBy({(a,b) in comp(a.0,b.0)}, {(a,b) in (a.0,a.1+b.1)})
+  public func mergeProbs
+    (comp: (Element,Element) -> Ordering) -> Prob {
+      return Prob(contents:
+        contents.mergeBy( {(a,b) in comp(a.0,b.0)}
+                        , {(a,b) in (a.0,a.1+b.1)})
     )
   }
 }
@@ -152,7 +156,8 @@ mergeBy :: (a -> a -> a) -> (a -> a -> Ordering) -> [a] -> [a]
 mergeBy m c = (foldl1' m <$>) . groupBy (eqing c) . sortBy c
 
 mergeProbs :: Ord a => Prob a -> Prob a
-mergeProbs = Prob . mergeBy (fmap . (+) . snd) (comparing fst) . getProb
+mergeProbs =
+  Prob . mergeBy (fmap . (+) . snd) (comparing fst) . getProb
 ```
 
 
@@ -211,32 +216,39 @@ data Choice = Switch | Stick
 Then, a `chances` function. The logic here is a bit dense. First of all, if you're going to stick, it doesn't matter how many doors the host opens: your chance of getting a car is `1/n`, where `n` is the number of doors. However, if you're going to switch, two things need to happen: you need to *not* pick the car on your first choice, *and* you need to pick the car on your second choice. The chance of picking the car on your second choice (if the one you picked on your first choice *wasn't* the car) is the one over the number of doors, minus the number of doors the host opens, minus one. 
 
 ```scala
-public func chances(n: Int, _ p: Int, _ c: Choice)(_ d: Int) -> Prob<Bool> {
-  switch c {
-  case .Stick : return (1...n).equalProbs.fmap(==d)
-  case .Switch:
-    let notFirst = chances(n,p,.Stick)(d).fmap(!)
-    let second   = Repeat(count: (n-p)-2, repeatedValue: false) + [true]
-    return notFirst.flatMap { f in second.equalProbs.fmap { s in f &amp;&amp; s } }
+public func chances(n: Int, _ p: Int, _ c: Choice)(_ d: Int)
+  -> Prob<Bool> {
+    switch c {
+    case .Stick : return (1...n).equalProbs.fmap(==d)
+    case .Switch:
+      let notFirst = chances(n,p,.Stick)(d).fmap(!)
+      let second =
+        Repeat(count: (n-p)-2, repeatedValue: false) + [true]
+      return notFirst.flatMap { f in 
+        second.equalProbs.fmap { s in f && s } 
+      }
   }
 }
 ```
 ```haskell
 chances :: Int -> Int -> Choice -> Int -> Prob Bool
 chances n _ Stick  d = fmap (==d) (equalProbs [1..n])
-chances n p Switch d = (&amp;&amp;) . not          <$>
-                       chances n p Stick d <*>
-                       (equalProbs $ True : replicate (n-p-2) False)
+chances n p Switch d = 
+  (&&) . not          <$>
+  chances n p Stick d <*>
+  (equalProbs $ True : replicate (n-p-2) False)
 ```
 
 Finally, the `chanceOfCar` function:
 
 ```scala
-public func chanceOfCar(n: Int, _ p: Int, _ s: Choice) -> Prob<Bool> {
-  return (1...n)
-    .equalProbs
-    .flatMap(chances(n,p,s))
-    .mergeProbs(comp)
+public func chanceOfCar
+  (n: Int, _ p: Int, _ s: Choice)
+  -> Prob<Bool> {
+    return (1...n)
+      .equalProbs
+      .flatMap(chances(n,p,s))
+      .mergeProbs(comp)
 }
 ```
 ```haskell
@@ -250,7 +262,8 @@ Which returns, as you'd expect, 1/3 chance of car if you stick, and 2/3 if you s
 One of the final cool things you can do with this is change the number of doors, and the number of doors the host opens, and see what happens:
 
 ```scala
-chanceOfCar(6, 2, .Switch) // 0.833333333333334: false, 0.166666666666667: true
+chanceOfCar(6, 2, .Switch) 
+// 0.833333333333334: false, 0.166666666666667: true
 ```
 ```haskell
 chanceOfCar 8 3 Switch // 7 % 32
@@ -269,9 +282,9 @@ let expect = fmap frmla sample
              where frmla :: (Integer,Integer) -> Rational
                    frmla (n,p) = (n - 1)%(n*(n-p-1))
 
-let actual = fmap t sample
-             where t (n,p) = truePrb $ getProb $ chanceOfCar n p Switch
-                   truePrb = fromJust . (fmap snd) . (find fst)
+let actual = fmap t sample where
+  t (n,p) = truePrb $ getProb $ chanceOfCar n p Switch
+  truePrb = fromJust . (fmap snd) . (find fst)
 
 expect == actual
 ```
