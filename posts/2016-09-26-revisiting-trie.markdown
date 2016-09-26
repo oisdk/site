@@ -202,28 +202,77 @@ add :: (Ord a, Foldable f) => f a -> TrieBin a -> TrieBin a
 In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring[^2] gives this exact method:
 
 ```haskell
-class Semiring a where
+class Monoid a => Semiring a where
   one   :: a
-  zero  :: a
-  (<+>) :: a -> a -> a
   (<.>) :: a -> a -> a
   
-instance Semiring Int where
+instance Num a => Semiring (Sum a) where
   one   = 1
-  zero  = 0
-  (<+>) = (+)
   (<.>) = (*)
-  
-instance Semiring Bool where
-  one   = True
-  zero  = False
-  (<+>) = (||)
-  (<.>) = (&&)
+
+instance Semiring Any where
+  one = Any True
+  Any x <.> Any y = Any (x && y)
 ```
 
+This class is kind of like a combination of both monoid wrappers for both `Int`{.haskell} and `Bool`{.haskell}. You could take advantage of that:
 
+```haskell
+{-# language FunctionalDependencies, FlexibleInstances #-}
 
+class (Monoid add, Monoid mult)
+  => Semigroup a add mult | a -> add, a -> mult where
+    toAdd    :: a -> add
+    fromAdd  :: add -> a
+    toMult   :: a -> mult
+    fromMult :: mult -> a
+  
+(<+>), (<.>) :: Semigroup a add mult => a -> a -> a
 
+x <+> y = fromAdd  (toAdd  x <> toAdd  y)
+x <.> y = fromMult (toMult x <> toMult y)
+
+one, zero :: Semigroup a add mult => a
+zero = fromAdd mempty
+one = fromMult mempty
+
+instance Semigroup Int (Sum Int) (Product Int) where
+  toAdd    = Sum
+  fromAdd  = getSum
+  toMult   = Product
+  fromMult = getProduct
+  
+instance Semigroup Bool Any All where
+  toAdd    = Any
+  fromAdd  = getAny
+  toMult   = All
+  fromMult = getAll
+```
+
+But it seems like overkill.
+
+Anyway, assuming that we have the functions from `Semigroup`{.haskell}, here's the `add` function:
+
+```haskell
+add :: (Foldable f, Ord a, Semiring b) => f a -> Trie a b -> Trie a b
+add xs = foldr f b xs where
+  b (Trie p c) = Trie (one <> p) c
+  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c)
+```
+
+Now, expressions can be built up without specifying the specific monoid implementation, and the whole behaviour can be changed with a type signature:
+
+```haskell
+fromList :: (Foldable f, Foldable g, Ord a, Semiring b) => f (g a) -> Trie a b
+fromList = foldr add mempty
+
+ans = lookup "abc" (fromList ["abc", "def", "abc", "ghi"])
+
+ans :: Sum Int -- Sum 2
+ans :: Any     -- Any True
+```
+
+Slightly fuller implementations of all of these are available [here](https://github.com/oisdk/hstrie).
 
 [^1]: Kind of like [program inference in lieu of type inference](https://www.youtube.com/watch?v=3U3lV5VPmOU)
 [^2]: While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)
