@@ -8,31 +8,37 @@ A Trie is one of those data structures that I find myself writing very early on 
 
 I usually write a version that is a set-like data structure, rather than a mapping type, for simplicity's sake. It stores sequences, in a prefix-tree structure. It has a map (dictionary) where the keys are the first element of every sequence it stores, and the values are the Tries which store the rest of the sequence. It also has a boolean tag, representing whether or not the current Trie is a Trie on which a sequence ends. Here's what the type looks like in Haskell:
 
-```haskell
-import qualified Data.Map.Lazy as M
+```{.haskell .literate}
+module Trie where
+
+import qualified Data.Map.Strict as Map
+import Data.Map.Strict (Map)
+import Prelude hiding (null)
+import Data.Maybe
+import Control.Monad
 
 data Trie a = Trie { endHere :: Bool
-                   , getTrie :: M.Map a (Trie a)
+                   , getTrie :: Map a (Trie a)
                    } deriving (Eq)
 ```
 
 Now, inserting into the Trie is easy. You just `uncons`{.haskell} on a list, and insert the head into the map, with the value being the tail inserted into whatever existed at that key before:
 
-```haskell
+```{.haskell .literate}
 empty :: Trie a
-empty = Trie False M.empty
+empty = Trie False Map.empty
 
-insert :: Ord a => [a] -> Trie a -> Trie a
-insert [] (Trie _ m)     = Trie True m
-insert (x:xs) (Trie e m) = Trie e (M.alter (Just . insert xs . fromMaybe empty) x m)
+insertRec :: Ord a => [a] -> Trie a -> Trie a
+insertRec [] (Trie _ m)     = Trie True m
+insertRec (x:xs) (Trie e m) = Trie e (Map.alter (Just . insertRec xs . fromMaybe empty) x m)
 ```
     
 Searching is simple, also. For the empty list, you just check if the Trie has its `endHere`{.haskell} tag set to `True`{.haskell}, otherwise, you uncons, search the map, and query the Trie with the tail if it eas found, or just return `False`{.haskell} if it was not:
 
-```haskell
-member :: Ord a => [a] -> Trie a -> Bool
-member [] (Trie e _)     = e
-member (x:xs) (Trie _ m) = fromMaybe False (member xs <$> M.lookup x m)
+```{.haskell .literate}
+memberRec :: Ord a => [a] -> Trie a -> Bool
+memberRec [] (Trie e _)     = e
+memberRec (x:xs) (Trie _ m) = fromMaybe False (memberRec xs <$> Map.lookup x m)
 ```
 
 Here's my problem. *Both* of those functions have the same pattern:
@@ -48,7 +54,7 @@ Any good Haskeller should be *begging* for a fold at this stage. But it proved a
 member :: Ord a => [a] -> Trie a -> Bool
 member = foldr f base where
   base = ???
-  f e a = M.lookup e ???
+  f e a = Map.lookup e ???
 ```
 
 Where do you get the base case from, though? You have to specify it from the beginning, but the variable you're looking for is nested deeply into the Trie. How can you look into the Trie, without traversing the list, to find the tag, *at the beginning of the function?*
@@ -61,51 +67,52 @@ That had been my issue for a while. Every time I cam back to writing a Trie, I w
  
 It's a (semi) well-known puzzle, that's maybe a little more difficult than it seems at first. Here, for instance, was my first attempt at it:
 
-```haskell
-dropWhile' :: (a -> Bool) -> [a] -> [a]
-dropWhile' p = foldr f [] where
+```{.haskell .literate}
+dropWhileWrong :: (a -> Bool) -> [a] -> [a]
+dropWhileWrong p = foldr f [] where
   f e a | p e       = a
         | otherwise = e:a
 ```
 
 Yeah. That's `filter`{.haskell}, not `dropWhile`{.haskell}:
 
-```haskell
-dropWhile' (<5) [1, 3, 6, 3, 1] -- [6]
+```{.haskell .literate .example}
+dropWhileWrong (<5) [1, 3, 6, 3, 1]
+[6]
 ```
     
 Here was my final solution:
 
-```haskell
-dropWhile' :: (a -> Bool) -> [a] -> [a]
-dropWhile' p l = drop (foldr f 0 l) l where
+```{.haskell .literate}
+dropWhileCount :: (a -> Bool) -> [a] -> [a]
+dropWhileCount p l = drop (foldr f 0 l) l where
   f e a | p e       = a + 1
         | otherwise = 0
 ```
             
 After the problem I found [this](https://wiki.haskell.org/wikiupload/1/14/TMR-Issue6.pdf) issue of The Monad Reader, which talks about the same problem. In my `drop`{.haskell} version, I had been counting the number of items to drop as I went, adding one for every element that passed the test. The corresponding version in the article had been building up `tail`{.haskell} functions, using `.`{.haskell} to add them together:
 
-```haskell
-dropWhile' :: (a -> Bool) -> [a] -> [a]
-dropWhile' p l = (foldr f id l) l where
+```{.haskell .literate}
+dropWhileTail :: (a -> Bool) -> [a] -> [a]
+dropWhileTail p l = (foldr f id l) l where
   f e a | p e       = tail . a
         | otherwise = id
 ```
             
 A quick visit to [pointfree.io](http://pointfree.io) can generate some monadic pointsfree magic:
 
-```haskell
-dropWhile' :: (a -> Bool) -> [a] -> [a]
-dropWhile' p = join (foldr f id) where
+```{.haskell .literate}
+dropWhilePf :: (a -> Bool) -> [a] -> [a]
+dropWhilePf p = join (foldr f id) where
   f e a | p e       = tail . a
         | otherwise = id
 ```
 
 Now, the final version in the article did *not* use this technique, as it was very inefficient. It used some cleverness beyond the scope of this post. The second-from-last version I quite liked, though:
 
-```haskell
-dropWhile' :: (a -> Bool) -> [a] -> [a]
-dropWhile' p l = foldr f l l where
+```{.haskell .literate}
+dropWhileFp :: (a -> Bool) -> [a] -> [a]
+dropWhileFp p l = foldr f l l where
   f e a | p e       = tail a
         | otherwise = l
 ```
@@ -155,32 +162,32 @@ member = foldr f endHere where
 
 Then, how to combine it. That's easy enough, actually. It accesses the map, searches it for the key, and calls the accumulating function on it. If it's not found in the map, just return `False`{.haskell}. Here it is:
 
-```haskell
+```{.haskell .literate}
 member :: Ord a => [a] -> Trie a -> Bool
 member = foldr f endHere where
-  f e a = fromMaybe False . fmap a . M.lookup e . getTrie
+  f e a = fromMaybe False . fmap a . Map.lookup e . getTrie
 ```
       
 One of the other standard functions for a Trie is returning the "completions" for a given sequence. It's a very similar function to `member`{.haskell}, actually: instead of calling `endHere`{.haskell} on the final Trie found, though, just return the Trie itself. And the thing to return if any given element of the sequence isn't found is just an empty Trie:
 
-```haskell
+```{.haskell .literate}
 complete :: Ord a => [a] -> Trie a -> Trie a
 complete = foldr f id where
-  f e a = fromMaybe empty . fmap a . M.lookup e . getTrie 
+  f e a = fromMaybe empty . fmap a . Map.lookup e . getTrie 
 ```
       
 In fact, you could abstract out the commonality here:
 
-```haskell
+```{.haskell .literate}
 follow :: Ord a => c -> (Trie a -> c) -> [a] -> Trie a -> c
 follow ifMiss onEnd = foldr f onEnd where
-  f e a = fromMaybe ifMiss . fmap a . M.lookup e . getTrie 
+  f e a = fromMaybe ifMiss . fmap a . Map.lookup e . getTrie 
   
-member :: Ord a => [a] -> Trie a -> Bool
-member = follow False endHere
+memberAbs :: Ord a => [a] -> Trie a -> Bool
+memberAbs = follow False endHere
 
-complete :: Ord a => [a] -> Trie a -> Trie a
-complete = follow empty id
+completeAbs :: Ord a => [a] -> Trie a -> Trie a
+completeAbs = follow empty id
 ```
     
 ## Folding in and out
@@ -198,17 +205,17 @@ insert = foldr f (\(Trie _ m) -> Trie True m)
 
 With the final function to be applied being one that just flips the `endHere`{.haskell} tag to `True`{.haskell}. Then `f`{.haskell}: this is going to act *over* the map of the Trie that it's called on. It's useful to define a function just for that:
 
-```haskell
-overMap :: Ord b => (M.Map a (Trie a) -> M.Map b (Trie b)) -> Trie a -> Trie b
+```{.haskell .literate}
+overMap :: Ord b => (Map.Map a (Trie a) -> Map.Map b (Trie b)) -> Trie a -> Trie b
 overMap f (Trie e m) = Trie e (f m)
 ```
     
 Then, it will look up the next element of the sequence in the Trie, and apply the accumulating function to it. (if it's not found it will provide an empty Trie instead) Simple!
 
-```haskell
+```{.haskell .literate}
 insert :: Ord a => [a] -> Trie a -> Trie a
 insert = foldr f (\(Trie _ m) -> Trie True m) where
-  f e a = overMap (M.alter (Just . a . fromMaybe (Trie False M.empty)) e)
+  f e a = overMap (Map.alter (Just . a . fromMaybe (Trie False Map.empty)) e)
 ```
       
 I think this is really cool: with just a `foldr`{.haskell}, you're burrowing into a Trie, changing it, and burrowing back out again.
@@ -229,15 +236,15 @@ Its first argument is a function which is given the result of looking up its *se
 
 Here's the finished version:
 
-```haskell
+```{.haskell .literate}
 delete :: Ord a => [a] -> Trie a -> Trie a
 delete = (fromMaybe empty .) . foldr f i where
-  i (Trie _ m) | M.null m  = Nothing
+  i (Trie _ m) | Map.null m  = Nothing
                | otherwise = Just (Trie False m)
-  f e a = nilIfEmpty . overMap (M.alter (a =<<) e) 
+  f e a = nilIfEmpty . overMap (Map.alter (a =<<) e) 
   
 null :: Trie a -> Bool
-null (Trie e m) = (not e) && (M.null m)
+null (Trie e m) = (not e) && (Map.null m)
 
 nilIfEmpty :: Trie a -> Maybe (Trie a)
 nilIfEmpty t | null t    = Nothing
@@ -248,9 +255,9 @@ nilIfEmpty t | null t    = Nothing
 
 So how about folding the Trie itself? Same trick: build up a function with a fold. This time, a fold over the map, not a list. And the function being built up is a cons operation. When you hit a `True`{.haskell} tag, fire off an empty list to the built-up function, allowing it to evaluate:
 
-```haskell
+```{.haskell .literate}
 foldrTrie :: ([a] -> b -> b) -> b -> Trie a -> b
-foldrTrie f i (Trie a m) = M.foldrWithKey ff s m where
+foldrTrie f i (Trie a m) = Map.foldrWithKey ff s m where
   s    = if a then f [] i else i
   ff k = flip (foldrTrie $ f . (k :))
 ```
