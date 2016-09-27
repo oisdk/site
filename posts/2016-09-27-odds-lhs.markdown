@@ -125,6 +125,17 @@ fromDistrib xs = f (tot*lst) xs where
   f _ [(x,_)] = Certainly x
   f n ((x,p):xs) = let mp = p * lst
                        np = n - mp in Odds x (mp % np) (f np xs)
+                  
+probOfEach :: Eq a => a -> Odds a -> Rational
+probOfEach x xs = probOf (x==) xs
+
+propOf :: Eq a => a -> [a] -> Maybe Rational
+propOf _ [] = Nothing
+propOf x xs = Just $
+  fromIntegral (length (filter (x==) xs)) % fromIntegral (length xs)
+```
+```{.haskell .literate .prop}
+propOf (x :: Int) xs == fmap (probOfEach x) (equalOdds xs)
 ```
 
 And finally, the instances:
