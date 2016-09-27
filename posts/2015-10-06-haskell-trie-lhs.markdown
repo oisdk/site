@@ -8,7 +8,7 @@ A Trie is one of those data structures that I find myself writing very early on 
 
 I usually write a version that is a set-like data structure, rather than a mapping type, for simplicity's sake. It stores sequences, in a prefix-tree structure. It has a map (dictionary) where the keys are the first element of every sequence it stores, and the values are the Tries which store the rest of the sequence. It also has a boolean tag, representing whether or not the current Trie is a Trie on which a sequence ends. Here's what the type looks like in Haskell:
 
-```{.haskell .literate}
+```{.haskell .literate .hidden_source}
 module Trie where
 
 import qualified Data.Map.Strict as Map
@@ -16,7 +16,9 @@ import Data.Map.Strict (Map)
 import Prelude hiding (null)
 import Data.Maybe
 import Control.Monad
-
+import Data.Foldable (fold)
+```
+```{.haskell .literate}
 data Trie a = Trie { endHere :: Bool
                    , getTrie :: Map a (Trie a)
                    } deriving (Eq)
@@ -30,7 +32,8 @@ empty = Trie False Map.empty
 
 insertRec :: Ord a => [a] -> Trie a -> Trie a
 insertRec [] (Trie _ m)     = Trie True m
-insertRec (x:xs) (Trie e m) = Trie e (Map.alter (Just . insertRec xs . fromMaybe empty) x m)
+insertRec (x:xs) (Trie e m) = 
+  Trie e (Map.alter (Just . insertRec xs . fromMaybe empty) x m)
 ```
     
 Searching is simple, also. For the empty list, you just check if the Trie has its `endHere`{.haskell} tag set to `True`{.haskell}, otherwise, you uncons, search the map, and query the Trie with the tail if it eas found, or just return `False`{.haskell} if it was not:
@@ -38,7 +41,8 @@ Searching is simple, also. For the empty list, you just check if the Trie has it
 ```{.haskell .literate}
 memberRec :: Ord a => [a] -> Trie a -> Bool
 memberRec [] (Trie e _)     = e
-memberRec (x:xs) (Trie _ m) = fromMaybe False (memberRec xs <$> Map.lookup x m)
+memberRec (x:xs) (Trie _ m) = 
+  fromMaybe False (memberRec xs <$> Map.lookup x m)
 ```
 
 Here's my problem. *Both* of those functions have the same pattern:
@@ -206,16 +210,28 @@ insert = foldr f (\(Trie _ m) -> Trie True m)
 With the final function to be applied being one that just flips the `endHere`{.haskell} tag to `True`{.haskell}. Then `f`{.haskell}: this is going to act *over* the map of the Trie that it's called on. It's useful to define a function just for that:
 
 ```{.haskell .literate}
-overMap :: Ord b => (Map.Map a (Trie a) -> Map.Map b (Trie b)) -> Trie a -> Trie b
+overMap :: Ord b 
+        => (Map.Map a (Trie a)
+        -> Map.Map b (Trie b))
+        -> Trie a
+        -> Trie b
 overMap f (Trie e m) = Trie e (f m)
 ```
     
 Then, it will look up the next element of the sequence in the Trie, and apply the accumulating function to it. (if it's not found it will provide an empty Trie instead) Simple!
 
+```{.haskell .literate .hidden_source}
+instance Ord a => Monoid (Trie a) where
+  mempty = Trie False Map.empty
+  Trie v k `mappend` Trie t l =
+    Trie (v || t) (Map.unionWith mappend k l)
+```
+
 ```{.haskell .literate}
 insert :: Ord a => [a] -> Trie a -> Trie a
 insert = foldr f (\(Trie _ m) -> Trie True m) where
-  f e a = overMap (Map.alter (Just . a . fromMaybe (Trie False Map.empty)) e)
+  f e a = 
+    overMap (Map.alter (Just . a . fold) e)
 ```
       
 I think this is really cool: with just a `foldr`{.haskell}, you're burrowing into a Trie, changing it, and burrowing back out again.
@@ -229,7 +245,11 @@ What you need to do is to send a function into the Trie, and have it report back
 The way to do the "message sending" is with `Maybe`{.haskell}. If the function you send into the Trie to delete the end of the sequence returns `Nothing`{.haskell}, then it signifies that you can delete that member. Luckily, the `alter`{.haskell} function on `Data.Map`{.haskell} works well with this:
 
 ```haskell
-alter :: Ord k => (Maybe a -> Maybe a) -> k -> Map k a -> Map k a
+alter :: Ord k 
+      => (Maybe a -> Maybe a)
+      -> k
+      -> Map k a
+      -> Map k a
 ```
     
 Its first argument is a function which is given the result of looking up its *second* argument. If the function returns `Nothing`{.haskell}, that key-value pair in the map is deleted (if it was there). If it returns `Just`{.haskell} something, though, that key-value pair is added. In the delete function, we can chain the accumulating function with `=<<`{.haskell}. This will skip the rest of the accumulation if any part of the sequence isn't found. The actual function we're chaining on is `nilIfEmpty`{.haskell}, which checks if a given Trie is empty, and returns `Just`{.haskell} the Trie if it's not, or `Nothing`{.haskell} otherwise.
