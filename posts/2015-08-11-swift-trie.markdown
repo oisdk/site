@@ -7,7 +7,7 @@ If you google "cool data structures" you'll get [this](http://stackoverflow.com
 
 A Trie is a prefix tree. It's another recursive data structure: each Trie contains other children Tries, identifiable by their prefixes.
 
-It's a bit of a hipster data structure, not very widely used, but it's got some useful applications. It's got set-like operations, with insertion and searching each at $O(n)$, where *n* is the length of the sequence being searched for. A Set is the only way to go for hashable, unordered elements. But, if you've got *sequences* of hashable elements, a Trie might be for you. (one thing to note is that Sets are hashable themselves, so if the sequences you want to store are unordered, a Set of Sets is more applicable)
+It's a bit of a hipster data structure, not very widely used, but it's got some useful applications. It's got set-like operations, with insertion and searching each at $O(n)$, where $n$ is the length of the sequence being searched for. A Set is the only way to go for hashable, unordered elements. But, if you've got *sequences* of hashable elements, a Trie might be for you. (one thing to note is that Sets are hashable themselves, so if the sequences you want to store are unordered, a Set of Sets is more applicable)
 
 ![A trie for keys](https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Trie_example.svg/1092px-Trie_example.svg.png)
 
@@ -204,11 +204,7 @@ public extension Trie {
 }
 ```
 
-Chris Eidhof gave me this idea:
-
-[embed]https://twitter.com/chriseidhof/status/629215881843884032[/embed]
-
-(Apparently there's a Trie implementation in [Functional Programming in Swift](http://www.objc.io/books/fpinswift/), his book. I've not read it, but it's on my list. If [Advanced Swift](http://www.objc.io/books/advanced-swift/)is anything to go by, it should be fantastic.)
+[Chris Eidhof gave me this idea.](https://twitter.com/chriseidhof/status/629215881843884032) (Apparently there's a Trie implementation in [Functional Programming in Swift](http://www.objc.io/books/fpinswift/), his book. I've not read it, but it's on my list. If [Advanced Swift](http://www.objc.io/books/advanced-swift/)is anything to go by, it should be fantastic.)
 
 The objective of this Trie is to replicate all of the Set methods: Union, Intersect, etc. Most of those are manageable to build from just `insert`{.scala}, `init`{.scala}, and `contains`{.scala}, but there's one other function that comes in handy: `remove`{.scala}.
 
