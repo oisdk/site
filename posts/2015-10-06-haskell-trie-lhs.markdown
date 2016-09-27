@@ -1,5 +1,7 @@
 ---
 title: A Trie in Haskell
+tags: Haskell
+description: A basic Trie in Haskell
 ---
 
 ## Basic Ops

@@ -1,5 +1,7 @@
 ---
 title: Lenses are Static Selectors
+tags: Swift
+description: Using statically-typed lenses instead of selectors
 ---
 
 So I don't really know what [KVC](https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html) is, or much about `performSelector`{.scala} functions. [This](http://inessential.com/2016/05/20/updating_local_objects_with_server_objec) blogpost, from Brent Simmons, let me know a little bit about why I would want to use them.

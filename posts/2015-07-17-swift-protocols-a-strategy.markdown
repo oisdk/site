@@ -1,5 +1,7 @@
 ---
 title: Swift Protocols: A Strategy
+tags: Swift
+description: Exploring protocols in Swift
 ---
 
 ### A Misguided, Over-Simplified Strategy
