@@ -27,7 +27,7 @@ main = hakyll $ do
         route $ setExtension "html"
         compile $ pandocCompilerWith
           defaultHakyllReaderOptions
-          (defaultHakyllWriterOptions { writerHTMLMathMethod = MathML Nothing, writerHighlight = True })
+          (def { writerHTMLMathMethod = MathML Nothing, writerHighlight = True })
             >>= loadAndApplyTemplate "templates/post.html"    postCtx
             >>= loadAndApplyTemplate "templates/default.html" postCtx
             >>= relativizeUrls

@@ -8,32 +8,41 @@ This post is a part-2 from [this](2015-10-06-haskell-trie.html) post.
 
 When I ended the last post, I had a nice `Trie`{.haskell} datatype, with plenty of functions, but I couldn't get it to conform to the standard Haskell classes. The problem was to do with the type variables in the Trie:
 
-```haskell
+```{.haskell .literate}
+{-# language GADTs, FlexibleInstances, TypeFamilies #-}
+{-# language DeriveFoldable, DeriveFunctor, DeriveTraversable #-}
+{-# language FunctionalDependencies, FlexibleInstances #-}
+
+module Tries where
+
 import qualified Data.Map.Strict as Map
 import Data.Map.Strict (Map)
-import Data.Foldable
+import Data.Foldable hiding (toList)
+import Prelude hiding (lookup)
+import Data.Monoid
+import GHC.Exts (IsList(..))
 
-data Trie a = Trie
-  { endHere  :: Bool
-  , children :: Map a (Trie a) }
+data OldTrie a = OldTrie
+  { otEndHere  :: Bool
+  , otChildren :: Map a (OldTrie a) }
 ```
 
 Although the type variable is `a`{.haskell}, the trie really contains *lists* of `a`{.haskell}s. At least, that's what's reflected in functions like `insert`{.haskell}, `member`{.haskell}, etc.:
 
-```haskell
-member :: (Foldable f, Ord a) => f a -> Trie a -> Bool
-member = foldr f endHere where
-  f e a = maybe False a . Map.lookup e . children
+```{.haskell .literate}
+member :: (Foldable f, Ord a) => f a -> OldTrie a -> Bool
+member = foldr f otEndHere where
+  f e a = maybe False a . Map.lookup e . otChildren
   
-insert :: (Foldable f, Ord a) => f a -> Trie a -> Trie a
-insert = foldr f b where
-  b (Trie _ c) = Trie True c
-  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c)
+otInsert :: (Foldable f, Ord a) => f a -> OldTrie a -> OldTrie a
+otInsert = foldr f b where
+  b (OldTrie _ c) = OldTrie True c
+  f e a (OldTrie n c) = OldTrie n (Map.alter (Just . a . fold) e c)
   
-instance Ord a => Monoid (Trie a) where
-  mempty = Trie False mempty
-  Trie v c `mappend` Trie t d = 
-    Trie (v || t) (Map.unionWith mappend c d)
+instance Ord a => Monoid (OldTrie a) where
+  mempty = OldTrie False mempty
+  OldTrie v c `mappend` OldTrie t d = 
+    OldTrie (v || t) (Map.unionWith (<>) c d)
 ```
 
 Realistically, the type which the trie contains is more like:
@@ -44,54 +53,70 @@ Foldable f => Trie (f a)
 
 That signature strongly hints at GADTs, as was indicated by [this stackoverflow answer](http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set). The particular GADT which is applicable here is this:
 
-```haskell
-{-# language GADTs, FlexibleInstances #-}
+```{.haskell .literate}
 
-data Trie a where Trie :: Bool -> Map a (Trie [a]) -> Trie [a]
+data TrieSet a where TrieSet :: Bool -> Map a (TrieSet [a]) -> TrieSet [a]
 
-endHere :: Trie [a] -> Bool
-endHere (Trie e _) = e
+tsEndHere :: TrieSet [a] -> Bool
+tsEndHere (TrieSet e _) = e
 
-children :: Trie [a] -> Map a (Trie [a])
-children (Trie _ c) = c
+tsChildren :: TrieSet [a] -> Map a (TrieSet [a])
+tsChildren (TrieSet _ c) = c
+
+tsInsert :: (Foldable f, Ord a) => f a -> TrieSet [a] -> TrieSet [a]
+tsInsert = foldr f b where
+  b :: TrieSet [a] -> TrieSet [a]
+  f :: Ord a => a -> (TrieSet [a] -> TrieSet [a]) -> TrieSet [a] -> TrieSet [a]
+
+  b (TrieSet _ c) = TrieSet True c
+  f e a (TrieSet n c) = TrieSet n (Map.alter (Just . a . fold) e c)
+  
+instance Ord a => Monoid (TrieSet [a]) where
+  mempty = TrieSet False Map.empty
+  TrieSet v c `mappend` TrieSet t d = 
+    TrieSet (v || t) (Map.unionWith (<>) c d)
 ```
 
 Why lists and not a general `Foldable`{.haskell}? Well, for the particular use I had in mind (conforming to the `Foldable`{.haskell} typeclass), I need `(:)`{.haskell}.
 
-```haskell
-instance Foldable Trie where
-  foldr f b (Trie e c) = if e then f [] r else r where
+```{.haskell .literate}
+instance Foldable TrieSet where
+  foldr f b (TrieSet e c) = if e then f [] r else r where
     r = Map.foldrWithKey (flip . g . (:)) b c
     g k = foldr (f . k)
 ```
 
 With some more helper functions, the interface becomes pretty nice:
 
-```haskell
-instance Show a => Show (Trie [a]) where
+```{.haskell .literate}
+instance Show a => Show (TrieSet [a]) where
   showsPrec d t = 
     showParen 
       (d > 10)
-      (showString "fromList " . shows (toList t))
+      (showString "fromList " . shows (foldr (:) [] t))
 
-fromList :: (Ord a, Foldable f, Foldable g) 
-         => f (g a) -> Trie [a]
-fromList = foldr insert mempty
+instance Ord a => IsList (TrieSet [a]) where
+  type Item (TrieSet [a]) = [a]
+  fromList = foldr tsInsert mempty
+  toList = foldr (:) []
 ```
 
 The trie has the side-effect of lexicographically sorting what it's given:
 
-```haskell
-fromList ["ced", "abc", "ced", "cb", "ab"]
--- fromList ["ab","abc","cb","ced"]
+```{.haskell .literate .example}
+:set -XGADTs
+
+```
+```{.haskell .literate .example}
+fromList ["ced", "abc", "ced", "cb", "ab"] :: TrieSet String
+fromList ["ab","abc","cb","ced"]
 ```
 
 # Further Generalizing
 
 Most implementations of tries that I've seen are map-like data structures, rather than set-like. In other words, instead of holding a `Bool`{.haskell} at the value position, it holds a `Maybe`{.haskell} something. 
 
-```haskell
-{-# language DeriveFoldable, DeriveFunctor, DeriveTraversable #-}
+```{.haskell .literate}
 
 data Trie a b = Trie
   { endHere  :: b
@@ -112,27 +137,24 @@ And have it automatically choose the implementation of the functions I need[^1].
 
 To do that, though, I'll need to write the base functions, agnostic of the type of `b`. I *can* rely on something like `Monoid`{.haskell}, though:
 
-```haskell
-import Data.Monoid
-import Data.Foldable
-
+```{.haskell .literate}
 instance (Ord a, Monoid b) => Monoid (Trie a b) where
   mempty = Trie mempty Map.empty
-  mappend (Trie x c) (Trie b d) = 
-    Trie (a <> b) (Map.unionWith (<>) c d)
+  mappend (Trie v k) (Trie t l) = 
+    Trie (v <> t) (Map.unionWith (<>) k l)
 ```
 
 In fact, quite a lot of functions naturally lend themselves to this fold + monoid style:
 
-```haskell
+```{.haskell .literate}
 lookup :: (Ord a, Monoid b, Foldable f) 
        => f a -> Trie a b -> b
 lookup = foldr f endHere where
   f e a = foldMap a . Map.lookup e . children
 
-insert :: (Foldable f, Ord a, Monoid b) 
+insert' :: (Foldable f, Ord a, Monoid b) 
        => f a -> b -> Trie a b -> Trie a b
-insert xs v = foldr f b xs where
+insert' xs v = foldr f b xs where
   b (Trie p c) = Trie (v <> p) c
   f e a (Trie n c) = 
     Trie n (Map.alter (Just . a . fold) e c) 
@@ -152,9 +174,11 @@ insert :: (Ord a, Foldable f)
 
 Similarly, for `Maybe`{.haskell}, there's both `First`{.haskell} and `Last`{.haskell}. They have the behaviour:
 
-```haskell
-First (Just x) <> First (Just y) = First (Just x)
-Last  (Just x) <> Last  (Just y) = Last  (Just y)
+```{.haskell .literate .prop}
+First (Just x) <> First (Just y) == First (Just x)
+```
+```{.haskell .literate .prop}
+Last  (Just x) <> Last  (Just y) == Last  (Just y)
 ```
 
 I think it makes more sense for a value inserted into a map to overwrite whatever was there before. Since the newer value is on the left in the `mappend`{.haskell}, then, `First`{.haskell} makes most sense.
@@ -195,7 +219,7 @@ insert :: (Ord a, Foldable f)
 
 Modifying insert slightly, you can get exactly that:
 
-```haskell
+```{.haskell .literate}
 insert :: (Foldable f, Ord a, Applicative c, Monoid (c b)) 
        => f a -> b -> Trie a (c b) -> Trie a (c b)
 insert xs v = foldr f b xs where
@@ -217,48 +241,43 @@ add :: (Ord a, Foldable f)
 
 In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring[^2] gives this exact method:
 
-```haskell
+```{.haskell .literate}
 class Monoid a => Semiring a where
-  one   :: a
-  (<.>) :: a -> a -> a
+  one :: a
+  mul :: a -> a -> a
   
 instance Num a => Semiring (Sum a) where
-  one   = 1
-  (<.>) = (*)
+  one = 1
+  mul = (*)
 
 instance Semiring Any where
   one = Any True
-  Any x <.> Any y = Any (x && y)
+  Any x `mul` Any y = Any (x && y)
 ```
 
 This class is kind of like a combination of both monoid wrappers for both `Int`{.haskell} and `Bool`{.haskell}. You could take advantage of that:
 
-```haskell
-{-# language FunctionalDependencies, FlexibleInstances #-}
+```{.haskell .literate}
 
 class (Monoid add, Monoid mult)
-  => Semiring a add mult | a -> add, a -> mult where
+  => SemiringIso a add mult | a -> add, a -> mult where
     toAdd    :: a -> add
     fromAdd  :: add -> a
     toMult   :: a -> mult
     fromMult :: mult -> a
   
-(<+>), (<.>) :: Semiring a add mult => a -> a -> a
+(<+>), (<.>) :: SemiringIso a add mult => a -> a -> a
 
 x <+> y = fromAdd  (toAdd  x <> toAdd  y)
 x <.> y = fromMult (toMult x <> toMult y)
 
-one, zero :: Semiring a add mult => a
-zero = fromAdd mempty
-one = fromMult mempty
-
-instance Semiring Int (Sum Int) (Product Int) where
+instance SemiringIso Int (Sum Int) (Product Int) where
   toAdd    = Sum
   fromAdd  = getSum
   toMult   = Product
   fromMult = getProduct
   
-instance Semiring Bool Any All where
+instance SemiringIso Bool Any All where
   toAdd    = Any
   fromAdd  = getAny
   toMult   = All
@@ -269,7 +288,7 @@ But it seems like overkill.
 
 Anyway, assuming that we have the functions from `Semiring`{.haskell}, here's the `add` function:
 
-```haskell
+```{.haskell .literate}
 add :: (Foldable f, Ord a, Semiring b) 
     => f a -> Trie a b -> Trie a b
 add xs = foldr f b xs where
@@ -280,15 +299,21 @@ add xs = foldr f b xs where
 
 Now, expressions can be built up without specifying the specific monoid implementation, and the whole behaviour can be changed with a type signature:
 
-```haskell
-fromList :: (Foldable f, Foldable g, Ord a, Semiring b) 
-         => f (g a) -> Trie a b
-fromList = foldr add mempty
+```{.haskell .literate}
+instance (Ord a, Semiring b) => IsList (Trie a b) where
+  type Item (Trie a b) = [a]
+  fromList = foldr add mempty
 
+ans :: Semiring b => b
 ans = lookup "abc" (fromList ["abc", "def", "abc", "ghi"])
-
-ans :: Sum Int -- Sum 2
-ans :: Any     -- Any True
+```
+```{.haskell .literate .example}
+ans :: Sum Int
+Sum {getSum = 2}
+```
+```{.haskell .literate .example}
+ans :: Any
+Any {getAny = True}
 ```
 
 Slightly fuller implementations of all of these are available [here](https://github.com/oisdk/hstrie).
