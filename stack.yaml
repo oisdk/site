@@ -4,7 +4,7 @@ packages:
 - '.'
 - location:
     git: https://github.com/oisdk/mddoctest.git
-    commit: 49f5e9bb6f51b7c7f7d803b3e1fdd08e6893f2d3
+    commit: b1a638b4c18cb332d89f9d44844fcd0977ca2605
 
 extra-deps: []
 
