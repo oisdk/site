@@ -2,6 +2,9 @@ resolver: lts-5.18
 
 packages:
 - '.'
+- location:
+    git: https://github.com/oisdk/mddoctest.git
+    commit: 52f644de1fa68a6a7bbc830b79b44a3c8c9cd85b
 
 extra-deps: []
 

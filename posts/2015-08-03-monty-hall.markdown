@@ -291,4 +291,4 @@ expect == actual
 
 And it works! (I didn't try the Swift version, because of floating-point inaccuracies)
 
-You can see the code used <a href="https://github.com/oisdk/Monty-Hall">here</a>.
+You can see the code used [here](https://github.com/oisdk/Monty-Hall).

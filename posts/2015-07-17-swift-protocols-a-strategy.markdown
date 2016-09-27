@@ -92,7 +92,7 @@ So here's how I think you should be doing your APIs: if at all possible, write y
 (I realise now that I may have just described a design pattern that was very obvious to everyone but me. Ah, well)
 
 # The Why
-There are pretty major advantages to this. Your two other options are generally class inheritance, or global functions with generics. <a href="https://developer.apple.com/videos/wwdc/2015/?id=408">The best video from WWDC</a> talks about class inheritance, so I'll stay away from that. In contrast to global functions, here are the advantages:
+There are pretty major advantages to this. Your two other options are generally class inheritance, or global functions with generics. [The best video from WWDC](https://developer.apple.com/videos/wwdc/2015/?id=408) talks about class inheritance, so I'll stay away from that. In contrast to global functions, here are the advantages:
 
 ## More discoverable
 

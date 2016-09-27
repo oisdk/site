@@ -157,7 +157,7 @@ First (Just x) <> First (Just y) = First (Just x)
 Last  (Just x) <> Last  (Just y) = Last  (Just y)
 ```
 
-I think it makes more sense for a value inserted into a map to overwrite whatever was there before. Since the newer value is on the left in the `mappend`{haskell}, then, `First`{.haskell} makes most sense.
+I think it makes more sense for a value inserted into a map to overwrite whatever was there before. Since the newer value is on the left in the `mappend`{.haskell}, then, `First`{.haskell} makes most sense.
 
 ```haskell
 type TrieMap a b = Trie a (First b)
@@ -187,8 +187,10 @@ insert :: (Ord a, Foldable f)
 This method so far isn't really satisfying, though. Really, the `insert`{.haskell} signatures should look like this:
 
 ```haskell
-insert :: (Ord a, Foldable f) => f a -> b -> TrieMap a b -> TrieMap a b
-insert :: (Ord a, Foldable f) => f a -> b -> TrieBin a b -> TrieBin a b
+insert :: (Ord a, Foldable f) 
+       => f a -> b -> TrieMap a b -> TrieMap a b
+insert :: (Ord a, Foldable f)
+       => f a -> b -> TrieBin a b -> TrieBin a b
 ```
 
 Modifying insert slightly, you can get exactly that:
@@ -207,8 +209,10 @@ insert xs v = foldr f b xs where
 Similarly, the "inserting" for the set-like types isn't really right. The value argument is out of place. This should be the signature:
 
 ```haskell
-add :: (Ord a, Foldable f) => f a -> TrieSet a -> TrieSet a
-add :: (Ord a, Foldable f) => f a -> TrieBin a -> TrieBin a
+add :: (Ord a, Foldable f) 
+    => f a -> TrieSet a -> TrieSet a
+add :: (Ord a, Foldable f)
+    => f a -> TrieBin a -> TrieBin a
 ```
 
 In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring[^2] gives this exact method:
@@ -233,28 +237,28 @@ This class is kind of like a combination of both monoid wrappers for both `Int`{
 {-# language FunctionalDependencies, FlexibleInstances #-}
 
 class (Monoid add, Monoid mult)
-  => Semigroup a add mult | a -> add, a -> mult where
+  => Semiring a add mult | a -> add, a -> mult where
     toAdd    :: a -> add
     fromAdd  :: add -> a
     toMult   :: a -> mult
     fromMult :: mult -> a
   
-(<+>), (<.>) :: Semigroup a add mult => a -> a -> a
+(<+>), (<.>) :: Semiring a add mult => a -> a -> a
 
 x <+> y = fromAdd  (toAdd  x <> toAdd  y)
 x <.> y = fromMult (toMult x <> toMult y)
 
-one, zero :: Semigroup a add mult => a
+one, zero :: Semiring a add mult => a
 zero = fromAdd mempty
 one = fromMult mempty
 
-instance Semigroup Int (Sum Int) (Product Int) where
+instance Semiring Int (Sum Int) (Product Int) where
   toAdd    = Sum
   fromAdd  = getSum
   toMult   = Product
   fromMult = getProduct
   
-instance Semigroup Bool Any All where
+instance Semiring Bool Any All where
   toAdd    = Any
   fromAdd  = getAny
   toMult   = All
@@ -263,7 +267,7 @@ instance Semigroup Bool Any All where
 
 But it seems like overkill.
 
-Anyway, assuming that we have the functions from `Semigroup`{.haskell}, here's the `add` function:
+Anyway, assuming that we have the functions from `Semiring`{.haskell}, here's the `add` function:
 
 ```haskell
 add :: (Foldable f, Ord a, Semiring b) 
@@ -290,4 +294,4 @@ ans :: Any     -- Any True
 Slightly fuller implementations of all of these are available [here](https://github.com/oisdk/hstrie).
 
 [^1]: Kind of like [program inference in lieu of type inference](https://www.youtube.com/watch?v=3U3lV5VPmOU)
-[^2]: While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)
+[^2]: This isn't really a very good definition of semiring. While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)
