@@ -16,7 +16,6 @@ div#logo a {
     color: black;
     float: left;
     font-size: 18px;
-    font-weight: bold;
     text-decoration: none;
 }
 
@@ -27,7 +26,6 @@ div#header #navigation {
 div#header #navigation a {
     color: black;
     font-size: 18px;
-    font-weight: bold;
     margin-left: 12px;
     text-decoration: none;
     text-transform: uppercase;
@@ -44,10 +42,12 @@ div#footer {
 
 h1 {
     font-size: 24px;
+    font-weight: normal;
 }
 
 h2 {
     font-size: 20px;
+    font-weight: normal;
 }
 
 div.info {
