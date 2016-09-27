@@ -1,7 +1,6 @@
 ---
 title: Deques, Queues, and Lists in Swift with Indirect
 tags: Swift
-description: Some pointer-based data structures in Swift
 ---
 
 Recursive enums have finally arrived. Woo! The first thing to do with these is to make a recursive list:

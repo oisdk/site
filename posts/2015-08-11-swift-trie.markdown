@@ -1,7 +1,6 @@
 ---
 title: A Trie in Swift
 tags: Swift
-description: A Trie in Swift
 ---
 
 If you google "cool data structures" you'll get [this](http://stackoverflow.com/questions/500607/what-are-the-lesser-known-but-useful-data-structures) as your first result. It's a stackoverflow question: "What are the lesser known but useful data structures?". And the top answer is a Trie. I read up on them, and found out a lot of cool things about their use (as well as finding out that I'm now the kind of person who googles "cool data structures"). So I rocked on up to my playground, and got writing.

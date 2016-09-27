@@ -1,7 +1,6 @@
 ---
 title: Revisiting a Trie in Haskell
 tags: Haskell
-description: Generalizing a Trie using Monoids
 ---
 
 This post is a part-2 from [this](2015-10-06-haskell-trie-lhs.html) post.

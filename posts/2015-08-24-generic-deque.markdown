@@ -1,7 +1,6 @@
 ---
 title: Using Protocols to Build a (very) Generic Deque 
 tags: Swift
-description: An efficient doubly-ended queue in Swift
 ---
 
 (Download the playground to use the code and see the outputs)

@@ -1,7 +1,6 @@
 ---
 title: Faking dependent types in Swift
 tags: Swift
-description: Dependent types in Swift
 ---
 
 [Dependent types](https://en.wikipedia.org/wiki/Dependent_type) are types "that depend on values". Say you had a function `f`{.scala} that took an integer. If you can write that function whereby it returns a value of type `A`{.scala} when that integer is even, or a type `B`{.scala} if the integer is odd, then you're working with dependent types. (I think. I'm not sure: if I've got it wrong [tweet me](https://twitter.com/oisdk).)

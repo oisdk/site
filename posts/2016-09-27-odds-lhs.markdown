@@ -1,7 +1,6 @@
 ---
 title: A Different Probability Monad
 tags: Haskell
-description: A cons-based monad for probability
 ---
 One of the more unusual monads is the "probability monad":
 ```{.haskell .literate}
