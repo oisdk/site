@@ -54,9 +54,10 @@ Foldable f => Trie (f a)
 That signature strongly hints at GADTs, as was indicated by [this stackoverflow answer](http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set). The particular GADT which is applicable here is this:
 
 ```{.haskell .literate}
-
 data TrieSet a where TrieSet :: Bool -> Map a (TrieSet [a]) -> TrieSet [a]
+```
 
+```{.haskell .literate .hidden_source}
 tsEndHere :: TrieSet [a] -> Bool
 tsEndHere (TrieSet e _) = e
 
@@ -103,7 +104,7 @@ instance Ord a => IsList (TrieSet [a]) where
 
 The trie has the side-effect of lexicographically sorting what it's given:
 
-```{.haskell .literate .example}
+```{.haskell .literate .example .hidden_source}
 :set -XGADTs
 
 ```
@@ -299,12 +300,13 @@ add xs = foldr f b xs where
 
 Now, expressions can be built up without specifying the specific monoid implementation, and the whole behaviour can be changed with a type signature:
 
-```{.haskell .literate}
+```{.haskell .literate .hidden_source}
 instance (Ord a, Semiring b) => IsList (Trie a b) where
   type Item (Trie a b) = [a]
   fromList = foldr add mempty
-
 ans :: Semiring b => b
+```
+```{.haskell .literate}
 ans = lookup "abc" (fromList ["abc", "def", "abc", "ghi"])
 ```
 ```{.haskell .literate .example}
