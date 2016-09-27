@@ -56,6 +56,11 @@ div.info {
     font-style: italic;
 }
 
+span.quiet {
+    color: #828282;
+    font-style: italic;
+}
+
 a {
     color: black;
 }
@@ -63,4 +68,5 @@ a {
 ul {
     margin-left: 0px;
     padding-left: 0px;
+    list-style-type: none;
 }
