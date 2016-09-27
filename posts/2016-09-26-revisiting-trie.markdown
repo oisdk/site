@@ -70,9 +70,12 @@ With some more helper functions, the interface becomes pretty nice:
 ```haskell
 instance Show a => Show (Trie [a]) where
   showsPrec d t = 
-    showParen (d > 10) (showString "fromList " . shows (toList t))
+    showParen 
+      (d > 10)
+      (showString "fromList " . shows (toList t))
 
-fromList :: (Ord a, Foldable f, Foldable g) => f (g a) -> Trie [a]
+fromList :: (Ord a, Foldable f, Foldable g) 
+         => f (g a) -> Trie [a]
 fromList = foldr insert mempty
 ```
 
@@ -115,20 +118,24 @@ import Data.Foldable
 
 instance (Ord a, Monoid b) => Monoid (Trie a b) where
   mempty = Trie mempty Map.empty
-  mappend (Trie x c) (Trie b d) = Trie (a <> b) (Map.unionWith (<>) c d)
+  mappend (Trie x c) (Trie b d) = 
+    Trie (a <> b) (Map.unionWith (<>) c d)
 ```
 
 In fact, quite a lot of functions naturally lend themselves to this fold + monoid style:
 
 ```haskell
-lookup :: (Ord a, Monoid b, Foldable f) => f a -> Trie a b -> b
+lookup :: (Ord a, Monoid b, Foldable f) 
+       => f a -> Trie a b -> b
 lookup = foldr f endHere where
   f e a = foldMap a . Map.lookup e . children
 
-insert :: (Foldable f, Ord a, Monoid b) => f a -> b -> Trie a b -> Trie a b
+insert :: (Foldable f, Ord a, Monoid b) 
+       => f a -> b -> Trie a b -> Trie a b
 insert xs v = foldr f b xs where
   b (Trie p c) = Trie (v <> p) c
-  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c) 
+  f e a (Trie n c) = 
+    Trie n (Map.alter (Just . a . fold) e c) 
 ```
 
 A monoid is needed for the values, though, and neither `Bool`{.haskell} nor `∀ a. Maybe a`{.haskell} conform to `Monoid`{.haskell}. Looking back to the implementation of the trie-set, the `(||)`{.haskell} function has been replaced by `mappend`{.haskell}. There *is* a newtype wrapper in `Data.Monoid`{.haskell} which has exactly this behaviour, though: `Any`{.haskell}.
@@ -137,8 +144,10 @@ Using that, the type signatures specialize to:
 
 ```haskell
 type TrieSet a = Trie a Any
-lookup :: (Ord a, Foldable f) => f a -> TrieSet a -> Any
-insert :: (Ord a, Foldable f) => f a -> Any -> TrieSet a -> TrieSet a
+lookup :: (Ord a, Foldable f) 
+       => f a -> TrieSet a -> Any
+insert :: (Ord a, Foldable f) 
+       => f a -> Any -> TrieSet a -> TrieSet a
 ```
 
 Similarly, for `Maybe`{.haskell}, there's both `First`{.haskell} and `Last`{.haskell}. They have the behaviour:
@@ -153,7 +162,8 @@ I think it makes more sense for a value inserted into a map to overwrite whateve
 ```haskell
 type TrieMap a b = Trie a (First b)
 lookup :: (Ord a, Foldable f) => f a -> TrieMap a b -> First b
-insert :: (Ord a, Foldable f) => f a -> First b -> TrieMap a b -> TrieMap a b
+insert :: (Ord a, Foldable f) 
+       => f a -> First b -> TrieMap a b -> TrieMap a b
 ```
 
 There are some other ways that you can interpret the monoid. For instance, subbing in `Sum Int`{.haskell} gives you a bag-like trie:
@@ -161,7 +171,8 @@ There are some other ways that you can interpret the monoid. For instance, subbi
 ```haskell
 type TrieBag a = Trie a (Sum Int)
 lookup :: (Ord a, Foldable f) => f a -> TrieBag a -> Sum Int
-insert :: (Ord a, Foldable f) => f a -> Sum Int -> TrieBag a -> TrieBag a
+insert :: (Ord a, Foldable f) 
+       => f a -> Sum Int -> TrieBag a -> TrieBag a
 ```
 
 This is a set which can store multiple copies of each member. Turned the other way around, a map which stores many values for each key looks like this:
@@ -169,7 +180,8 @@ This is a set which can store multiple copies of each member. Turned the other w
 ```haskell
 type TrieBin a b = Trie a [b]
 lookup :: (Ord a, Foldable f) => f a -> TrieBin a b -> [b]
-insert :: (Ord a, Foldable f) => f a -> [b] -> TrieBin a b -> TrieBin a b
+insert :: (Ord a, Foldable f) 
+       => f a -> [b] -> TrieBin a b -> TrieBin a b
 ```
 
 This method so far isn't really satisfying, though. Really, the `insert`{.haskell} signatures should look like this:
@@ -254,16 +266,19 @@ But it seems like overkill.
 Anyway, assuming that we have the functions from `Semigroup`{.haskell}, here's the `add` function:
 
 ```haskell
-add :: (Foldable f, Ord a, Semiring b) => f a -> Trie a b -> Trie a b
+add :: (Foldable f, Ord a, Semiring b) 
+    => f a -> Trie a b -> Trie a b
 add xs = foldr f b xs where
   b (Trie p c) = Trie (one <> p) c
-  f e a (Trie n c) = Trie n (Map.alter (Just . a . fold) e c)
+  f e a (Trie n c) = 
+    Trie n (Map.alter (Just . a . fold) e c)
 ```
 
 Now, expressions can be built up without specifying the specific monoid implementation, and the whole behaviour can be changed with a type signature:
 
 ```haskell
-fromList :: (Foldable f, Foldable g, Ord a, Semiring b) => f (g a) -> Trie a b
+fromList :: (Foldable f, Foldable g, Ord a, Semiring b) 
+         => f (g a) -> Trie a b
 fromList = foldr add mempty
 
 ans = lookup "abc" (fromList ["abc", "def", "abc", "ghi"])
