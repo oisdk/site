@@ -8,7 +8,7 @@ This post is a part-2 from [this](2015-10-06-haskell-trie-lhs.html) post.
 
 When I ended the last post, I had a nice `Trie`{.haskell} datatype, with plenty of functions, but I couldn't get it to conform to the standard Haskell classes. The problem was to do with the type variables in the Trie:
 
-```{.haskell .literate}
+```{.haskell .literate .hidden_source}
 {-# language GADTs, FlexibleInstances, TypeFamilies #-}
 {-# language DeriveFoldable, DeriveFunctor, DeriveTraversable #-}
 {-# language FunctionalDependencies, FlexibleInstances #-}
@@ -21,7 +21,8 @@ import Data.Foldable hiding (toList)
 import Prelude hiding (lookup)
 import Data.Monoid
 import GHC.Exts (IsList(..))
-
+```
+```{.haskell .literate}
 data OldTrie a = OldTrie
   { otEndHere  :: Bool
   , otChildren :: Map a (OldTrie a) }
