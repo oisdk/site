@@ -1,6 +1,12 @@
 module Main where
 
 import Test.MarkdownDocTest
+import System.Directory
+import Data.List
 
 main :: IO ()
-main = mddoctest ["posts/2016-09-27-odds.markdown"]
+main = do
+  posts <- getDirectoryContents "posts/"
+  mddoctest [ "posts/" ++ post
+            | post <- posts
+            , "lhs.markdown" `isSuffixOf` post ]
