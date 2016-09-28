@@ -1,8 +1,10 @@
 --------------------------------------------------------------------------------
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE LambdaCase #-}
 
 import           Data.Monoid
 import           Hakyll
+import           Hakyll.Web.Pandoc.Biblio
 import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
@@ -21,6 +23,10 @@ main = hakyll $ do
         compile $ pandocCompiler
             >>= loadAndApplyTemplate "templates/default.html" defaultContext
             >>= relativizeUrls
+
+    match "assets/csl/*" $ compile cslCompiler
+
+    match "assets/bib/*" $ compile biblioCompiler
 
     -- build up tags
     tags <- buildTags "posts/*" (fromCapture "tags/*.html")
@@ -41,14 +47,21 @@ main = hakyll $ do
 
     match "posts/*" $ do
         route $ setExtension "html"
-        compile $ pandocCompilerWith
-          defaultHakyllReaderOptions
-          (def { writerHTMLMathMethod = MathML Nothing
-               , writerHighlight = True })
-            >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags)
-            >>= saveSnapshot "content"
-            >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags)
-            >>= relativizeUrls
+        compile $ do
+          item <- getUnderlying
+          read <- getMetadataField item "bibliography" >>= \case
+            Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
+            Just bibFile -> do
+              csl <- load $ fromFilePath "assets/csl/chicago.csl"
+              bib <- load $ fromFilePath ("assets/bib/" ++ bibFile)
+              readPandocBiblio defaultHakyllReaderOptions csl bib =<< getResourceBody
+          pure (writePandocWith
+            (def { writerHTMLMathMethod = MathML Nothing
+                , writerHighlight = True }) read)
+              >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags)
+              >>= saveSnapshot "content"
+              >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags)
+              >>= relativizeUrls
 
     match "index.html" $ do
         route idRoute

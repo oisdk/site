@@ -4,9 +4,14 @@ import Test.MarkdownDocTest
 import System.Directory
 import Data.List
 
-main :: IO ()
-main = do
-  posts <- getDirectoryContents "posts/"
-  mddoctest [ "posts/" ++ post
+docTestDir :: String -> IO ()
+docTestDir dir = do
+  posts <- getDirectoryContents dir
+  mddoctest [ dir ++ post
             | post <- posts
             , "lhs.markdown" `isSuffixOf` post ]
+
+main :: IO ()
+main = do
+  docTestDir "posts/"
+  docTestDir "drafts/"

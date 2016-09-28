@@ -1,7 +1,7 @@
 body {
     color: black;
-    font-family: Verdana, Helvetica, Arial, sans-serif;
-    font-size: 13px;
+    font-family: Garamond, Times New Roman, serif;
+    font-size: 15px;
     margin: 0px auto 0px auto;
     max-width: 500px;
 }
@@ -11,7 +11,7 @@ img {
 }
 
 div#header {
-    border-bottom: 2px solid black;
+    border-bottom: 3px double black;
     margin-bottom: 30px;
     padding: 12px 0px 12px 0px;
 }
@@ -29,6 +29,7 @@ div#header #navigation {
 
 div#header #navigation a {
     color: black;
+    font-family: Garamond, Times New Roman, Serif;
     font-size: 18px;
     margin-left: 12px;
     text-decoration: none;
@@ -36,6 +37,7 @@ div#header #navigation a {
 }
 
 div#footer {
+    font-family: Garamond, Times New Roman, Serif;
     border-top: solid 2px black;
     color: #555;
     font-size: 12px;
@@ -45,11 +47,13 @@ div#footer {
 }
 
 h1 {
+    font-family: Garamond, Times New Roman, Serif;
     font-size: 24px;
     font-weight: normal;
 }
 
 h2 {
+    font-family: Garamond, Times New Roman, Serif;
     font-size: 20px;
     font-weight: normal;
 }
@@ -81,6 +85,5 @@ ul {
 
 .example:before {
     content: ">>> ";
-    /* padding-right: 8px; */
     font-family: menlo, mono;
 }

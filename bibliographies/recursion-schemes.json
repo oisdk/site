@@ -1,0 +1,168 @@
+[
+	{
+		"id": "http://zotero.org/users/2431910/items/AXAUXHC3",
+		"type": "article-journal",
+		"title": "A Tutorial on the Universality and Expressiveness of Fold",
+		"container-title": "Journal of Functional Programming",
+		"page": "355–372",
+		"volume": "9",
+		"issue": "4",
+		"source": "Google Scholar",
+		"URL": "http://journals.cambridge.org/abstract_S0956796899003500",
+		"author": [
+			{
+				"family": "Hutton",
+				"given": "Graham"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"1999"
+				]
+			]
+		},
+		"accessed": {
+			"date-parts": [
+				[
+					"2016",
+					9,
+					28
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/2431910/items/NQXPW426",
+		"type": "article-journal",
+		"title": "Functional Programming with Bananas, Lenses, Envelopes and Barbed Wire",
+		"container-title": "Functional Programming Languages and Computer Architecture",
+		"page": "124–144",
+		"source": "Google Scholar",
+		"URL": "http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.125",
+		"author": [
+			{
+				"family": "Meijer",
+				"given": "E."
+			},
+			{
+				"family": "Fokkinga",
+				"given": "M. M."
+			},
+			{
+				"family": "Paterson",
+				"given": "R."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"1991"
+				]
+			]
+		},
+		"accessed": {
+			"date-parts": [
+				[
+					"2016",
+					9,
+					28
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/2431910/items/A77ME62H",
+		"type": "article-journal",
+		"title": "Monadic Corecursion -Definition, Fusion Laws, and Applications-",
+		"page": "1-35",
+		"volume": "11",
+		"issue": "1",
+		"source": "IngentaConnect",
+		"DOI": "10.1016/S1571-0661(04)00055-6",
+		"author": [
+			{
+				"family": "Pardo",
+				"given": "A."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2004",
+					1,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/2431910/items/TNRII5IF",
+		"type": "article-journal",
+		"title": "Unifying Recursion Schemes",
+		"source": "Google Scholar",
+		"URL": "http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.307.5950&rep=rep1&type=pdf",
+		"author": [
+			{
+				"family": "Hinze",
+				"given": "Ralf"
+			},
+			{
+				"family": "Wu",
+				"given": "Nicolas"
+			},
+			{
+				"family": "Gibbons",
+				"given": "Jeremy"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2016",
+					9,
+					28
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/2431910/items/6UUI4D87",
+		"type": "article-journal",
+		"title": "Unifying Structured Recursion Schemes",
+		"container-title": "ACM SIGPLAN Notices",
+		"page": "209–220",
+		"volume": "48",
+		"source": "Google Scholar",
+		"URL": "http://www.cs.ox.ac.uk/publications/publication6761-abstract.html",
+		"author": [
+			{
+				"family": "Gibbons",
+				"given": "Jeremy"
+			},
+			{
+				"family": "Wu",
+				"given": "Nicolas"
+			},
+			{
+				"literal": "others"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2013"
+				]
+			]
+		},
+		"accessed": {
+			"date-parts": [
+				[
+					"2016",
+					9,
+					28
+				]
+			]
+		}
+	}
+]

@@ -136,7 +136,7 @@ type TrieSet [a] = Trie a Bool
 type TrieMap a b = Trie a (Maybe b)
 ```
 
-And have it automatically choose the implementation of the functions I need[^1].
+And have it automatically choose the implementation of the functions I need^[Kind of like [program inference in lieu of type inference](https://www.youtube.com/watch?v=3U3lV5VPmOU)].
 
 To do that, though, I'll need to write the base functions, agnostic of the type of `b`. I *can* rely on something like `Monoid`{.haskell}, though:
 
@@ -242,7 +242,7 @@ add :: (Ord a, Foldable f)
     => f a -> TrieBin a -> TrieBin a
 ```
 
-In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring[^2] gives this exact method:
+In particular, while we have an "empty" thing (0, False) for monoids, we need a "one" thing (1, True) for this function. A semiring^[This isn't really a very good definition of semiring. While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)] gives this exact method:
 
 ```{.haskell .literate}
 class Monoid a => Semiring a where
@@ -322,5 +322,4 @@ Any {getAny = True}
 
 Slightly fuller implementations of all of these are available [here](https://github.com/oisdk/hstrie).
 
-[^1]: Kind of like [program inference in lieu of type inference](https://www.youtube.com/watch?v=3U3lV5VPmOU)
-[^2]: This isn't really a very good definition of semiring. While Haskell doesn't have this class in base, [Purescript has it in their prelude.](https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs)
+[^2]: 
