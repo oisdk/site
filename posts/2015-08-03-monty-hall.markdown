@@ -214,7 +214,7 @@ public enum Choice { case Switch, Stick }
 data Choice = Switch | Stick
 ```
 
-Then, a `chances` function. The logic here is a bit dense. First of all, if you're going to stick, it doesn't matter how many doors the host opens: your chance of getting a car is `1/n`, where `n` is the number of doors. However, if you're going to switch, two things need to happen: you need to *not* pick the car on your first choice, *and* you need to pick the car on your second choice. The chance of picking the car on your second choice (if the one you picked on your first choice *wasn't* the car) is the one over the number of doors, minus the number of doors the host opens, minus one. 
+Then, a `chances`{.scala} function. The logic here is a bit dense. First of all, if you're going to stick, it doesn't matter how many doors the host opens: your chance of getting a car is `1/n`, where `n` is the number of doors. However, if you're going to switch, two things need to happen: you need to *not* pick the car on your first choice, *and* you need to pick the car on your second choice. The chance of picking the car on your second choice (if the one you picked on your first choice *wasn't* the car) is the one over the number of doors, minus the number of doors the host opens, minus one. 
 
 ```scala
 public func chances(n: Int, _ p: Int, _ c: Choice)(_ d: Int)

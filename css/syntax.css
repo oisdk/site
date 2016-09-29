@@ -5,10 +5,11 @@ td.lineNumbers { border-right: 1px solid #AAAAAA; text-align: right; color: #AAA
 td.sourceCode {
     padding-left: 5px;
 }
-.sourceCode {
+.sourceCode, code {
     font-size: 11px;
-    font-family: hasklig, menlo, mono;
+    font-family: menlo, mono;
 }
+
 /* Low key */
 .sourceCode span.kw { color: #262C6A; } /* keyword              */
 .sourceCode span.dt { color: #476A97; } /* datatype             */

@@ -3,16 +3,18 @@ title: A Different Probability Monad
 tags: Haskell
 ---
 One of the more unusual monads is the "probability monad":
-```{.haskell .literate}
+```{.haskell .literate .hidden_source}
 {-# language PatternSynonyms, ViewPatterns #-}
 {-# language DeriveFunctor, DeriveFoldable #-}
+{-# language BangPatterns #-}
 
 module Prob where
 
 import Control.Arrow
 import Data.Ratio
 import Data.Foldable
-
+```
+```{.haskell .literate}
 newtype Probability a = Probability
   { runProb :: [(a,Rational)] }
   
@@ -116,27 +118,30 @@ Some utility functions to create `Odds`{.haskell}:
 equalOdds :: Foldable f => f a -> Maybe (Odds a)
 equalOdds xs = case length xs of
   0 -> Nothing
-  n -> Just (foldr f undefined xs (fromIntegral (length xs - 1))) where
+  n -> Just (foldr f undefined xs (n - 1)) where
     f y a 0 = Certainly y
-    f y a n = Odds y (1 % n) (a (n-1))
+    f y a n = Odds y (1 % fromIntegral n) (a (n - 1))
 
-fromDistrib :: [(a,Integer)] -> Odds a
-fromDistrib xs = f (tot*lst) xs where
-  (tot,lst) = foldl' (\(t,_) e -> (t+e,e)) (0,undefined) (map snd xs)
+fromDistrib :: [(a,Integer)] -> Maybe (Odds a)
+fromDistrib [] = Nothing
+fromDistrib xs = Just $ f (tot*lst) xs where
+  (tot,lst) = foldl' (\(!t,_) e -> (t+e,e)) (0,undefined) (map snd xs)
   f _ [(x,_)] = Certainly x
-  f n ((x,p):xs) = let mp = p * lst
-                       np = n - mp in Odds x (mp % np) (f np xs)
+  f n ((x,p):xs) = Odds x (mp % np) (f np xs) where
+    mp = p * lst
+    np = n - mp
                   
 probOfEach :: Eq a => a -> Odds a -> Rational
 probOfEach x xs = probOf (x==) xs
 
 propOf :: Eq a => a -> [a] -> Maybe Rational
 propOf _ [] = Nothing
-propOf x xs = Just $
-  fromIntegral (length (filter (x==) xs)) % fromIntegral (length xs)
+propOf x xs = Just . uncurry (%) $
+  foldl' (\(!n,!m) e -> (if x == e then n+1 else n, m+1)) (0,0) xs
 ```
+
 ```{.haskell .literate .prop}
-propOf (x :: Int) xs == fmap (probOfEach x) (equalOdds xs)
+propOf x xs == fmap (probOfEach x) (equalOdds xs)
 ```
 
 And finally, the instances:

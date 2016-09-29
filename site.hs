@@ -1,10 +1,11 @@
 --------------------------------------------------------------------------------
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE LambdaCase #-}
 
+import           Control.Monad
 import           Data.Monoid
 import           Hakyll
-import           Hakyll.Web.Pandoc.Biblio
+import           Text.Pandoc         (Pandoc)
 import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
@@ -37,8 +38,8 @@ main = hakyll $ do
         compile $ do
             posts <- recentFirst =<< loadAll pattrn
             let ctx = constField "title" title
-                      `mappend` listField "posts" postCtx (return posts)
-                      `mappend` defaultContext
+                      <> listField "posts" postCtx (pure posts)
+                      <> defaultContext
 
             makeItem ""
                 >>= loadAndApplyTemplate "templates/tag.html" ctx
@@ -47,17 +48,8 @@ main = hakyll $ do
 
     match "posts/*" $ do
         route $ setExtension "html"
-        compile $ do
-          item <- getUnderlying
-          read <- getMetadataField item "bibliography" >>= \case
-            Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
-            Just bibFile -> do
-              csl <- load $ fromFilePath "assets/csl/chicago.csl"
-              bib <- load $ fromFilePath ("assets/bib/" ++ bibFile)
-              readPandocBiblio defaultHakyllReaderOptions csl bib =<< getResourceBody
-          pure (writePandocWith
-            (def { writerHTMLMathMethod = MathML Nothing
-                , writerHighlight = True }) read)
+        compile $ readPandocOptionalBiblio
+              <&> writePandocWith (def { writerHTMLMathMethod = MathML Nothing, writerHighlight = True })
               >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags)
               >>= saveSnapshot "content"
               >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags)
@@ -68,8 +60,8 @@ main = hakyll $ do
         compile $ do
             posts <- recentFirst =<< loadAll "posts/*"
             let indexCtx =
-                    listField "posts" postCtx (return posts) <>
-                    constField "title" "Home"                <>
+                    listField "posts" postCtx (pure posts) <>
+                    constField "title" "Home"              <>
                     defaultContext
 
             getResourceBody
@@ -87,6 +79,19 @@ main = hakyll $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
+(<&>) :: Functor f => f a -> (a -> b) -> f b
+x <&> f = f <$> x
+
+readPandocOptionalBiblio :: Compiler (Item Pandoc)
+readPandocOptionalBiblio = do
+  item <- getUnderlying
+  getMetadataField item "bibliography" >>= \case
+    Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
+    Just bibFile -> join $
+      readPandocBiblio defaultHakyllReaderOptions
+                   <$> load (fromFilePath "assets/csl/chicago.csl")
+                   <*> load (fromFilePath ("assets/bib/" ++ bibFile))
+                   <*> getResourceBody
 
 
 --------------------------------------------------------------------------------
