@@ -1,7 +1,8 @@
 ---
 title: Recursion Schemes Examples
 tags: Haskell
-bibliography: ../bibliographies/recursion-schemes.bib
+bibliography: recursion-schemes.bib
+link-citations: true
 ---
 ```{.haskell .literate .hidden_source}
 module RecSchemes where
@@ -10,4 +11,4 @@ Recursion schemes are one of the areas in Haskell that is usually regarded as "a
 
 That said, they're very interesting!
 
-The original paper [@meijer_functional_1991]
+The original paper [@meijer_functional_1991] is excellent, but a little dense. 
