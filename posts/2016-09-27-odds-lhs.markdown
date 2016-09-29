@@ -38,7 +38,7 @@ tossProb :: Distrib Coin
 tossProb = Distrib [(Heads, 1), (Tails, 1)]
 ```
 
-The type is the same as before, it's the semantics which have changed. The second field of the tuples no longer have to add up to one. The list can still be empty, though, and now finding the probability of, say, the head, looks like this:
+The type is the same as before: it's the semantics which have changed. The second field of the tuples no longer have to add up to one. The list can still be empty, though, and now finding the probability of, say, the head, looks like this:
 
 ```{.haskell .literate}
 probHead :: Distrib a -> Rational
