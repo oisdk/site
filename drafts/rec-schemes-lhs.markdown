@@ -1,8 +1,7 @@
 ---
 title: Recursion Schemes Examples
 tags: Haskell
-bibliography: recursion-schemes.bib
-link-citations: true
+bibliography: Recursion Schemes.bib
 ---
 ```{.haskell .literate .hidden_source}
 module RecSchemes where
