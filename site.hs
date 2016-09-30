@@ -3,10 +3,24 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad
+import           Data.Foldable
+import           Data.Map.Strict                 (Map)
+import qualified Data.Map.Strict                 as Map
 import           Data.Monoid
 import           Hakyll
-import           Text.Pandoc         (Pandoc)
+import           Prelude                         hiding (head)
+import           Text.Blaze.Html                 (toHtml, toValue, (!))
+import           Text.Blaze.Html.Renderer.String (renderHtml)
+import qualified Text.Blaze.Html5                as H
+import qualified Text.Blaze.Html5.Attributes     as A
+import           Text.Pandoc                     (Pandoc)
 import           Text.Pandoc.Options
+import Data.Maybe
+import Data.List (elemIndex)
+
+head :: [a] -> Maybe a
+head [] = Nothing
+head (x:_) = Just x
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -32,17 +46,33 @@ main = hakyll $ do
     -- build up tags
     tags <- buildTags "posts/*" (fromCapture "tags/*.html")
 
+    series <- buildSeries "posts/*" (fromCapture "series/*.html")
+
     tagsRules tags $ \tag pattrn -> do
         let title = "Posts tagged \"" ++ tag ++ "\""
         route idRoute
         compile $ do
             posts <- recentFirst =<< loadAll pattrn
             let ctx = constField "title" title
-                      <> listField "posts" postCtx (pure posts)
-                      <> defaultContext
+                   <> listField "posts" postCtx (pure posts)
+                   <> defaultContext
 
             makeItem ""
                 >>= loadAndApplyTemplate "templates/tag.html" ctx
+                >>= loadAndApplyTemplate "templates/default.html" ctx
+                >>= relativizeUrls
+
+    tagsRules series $ \serie pattrn -> do
+        let title = "Series on " ++ serie
+        route idRoute
+        compile $ do
+            posts <- chronological =<< loadAll pattrn
+            let ctx = constField "title" title
+                   <> listField "posts" postCtx (pure posts)
+                   <> defaultContext
+
+            makeItem ""
+                >>= loadAndApplyTemplate "templates/series.html" ctx
                 >>= loadAndApplyTemplate "templates/default.html" ctx
                 >>= relativizeUrls
 
@@ -50,9 +80,9 @@ main = hakyll $ do
         route $ setExtension "html"
         compile $ readPandocOptionalBiblio
               <&> writePandocWith (def { writerHTMLMathMethod = MathML Nothing, writerHighlight = True })
-              >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags)
+              >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags series)
               >>= saveSnapshot "content"
-              >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags)
+              >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags series)
               >>= relativizeUrls
 
     match "index.html" $ do
@@ -95,8 +125,36 @@ readPandocOptionalBiblio = do
 
 
 --------------------------------------------------------------------------------
-postCtxWithTags :: Tags -> Context String
-postCtxWithTags tags = tagsField "tags" tags <> postCtx
+postCtxWithTags :: Tags -> Tags -> Context String
+postCtxWithTags tags series = seriesField series <> tagsField "tags" tags <> postCtx
+
+-- seriesField :: Tags -> Context a
+-- seriesField = tagsFieldWith getSeries simpleRenderLink (fold . head) "series"
+
+seriesField :: Tags
+              -- ^ Tags structure
+              -> Context a
+              -- ^ Resulting context
+seriesField tags = seriesNum <> seriesTot <> seriesName where
+  seriesTot = field "tot" $ \item -> do
+    serie' <- getSeries $ itemIdentifier item
+    nums <- forM serie' $ \serie -> do
+      return $ maybe 0 length $ lookup serie (tagsMap tags)
+    return $ concat $ map show $ nums
+
+  seriesNum = field "num" $ \item -> do
+    serie' <- getSeries $ itemIdentifier item
+    nums <- forM serie' $ \serie -> do
+      return $ maybe 0 succ $ (elemIndex (itemIdentifier item) ) =<< lookup serie (tagsMap tags)
+    return $ concat $ map show $ nums
+
+  seriesName = field "series" $ \item -> do
+    tags' <- getSeries $ itemIdentifier item
+    links <- forM tags' $ \tag -> do
+        route' <- getRoute $ tagsMakeId tags tag
+        return $ simpleRenderLink tag route'
+
+    return $ renderHtml $ (fold.head) $ catMaybes $ links
 
 postCtx :: Context String
 postCtx =
@@ -110,3 +168,15 @@ feedConfiguration = FeedConfiguration
   , feedAuthorName = "Donnacha Oisin Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
   , feedRoot = "http://oisdk.netsoc.co"}
+
+getSeries :: MonadMetadata m => Identifier -> m [String]
+getSeries =
+  fmap (maybe [] (pure . trim) . Map.lookup "series") . getMetadata
+
+buildSeries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m Tags
+buildSeries = buildTagsWith getSeries
+
+simpleRenderLink :: String -> Maybe FilePath -> Maybe H.Html
+simpleRenderLink _   Nothing         = Nothing
+simpleRenderLink tag (Just filePath) =
+  Just $ H.a ! A.href (toValue $ toUrl filePath) $ toHtml tag

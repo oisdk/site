@@ -8,6 +8,8 @@ executable site
   build-depends:    base == 4.*
                   , hakyll == 4.7.*
                   , pandoc >= 1.16
+                  , containers >= 0.3 && < 0.6
+                  , blaze-html >= 0.8
   ghc-options:      -threaded
   default-language: Haskell2010
 
