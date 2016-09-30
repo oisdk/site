@@ -20,9 +20,6 @@ getSeries :: MonadMetadata m => Identifier -> m (Maybe String)
 getSeries =
   fmap (fmap trim . Map.lookup "series") . getMetadata
 
-buildSeries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m Tags
-buildSeries = buildSeriesWith getSeries
-
 compileSeries :: String -> Tags -> Identifier -> Maybe (Compiler String)
 compileSeries serie tags ident = do
   otherPostsInSeries <- lookup serie (tagsMap tags)
@@ -39,13 +36,11 @@ seriesField tags = field "series" $ \item -> do
     series <- getSeries ident
     fromMaybe (pure "") (series >>= \serie -> compileSeries serie tags ident)
 
--- | Higher-order function to read tags
-buildSeriesWith :: MonadMetadata m
-              => (Identifier -> m (Maybe String))
-              -> Pattern
-              -> (String -> Identifier)
-              -> m Tags
-buildSeriesWith f pattrn makeId = do
+buildSeries :: MonadMetadata m
+            => Pattern
+            -> (String -> Identifier)
+            -> m Tags
+buildSeries pattrn makeId = do
     ids    <- getMatches pattrn
     tagMap <- foldM addTags Map.empty ids
     let set' = Set.fromList ids
@@ -53,4 +48,4 @@ buildSeriesWith f pattrn makeId = do
   where
     -- Create a tag map for one page
     addTags tagMap id' =
-        maybe tagMap (\k -> Map.insertWith (flip (++)) k [id'] tagMap) <$> f id'
+        maybe tagMap (\k -> Map.insertWith (flip (++)) k [id'] tagMap) <$> getSeries id'
