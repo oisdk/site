@@ -117,7 +117,7 @@ postCtxWithTags tags series = seriesField desc series
                            <> tagsField "tags" tags
                            <> postCtx
   where
-    desc curNum seriesLen serieName = concat
+    desc (SeriesInfo serieName curNum seriesLen) = concat
       [ "Part ", show curNum, " from a ", show seriesLen, "-part series on ", serieName]
 
 postCtx :: Context String

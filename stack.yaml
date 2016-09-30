@@ -5,6 +5,9 @@ packages:
 - location:
     git: https://github.com/oisdk/mddoctest.git
     commit: d105da84caee5c3d1eb8ed12430dfb797b878480
+- location:
+    git: https://github.com/oisdk/hakyll-series.git
+    commit: 02882b44641de0ee496d806b3f456a34fcf438e7
 
 extra-deps: []
 
