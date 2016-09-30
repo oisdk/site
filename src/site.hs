@@ -113,12 +113,9 @@ readPandocOptionalBiblio = do
 
 --------------------------------------------------------------------------------
 postCtxWithTags :: Tags -> Tags -> Context String
-postCtxWithTags tags series = seriesField desc series
+postCtxWithTags tags series = seriesField series
                            <> tagsField "tags" tags
                            <> postCtx
-  where
-    desc (SeriesInfo serieName curNum seriesLen) = concat
-      [ "Part ", show curNum, " from a ", show seriesLen, "-part series on ", serieName]
 
 postCtx :: Context String
 postCtx =
