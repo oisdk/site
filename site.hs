@@ -4,7 +4,6 @@
 
 import           Control.Monad
 import           Data.Foldable
-import           Data.Map.Strict                 (Map)
 import qualified Data.Map.Strict                 as Map
 import           Data.Monoid
 import           Hakyll
@@ -17,10 +16,6 @@ import           Text.Pandoc                     (Pandoc)
 import           Text.Pandoc.Options
 import Data.Maybe
 import Data.List (elemIndex)
-
-head :: [a] -> Maybe a
-head [] = Nothing
-head (x:_) = Just x
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -128,33 +123,28 @@ readPandocOptionalBiblio = do
 postCtxWithTags :: Tags -> Tags -> Context String
 postCtxWithTags tags series = seriesField series <> tagsField "tags" tags <> postCtx
 
--- seriesField :: Tags -> Context a
--- seriesField = tagsFieldWith getSeries simpleRenderLink (fold . head) "series"
-
 seriesField :: Tags
               -- ^ Tags structure
               -> Context a
               -- ^ Resulting context
-seriesField tags = seriesNum <> seriesTot <> seriesName where
-  seriesTot = field "tot" $ \item -> do
-    serie' <- getSeries $ itemIdentifier item
-    nums <- forM serie' $ \serie -> do
-      return $ maybe 0 length $ lookup serie (tagsMap tags)
-    return $ concat $ map show $ nums
+seriesField tags = field "series" $ \item -> do
+    let ident = itemIdentifier item
+    series <- getSeries ident
+    fromMaybe (pure "") (compileSeries series tags ident)
 
-  seriesNum = field "num" $ \item -> do
-    serie' <- getSeries $ itemIdentifier item
-    nums <- forM serie' $ \serie -> do
-      return $ maybe 0 succ $ (elemIndex (itemIdentifier item) ) =<< lookup serie (tagsMap tags)
-    return $ concat $ map show $ nums
+head :: Foldable f => f a -> Maybe a
+head = foldr (\e _ -> Just e) Nothing
 
-  seriesName = field "series" $ \item -> do
-    tags' <- getSeries $ itemIdentifier item
-    links <- forM tags' $ \tag -> do
-        route' <- getRoute $ tagsMakeId tags tag
-        return $ simpleRenderLink tag route'
-
-    return $ renderHtml $ (fold.head) $ catMaybes $ links
+compileSeries :: [String] -> Tags -> Identifier -> Maybe (Compiler String)
+compileSeries series tags ident = do
+  serie <- head series
+  otherPostsInSeries <- lookup serie (tagsMap tags)
+  let seriesLen = length otherPostsInSeries
+  curInd <- elemIndex ident otherPostsInSeries
+  let curNum = curInd + 1
+  let desc = concat ["Part ", show curNum, " from a ", show seriesLen, "-part series on ", serie]
+  let renderLink link = renderHtml $ H.a ! A.href (toValue $ toUrl link) $ toHtml desc
+  pure $ foldMap renderLink <$> getRoute (tagsMakeId tags serie)
 
 postCtx :: Context String
 postCtx =
@@ -176,7 +166,3 @@ getSeries =
 buildSeries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m Tags
 buildSeries = buildTagsWith getSeries
 
-simpleRenderLink :: String -> Maybe FilePath -> Maybe H.Html
-simpleRenderLink _   Nothing         = Nothing
-simpleRenderLink tag (Just filePath) =
-  Just $ H.a ! A.href (toValue $ toUrl filePath) $ toHtml tag

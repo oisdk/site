@@ -87,3 +87,15 @@ ul {
     content: ">>> ";
     font-family: menlo, mono;
 }
+
+ol.serieslist {
+    counter-reset: item;
+    list-style-type: none;
+    margin-left: 0;
+    padding-left: 20;
+}
+
+ol li.serieslist: before {
+    content: 'Part ' counter(item,decimal) ': ';
+    counter-increment: item;
+}

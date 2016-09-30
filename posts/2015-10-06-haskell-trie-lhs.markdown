@@ -1,6 +1,7 @@
 ---
 title: A Trie in Haskell
 tags: Haskell
+series: tries
 ---
 
 ## Basic Ops

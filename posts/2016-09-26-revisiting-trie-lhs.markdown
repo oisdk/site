@@ -1,9 +1,8 @@
 ---
 title: Revisiting a Trie in Haskell
 tags: Haskell
+series: tries
 ---
-
-This post is a part-2 from [this](2015-10-06-haskell-trie-lhs.html) post.
 
 # Conforming to Foldable
 
