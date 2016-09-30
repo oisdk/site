@@ -3,19 +3,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad
-import           Data.Foldable
-import qualified Data.Map.Strict                 as Map
+import           Data.Maybe
 import           Data.Monoid
 import           Hakyll
+import           Hakyll.Web.Series
 import           Prelude                         hiding (head)
-import           Text.Blaze.Html                 (toHtml, toValue, (!))
-import           Text.Blaze.Html.Renderer.String (renderHtml)
-import qualified Text.Blaze.Html5                as H
-import qualified Text.Blaze.Html5.Attributes     as A
 import           Text.Pandoc                     (Pandoc)
 import           Text.Pandoc.Options
-import Data.Maybe
-import Data.List (elemIndex)
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -38,7 +32,6 @@ main = hakyll $ do
 
     match "assets/bib/*" $ compile biblioCompiler
 
-    -- build up tags
     tags <- buildTags "posts/*" (fromCapture "tags/*.html")
 
     series <- buildSeries "posts/*" (fromCapture "series/*.html")
@@ -121,30 +114,9 @@ readPandocOptionalBiblio = do
 
 --------------------------------------------------------------------------------
 postCtxWithTags :: Tags -> Tags -> Context String
-postCtxWithTags tags series = seriesField series <> tagsField "tags" tags <> postCtx
-
-seriesField :: Tags
-              -- ^ Tags structure
-              -> Context a
-              -- ^ Resulting context
-seriesField tags = field "series" $ \item -> do
-    let ident = itemIdentifier item
-    series <- getSeries ident
-    fromMaybe (pure "") (compileSeries series tags ident)
-
-head :: Foldable f => f a -> Maybe a
-head = foldr (\e _ -> Just e) Nothing
-
-compileSeries :: [String] -> Tags -> Identifier -> Maybe (Compiler String)
-compileSeries series tags ident = do
-  serie <- head series
-  otherPostsInSeries <- lookup serie (tagsMap tags)
-  let seriesLen = length otherPostsInSeries
-  curInd <- elemIndex ident otherPostsInSeries
-  let curNum = curInd + 1
-  let desc = concat ["Part ", show curNum, " from a ", show seriesLen, "-part series on ", serie]
-  let renderLink link = renderHtml $ H.a ! A.href (toValue $ toUrl link) $ toHtml desc
-  pure $ foldMap renderLink <$> getRoute (tagsMakeId tags serie)
+postCtxWithTags tags series = seriesField series
+                           <> tagsField "tags" tags
+                           <> postCtx
 
 postCtx :: Context String
 postCtx =
@@ -158,11 +130,4 @@ feedConfiguration = FeedConfiguration
   , feedAuthorName = "Donnacha Oisin Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
   , feedRoot = "http://oisdk.netsoc.co"}
-
-getSeries :: MonadMetadata m => Identifier -> m [String]
-getSeries =
-  fmap (maybe [] (pure . trim) . Map.lookup "series") . getMetadata
-
-buildSeries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m Tags
-buildSeries = buildTagsWith getSeries
 
