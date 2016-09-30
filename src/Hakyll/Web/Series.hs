@@ -6,7 +6,6 @@ module Hakyll.Web.Series
 import           Control.Monad
 import           Data.Foldable
 import           Data.List                       (elemIndex)
-import           Data.Map.Strict                 (Map)
 import qualified Data.Map.Strict                 as Map
 import           Data.Maybe
 import           Hakyll
@@ -15,25 +14,17 @@ import           Text.Blaze.Html                 (toHtml, toValue, (!))
 import           Text.Blaze.Html.Renderer.String (renderHtml)
 import qualified Text.Blaze.Html5                as H
 import qualified Text.Blaze.Html5.Attributes     as A
+import qualified Data.Set as Set
 
--- data Series = Series
---   { seriesMap :: Map String [Identifier]
---   , seriesMakeId :: String -> Identifier
---   , seriesDependency :: Dependency }
-
-getSeries :: MonadMetadata m => Identifier -> m [String]
+getSeries :: MonadMetadata m => Identifier -> m (Maybe String)
 getSeries =
-  fmap (maybe [] (pure . trim) . Map.lookup "series") . getMetadata
+  fmap (fmap trim . Map.lookup "series") . getMetadata
 
 buildSeries :: MonadMetadata m => Pattern -> (String -> Identifier) -> m Tags
-buildSeries = buildTagsWith getSeries
+buildSeries = buildSeriesWith getSeries
 
-head :: Foldable f => f a -> Maybe a
-head = foldr (\e _ -> Just e) Nothing
-
-compileSeries :: [String] -> Tags -> Identifier -> Maybe (Compiler String)
-compileSeries series tags ident = do
-  serie <- head series
+compileSeries :: String -> Tags -> Identifier -> Maybe (Compiler String)
+compileSeries serie tags ident = do
   otherPostsInSeries <- lookup serie (tagsMap tags)
   let seriesLen = length otherPostsInSeries
   curInd <- elemIndex ident otherPostsInSeries
@@ -46,4 +37,20 @@ seriesField :: Tags -> Context a
 seriesField tags = field "series" $ \item -> do
     let ident = itemIdentifier item
     series <- getSeries ident
-    fromMaybe (pure "") (compileSeries series tags ident)
+    fromMaybe (pure "") (series >>= \serie -> compileSeries serie tags ident)
+
+-- | Higher-order function to read tags
+buildSeriesWith :: MonadMetadata m
+              => (Identifier -> m (Maybe String))
+              -> Pattern
+              -> (String -> Identifier)
+              -> m Tags
+buildSeriesWith f pattrn makeId = do
+    ids    <- getMatches pattrn
+    tagMap <- foldM addTags Map.empty ids
+    let set' = Set.fromList ids
+    return $ Tags (Map.assocs tagMap) makeId (PatternDependency pattrn set')
+  where
+    -- Create a tag map for one page
+    addTags tagMap id' =
+        maybe tagMap (\k -> Map.insertWith (flip (++)) k [id'] tagMap) <$> f id'
