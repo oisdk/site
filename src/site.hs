@@ -3,12 +3,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 import           Control.Monad
-import           Data.Maybe
+import           Data.Char           (toUpper)
 import           Data.Monoid
 import           Hakyll
 import           Hakyll.Web.Series
-import           Prelude                         hiding (head)
-import           Text.Pandoc                     (Pandoc)
+import           Text.Pandoc         (Pandoc)
 import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
@@ -51,7 +50,7 @@ main = hakyll $ do
                 >>= relativizeUrls
 
     tagsRules series $ \serie pattrn -> do
-        let title = "Series on " ++ serie
+        let title = toUpper (head serie) : tail serie
         route idRoute
         compile $ do
             posts <- chronological =<< loadAll pattrn
@@ -114,9 +113,12 @@ readPandocOptionalBiblio = do
 
 --------------------------------------------------------------------------------
 postCtxWithTags :: Tags -> Tags -> Context String
-postCtxWithTags tags series = seriesField series
+postCtxWithTags tags series = seriesField desc series
                            <> tagsField "tags" tags
                            <> postCtx
+  where
+    desc curNum seriesLen serieName = concat
+      [ "Part ", show curNum, " from a ", show seriesLen, "-part series on ", serieName]
 
 postCtx :: Context String
 postCtx =

@@ -20,21 +20,25 @@ getSeries :: MonadMetadata m => Identifier -> m (Maybe String)
 getSeries =
   fmap (fmap trim . Map.lookup "series") . getMetadata
 
-compileSeries :: String -> Tags -> Identifier -> Maybe (Compiler String)
-compileSeries serie tags ident = do
+compileSeries :: String
+              -> (Int -> Int -> String -> String)
+              -> Tags
+              -> Identifier
+              -> Maybe (Compiler String)
+compileSeries serie desc tags ident = do
   otherPostsInSeries <- lookup serie (tagsMap tags)
   let seriesLen = length otherPostsInSeries
   curInd <- elemIndex ident otherPostsInSeries
   let curNum = curInd + 1
-  let desc = concat ["Part ", show curNum, " from a ", show seriesLen, "-part series on ", serie]
-  let renderLink link = renderHtml $ H.a ! A.href (toValue $ toUrl link) $ toHtml desc
+  let desc' = desc curNum seriesLen serie
+  let renderLink link = renderHtml $ H.a ! A.href (toValue $ toUrl link) $ toHtml desc'
   pure $ foldMap renderLink <$> getRoute (tagsMakeId tags serie)
 
-seriesField :: Tags -> Context a
-seriesField tags = field "series" $ \item -> do
+seriesField :: (Int -> Int -> String -> String) -> Tags -> Context a
+seriesField desc tags = field "series" $ \item -> do
     let ident = itemIdentifier item
     series <- getSeries ident
-    fromMaybe (pure "") (series >>= \serie -> compileSeries serie tags ident)
+    fromMaybe (pure "") (series >>= \serie -> compileSeries serie desc tags ident)
 
 buildSeries :: MonadMetadata m
             => Pattern
@@ -44,8 +48,8 @@ buildSeries pattrn makeId = do
     ids    <- getMatches pattrn
     tagMap <- foldM addTags Map.empty ids
     let set' = Set.fromList ids
-    return $ Tags (Map.assocs tagMap) makeId (PatternDependency pattrn set')
+    inOrder <- (traverse.traverse) sortChronological (Map.assocs tagMap)
+    pure $ Tags inOrder makeId (PatternDependency pattrn set')
   where
-    -- Create a tag map for one page
     addTags tagMap id' =
-        maybe tagMap (\k -> Map.insertWith (flip (++)) k [id'] tagMap) <$> getSeries id'
+        maybe tagMap (\k -> Map.insertWith (++) k [id'] tagMap) <$> getSeries id'
