@@ -108,22 +108,22 @@ readPandocOptionalBiblio = do
 --------------------------------------------------------------------------------
 
 postCtx :: Context String
-postCtx =
-    dateField "date" "%B %e, %Y" <>
-    defaultContext
+postCtx = mconcat
+    [ dateField "date" "%B %e, %Y"
+    , defaultContext ]
 
 postFullCtx :: Tags -> Tags -> Context String
-postFullCtx tags series =
-  seriesField series    <>
-  tagsField "tags" tags <>
-  postCtx
+postFullCtx tags series = mconcat
+  [ seriesField series
+  , tagsField "tags" tags
+  , postCtx ]
 
 
 postListCtx :: String -> Compiler [Item String] -> Context String
-postListCtx title posts =
-  listField "posts" postCtx posts <>
-  constField "title" title        <>
-  defaultContext
+postListCtx title posts = mconcat
+  [ listField "posts" postCtx posts
+  , constField "title" title
+  , defaultContext ]
 
 --------------------------------------------------------------------------------
 
