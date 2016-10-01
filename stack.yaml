@@ -7,7 +7,7 @@ packages:
     commit: d105da84caee5c3d1eb8ed12430dfb797b878480
 - location:
     git: https://github.com/oisdk/hakyll-series.git
-    commit: 4a398da95f2d2c70d655422bec12f20da34b689d
+    commit: 01060e7d2d06e31e19c920951e054be6635102ba
 
 extra-deps: []
 

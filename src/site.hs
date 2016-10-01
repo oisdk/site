@@ -4,6 +4,7 @@
 
 import           Control.Monad
 import           Data.Char           (toUpper)
+import           Data.Maybe
 import           Data.Monoid
 import           Hakyll
 import           Hakyll.Web.Series
@@ -39,11 +40,7 @@ main = hakyll $ do
         let title = "Posts tagged \"" ++ tag ++ "\""
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll pattrn
-            let ctx = constField "title" title
-                   <> listField "posts" postCtx (pure posts)
-                   <> defaultContext
-
+            let ctx = postListCtx title $ recentFirst =<< loadAll pattrn
             makeItem ""
                 >>= loadAndApplyTemplate "templates/tag.html" ctx
                 >>= loadAndApplyTemplate "templates/default.html" ctx
@@ -53,34 +50,25 @@ main = hakyll $ do
         let title = toUpper (head serie) : tail serie
         route idRoute
         compile $ do
-            posts <- chronological =<< loadAll pattrn
-            let ctx = constField "title" title
-                   <> listField "posts" postCtx (pure posts)
-                   <> defaultContext
-
+            let ctx = postListCtx title $ chronological =<< loadAll pattrn
             makeItem ""
                 >>= loadAndApplyTemplate "templates/series.html" ctx
                 >>= loadAndApplyTemplate "templates/default.html" ctx
                 >>= relativizeUrls
 
     match "posts/*" $ do
+        let ctx = postFullCtx tags series
         route $ setExtension "html"
-        compile $ readPandocOptionalBiblio
-              <&> writePandocWith (def { writerHTMLMathMethod = MathML Nothing, writerHighlight = True })
-              >>= loadAndApplyTemplate "templates/post.html"    (postCtxWithTags tags series)
+        compile $ postCompiler
+              >>= loadAndApplyTemplate "templates/post.html"    ctx
               >>= saveSnapshot "content"
-              >>= loadAndApplyTemplate "templates/default.html" (postCtxWithTags tags series)
+              >>= loadAndApplyTemplate "templates/default.html" ctx
               >>= relativizeUrls
 
     match "index.html" $ do
         route idRoute
         compile $ do
-            posts <- recentFirst =<< loadAll "posts/*"
-            let indexCtx =
-                    listField "posts" postCtx (pure posts) <>
-                    constField "title" "Home"              <>
-                    defaultContext
-
+            let indexCtx = postListCtx "Home" $ recentFirst =<< loadAll "posts/*"
             getResourceBody
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
@@ -96,31 +84,48 @@ main = hakyll $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
-(<&>) :: Functor f => f a -> (a -> b) -> f b
-x <&> f = f <$> x
+--------------------------------------------------------------------------------
+
+postCompiler :: Compiler (Item String)
+postCompiler =
+  writePandocWith (def { writerHTMLMathMethod = MathML Nothing
+                       , writerHighlight = True }) <$>
+  readPandocOptionalBiblio
 
 readPandocOptionalBiblio :: Compiler (Item Pandoc)
 readPandocOptionalBiblio = do
   item <- getUnderlying
   getMetadataField item "bibliography" >>= \case
     Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
-    Just bibFile -> join $
-      readPandocBiblio defaultHakyllReaderOptions
-                   <$> load (fromFilePath "assets/csl/chicago.csl")
-                   <*> load (fromFilePath ("assets/bib/" ++ bibFile))
-                   <*> getResourceBody
+    Just bibFile -> do
+      maybeCsl <- getMetadataField item "csl"
+      join $ readPandocBiblio defaultHakyllReaderOptions
+                          <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
+                          <*> load (fromFilePath ("assets/bib/" ++ bibFile))
+                          <*> getResourceBody
 
 
 --------------------------------------------------------------------------------
-postCtxWithTags :: Tags -> Tags -> Context String
-postCtxWithTags tags series = seriesField series
-                           <> tagsField "tags" tags
-                           <> postCtx
 
 postCtx :: Context String
 postCtx =
     dateField "date" "%B %e, %Y" <>
     defaultContext
+
+postFullCtx :: Tags -> Tags -> Context String
+postFullCtx tags series =
+  seriesField series    <>
+  tagsField "tags" tags <>
+  postCtx
+
+
+postListCtx :: String -> Compiler [Item String] -> Context String
+postListCtx title posts =
+  listField "posts" postCtx posts <>
+  constField "title" title        <>
+  defaultContext
+
+--------------------------------------------------------------------------------
 
 feedConfiguration :: FeedConfiguration
 feedConfiguration = FeedConfiguration
