@@ -123,15 +123,26 @@ instance Monad Odds where
 Finally, as a bonus, to remove duplicates:
 
 ```{.haskell .literate}
-counts :: (Ord a, Foldable f, Num n) => f a -> [(a,n)]
+lcd :: Foldable f => f Rational -> Integer
+lcd = foldl' (\a e -> lcm a (denominator e)) 1
+
+toDistrib :: Odds a -> [(a,Integer)]
+toDistrib = factorOut . foldOdds f b where
+  b x = [(x,1)]
+  f l p r = (map.fmap) (n%t*) l ++ (map.fmap) (d%t*) r where
+    n = numerator p
+    d = denominator p
+    t = n + d
+  factorOut xs = (map.fmap) (numerator . (lcd'*)) xs where
+    lcd' = fromIntegral . lcd . map snd $ xs
+
+counts :: (Ord a, Num n) => [(a,n)] -> [(a,n)]
 counts = 
   Map.assocs . 
-    foldl' 
-      ((flip . Map.alter) (Just . foldr (+) 1)) 
-      Map.empty
+  Map.fromListWith (+)
       
 compress :: Ord a => Odds a -> Odds a
-compress xs = let Just ys = (fromDistrib . counts) xs in ys
+compress xs = let Just ys = (fromDistrib . counts . toDistrib) xs in ys
 ```
 After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: @larsen_memory_2011, and @scibior_practical_2015, refer to a GADT implementation of the monad which maximises laziness.
 
