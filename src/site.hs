@@ -46,8 +46,8 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" ctx
                 >>= relativizeUrls
 
-    tagsRules series $ \serie pattrn -> do
-        let title = toUpper (head serie) : tail serie
+    tagsRules series $ \(s:erie) pattrn -> do
+        let title = toUpper s : erie
         route idRoute
         compile $ do
             let ctx = postListCtx title $ chronological =<< loadAll pattrn
