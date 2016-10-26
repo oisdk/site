@@ -133,5 +133,5 @@ feedConfiguration = FeedConfiguration
   , feedDescription = "Mainly writing about programming"
   , feedAuthorName = "Donnacha Oisin Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
-  , feedRoot = "http://oisdk.netsoc.co"}
+  , feedRoot = "http://doisinkidney.com"}
 

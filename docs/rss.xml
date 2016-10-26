@@ -3,14 +3,14 @@
     xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
         <title>Donnacha Oisin Kidney's Blog</title>
-        <link>http://oisdk.netsoc.co</link>
+        <link>http://doisinkidney.com</link>
         <description><![CDATA[Mainly writing about programming]]></description>
-        <atom:link href="http://oisdk.netsoc.co/rss.xml" rel="self"
+        <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
         <lastBuildDate>Fri, 30 Sep 2016 00:00:00 UT</lastBuildDate>
         <item>
     <title>Probability Trees</title>
-    <link>http://oisdk.netsoc.co/posts/2016-09-30-prob-trees-lhs.html</link>
+    <link>http://doisinkidney.com/posts/2016-09-30-prob-trees-lhs.html</link>
     <description><![CDATA[<div class="info">
     Posted on September 30, 2016
 </div>
@@ -142,12 +142,12 @@ compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="d
 </div>
 ]]></description>
     <pubDate>Fri, 30 Sep 2016 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2016-09-30-prob-trees-lhs.html</guid>
+    <guid>http://doisinkidney.com/posts/2016-09-30-prob-trees-lhs.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>A Different Probability Monad</title>
-    <link>http://oisdk.netsoc.co/posts/2016-09-27-odds-lhs.html</link>
+    <link>http://doisinkidney.com/posts/2016-09-27-odds-lhs.html</link>
     <description><![CDATA[<div class="info">
     Posted on September 27, 2016
 </div>
@@ -267,12 +267,12 @@ flatten <span class="fu">=</span> foldOdds append id
   x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> flatten (f <span class="fu">&lt;$&gt;</span> x)</code></pre></div>
 ]]></description>
     <pubDate>Tue, 27 Sep 2016 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2016-09-27-odds-lhs.html</guid>
+    <guid>http://doisinkidney.com/posts/2016-09-27-odds-lhs.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Revisiting a Trie in Haskell</title>
-    <link>http://oisdk.netsoc.co/posts/2016-09-26-revisiting-trie-lhs.html</link>
+    <link>http://doisinkidney.com/posts/2016-09-26-revisiting-trie-lhs.html</link>
     <description><![CDATA[<div class="info">
     Posted on September 26, 2016
 </div>
@@ -496,12 +496,12 @@ add xs <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
 </div>
 ]]></description>
     <pubDate>Mon, 26 Sep 2016 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2016-09-26-revisiting-trie-lhs.html</guid>
+    <guid>http://doisinkidney.com/posts/2016-09-26-revisiting-trie-lhs.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Lenses are Static Selectors</title>
-    <link>http://oisdk.netsoc.co/posts/2016-06-16-lenses-are-static-selectors.html</link>
+    <link>http://doisinkidney.com/posts/2016-06-16-lenses-are-static-selectors.html</link>
     <description><![CDATA[<div class="info">
     Posted on June 16, 2016
 </div>
@@ -625,12 +625,12 @@ func checkEqualOnNames
 <p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the types intact. Other people have spoken about the other things you can do with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams - Lenses in Swift</a>), like composing them together, chaining operations, etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method cascading</a>) Unfortunately, in current Swift, the boilerplate makes all of this a little unpleasant. Still, they’re an interesting idea, and they show how a good type system needn’t always get in the way.</p>
 ]]></description>
     <pubDate>Thu, 16 Jun 2016 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2016-06-16-lenses-are-static-selectors.html</guid>
+    <guid>http://doisinkidney.com/posts/2016-06-16-lenses-are-static-selectors.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Folding Two Things at Once</title>
-    <link>http://oisdk.netsoc.co/posts/2016-04-17-folding-two-at-once.html</link>
+    <link>http://doisinkidney.com/posts/2016-04-17-folding-two-at-once.html</link>
     <description><![CDATA[<div class="info">
     Posted on April 17, 2016
 </div>
@@ -772,12 +772,12 @@ zipInto f xs <span class="fu">=</span>
     h e2 a e1 <span class="fu">=</span> (<span class="dt">RecAccu</span> a, f e1 (<span class="dt">Just</span> e2))</code></pre></div>
 ]]></description>
     <pubDate>Sun, 17 Apr 2016 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2016-04-17-folding-two-at-once.html</guid>
+    <guid>http://doisinkidney.com/posts/2016-04-17-folding-two-at-once.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>A Trie in Haskell</title>
-    <link>http://oisdk.netsoc.co/posts/2015-10-06-haskell-trie-lhs.html</link>
+    <link>http://doisinkidney.com/posts/2015-10-06-haskell-trie-lhs.html</link>
     <description><![CDATA[<div class="info">
     Posted on October  6, 2015
 </div>
@@ -951,12 +951,12 @@ foldrTrie f i (<span class="dt">Trie</span> a m) <span class="fu">=</span> Map.f
 <p>Unfortunately, <a href="http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set">it’s not easy</a> to make the Trie <em>conform</em> to <code class="sourceCode haskell"><span class="dt">Foldable</span></code>. It is possible, and it’s what I’m currently trying to figure out, but it’s non-trivial.</p>
 ]]></description>
     <pubDate>Tue, 06 Oct 2015 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2015-10-06-haskell-trie-lhs.html</guid>
+    <guid>http://doisinkidney.com/posts/2015-10-06-haskell-trie-lhs.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Faking dependent types in Swift</title>
-    <link>http://oisdk.netsoc.co/posts/2015-09-06-dependent-types.html</link>
+    <link>http://doisinkidney.com/posts/2015-09-06-dependent-types.html</link>
     <description><![CDATA[<div class="info">
     Posted on September  6, 2015
 </div>
@@ -1197,12 +1197,12 @@ a.<span class="fu">isSecondLessThan</span>(b)</code></pre></div>
 <p>For some extra reading, check out <a href="https://ghc.haskell.org/trac/ghc/wiki/DependentHaskell">DependentHaskell</a>, <a href="https://wiki.haskell.org/Heterogenous_collections">Heterogenous Collections in Haskell</a>, and <a href="http://programmers.stackexchange.com/questions/132835/is-there-a-specific-purpose-for-heterogeneous-lists">Strongly Typed Heterogenous Collections</a>. I’m muddling my way through seeing what’s possible with length-indexed lists, heterogenous lists, and numeral types <a href="https://github.com/oisdk/PretendDependSwift">over here</a>, if you’re interested.</p>
 ]]></description>
     <pubDate>Sun, 06 Sep 2015 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2015-09-06-dependent-types.html</guid>
+    <guid>http://doisinkidney.com/posts/2015-09-06-dependent-types.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Using Protocols to Build a (very) Generic Deque</title>
-    <link>http://oisdk.netsoc.co/posts/2015-08-24-generic-deque.html</link>
+    <link>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</link>
     <description><![CDATA[<div class="info">
     Posted on August 24, 2015
 </div>
@@ -1406,12 +1406,12 @@ dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></code>
 <p>Woo protocols!</p>
 ]]></description>
     <pubDate>Mon, 24 Aug 2015 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2015-08-24-generic-deque.html</guid>
+    <guid>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>A Trie in Swift</title>
-    <link>http://oisdk.netsoc.co/posts/2015-08-11-swift-trie.html</link>
+    <link>http://doisinkidney.com/posts/2015-08-11-swift-trie.html</link>
     <description><![CDATA[<div class="info">
     Posted on August 11, 2015
 </div>
@@ -1656,12 +1656,12 @@ children.<span class="fu">removeValueForKey</span>(head)
 <p>The code is all available <a href="https://github.com/oisdk/SwiftTrie">here</a>, as a playground, or <a href="https://github.com/oisdk/SwiftSequence">here</a>, in SwiftSequence, where it’s accompanied by some tests.</p>
 ]]></description>
     <pubDate>Tue, 11 Aug 2015 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2015-08-11-swift-trie.html</guid>
+    <guid>http://doisinkidney.com/posts/2015-08-11-swift-trie.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 <item>
     <title>Monty Hall</title>
-    <link>http://oisdk.netsoc.co/posts/2015-08-03-monty-hall.html</link>
+    <link>http://doisinkidney.com/posts/2015-08-03-monty-hall.html</link>
     <description><![CDATA[<div class="info">
     Posted on August  3, 2015
 </div>
@@ -1877,7 +1877,7 @@ expect <span class="fu">==</span> actual</code></pre></div>
 <p>You can see the code used <a href="https://github.com/oisdk/Monty-Hall">here</a>.</p>
 ]]></description>
     <pubDate>Mon, 03 Aug 2015 00:00:00 UT</pubDate>
-    <guid>http://oisdk.netsoc.co/posts/2015-08-03-monty-hall.html</guid>
+    <guid>http://doisinkidney.com/posts/2015-08-03-monty-hall.html</guid>
     <dc:creator>Donnacha Oisin Kidney</dc:creator>
 </item>
 
