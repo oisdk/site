@@ -13,7 +13,7 @@ import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = hakyllWith (defaultConfiguration {destinationDirectory = "docs"}) $ do
+main = hakyll $ do
     match "images/*" $ do
         route   idRoute
         compile copyFileCompiler
