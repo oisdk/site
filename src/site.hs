@@ -13,7 +13,7 @@ import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = hakyll $ do
+main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
     match "images/*" $ do
         route   idRoute
         compile copyFileCompiler
@@ -135,3 +135,19 @@ feedConfiguration = FeedConfiguration
   , feedAuthorEmail = "mail@doisinkidney.com"
   , feedRoot = "http://doisinkidney.com"}
 
+
+command :: String
+command = unlines
+ [ "git stash"
+ , "git checkout master"
+ , "stack exec site clean"
+ , "stack exec site build"
+ , "git fetch --all"
+ , "git checkout -b gh-pages --track origin/gh-pages"
+ , "cp -a _site/. ."
+ , "git add -A"
+ , "git commit -m \"Publish.\""
+ , "git push origin gh-pages:gh-pages"
+ , "git checkout master"
+ , "git branch -D gh-pages"
+ , "git stash pop"]
