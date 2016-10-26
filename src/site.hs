@@ -139,11 +139,11 @@ feedConfiguration = FeedConfiguration
 command :: String
 command = unlines
  [ "git stash"
- , "git checkout master"
+ , "git checkout develop"
  , "stack exec site clean"
  , "stack exec site build"
  , "git fetch --all"
- , "git checkout -b gh-pages --track origin/gh-pages"
+ , "git checkout -b master --track origin/master"
  , unwords [ "rsync -a"
            , "--filter='P _site/'"
            , "--filter-'P _cache/'"
@@ -154,7 +154,7 @@ command = unlines
            , "_site/ ."]
  , "git add -A"
  , "git commit -m \"Publish.\""
- , "git push origin gh-pages:gh-pages"
- , "git checkout master"
- , "git branch -D gh-pages"
+ , "git push origin master:master"
+ , "git checkout develop"
+ , "git branch -D master"
  , "git stash pop"]
