@@ -1,9 +1,9 @@
 ---
 title: Contact
 ---
-[twitter](http://twitter.com/oisdk)
+[twitter](https://twitter.com/oisdk)
 
-[github](http://github.com/oisdk)
+[github](https://github.com/oisdk)
 
 [mail@doisinkidney.com](mailto:mail@doisinkidney.com)
 
