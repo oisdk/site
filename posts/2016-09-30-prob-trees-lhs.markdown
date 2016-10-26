@@ -17,7 +17,7 @@ import Control.Arrow
 import Data.Ratio
 import Data.Foldable
 ```
-Previously, I tried to figure out how to make the probability monad more "listy". I read a little more about the [especially @erwig_functional_2006; and @kidd_build_2007].
+Previously, I tried to figure out how to make the probability monad more "listy". I read a little more about the topic [especially @erwig_functional_2006; and @kidd_build_2007].
 
 I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:
 
