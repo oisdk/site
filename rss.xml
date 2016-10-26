@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"
     xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
-        <title>Donnacha Oisin Kidney's Blog</title>
+        <title>Donnacha Oisín Kidney's Blog</title>
         <link>http://doisinkidney.com</link>
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
@@ -143,7 +143,7 @@ compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="d
 ]]></description>
     <pubDate>Fri, 30 Sep 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-09-30-prob-trees-lhs.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>A Different Probability Monad</title>
@@ -268,7 +268,7 @@ flatten <span class="fu">=</span> foldOdds append id
 ]]></description>
     <pubDate>Tue, 27 Sep 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-09-27-odds-lhs.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Revisiting a Trie in Haskell</title>
@@ -497,7 +497,7 @@ add xs <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
 ]]></description>
     <pubDate>Mon, 26 Sep 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-09-26-revisiting-trie-lhs.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Lenses are Static Selectors</title>
@@ -626,7 +626,7 @@ func checkEqualOnNames
 ]]></description>
     <pubDate>Thu, 16 Jun 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-06-16-lenses-are-static-selectors.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Folding Two Things at Once</title>
@@ -773,7 +773,7 @@ zipInto f xs <span class="fu">=</span>
 ]]></description>
     <pubDate>Sun, 17 Apr 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-04-17-folding-two-at-once.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>A Trie in Haskell</title>
@@ -952,7 +952,7 @@ foldrTrie f i (<span class="dt">Trie</span> a m) <span class="fu">=</span> Map.f
 ]]></description>
     <pubDate>Tue, 06 Oct 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-10-06-haskell-trie-lhs.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Faking dependent types in Swift</title>
@@ -1198,7 +1198,7 @@ a.<span class="fu">isSecondLessThan</span>(b)</code></pre></div>
 ]]></description>
     <pubDate>Sun, 06 Sep 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-09-06-dependent-types.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Using Protocols to Build a (very) Generic Deque</title>
@@ -1407,7 +1407,7 @@ dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></code>
 ]]></description>
     <pubDate>Mon, 24 Aug 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>A Trie in Swift</title>
@@ -1657,7 +1657,7 @@ children.<span class="fu">removeValueForKey</span>(head)
 ]]></description>
     <pubDate>Tue, 11 Aug 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-08-11-swift-trie.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Monty Hall</title>
@@ -1878,7 +1878,7 @@ expect <span class="fu">==</span> actual</code></pre></div>
 ]]></description>
     <pubDate>Mon, 03 Aug 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-08-03-monty-hall.html</guid>
-    <dc:creator>Donnacha Oisin Kidney</dc:creator>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
     </channel>
