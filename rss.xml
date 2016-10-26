@@ -36,7 +36,7 @@
 <span class="kw">import </span><span class="dt">Control.Arrow</span>
 <span class="kw">import </span><span class="dt">Data.Ratio</span>
 <span class="kw">import </span><span class="dt">Data.Foldable</span></code></pre></div>
-<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation">(especially Erwig and Kollmansberger 2006; and Kidd 2007)</span>.</p>
+<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the tpic <span class="citation">(especially Erwig and Kollmansberger 2006; and Kidd 2007)</span>.</p>
 <p>I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">ProperProb</span> a <span class="fu">=</span> <span class="dt">ProperProb</span>
   {<span class="ot"> yes ::</span> <span class="dt">Map</span> a (<span class="dt">Product</span> <span class="dt">Rational</span>) }</code></pre></div>
