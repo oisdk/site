@@ -2,6 +2,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+
 import           Control.Monad
 import           Data.Char           (toUpper)
 import           Data.Maybe
@@ -16,7 +17,7 @@ main :: IO ()
 main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
 
     match "CNAME" $ do
-      route idRoute
+      route   idRoute
       compile copyFileCompiler
 
     match "images/*" $ do
@@ -134,9 +135,9 @@ postListCtx title posts = mconcat
 
 feedConfiguration :: FeedConfiguration
 feedConfiguration = FeedConfiguration
-  { feedTitle = "Donnacha Oisin Kidney's Blog"
+  { feedTitle = "Donnacha Oisín Kidney's Blog"
   , feedDescription = "Mainly writing about programming"
-  , feedAuthorName = "Donnacha Oisin Kidney"
+  , feedAuthorName = "Donnacha Oisín Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
   , feedRoot = "http://doisinkidney.com"}
 
