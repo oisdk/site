@@ -68,7 +68,7 @@ main = hakyllWith (defaultConfiguration {destinationDirectory = "docs"}) $ do
     match "index.html" $ do
         route idRoute
         compile $ do
-            let indexCtx = postListCtx "Home" $ recentFirst =<< loadAll "posts/*"
+            let indexCtx = postListCtx "Posts" $ recentFirst =<< loadAll "posts/*"
             getResourceBody
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
