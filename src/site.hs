@@ -15,7 +15,9 @@ import           Text.Pandoc.Options
 main :: IO ()
 main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
 
-    match "CNAME" (route idRoute)
+    match "CNAME" $ do
+      route idRoute
+      compile copyFileCompiler
 
     match "images/*" $ do
         route   idRoute
