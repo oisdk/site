@@ -11,6 +11,9 @@ module Semirings where
 import qualified Data.Map.Strict as Map
 import Data.Monoid
 import Data.Foldable
+import Data.Ratio
+import Control.Applicative (liftA2)
+import Control.Arrow (first)
 ```
 
 I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. Here's what it looks like:
@@ -204,7 +207,20 @@ newtype WeightedT s m a = WeightedT
 ```
 
 It can conform to the traditional typeclasses using some help from the [prelude-extras](https://hackage.haskell.org/package/prelude-extras) package:
+```{.haskell .literate .hidden_source}
+class Eq1 f where
+  (==#) :: Eq a => f a -> f a -> Bool
 
+class Eq1 f => Ord1 f where
+  compare1 :: Ord a => f a -> f a -> Ordering
+
+class Show1 f where
+  showsPrec1 :: Show a => Int -> f a -> ShowS
+
+instance Eq1 [] where (==#) = (==)
+instance Ord1 [] where compare1 = compare
+instance Show1 [] where showsPrec1 = showsPrec
+```
 ```{.haskell .literate}
 instance (Eq1 m, Eq s, Eq a) => Eq (WeightedT s m a) where
   WeightedT x == WeightedT y = x ==# y
@@ -222,7 +238,7 @@ instance (Show1 m, Show s, Show a) => Show (WeightedT s m a) where
 
 And the `Monad`{.haskell} instances are similar to `WriterT`{.haskell}:
 
-```
+```{.haskell .literate}
 pairwise :: (afst -> bfst -> cfst)
          -> (asnd -> bsnd -> csnd)
          -> (afst,asnd)
@@ -245,4 +261,30 @@ instance (Applicative m, Semiring s) => Applicative (WeightedT s m) where
 instance (Monad m, Semiring s) => Monad (WeightedT s m) where
   WeightedT xs >>= f =
     WeightedT ((\(p,x) -> (fmap.first) (p<.>) (getWeightedT (f x))) =<< xs)
+```
+
+And a function for probability:
+
+```{.haskell .literate}
+instance (Semiring a, Semiring b) => Semiring (a,b) where
+        zero = (zero, zero)
+        (a1,b1) <+> (a2,b2) =
+                (a1 <+> a2, b1 <+> b2)
+        one = (one, one)
+        (a1,b1) <.> (a2,b2) =
+                (a1 <.> a2, b1 <.> b2)
+
+probOf :: (Semiring s, Integral s, Foldable f)
+       => (a -> Bool)
+       -> WeightedT s f a
+       -> Ratio s
+probOf e = uncurry (%) . getAdd . foldMap (uncurry f) . getWeightedT where
+  f p x = Add (if e x then p else zero, p)
+
+die :: WeightedT Integer [] Integer
+die = WeightedT [ (1,n) | n <- [1..6] ]
+```
+```{.haskell .literate .example}
+probOf (6==) ((+) <$> die <*> die)
+5 % 36
 ```
