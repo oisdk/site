@@ -102,8 +102,6 @@ newtype GeneralMap a b = GeneralMap
   { getMap :: Map.Map a b
   } deriving (Functor, Show, Eq, Ord)
 
-type Map a b = GeneralMap a (First b)
-
 lookup :: (Ord a, Monoid b) => a -> GeneralMap a b -> b
 lookup x = fold . Map.lookup x . getMap
 
@@ -112,4 +110,33 @@ insert k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
 
 delete :: Ord a => a -> GeneralMap a b -> GeneralMap a b
 delete x = GeneralMap . Map.delete x . getMap
+```
+
+That will give you a couple of flexible type synonyms:
+
+```{.haskell .literate}
+type Map a b = GeneralMap a (First b)
+type MultiMap a b = GeneralMap a [b]
+```
+
+Which can specialise the functions to these types:
+
+```{.haskell}
+lookup :: Ord a => a -> Map a b -> First b
+insert :: Ord a => a -> b -> Map a b -> Map a b
+delete :: Ord a => a -> Map a b -> Map a b
+
+lookup :: Ord a => a -> MultiMap a b -> [b]
+insert :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
+delete :: Ord a => a -> MultiMap a b -> MultiMap a b
+```
+
+Sets need `one`{.haskell}, though:
+
+```{.haskell .literate}
+add :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
+add x = GeneralMap . Map.insertWith (<+>) x one . getMap
+```
+
+```{.haskell}
 ```
