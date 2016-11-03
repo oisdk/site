@@ -4,6 +4,7 @@ tags: Haskell
 ---
 ```{.haskell .literate .hidden_source}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 
 module Semirings where
 
@@ -133,7 +134,7 @@ assoc  :: Ord a => a -> b -> Map a b -> Map a b
 delete :: Ord a => a -> Map a b -> Map a b
 
 lookup :: Ord a => a -> MultiMap a b -> [b]
-asso  :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
+assoc  :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
 delete :: Ord a => a -> MultiMap a b -> MultiMap a b
 ```
 
@@ -142,10 +143,106 @@ Sets need `one`{.haskell}, though:
 ```{.haskell .literate}
 insert :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
 insert x = GeneralMap . Map.insertWith (<+>) x one . getMap
-```
 
-```{.haskell .literate}
 type Set      a = GeneralMap a (Add Bool)
 type MultiSet a = GeneralMap a (Add Integer)
 ```
 
+And the signatures specialize nicely:
+
+```{.haskell}
+insert :: Ord a => a -> Set a -> Set a
+
+insert :: Ord a => a -> MultiSet a -> MultiSet a
+```
+
+Some more operations which might be useful:
+
+```{.haskell .literate}
+fromList :: (Ord a, Semiring b, Foldable f) => f a -> GeneralMap a b
+fromList = foldr insert (GeneralMap Map.empty)
+
+fromAssocs :: (Ord a, Applicative f, Monoid (f b), Foldable t) => t (a, b) -> GeneralMap a (f b)
+fromAssocs = foldr (uncurry assoc) (GeneralMap Map.empty)
+
+instance (Ord a, Monoid b) => Monoid (GeneralMap a b) where
+  mempty = GeneralMap Map.empty
+  mappend (GeneralMap x) (GeneralMap y) = GeneralMap (Map.unionWith mappend x y)
+```
+
+That's about as far as I got, though. In particular, intersection wasn't very easy to define:
+
+```{.haskell .literate}
+intersection :: (Ord a, Semiring b) => GeneralMap a b -> GeneralMap a b -> GeneralMap a b
+intersection (GeneralMap x) (GeneralMap y) = GeneralMap (Map.intersectionWith (<.>) x y)
+```
+
+While it works for `Set`s, it doesn't make sense for `MultiSet`s, and it doesn't work for `Map`s. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
+
+While searching, though, I came across some other interesting semirings. The *Probability* semiring, in particular, was pretty interesting. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1. You could combine it with a list to get the traditional probability monad: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
+
+As it turns out, you can build the probability monad out of smaller transformers:
+
+```{.haskell}
+WriterT (Product Double) []
+```
+
+[Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in this excellent blog post].
+
+Using a semiring, the same can be expressed like this:
+
+```{.haskell}
+WriterT (Mul Double) []
+```
+
+That's got an extra `newtype`{.haskell}, though, which reduces the power of the semigroup. Let's make a whole new monad transformer:
+
+```{.haskell .literate}
+newtype WeightedT s m a = WeightedT
+  { getWeightedT :: m (s, a) 
+  } deriving (Functor, Foldable, Traversable)
+```
+
+It can conform to the traditional typeclasses using some help from the [prelude-extras](https://hackage.haskell.org/package/prelude-extras) package:
+
+```{.haskell .literate}
+instance (Eq1 m, Eq s, Eq a) => Eq (WeightedT s m a) where
+  WeightedT x == WeightedT y = x ==# y
+
+instance (Ord1 m, Ord s, Ord a) => Ord (WeightedT s m a) where
+  compare (WeightedT x) (WeightedT y) = compare1 x y
+
+instance (Show1 m, Show s, Show a) => Show (WeightedT s m a) where
+  showsPrec n (WeightedT x) =
+    showParen (n >= 10)
+      $ showString "WeightedT {getWeightedT = "
+      . showsPrec1 0 x
+      . showChar '}'
+```
+
+And the `Monad`{.haskell} instances are similar to `WriterT`{.haskell}:
+
+```
+pairwise :: (afst -> bfst -> cfst)
+         -> (asnd -> bsnd -> csnd)
+         -> (afst,asnd)
+         -> (bfst,bsnd)
+         -> (cfst,csnd)
+pairwise f g ~(w,x) ~(y,z) = (f w y, g x z)
+
+liftA2T :: Applicative f
+        => (afst -> bfst -> cfst)
+        -> (asnd -> bsnd -> csnd)
+        -> f (afst,asnd)
+        -> f (bfst,bsnd)
+        -> f (cfst,csnd)
+liftA2T f g = liftA2 (pairwise f g)
+
+instance (Applicative m, Semiring s) => Applicative (WeightedT s m) where
+  pure x = WeightedT (pure (one,x))
+  WeightedT fs <*> WeightedT xs = WeightedT (liftA2T (<.>) ($) fs xs)
+
+instance (Monad m, Semiring s) => Monad (WeightedT s m) where
+  WeightedT xs >>= f =
+    WeightedT ((\(p,x) -> (fmap.first) (p<.>) (getWeightedT (f x))) =<< xs)
+```
