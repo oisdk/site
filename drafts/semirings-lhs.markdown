@@ -93,3 +93,23 @@ add xs == any id (xs :: [Bool])
 mul xs == all id (xs :: [Bool])
 ```
 
+So far, so easy.
+
+I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to be able to write one map-like type, and decide whether it was a set, map, multimap, multiset, etc. based on types. (and avoiding `newtype`{.haskell}s as much as possible) `Monoid`{.haskell}s worked for a while:
+
+```{.haskell .literate}
+newtype GeneralMap a b = GeneralMap
+  { getMap :: Map.Map a b
+  } deriving (Functor, Show, Eq, Ord)
+
+type Map a b = GeneralMap a (First b)
+
+lookup :: (Ord a, Monoid b) => a -> GeneralMap a b -> b
+lookup x = fold . Map.lookup x . getMap
+
+insert :: (Ord a, Applicative f, Monoid (f b)) => a -> b -> GeneralMap a (f b) -> GeneralMap a (f b)
+insert k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
+
+delete :: Ord a => a -> GeneralMap a b -> GeneralMap a b
+delete x = GeneralMap . Map.delete x . getMap
+```
