@@ -260,10 +260,10 @@ instance (Applicative m, Semiring s) => Applicative (WeightedT s m) where
 
 instance (Monad m, Semiring s) => Monad (WeightedT s m) where
   WeightedT xs >>= f =
-    WeightedT ((\(p,x) -> (fmap.first) (p<.>) (getWeightedT (f x))) =<< xs)
+    WeightedT ((\(p,x) -> (fmap.first.(<.>)) p (getWeightedT (f x))) =<< xs)
 ```
 
-And a function for probability:
+The first obvious advantage to the semiring is that the function for calculating probability can be defined directly:
 
 ```{.haskell .literate}
 instance (Semiring a, Semiring b) => Semiring (a,b) where
@@ -274,17 +274,33 @@ instance (Semiring a, Semiring b) => Semiring (a,b) where
         (a1,b1) <.> (a2,b2) =
                 (a1 <.> a2, b1 <.> b2)
 
-probOf :: (Semiring s, Integral s, Foldable f)
+probOf :: (Semiring s, Foldable f)
        => (a -> Bool)
        -> WeightedT s f a
-       -> Ratio s
-probOf e = uncurry (%) . getAdd . foldMap (uncurry f) . getWeightedT where
+       -> (s,s)
+probOf e = getAdd . foldMap (uncurry f) . getWeightedT where
   f p x = Add (if e x then p else zero, p)
 
+uniform :: Semiring s => [a] -> WeightedT s [] a
+uniform xs = WeightedT (map ((,) one) xs)
+
 die :: WeightedT Integer [] Integer
-die = WeightedT [ (1,n) | n <- [1..6] ]
+die = uniform [1..6]
 ```
 ```{.haskell .literate .example}
 probOf (6==) ((+) <$> die <*> die)
-5 % 36
+(5,36)
 ```
+
+So far, it's no better than the standard probability monad. We've not yet used the `<+>`{.haskell} on the semiring. Here's one potential use:
+
+```{.haskell .literate}
+instance (Semiring s, Alternative m, Monad m) => Alternative (WeightedT s m) where
+  empty = WeightedT empty
+  WeightedT x <|> WeightedT y = 
+    WeightedT (liftA2T (<+>) (<|>) (opt x) (opt y))
+      >>= maybe empty pure
+        where opt m = (fmap.fmap) Just m <|> pure (zero,Nothing)
+```
+
+
