@@ -75,7 +75,21 @@ instance Semiring a => Monoid (Mul a) where
   
 add :: (Semiring a, Foldable f) => f a -> a
 add = getAdd . foldMap Add
+
+mul :: (Semiring a, Foldable f) => f a -> a
+mul = getMul . foldMap Mul
 ```
 ```{.haskell .literate .prop}
-add xs == sum xs
+add xs == sum (xs :: [Integer])
 ```
+```{.haskell .literate .prop}
+mul xs == product (xs :: [Integer])
+```
+Which subsume `Any`{.haskell} and `All`{.haskell}:
+```{.haskell .literate .prop}
+add xs == any id (xs :: [Bool])
+```
+```{.haskell .literate .prop}
+mul xs == all id (xs :: [Bool])
+```
+
