@@ -1,5 +1,5 @@
 ---
-title: Swift Protocols: A Strategy
+title: Swift Protocols':' A Strategy
 tags: Swift
 ---
 
