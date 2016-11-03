@@ -5,7 +5,7 @@ tags: Haskell
 ```{.haskell .literate .hidden_source}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
-{-# LANGUAGE }
+{-# LANGUAGE PatternSynonyms, ViewPatterns #-}
 
 module Semirings where
 
@@ -342,7 +342,14 @@ instance Monad m => Monad (WeightedT' s m) where
 
 You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
 
+```{.haskell .literate .hidden_source}
+newtype Identity a = Identity { runIdentity :: a }
+```
 ```{.haskell .literate}
 pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
   Weighted (w,x) = WeightedT' (\s -> Identity (s <.> w, x) )
 ```
+
+How about the other plays on probability? `Odds`{.haskell}, the odds-tree, etc.?
+
+Well, while the normal probability monad is like a combination of writer and list, the `Odds`{.haskell} version is like a combination of writer and [`ListT` done right](https://hackage.haskell.org/package/list-t). The tree version? Well, stripping away the numeric information, you get:
