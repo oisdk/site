@@ -3,7 +3,13 @@ title: Semirings
 tags: Haskell
 ---
 ```{.haskell .literate .hidden_source}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 module Semirings where
+
+import qualified Data.Map.Strict as Map
+import Data.Monoid
+import Data.Foldable
 ```
 
 I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. Here's what it looks like:
@@ -105,8 +111,8 @@ newtype GeneralMap a b = GeneralMap
 lookup :: (Ord a, Monoid b) => a -> GeneralMap a b -> b
 lookup x = fold . Map.lookup x . getMap
 
-insert :: (Ord a, Applicative f, Monoid (f b)) => a -> b -> GeneralMap a (f b) -> GeneralMap a (f b)
-insert k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
+assoc :: (Ord a, Applicative f, Monoid (f b)) => a -> b -> GeneralMap a (f b) -> GeneralMap a (f b)
+assoc k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
 
 delete :: Ord a => a -> GeneralMap a b -> GeneralMap a b
 delete x = GeneralMap . Map.delete x . getMap
@@ -123,20 +129,23 @@ Which can specialise the functions to these types:
 
 ```{.haskell}
 lookup :: Ord a => a -> Map a b -> First b
-insert :: Ord a => a -> b -> Map a b -> Map a b
+assoc  :: Ord a => a -> b -> Map a b -> Map a b
 delete :: Ord a => a -> Map a b -> Map a b
 
 lookup :: Ord a => a -> MultiMap a b -> [b]
-insert :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
+asso  :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
 delete :: Ord a => a -> MultiMap a b -> MultiMap a b
 ```
 
 Sets need `one`{.haskell}, though:
 
 ```{.haskell .literate}
-add :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
-add x = GeneralMap . Map.insertWith (<+>) x one . getMap
+insert :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
+insert x = GeneralMap . Map.insertWith (<+>) x one . getMap
 ```
 
-```{.haskell}
+```{.haskell .literate}
+type Set      a = GeneralMap a (Add Bool)
+type MultiSet a = GeneralMap a (Add Integer)
 ```
+
