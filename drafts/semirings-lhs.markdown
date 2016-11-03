@@ -5,6 +5,7 @@ tags: Haskell
 ```{.haskell .literate .hidden_source}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
+{-# LANGUAGE }
 
 module Semirings where
 
@@ -12,7 +13,7 @@ import qualified Data.Map.Strict as Map
 import Data.Monoid
 import Data.Foldable
 import Data.Ratio
-import Control.Applicative (liftA2)
+import Control.Applicative
 import Control.Arrow (first)
 ```
 
@@ -263,6 +264,12 @@ instance (Monad m, Semiring s) => Monad (WeightedT s m) where
     WeightedT ((\(p,x) -> (fmap.first.(<.>)) p (getWeightedT (f x))) =<< xs)
 ```
 
+It's the same as `WriterT`{.haskell} so far (with a different monoid). You can even make it an instance of the `MonadWriter`{.haskell} class:
+
+```{.haskell}
+instance (Monad m, Semiring s) => MonadWriter (Mul s) (WeightedT s m)
+```
+
 The first obvious advantage to the semiring is that the function for calculating probability can be defined directly:
 
 ```{.haskell .literate}
@@ -292,15 +299,50 @@ probOf (6==) ((+) <$> die <*> die)
 (5,36)
 ```
 
-So far, it's no better than the standard probability monad. We've not yet used the `<+>`{.haskell} on the semiring. Here's one potential use:
+The other advantage is that you get an interesting `Alternative`{.haskell} instance:
 
 ```{.haskell .literate}
-instance (Semiring s, Alternative m, Monad m) => Alternative (WeightedT s m) where
+instance (Semiring s, Alternative m, Foldable m) => Alternative (WeightedT s m) where
   empty = WeightedT empty
-  WeightedT x <|> WeightedT y = 
-    WeightedT (liftA2T (<+>) (<|>) (opt x) (opt y))
-      >>= maybe empty pure
-        where opt m = (fmap.fmap) Just m <|> pure (zero,Nothing)
+  WeightedT xs <|> WeightedT ys = WeightedT $
+    (fmap.first.(<.>)) yssum xs <|> (fmap.first.(<.>)) xssum ys where
+      pssum = getAdd . foldMap (Add . fst)
+      xssum = pssum xs
+      yssum = pssum ys
 ```
 
+This makes things involving choice make much more sense:
 
+```{.haskell .literate .example}
+probOf (1==) (uniform [1] <|> uniform [2,3,4])
+(3,6)
+```
+
+Other combinators, like `mfilter`{.haskell}, also work.
+
+All of this is still incredibly slow, obviously. One issue is to do with [`WriterT` leaking](https://twitter.com/gabrielg439/status/659170544038707201). (although it's by no means the only problem) The solution is to reformulate `WeightedT`{.haskell} as a State monad:
+
+```{.haskell .literate}
+newtype WeightedT' s m a = WeightedT' 
+  { getWeightedT' :: s -> m (s, a)
+  } deriving Functor
+  
+instance Monad m => Applicative (WeightedT' s m) where
+  pure x = WeightedT' $ \s -> pure (s,x)
+  WeightedT' fs <*> WeightedT' xs = WeightedT' $ \s -> do
+    (p, f) <- fs s
+    (t, x) <- xs p
+    pure (t, f x)
+  
+instance Monad m => Monad (WeightedT' s m) where
+  WeightedT' x >>= f = WeightedT' $ \s -> do
+    (p, x) <- x s
+    getWeightedT' (f x) p
+```
+
+You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
+
+```{.haskell .literate}
+pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
+  Weighted (w,x) = WeightedT' (\s -> Identity (s <.> w, x) )
+```
