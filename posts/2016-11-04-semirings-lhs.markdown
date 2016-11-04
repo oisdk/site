@@ -1,6 +1,7 @@
 ---
 title: Semirings
 tags: Haskell
+bibliography: Semirings.bib
 ---
 ```{.haskell .literate .hidden_source}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -106,6 +107,8 @@ mul xs == all id (xs :: [Bool])
 
 So far, so easy.
 
+## A Semiring Map
+
 I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to be able to write one map-like type, and decide whether it was a set, map, multimap, multiset, etc. based on types. (and avoiding `newtype`{.haskell}s as much as possible) `Monoid`{.haskell}s worked for a while:
 
 ```{.haskell .literate}
@@ -183,6 +186,8 @@ intersection (GeneralMap x) (GeneralMap y) = GeneralMap (Map.intersectionWith (<
 
 While it works for `Set`s, it doesn't make sense for `MultiSet`s, and it doesn't work for `Map`s. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
 
+## A Probability Semiring
+
 While searching, though, I came across some other interesting semirings. The *Probability* semiring, in particular, was pretty interesting. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1. You could combine it with a list to get the traditional probability monad: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
 
 As it turns out, you can build the probability monad out of smaller transformers:
@@ -191,7 +196,7 @@ As it turns out, you can build the probability monad out of smaller transformers
 WriterT (Product Double) []
 ```
 
-[Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in this excellent blog post].
+[Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in this excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/).
 
 Using a semiring, the same can be expressed like this:
 
@@ -350,36 +355,207 @@ pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
   Weighted (w,x) = WeightedT' (\s -> Identity (s <.> w, x) )
 ```
 
+## Free
+
 How about the other plays on probability? `Odds`{.haskell}, the odds-tree, etc.?
 
-The old `Odds`{.haskell} monad is isomorphic to the [Cofree comonad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Comonad-Cofree.html) over a Writer monad. Kind of.
+If you take out the writer part of the monad for each, you're left with something like this:
 
 ```{.haskell}
-data Odds a = Certain a | Choice Rational a (Odds a)
-data Odds a = (a, Maybe (Rational, Odds a))
-
-data Cofree f a = a :< f (Cofree f a)
-data Cofree (Maybe . (,) Rational) = a :< Maybe (Rational, Cofree f a)
+data Odds m a = Certain a | Choice (m (a, Odds a)) -- Odds-list
+data Odds m a = Certain a | Choice (m (a,a))       -- Odds-tree
 ```
 
-The `Maybe`{.haskell} sneaking in there is to model the fact that a list can finish. Interestingly, the `PerhapsT` transformer I described earlier models this behaviour exactly.
-
-The `Tree`-ish type is the free monad over a type like this:
+The first thing that comes to mind is [`ListT`{.haskell} done right](https://wiki.haskell.org/ListT_done_right):
 
 ```{.haskell .literate}
-data WeightedChoice s a = Choice a s a
+newtype ListT m a = ListT { next :: m (Step m a) }
+data Step m a = Cons a (ListT m a) | Nil
 ```
 
-That's not a huge revelation, though: everything is isomorphic to some free construction somehow.
+(I'm using [Gabriel Gonzalez](http://www.haskellforall.com/2016/07/list-transformer-beginner-friendly-listt.html)'s version here)
 
-What is interesting is looking at some of the implementations of efficient probability monads:
+It's *kind* of like the traditional probability monad is:
 
 ```{.haskell}
-data Dist a where
-  Certainly :: a -> Dist a -- only possible value 
-  Choice :: Probability -> Dist a -> Dist a -> Dist a 
-  Fmap ::(a -> b) -> Dist a -> Dist b
-  Join :: Dist (Dist a) -> Dist a
+WriterT (Product Rational) []
 ```
 
-This looks *very* like a free-something.
+Whereas the odds-based variant is:
+
+```{.haskell}
+ListT (Weighted Rational)
+```
+
+Except that `ListT`{.haskell} admits empty lists, which I don't want.
+
+Another option is the [Cofree Comonad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Comonad-Cofree.html):
+
+```{.haskell .literate}
+data Cofree f a = a :< (f (Cofree f a))
+```
+
+You can make a non-empty list with:
+
+```{.haskell .literate}
+type NonEmpty = Cofree Maybe
+```
+
+So you could also make the odds monad with:
+
+```{.haskell .literate}
+type Odds = Cofree (WeightedT Rational Maybe)
+```
+
+Interestingly, `WeightedT Rational Maybe`{.haskell} is basically [`PerhapsT`{.haskell}](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/), as was mentioned earlier.
+
+And the tree? Well, adding the [free monad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#t:Free):
+
+```{.haskell .literate}
+data Free f a = Pure a | Free (f (Free f a))
+```
+
+To a pair:
+
+```{.haskell .literate}
+data Pair a = Pair a a
+```
+
+You get a type like:
+
+```{.haskell .literate}
+data Tree a = Bin (Tree a) (Tree a) | Tip a
+```
+
+(This is the example given for the [`MonadFree`{.haskell} class](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#t:MonadFree)).
+
+So the Choice-tree is something like the free monad over:
+
+```{.haskell .literate}
+data WeightedChoice s a = WeightedChoice a s a deriving Show
+```
+
+This type is kind of interesting, I think. It's like a datatype for branching. You can make it nicer to construct with [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
+
+```{.haskell .literate}
+data WeightedChoice s a = WeightedChoice
+  { left :: a
+  , right :: a
+  , ratioLeftToRight :: s
+  } deriving Show
+
+(|>) :: s -> a -> a -> WeightedChoice s a
+(p |> r) l = WeightedChoice l r p
+
+(<|) :: a -> (a -> WeightedChoice s a) -> WeightedChoice s a
+l <| r = r l
+
+infixr 0 <|
+infixr 0 |>
+```
+
+```{.haskell .literate .example}
+'a' <| 0.3 |> 'b'
+WeightedChoice {left = 'a', right = 'b', ratioLeftToRight = 0.3}
+```
+
+Or even:
+
+```{.haskell .literate .example}
+'a' <| 1  %  2 |> 'b'
+WeightedChoice {left = 'a', right = 'b', ratioLeftToRight = 1 % 2}
+```
+
+The shape of that operator hints strongly at `<|>`{.haskell} from the [Alternative](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#t:Alternative) class. So does the free alternative fit in here somewhere?
+
+Unfortunately not, it [looks like](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html):
+
+```{.haskell .literate}
+newtype Alt	 = Alt
+  { alternatives :: [AltF f a] }
+  
+data AltF f a where
+  Ap     :: f a -> Alt f (a -> b) -> AltF f b
+  Pure   :: a                     -> AltF f a
+```
+
+## Everything is a semiring
+
+Looking at these very general representations, I came across the paper by @rivas_monoids_2015. It explores the similarity between semirings (or near-semirings) and a whole bunch of other things.
+
+If you think of a semiring as something which is a monoid in two ways, there are some analogs:
+
+```{.haskell}
+instance Semiring Monad where
+  (<.>) = (>>=)
+  one = pure  -- Monoid in the category of endofunctors!
+  
+  (<+>) = mplus
+  zero = mzero
+
+instance Semiring Applicative where
+  (<.>) = (<*>)
+  one = pure
+  
+  (<+>) = (<|>)
+  zero = empty
+  
+instance Semiring OtherApplicative where
+  (<.>) = (<*>)
+  one = pure
+  
+  (<+>) = other (<*>) -- ie ZipList, etc
+  zero = other pure
+  
+instance Semiring Arrow where
+  (<.>) = (***)
+  one = arr id
+  
+  (<+>) = (|||)
+  zero = left id
+```
+
+However, as [Edward Kmett points out](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/), these similarities aren't necessarily that consistent.
+
+
+There's even a similarity with types:
+
+```{.haskell}
+(<.>) = (,)
+one = ()
+
+(<+>) = Either
+zero = Void
+```
+
+There's an extra you can add to semirings: [Star semirings](https://en.wikipedia.org/wiki/Semiring#Star_semirings):
+
+```{.haskell}
+class Semiring a => StarSemiring a where
+  star :: a -> a
+```
+
+It must satisfy the law:
+
+$a* = 1 + aa* = 1 + a*a$
+
+
+Defining it for types, for instance:
+
+```{.haskell}
+star a = Either () (a, star a)
+```
+
+Which is just a standard list!
+
+For monads, the star looks kind of like the [`MonadPlus`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad-Fix.html) class, or the [`ArrowLoop`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Arrow.html#t:ArrowLoop) class. I'm not sure if it has an applicative analogy. 
+
+## Weighting
+
+Weighted parsers, regexes, natural lang, constraint programming
+
+## Modules
+
+permutations, replications
+http://hackage.haskell.org/package/PermuteEffects-0.2/docs/Control-Permute.html
+http://hackage.haskell.org/package/ReplicateEffects-0.2/docs/Control-Replicate.html#t:Replicate
