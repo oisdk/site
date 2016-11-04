@@ -311,7 +311,7 @@ instance (Semiring s, Alternative m, Foldable m) => Alternative (WeightedT s m) 
       yssum = pssum ys
 ```
 
-This makes things involving choice make much more sense:
+This almost certainly breaks all sorts of rules. This makes things involving choice make much more sense:
 
 ```{.haskell .literate .example}
 probOf (1==) (uniform [1] <|> uniform [2,3,4])
@@ -352,4 +352,34 @@ pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
 
 How about the other plays on probability? `Odds`{.haskell}, the odds-tree, etc.?
 
-Well, while the normal probability monad is like a combination of writer and list, the `Odds`{.haskell} version is like a combination of writer and [`ListT` done right](https://hackage.haskell.org/package/list-t). The tree version? Well, stripping away the numeric information, you get:
+The old `Odds`{.haskell} monad is isomorphic to the [Cofree comonad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Comonad-Cofree.html) over a Writer monad. Kind of.
+
+```{.haskell}
+data Odds a = Certain a | Choice Rational a (Odds a)
+data Odds a = (a, Maybe (Rational, Odds a))
+
+data Cofree f a = a :< f (Cofree f a)
+data Cofree (Maybe . (,) Rational) = a :< Maybe (Rational, Cofree f a)
+```
+
+The `Maybe`{.haskell} sneaking in there is to model the fact that a list can finish. Interestingly, the `PerhapsT` transformer I described earlier models this behaviour exactly.
+
+The `Tree`-ish type is the free monad over a type like this:
+
+```{.haskell .literate}
+data WeightedChoice s a = Choice a s a
+```
+
+That's not a huge revelation, though: everything is isomorphic to some free construction somehow.
+
+What is interesting is looking at some of the implementations of efficient probability monads:
+
+```{.haskell}
+data Dist a where
+  Certainly :: a -> Dist a -- only possible value 
+  Choice :: Probability -> Dist a -> Dist a -> Dist a 
+  Fmap ::(a -> b) -> Dist a -> Dist b
+  Join :: Dist (Dist a) -> Dist a
+```
+
+This looks *very* like a free-something.
