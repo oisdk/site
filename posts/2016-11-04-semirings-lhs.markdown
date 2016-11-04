@@ -557,5 +557,6 @@ Weighted parsers, regexes, natural lang, constraint programming
 ## Modules
 
 permutations, replications
+http://comonad.com/reader/2011/free-modules-and-functional-linear-functionals/
 http://hackage.haskell.org/package/PermuteEffects-0.2/docs/Control-Permute.html
 http://hackage.haskell.org/package/ReplicateEffects-0.2/docs/Control-Replicate.html#t:Replicate
