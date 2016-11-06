@@ -57,6 +57,12 @@ instance Semiring Integer where
   one  = 1
   (<+>) = (+)
   (<.>) = (*)
+
+instance Semiring Double where
+  zero = 0
+  one  = 1
+  (<+>) = (+)
+  (<.>) = (*)
 ```
 
 However, `Bool`{.haskell} also conforms:
@@ -333,23 +339,50 @@ probOf (1==) (uniform [1] <|> uniform [2,3,4])
 
 Using the `<|>`{.haskell} on `WriterT (Product Rational)`{.haskell} would have given you `(1,4)`{.haskell} in the example above. I'd imagine it also makes more semantic sense when using things like `mfilter`{.haskell}. I don't like the `Foldable`{.haskell} constraint, though.
 
+If you *wanted* each side to have a different weighting, you could use something like [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
+
+```{.haskell .literate}
+data BiWeighted s = s :|: s
+infixl 8 :|:
+
+(|>) :: (Alternative m, Semiring s)
+     => BiWeighted s
+     -> WeightedT s m a
+     -> WeightedT s m a
+     -> WeightedT s m a
+((lp :|: rp) |> WeightedT r) (WeightedT l) =
+  WeightedT ((fmap.fmap.(<.>)) lp l <|> (fmap.fmap.(<.>)) rp r)
+--
+(<|) :: WeightedT s m a
+     -> (WeightedT s m a -> WeightedT s m a)
+     -> WeightedT s m a
+l <| r = r l
+
+infixr 0 <|
+infixr 0 |>
+```
+```{.haskell .literate .example}
+probOf ('a'==) (uniform "a" <| 3 :|: 1 |> uniform "b")
+(3,4)
+```
+
 All of this is still incredibly slow, obviously. One issue is to do with [`WriterT` leaking](https://twitter.com/gabrielg439/status/659170544038707201). (although it's by no means the only problem) The solution is to reformulate `WeightedT`{.haskell} as a State monad:
 
 ```{.haskell .literate}
 newtype WeightedT' s m a = WeightedT' 
-  { getWeightedT' :: s -> m (s, a)
+  { getWeightedT' :: s -> m (a, s)
   } deriving Functor
   
 instance Monad m => Applicative (WeightedT' s m) where
-  pure x = WeightedT' $ \s -> pure (s,x)
+  pure x = WeightedT' $ \s -> pure (x,s)
   WeightedT' fs <*> WeightedT' xs = WeightedT' $ \s -> do
-    (p, f) <- fs s
-    (t, x) <- xs p
-    pure (t, f x)
+    (f, p) <- fs s
+    (x, t) <- xs p
+    pure (f x, t)
   
 instance Monad m => Monad (WeightedT' s m) where
   WeightedT' x >>= f = WeightedT' $ \s -> do
-    (p, x) <- x s
+    (x, p) <- x s
     getWeightedT' (f x) p
 ```
 
@@ -359,20 +392,26 @@ You can even make it look like a normal (non-transformer) writer with some patte
 newtype Identity a = Identity { runIdentity :: a }
 ```
 ```{.haskell .literate}
-type Weighted s = WeightedT s Identity
+type Weighted s = WeightedT' s Identity
 
 pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
-  Weighted (w,x) = WeightedT' (\s -> Identity (s <.> w, x) )
+  Weighted (x,w) = WeightedT' (\s -> Identity (x, s <.> w) )
 ```
 
 And you can pretend that you've just got a normal tuple:
 
-```{.haskell}
+```{.haskell .literate}
 half :: a -> Weighted Double a
 half x = Weighted (x, 0.5)
 
-getVal :: Semiring s => Weighted s a -> a
-getVal (Weighted (x, _)) = x
+runWeighted :: Semiring s => Weighted s a -> (a, s)
+runWeighted (Weighted w) = w
+
+evalWeighted :: Semiring s => Weighted s a -> a
+evalWeighted (Weighted (x,_)) = x
+
+execWeighted :: Semiring s => Weighted s a -> s
+execWeighted (Weighted (_,s)) = s
 ```
 
 ## Free
@@ -448,54 +487,6 @@ data Tree a = Bin (Tree a) (Tree a) | Tip a
 ```
 
 (This is the example given for the [`MonadFree`{.haskell} class](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#t:MonadFree)).
-
-So the Choice-tree is something like the free monad over:
-
-```{.haskell .literate}
-data WeightedChoice s a = WeightedChoice
-  { left :: a
-  , right :: a
-  , ratioLeftToRight :: s
-  } deriving Show
-```
-
-This type is kind of interesting, I think. It's like a datatype for branching. You can make it nicer to construct with [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
-
-```{.haskell .literate}
-(|>) :: s -> a -> a -> WeightedChoice s a
-(p |> r) l = WeightedChoice l r p
-
-(<|) :: a -> (a -> WeightedChoice s a) -> WeightedChoice s a
-l <| r = r l
-
-infixr 0 <|
-infixr 0 |>
-```
-
-```{.haskell .literate .example}
-'a' <| 0.3 |> 'b'
-WeightedChoice {left = 'a', right = 'b', ratioLeftToRight = 0.3}
-```
-
-Or even:
-
-```{.haskell .literate .example}
-'a' <| 1  %  2 |> 'b'
-WeightedChoice {left = 'a', right = 'b', ratioLeftToRight = 1 % 2}
-```
-
-The shape of that operator hints strongly at `<|>`{.haskell} from the [Alternative](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#t:Alternative) class. So does the free alternative fit in here somewhere?
-
-Unfortunately not, it [looks like](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html):
-
-```{.haskell}
-newtype Alt	 = Alt
-  { alternatives :: [AltF f a] }
-  
-data AltF f a where
-  Ap     :: f a -> Alt f (a -> b) -> AltF f b
-  Pure   :: a                     -> AltF f a
-```
 
 ## Everything is a semiring
 
