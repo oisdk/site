@@ -119,7 +119,6 @@ fromList ["ab","abc","cb","ced"]
 Most implementations of tries that I've seen are map-like data structures, rather than set-like. In other words, instead of holding a `Bool`{.haskell} at the value position, it holds a `Maybe`{.haskell} something. 
 
 ```{.haskell .literate}
-
 data Trie a b = Trie
   { endHere  :: b
   , children :: Map a (Trie a b) 
@@ -278,7 +277,7 @@ instance SemiringIso Int (Sum Int) (Product Int) where
   fromAdd  = getSum
   toMult   = Product
   fromMult = getProduct
-  
+
 instance SemiringIso Bool Any All where
   toAdd    = Any
   fromAdd  = getAny
@@ -305,6 +304,7 @@ Now, expressions can be built up without specifying the specific monoid implemen
 instance (Ord a, Semiring b) => IsList (Trie a b) where
   type Item (Trie a b) = [a]
   fromList = foldr add mempty
+  toList = undefined
 ans :: Semiring b => b
 ```
 ```{.haskell .literate}

@@ -18,29 +18,32 @@ import Control.Applicative
 import Control.Arrow (first)
 ```
 
-I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. Here's what it looks like:
+I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
+
 
 ```{.haskell .literate}
 class Semiring a where
   zero :: a
-  one :: a
+  one  :: a
   infixl 7 <.>
   (<.>) :: a -> a -> a
   infixl 6 <+>
   (<+>) :: a -> a -> a
 ```
 
-It's kind of like a combination of two  [`Monoid`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html)s. It's got the normal monoid laws on `<+>`{.haskell} and `<.>`{.haskell}, with a couple extras:
+It's kind of like a combination of two  [monoids](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html). It has the normal monoid laws:
 
-* Commutivity of `<+>`{.haskell}:
+```{.haskell}
+x <+> (y <+> z) = (x <+> y) <+> z
+x <.> (y <.> z) = (x <.> y) <.> z
+x <+> zero = zero <+> x = x
+x <.> one  = one  <.> x = x
+```
+
+And a few extra:
 
 ```{.haskell}
 x <+> y = y <+> x
-```
-
-* Distribution of `<.>`{.haskell} over `<+>`{.haskell}, right and left:
-
-```{.haskell}
 x <.> (y <+> z) = (x <.> y) <+> (x <.> z)
 (x <+> y) <.> z = (x <.> z) <+> (y <.> z)
 zero <.> a = a <.> zero = zero
@@ -51,7 +54,7 @@ At first glance, it looks quite numeric. Indeed, [PureScript](https://pursuit.pu
 ```{.haskell .literate}
 instance Semiring Integer where
   zero = 0
-  one = 1
+  one  = 1
   (<+>) = (+)
   (<.>) = (*)
 ```
@@ -61,7 +64,7 @@ However, `Bool`{.haskell} also conforms:
 ```{.haskell .literate}
 instance Semiring Bool where
   zero = False
-  one = True
+  one  = True
   (<+>) = (||)
   (<.>) = (&&)
 ```
@@ -109,7 +112,7 @@ So far, so easy.
 
 ## A Semiring Map
 
-I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to be able to write one map-like type, and decide whether it was a set, map, multimap, multiset, etc. based on types. (and avoiding `newtype`{.haskell}s as much as possible) `Monoid`{.haskell}s worked for a while:
+I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to be able to write one map-like type, and decide whether it was a set, map, multimap, multiset, etc. based on types. (and avoiding `newtype`{.haskell}s as much as possible) Monoids worked for a while:
 
 ```{.haskell .literate}
 newtype GeneralMap a b = GeneralMap
@@ -119,7 +122,8 @@ newtype GeneralMap a b = GeneralMap
 lookup :: (Ord a, Monoid b) => a -> GeneralMap a b -> b
 lookup x = fold . Map.lookup x . getMap
 
-assoc :: (Ord a, Applicative f, Monoid (f b)) => a -> b -> GeneralMap a (f b) -> GeneralMap a (f b)
+assoc :: (Ord a, Applicative f, Monoid (f b)) 
+      => a -> b -> GeneralMap a (f b) -> GeneralMap a (f b)
 assoc k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
 
 delete :: Ord a => a -> GeneralMap a b -> GeneralMap a b
@@ -169,19 +173,23 @@ Some more operations which might be useful:
 fromList :: (Ord a, Semiring b, Foldable f) => f a -> GeneralMap a b
 fromList = foldr insert (GeneralMap Map.empty)
 
-fromAssocs :: (Ord a, Applicative f, Monoid (f b), Foldable t) => t (a, b) -> GeneralMap a (f b)
+fromAssocs :: (Ord a, Applicative f, Monoid (f b), Foldable t) 
+           => t (a, b) -> GeneralMap a (f b)
 fromAssocs = foldr (uncurry assoc) (GeneralMap Map.empty)
 
 instance (Ord a, Monoid b) => Monoid (GeneralMap a b) where
   mempty = GeneralMap Map.empty
-  mappend (GeneralMap x) (GeneralMap y) = GeneralMap (Map.unionWith mappend x y)
+  mappend (GeneralMap x) (GeneralMap y) = 
+    GeneralMap (Map.unionWith mappend x y)
 ```
 
 That's about as far as I got, though. In particular, intersection wasn't very easy to define:
 
 ```{.haskell .literate}
-intersection :: (Ord a, Semiring b) => GeneralMap a b -> GeneralMap a b -> GeneralMap a b
-intersection (GeneralMap x) (GeneralMap y) = GeneralMap (Map.intersectionWith (<.>) x y)
+intersection :: (Ord a, Semiring b)
+             => GeneralMap a b -> GeneralMap a b -> GeneralMap a b
+intersection (GeneralMap x) (GeneralMap y) =
+  GeneralMap (Map.intersectionWith (<.>) x y)
 ```
 
 While it works for `Set`s, it doesn't make sense for `MultiSet`s, and it doesn't work for `Map`s. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
@@ -196,7 +204,7 @@ As it turns out, you can build the probability monad out of smaller transformers
 WriterT (Product Double) []
 ```
 
-[Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in this excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/).
+Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/).
 
 Using a semiring, the same can be expressed like this:
 
@@ -208,7 +216,7 @@ That's got an extra `newtype`{.haskell}, though, which reduces the power of the 
 
 ```{.haskell .literate}
 newtype WeightedT s m a = WeightedT
-  { getWeightedT :: m (s, a) 
+  { getWeightedT :: m (a, s) 
   } deriving (Functor, Foldable, Traversable)
 ```
 
@@ -261,12 +269,12 @@ liftA2T :: Applicative f
 liftA2T f g = liftA2 (pairwise f g)
 
 instance (Applicative m, Semiring s) => Applicative (WeightedT s m) where
-  pure x = WeightedT (pure (one,x))
-  WeightedT fs <*> WeightedT xs = WeightedT (liftA2T (<.>) ($) fs xs)
-
+  pure x = WeightedT (pure (x,one))
+  WeightedT fs <*> WeightedT xs = WeightedT (liftA2T ($) (<.>) fs xs)
+      
 instance (Monad m, Semiring s) => Monad (WeightedT s m) where
   WeightedT xs >>= f =
-    WeightedT ((\(p,x) -> (fmap.first.(<.>)) p (getWeightedT (f x))) =<< xs)
+    WeightedT ((\(x,p) -> (fmap.fmap.(<.>)) p (getWeightedT (f x))) =<< xs)
 ```
 
 It's the same as `WriterT`{.haskell} so far (with a different monoid). You can even make it an instance of the `MonadWriter`{.haskell} class:
@@ -291,10 +299,10 @@ probOf :: (Semiring s, Foldable f)
        -> WeightedT s f a
        -> (s,s)
 probOf e = getAdd . foldMap (uncurry f) . getWeightedT where
-  f p x = Add (if e x then p else zero, p)
+  f x p = Add (if e x then p else zero, p)
 
 uniform :: Semiring s => [a] -> WeightedT s [] a
-uniform xs = WeightedT (map ((,) one) xs)
+uniform xs = WeightedT (map (flip (,) one) xs)
 
 die :: WeightedT Integer [] Integer
 die = uniform [1..6]
@@ -304,26 +312,26 @@ probOf (6==) ((+) <$> die <*> die)
 (5,36)
 ```
 
-The other advantage is that you get an interesting `Alternative`{.haskell} instance:
+I'm not sure about any other benefits beyond that. I was trying to think of ways to use the `<+>`{.haskell}, and this kind of thing came to mind:
 
 ```{.haskell .literate}
 instance (Semiring s, Alternative m, Foldable m) => Alternative (WeightedT s m) where
-  empty = WeightedT empty
+  empty = WeightedT (flip (,) zero <$> empty)
   WeightedT xs <|> WeightedT ys = WeightedT $
-    (fmap.first.(<.>)) yssum xs <|> (fmap.first.(<.>)) xssum ys where
-      pssum = getAdd . foldMap (Add . fst)
+    (fmap.fmap.(<.>)) yssum xs <|> (fmap.fmap.(<.>)) xssum ys where
+      pssum = getAdd . foldMap (Add . snd)
       xssum = pssum xs
       yssum = pssum ys
 ```
 
-This almost certainly breaks all sorts of rules. This makes things involving choice make much more sense:
+This means that the `<|>`{.haskell} operator gives equal weight to either side. For instance:
 
 ```{.haskell .literate .example}
 probOf (1==) (uniform [1] <|> uniform [2,3,4])
 (3,6)
 ```
 
-Other combinators, like `mfilter`{.haskell}, also work.
+Using the `<|>`{.haskell} on `WriterT (Product Rational)`{.haskell} would have given you `(1,4)`{.haskell} in the example above. I'd imagine it also makes more semantic sense when using things like `mfilter`{.haskell}. I don't like the `Foldable`{.haskell} constraint, though.
 
 All of this is still incredibly slow, obviously. One issue is to do with [`WriterT` leaking](https://twitter.com/gabrielg439/status/659170544038707201). (although it's by no means the only problem) The solution is to reformulate `WeightedT`{.haskell} as a State monad:
 
@@ -351,8 +359,20 @@ You can even make it look like a normal (non-transformer) writer with some patte
 newtype Identity a = Identity { runIdentity :: a }
 ```
 ```{.haskell .literate}
+type Weighted s = WeightedT s Identity
+
 pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
   Weighted (w,x) = WeightedT' (\s -> Identity (s <.> w, x) )
+```
+
+And you can pretend that you've just got a normal tuple:
+
+```{.haskell}
+half :: a -> Weighted Double a
+half x = Weighted (x, 0.5)
+
+getVal :: Semiring s => Weighted s a -> a
+getVal (Weighted (x, _)) = x
 ```
 
 ## Free
@@ -432,18 +452,16 @@ data Tree a = Bin (Tree a) (Tree a) | Tip a
 So the Choice-tree is something like the free monad over:
 
 ```{.haskell .literate}
-data WeightedChoice s a = WeightedChoice a s a deriving Show
-```
-
-This type is kind of interesting, I think. It's like a datatype for branching. You can make it nicer to construct with [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
-
-```{.haskell .literate}
 data WeightedChoice s a = WeightedChoice
   { left :: a
   , right :: a
   , ratioLeftToRight :: s
   } deriving Show
+```
 
+This type is kind of interesting, I think. It's like a datatype for branching. You can make it nicer to construct with [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
+
+```{.haskell .literate}
 (|>) :: s -> a -> a -> WeightedChoice s a
 (p |> r) l = WeightedChoice l r p
 
@@ -470,7 +488,7 @@ The shape of that operator hints strongly at `<|>`{.haskell} from the [Alternati
 
 Unfortunately not, it [looks like](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html):
 
-```{.haskell .literate}
+```{.haskell}
 newtype Alt	 = Alt
   { alternatives :: [AltF f a] }
   
