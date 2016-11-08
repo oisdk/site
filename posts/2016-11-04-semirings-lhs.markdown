@@ -17,6 +17,7 @@ import Data.Foldable
 import Data.Ratio
 import Control.Applicative
 import Control.Arrow (first)
+import Control.Monad.Cont
 ```
 
 I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
@@ -119,7 +120,7 @@ So far, so easy.
 
 ## A Semiring Map
 
-I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to be able to write one map-like type, and decide whether it was a set, map, multimap, multiset, etc. based on types. (and avoiding `newtype`{.haskell}s as much as possible) Monoids worked for a while:
+I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to write one map-like type, and have its behaviour change between the whole Boom hierarchy [@bunkenburg_boom_1994] depending on the type annotations. I also wanted to avoid newtypes.
 
 ```{.haskell .literate}
 newtype GeneralMap a b = GeneralMap
@@ -205,7 +206,13 @@ While it works for `Set`s, it doesn't make sense for `MultiSet`s, and it doesn't
 
 While searching, though, I came across some other interesting semirings. The *Probability* semiring, in particular, was pretty interesting. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1. You could combine it with a list to get the traditional probability monad: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
 
-As it turns out, you can build the probability monad out of smaller transformers:
+The normal, standard definition of probability is this:
+
+```{.haskell}
+newtype Prob s a = Prob { runProb :: [(a, s)]}
+```
+
+Fiddling with that definition can get you some pretty cool definitions. For instance, you can build the monad out of smaller transformers:
 
 ```{.haskell}
 WriterT (Product Double) []
@@ -213,151 +220,65 @@ WriterT (Product Double) []
 
 Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/).
 
-Using a semiring, the same can be expressed like this:
+Of course, the boring version:
 
 ```{.haskell}
-WriterT (Mul Double) []
+newtype Prob s a = Prob { runProb :: [(a, s)]}
 ```
 
-That's got an extra `newtype`{.haskell}, though, which reduces the power of the semigroup. Let's make a whole new monad transformer:
+Looks like an inefficient version of a `Map`. Or, to put it a different way, the general map from above.
 
-```{.haskell .literate}
-newtype WeightedT s m a = WeightedT
-  { getWeightedT :: m (a, s) 
-  } deriving (Functor, Foldable, Traversable)
-```
+## Cont
 
-It can conform to the traditional typeclasses using some help from the [prelude-extras](https://hackage.haskell.org/package/prelude-extras) package:
-```{.haskell .literate .hidden_source}
-class Eq1 f where
-  (==#) :: Eq a => f a -> f a -> Bool
-
-class Eq1 f => Ord1 f where
-  compare1 :: Ord a => f a -> f a -> Ordering
-
-class Show1 f where
-  showsPrec1 :: Show a => Int -> f a -> ShowS
-
-instance Eq1 [] where (==#) = (==)
-instance Ord1 [] where compare1 = compare
-instance Show1 [] where showsPrec1 = showsPrec
-```
-```{.haskell .literate}
-instance (Eq1 m, Eq s, Eq a) => Eq (WeightedT s m a) where
-  WeightedT x == WeightedT y = x ==# y
-
-instance (Ord1 m, Ord s, Ord a) => Ord (WeightedT s m a) where
-  compare (WeightedT x) (WeightedT y) = compare1 x y
-
-instance (Show1 m, Show s, Show a) => Show (WeightedT s m a) where
-  showsPrec n (WeightedT x) =
-    showParen (n >= 10)
-      $ showString "WeightedT {getWeightedT = "
-      . showsPrec1 0 x
-      . showChar '}'
-```
-
-And the `Monad`{.haskell} instances are similar to `WriterT`{.haskell}:
-
-```{.haskell .literate}
-pairwise :: (afst -> bfst -> cfst)
-         -> (asnd -> bsnd -> csnd)
-         -> (afst,asnd)
-         -> (bfst,bsnd)
-         -> (cfst,csnd)
-pairwise f g ~(w,x) ~(y,z) = (f w y, g x z)
-
-liftA2T :: Applicative f
-        => (afst -> bfst -> cfst)
-        -> (asnd -> bsnd -> csnd)
-        -> f (afst,asnd)
-        -> f (bfst,bsnd)
-        -> f (cfst,csnd)
-liftA2T f g = liftA2 (pairwise f g)
-
-instance (Applicative m, Semiring s) => Applicative (WeightedT s m) where
-  pure x = WeightedT (pure (x,one))
-  WeightedT fs <*> WeightedT xs = WeightedT (liftA2T ($) (<.>) fs xs)
-      
-instance (Monad m, Semiring s) => Monad (WeightedT s m) where
-  WeightedT xs >>= f =
-    WeightedT ((\(x,p) -> (fmap.fmap.(<.>)) p (getWeightedT (f x))) =<< xs)
-```
-
-It's the same as `WriterT`{.haskell} so far (with a different monoid). You can even make it an instance of the `MonadWriter`{.haskell} class:
+Edward Kmett [-@kmett_modules_2011] pointed out that this can be expressed as:
 
 ```{.haskell}
-instance (Monad m, Semiring s) => MonadWriter (Mul s) (WeightedT s m)
+infixr 0 $*
+newtype Linear r a = Linear { ($*) :: (a -> r) -> r }
 ```
 
-The first obvious advantage to the semiring is that the function for calculating probability can be defined directly:
+Or, as it's also known: [Cont](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Cont.html#t:Cont). This can actually encode all the functionality you might need: (and even a sensible `<|>`{.haskell} definition)
 
 ```{.haskell .literate}
-instance (Semiring a, Semiring b) => Semiring (a,b) where
-  zero = (zero, zero)
-  (a1,b1) <+> (a2,b2) =
-          (a1 <+> a2, b1 <+> b2)
-  one = (one, one)
-  (a1,b1) <.> (a2,b2) =
-          (a1 <.> a2, b1 <.> b2)
+fromProbs :: (Semiring s, Applicative m) => [(a,s)] -> ContT s m a
+fromProbs xs = ContT $ \k ->
+  foldr (\(x,s) a -> liftA2 (<+>) (fmap (s<.>) (k x)) a) (pure zero) xs
 
-probOf :: (Semiring s, Foldable f)
-       => (a -> Bool)
-       -> WeightedT s f a
-       -> (s,s)
-probOf e = getAdd . foldMap (uncurry f) . getWeightedT where
-  f x p = Add (if e x then p else zero, p)
+instance (Semiring r, Applicative m) => Alternative (ContT r m) where
+  f <|> g = ContT (\k -> (<+>) <$> runContT f k <*> runContT g k)
+  empty = ContT (const (pure zero))
 
-uniform :: Semiring s => [a] -> WeightedT s [] a
-uniform xs = WeightedT (map (flip (,) one) xs)
+probOfT :: (Semiring r, Applicative m) => (a -> Bool) -> ContT r m a -> m r
+probOfT e c = runContT c (\x -> if e x then pure one else pure zero)
 
-die :: WeightedT Integer [] Integer
-die = uniform [1..6]
-```
-```{.haskell .literate .example}
-probOf (6==) ((+) <$> die <*> die)
-(5,36)
+probOfC :: Semiring r => (a -> Bool) -> Cont r a -> r
+probOfC e = runIdentity . probOfT e
+
+uniformC :: Applicative m => [a] -> ContT Double m a
+uniformC xs =
+  let s = 1.0 / fromIntegral (length xs)
+  in fromProbs (map (flip (,) s) xs)
 ```
 
-I'm not sure about any other benefits beyond that. I was trying to think of ways to use the `<+>`{.haskell}, and this kind of thing came to mind:
+I wonder if this representation has something to do with modules over monads [@hirschowitz_modules_2010].
 
-```{.haskell .literate}
-instance (Semiring s, Alternative m, Foldable m) 
-  => Alternative (WeightedT s m) where
-    empty = WeightedT (flip (,) zero <$> empty)
-    WeightedT xs <|> WeightedT ys = WeightedT $
-      (fmap.fmap.(<.>)) yssum xs <|> (fmap.fmap.(<.>)) xssum ys where
-        pssum = getAdd . foldMap (Add . snd)
-        xssum = pssum xs
-        yssum = pssum ys
-```
-
-This means that the `<|>`{.haskell} operator gives equal weight to either side. For instance:
-
-```{.haskell .literate .example}
-probOf (1==) (uniform [1] <|> uniform [2,3,4])
-(3,6)
-```
-
-Using the `<|>`{.haskell} on `WriterT (Product Rational)`{.haskell} would have given you `(1,4)`{.haskell} in the example above. I'd imagine it also makes more semantic sense when using things like `mfilter`{.haskell}. I don't like the `Foldable`{.haskell} constraint, though.
-
-If you *wanted* each side to have a different weighting, you could use something like [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
+In fact, you can beef up the `<|>`{.haskell} operator a little, with something like [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
 
 ```{.haskell .literate}
 data BiWeighted s = s :|: s
 infixl 8 :|:
 
-(|>) :: (Alternative m, Semiring s)
+(|>) :: (Applicative m, Semiring s)
      => BiWeighted s
-     -> WeightedT s m a
-     -> WeightedT s m a
-     -> WeightedT s m a
-((lp :|: rp) |> WeightedT r) (WeightedT l) =
-  WeightedT ((fmap.fmap.(<.>)) lp l <|> (fmap.fmap.(<.>)) rp r)
+     -> ContT s m a
+     -> ContT s m a
+     -> ContT s m a
+((lp :|: rp) |> r) l =
+  (mapContT.fmap.(<.>)) lp l <|> (mapContT.fmap.(<.>)) rp r
 --
-(<|) :: WeightedT s m a
-     -> (WeightedT s m a -> WeightedT s m a)
-     -> WeightedT s m a
+(<|) :: ContT s m a
+     -> (ContT s m a -> ContT s m a)
+     -> ContT s m a
 l <| r = r l
 
 infixr 0 <|
@@ -368,36 +289,38 @@ probOf ('a'==) (uniform "a" <| 3 :|: 1 |> uniform "b")
 (3,4)
 ```
 
-All of this is still incredibly slow, obviously. One issue is to do with [`WriterT` leaking](https://twitter.com/gabrielg439/status/659170544038707201). (although it's by no means the only problem) The solution is to reformulate `WeightedT`{.haskell} as a State monad:
+## UnLeak
+
+Another optimization is to transform the leaky [`WriterT`](https://twitter.com/gabrielg439/status/659170544038707201) into a state monad:
 
 ```{.haskell .literate}
-newtype WeightedT' s m a = WeightedT' 
-  { getWeightedT' :: s -> m (a, s)
+newtype WeightedT s m a = WeightedT 
+  { getWeightedT :: s -> m (a, s)
   } deriving Functor
   
-instance Monad m => Applicative (WeightedT' s m) where
-  pure x = WeightedT' $ \s -> pure (x,s)
-  WeightedT' fs <*> WeightedT' xs = WeightedT' $ \s -> do
+instance Monad m => Applicative (WeightedT s m) where
+  pure x = WeightedT $ \s -> pure (x,s)
+  WeightedT fs <*> WeightedT xs = WeightedT $ \s -> do
     (f, p) <- fs s
     (x, t) <- xs p
     pure (f x, t)
   
-instance Monad m => Monad (WeightedT' s m) where
-  WeightedT' x >>= f = WeightedT' $ \s -> do
+instance Monad m => Monad (WeightedT s m) where
+  WeightedT x >>= f = WeightedT $ \s -> do
     (x, p) <- x s
-    getWeightedT' (f x) p
+    getWeightedT (f x) p
 ```
 
-You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
+(I think this might have something to do with Cont) You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
 
 ```{.haskell .literate .hidden_source}
 newtype Identity a = Identity { runIdentity :: a }
 ```
 ```{.haskell .literate}
-type Weighted s = WeightedT' s Identity
+type Weighted s = WeightedT s Identity
 
-pattern Weighted w <- (runIdentity . flip getWeightedT' zero -> w) where
-  Weighted (x,w) = WeightedT' (\s -> Identity (x, s <.> w) )
+pattern Weighted w <- (runIdentity . flip getWeightedT zero -> w) where
+  Weighted (x,w) = WeightedT (\s -> Identity (x, s <.> w) )
 ```
 
 And you can pretend that you've just got a normal tuple:
@@ -416,7 +339,36 @@ execWeighted :: Semiring s => Weighted s a -> s
 execWeighted (Weighted (_,s)) = s
 ```
 
+## Free
+
+Looking back at `Cont`, it is reminiscent of an initial encoding of the free monoid:
+
+```{.haskell}
+newtype FreeMonoid a = FreeMonoid
+  { forall m. Monoid m => (a -> m) -> m }
+```
+
+[@doel_free_2015]
+
+So this big map-like thing, which represents probability, and continuations, and whatnot, has something to do with the free semiring.
+
+Another encoding which looks free-ish is one of the efficient implementations of the probability monad:
+
+```{.haskell}
+data Dist a where
+  Certainly :: a -> Dist a -- only possible value
+  Choice :: Probability -> Dist a -> Dist a -> Dist a
+  Fmap ::(a -> b) -> Dist a -> Dist b
+  Join :: Dist (Dist a) -> Dist a
+```
+
+[@larsen_memory_2011]
+
+It looks like almost a semigroup in the category of endofunctors! [@rivas_monoids_2015] Alternatively it resembles a free `MonadPlus`{.haskell}, although that's probably misleading. You need an extra law to make even a *near*-semiring, and most members of the above classes *don't* follow that extra law. The only things which really do are basically lists! (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
+
 ## Odds
+
+Does `Odds`{.haskell} fit in to any of this?
 
 While `WriterT (Product Rational) []`{.haskell} is a valid definition of the traditional probability monad, it's *not* the same as the `Odds`{.haskell} monad. If you take the odds monad, and parameterize it over the weight of the tail, you get this:
 
@@ -448,56 +400,9 @@ data Cofree f a = a :< (f (Cofree f a))
 
 Subbing in `Maybe`{.haskell} for `f`{.haskell}, you get a non-empty list. A *weighted* `Maybe`{.haskell} is basically [`PerhapsT`{.haskell}](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/), as was mentioned earlier.
 
-And the tree? Well, adding the [free monad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#t:Free):
+## Generalizing Semirings
 
-```{.haskell .literate}
-data Free f a = Pure a | Free (f (Free f a))
-```
-
-To a pair:
-
-```{.haskell .literate}
-data Pair a = Pair a a
-```
-
-You get a type like:
-
-```{.haskell .literate}
-data Tree a = Bin (Tree a) (Tree a) | Tip a
-```
-
-(This is the example given for the [`MonadFree`{.haskell} class](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Free.html#t:MonadFree)).
-
-So potentially, adding a `WeightedPair`{.haskell} would give you the odds-tree.
-
-
-## Generalized Semirings
-
-I came across the paper by @rivas_monoids_2015. It explores the similarity between semirings (or [near-semirings](https://en.wikipedia.org/wiki/Near-semiring)) and a whole bunch of other things.
-
-If you think of a semiring as something which is a monoid in two ways, there are some analogs:
-
-```{.haskell}
-instance Semiring Monad where
-  (<.>) = (>>=)
-  one = pure
-  
-  (<+>) = mplus
-  zero = mzero
-
-instance Semiring Applicative where
-  (<.>) = (<*>)
-  one = pure
-  
-  (<+>) = (<|>)
-  zero = empty
-```
-
-This doesn't hold up, though. You need an extra law to make a proper near-semiring, and most members of the above classes *don't* follow that extra law. The only things which really do are basically lists! (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
-
-The paper calls the things which conform to this concept "non-determinism" monads, which is maybe a closer representation.
-
-Speaking of lists, if you take the semiring of types, you get:
+As you might have noticed, semirings seem to have a lot to do with "both" and "either" things. For instance: `Arrow`, `ArrowChoice`; `Monad`, `MonadPlus`; `Applicative`, `Alternative`; `List`, `ZipList`, etc. Becoming more general still, you can describe types as a semiring:
 
 ```{.haskell}
 (<.>) = (,)
@@ -525,71 +430,55 @@ Using this on types, you get:
 star a = Either () (a, star a)
 ```
 
-Which is just a standard list!
+Which is just a standard list! Some pseudo-haskell on alternatives will give you:
 
-## Church
-
-There's one other representation of near-semirings which is relevant: [church numerals](https://en.wikipedia.org/wiki/Church_encoding#Church_numerals) [@statman_near_2014]. A church numeral is a higher-order function which takes a function and a value, and applies the function to the value $n$ times. $n$ is the number which the church numeral represents. An example might help:
-
-```{.haskell .literate}
-newtype Nat = Nat
-  { r :: forall a. (a -> a) -> a -> a }
+```{.haskell}
+star :: (Alternative f, Monoid a) => f a -> f a
+star x = (x <.> star x) <+> pure mempty where
+  (<.>) = liftA2 mappend
+  (<+>) = <|>
 ```
 
-Conversion from the above type into a Haskell integer is reasonably easy:
+Also known as [`many`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#v:many). (although note that this breaks all the laws)
 
-```{.haskell .literate}
-fromNat :: Nat -> Integer
-fromNat (Nat n) = n succ 0
+The $*$ for rationals is defined as:
 
-instance Show Nat where
-  show = show . fromNat
-```
-
-From there, we can go ahead and make it a semiring:
-
-```{.haskell .literate}
-instance Semiring Nat where
-  one  = Nat ($)
-  zero = Nat (const id)
-  Nat n <+> Nat m = Nat (\f -> n f . m f)
-  Nat n <.> Nat m = Nat (n . m)
-```
-
-To allow us to use numeric literals, we can also get it to conform to `Num`{.haskell}. Subtraction here is the tricky one (and it's also extremely inefficient)
-
-```{.haskell .literate}
-instance Num Nat where
-  (+) = (<+>)
-  (*) = (<.>)
-  fromInteger m = Nat (appEndo . foldMap Endo . replicate (fromInteger m))
-  n - Nat m = m pred n where
-    pred n = Nat (\f x -> r n (\g h -> h (g f)) (const x) id)
-  abs = id
-  signum (Nat n) = n (const 1) 0
-
-instance StarSemiring Nat
-```
-
-I'm not sure what the use of the star is here. $0*$ seems to be $1$, and everything else is $\infty$.
-
-It turns out that's correct, according to @droste_semirings_2009 p8. Also on the same page, it describes that star-semiring for the rationals:
 
 $a* = \begin{cases}
-  \frac{1}{1 - a} & \quad 0 \leq a \lt 1 \\
-  \infty          & \quad a \geq 1
+  \frac{1}{1 - a} & \quad \text{if  } & 0 \leq a \lt 1, \\
+  \infty          & \quad \text{if  } & a \geq 1.
 \end{cases}$
 
-Or, in other words, the star for probability is the inverse probability!
+[@droste_semirings_2009, p8]
 
-## Weighting
+So, combining the probability with the type-level business, the star of `Writer s a` is:
 
+```{.haskell}
+Either a (a, inverse of s, star (Writer s a))
+```
+
+Or, to put it another way: the `Odds`{.haskell} monad!
+
+## Some Examples
+
+So we've seen semirings for probabilities, maps, sets, etc. What else?
+
+Well, multisets over monoids form semirings:
+
+```{.haskell .literate}
+newtype MultiSet a = MultiSet [a]
+  deriving (Show, Functor)
+  -- Not allowed to worry about the order!
+```
+
+## Modules.
+
+permutations, replications.
 Weighted parsers, regexes, natural lang, constraint programming
 
+## References
 
-## Modules
+[Permute](http://hackage.haskell.org/package/PermuteEffects-0.2/docs/Control-Permute.html)
 
-permutations, replications
+[Replicate](http://hackage.haskell.org/package/ReplicateEffects-0.2/docs/Control-Replicate.html#t:Replicate)
 
-http://hackage.haskell.org/package/PermuteEffects-0.2/docs/Control-Permute.html
-http://hackage.haskell.org/package/ReplicateEffects-0.2/docs/Control-Replicate.html#t:Replicate

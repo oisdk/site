@@ -74,7 +74,8 @@ span.quiet {
 }
 
 a {
-    color: black
+    color: black;
+    word-wrap: break-word
 }
 
 ul {
