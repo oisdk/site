@@ -6,18 +6,24 @@ bibliography: Semirings.bib
 ```{.haskell .literate .hidden_source}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
-{-# LANGUAGE PatternSynonyms, ViewPatterns #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE PatternSynonyms, ViewPatterns, LambdaCase #-}
+{-# LANGUAGE RankNTypes, FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Semirings where
 
 import qualified Data.Map.Strict as Map
 import Data.Monoid
+import Data.Array
 import Data.Foldable
 import Data.Ratio
 import Control.Applicative
 import Control.Arrow (first)
 import Control.Monad.Cont
+import Data.Functor.Identity
+import GHC.Exts
+import Data.Maybe
+import Data.List hiding (insert)
 ```
 
 I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
@@ -162,7 +168,8 @@ Sets need `one`{.haskell}, though:
 ```{.haskell .literate}
 insert :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
 insert x = GeneralMap . Map.insertWith (<+>) x one . getMap
-
+```
+```{.haskell}
 type Set      a = GeneralMap a (Add Bool)
 type MultiSet a = GeneralMap a (Add Integer)
 ```
@@ -251,11 +258,11 @@ instance (Semiring r, Applicative m) => Alternative (ContT r m) where
 probOfT :: (Semiring r, Applicative m) => (a -> Bool) -> ContT r m a -> m r
 probOfT e c = runContT c (\x -> if e x then pure one else pure zero)
 
-probOfC :: Semiring r => (a -> Bool) -> Cont r a -> r
-probOfC e = runIdentity . probOfT e
+probOf :: Semiring r => (a -> Bool) -> Cont r a -> r
+probOf e = runIdentity . probOfT e
 
-uniformC :: Applicative m => [a] -> ContT Double m a
-uniformC xs =
+uniform :: Applicative m => [a] -> ContT Double m a
+uniform xs =
   let s = 1.0 / fromIntegral (length xs)
   in fromProbs (map (flip (,) s) xs)
 ```
@@ -285,8 +292,8 @@ infixr 0 <|
 infixr 0 |>
 ```
 ```{.haskell .literate .example}
-probOf ('a'==) (uniform "a" <| 3 :|: 1 |> uniform "b")
-(3,4)
+probOf ('a'==) (uniform "a" <| 0.4 :|: 0.6 |> uniform "b")
+0.4
 ```
 
 ## UnLeak
@@ -313,9 +320,6 @@ instance Monad m => Monad (WeightedT s m) where
 
 (I think this might have something to do with Cont) You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
 
-```{.haskell .literate .hidden_source}
-newtype Identity a = Identity { runIdentity :: a }
-```
 ```{.haskell .literate}
 type Weighted s = WeightedT s Identity
 
@@ -365,6 +369,37 @@ data Dist a where
 [@larsen_memory_2011]
 
 It looks like almost a semigroup in the category of endofunctors! [@rivas_monoids_2015] Alternatively it resembles a free `MonadPlus`{.haskell}, although that's probably misleading. You need an extra law to make even a *near*-semiring, and most members of the above classes *don't* follow that extra law. The only things which really do are basically lists! (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
+
+An actual free near-semiring looks like this:
+
+```{.haskell}
+data Free f x = Free {unFree :: [FFree f x] }
+data FFree f x = Pure x | Con (f (Free f x))
+```
+
+[@rivas_monoids_2015]
+
+Specialized to the `Identity`{.haskell} monad, that becomes:
+
+```{.haskell}
+data Forest a = Forest { unForest :: [Tree x] }
+data Tree x = Leaf x | Branch (Forest x)
+```
+
+De-specialized to the [free monad transformer](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Monad-Trans-Free.html), it becomes:
+
+```{.haskell}
+newtype FreeT f m a = FreeT
+  { runFreeT :: m (FreeF f a (FreeT f m a)) }
+
+data FreeF f a b
+  = Pure a
+  | Free (f b)
+
+type FreeNearSemiring f = FreeT f []
+```
+
+These definitions all lend themselves to combinatorial search [@spivey_algebras_2009, @fischer_reinventing_2009, @piponi_monad_2009], with one extra operation needed: `wrap`{.haskell}.
 
 ## Odds
 
@@ -421,7 +456,9 @@ Or, as a class:
 ```{.haskell .literate}
 class Semiring a => StarSemiring a where
   star :: a -> a
-  star x = one <+> star x <.> x
+  star x = one <+> plus x
+  plus :: a -> a
+  plus x = x <.> star x
 ```
 
 Using this on types, you get:
@@ -461,14 +498,153 @@ Or, to put it another way: the `Odds`{.haskell} monad!
 
 ## Some Examples
 
-So we've seen semirings for probabilities, maps, sets, etc. What else?
+So we've seen semirings for probabilities, maps, sets, etc. What else forms a semiring?
 
-Well, multisets over monoids form semirings:
+One of the most important applications (and a source of much of the notation) are regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:
 
 ```{.haskell .literate}
-newtype MultiSet a = MultiSet [a]
-  deriving (Show, Functor)
-  -- Not allowed to worry about the order!
+data FreeStar a
+ = Gen a
+ | Zero
+ | One
+ | FreeStar a :<+> FreeStar a
+ | FreeStar a :<.> FreeStar a
+ | Star (FreeStar a)
+
+instance Semiring (FreeStar a) where
+  (<+>) = (:<+>)
+  (<.>) = (:<.>)
+  zero = Zero
+  one = One
+  
+instance StarSemiring (FreeStar a) where
+  star = Star
+  
+interpret :: StarSemiring s => (a -> s) -> FreeStar a -> s
+interpret f = \case
+  Gen x -> f x
+  Zero -> zero
+  One -> one
+  l :<+> r -> interpret f l <+> interpret f r
+  l :<.> r -> interpret f l <.> interpret f r
+  Star x -> star (interpret f x)
+```
+
+This may be more efficiently encoded using the more initial approach. Using another semiring (near-semiring, specifically; and it requires the underlying monoid to be commutative):
+
+```{.haskell .literate}
+instance Monoid a => Semiring (Endo a) where
+  Endo f <+> Endo g = Endo (\x -> f x <> g x)
+  zero = Endo (const mempty)
+  one = Endo id
+  Endo f <.> Endo g = Endo (f . g)
+  
+instance (Monoid a, Eq a) => StarSemiring (Endo a) where
+  star (Endo f) = Endo converge where
+    converge x = x <> (if y == mempty then y else converge y) where
+      y = f x
+```
+
+Then, interpreting the regex is as simple as writing an interpreter:
+
+```{.haskell .literate}
+asRegex :: Eq a => FreeStar (a -> Bool) -> [a] -> Bool
+asRegex fs = any null . appEndo (interpret f fs) . pure where
+  f p = Endo . mapMaybe $ \case
+    (x:xs) | p x -> Just xs
+    _ -> Nothing
+
+char' :: Eq a => a -> FreeStar (a -> Bool)
+char' c = Gen (c==)
+```
+
+Actually, you don't need the free version at all!
+
+```{.haskell .literate}
+runRegex :: Eq a => Endo [[a]] -> [a] -> Bool
+runRegex fs = any null . appEndo fs . pure
+
+char :: Eq a => a -> Endo [[a]]
+char c = Endo . mapMaybe $ \case
+  (x:xs) | c == x -> Just xs
+  _ -> Nothing
+  
+instance IsString (Endo [String]) where
+  fromString = mul . map char . reverse
+  
+(<^>) :: Semiring s => s -> s -> s
+(<^>) = flip (<.>)
+
+greet :: Endo [String]
+greet = "H" <^> ("a" <+> "e") <^> "llo"
+```
+```{.haskell .literate .example .hidden_source}
+:set -XOverloadedStrings
+```
+```{.haskell .literate .example}
+runRegex greet "Hello"
+True
+```
+```{.haskell .literate .example}
+runRegex greet "Hallo"
+True
+```
+```{.haskell .literate .example}
+runRegex greet "Halo"
+False
+```
+
+## Efficiency
+
+Of course, that's about as slow as it gets when it comes to regexes. A faster representation is a [nondeterministic finite automaton](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton). This is a thing which has multiple states, and can transition between each state based on which character we receive. 
+
+Each state is represented by something like a number. Alternatively, you can represent the state machine with a matrix, where each entry indicates whether or not that transition can occur. Actually, each entry can be an arbitrary semiring. So the whole thing is kind of like a map from indices to semirings (sound familiar?)
+
+Taking some code from @dolan_fun_2013:
+
+```{.haskell .literate}
+data Matrix a = Scalar a
+              | Matrix [[a]]
+              
+mjoin :: (Matrix a, Matrix a, Matrix a, Matrix a) -> Matrix a
+mjoin (Matrix ws, Matrix xs, Matrix ys, Matrix zs) =
+  Matrix ((zipWith (++) ws xs) ++ (zipWith (++) ys zs))
+  
+msplit :: Matrix a -> (Matrix a, Matrix a, Matrix a, Matrix a)
+msplit (Matrix (row:rows)) = 
+  (Matrix [[first]], Matrix [top]
+  ,Matrix left,      Matrix rest )
+  where
+    (first:top) = row
+    (left,rest) = unzip (map (\(x:xs) -> ([x],xs)) rows)
+    
+instance Semiring a => Semiring (Matrix a) where
+  zero = Scalar zero
+  one = Scalar one
+  Scalar x <+> Scalar y = Scalar (x <+> y)
+  Matrix x <+> Matrix y =
+    Matrix (zipWith (zipWith (<+>)) x y)
+  Scalar x <+> m = m <+> Scalar x
+  Matrix [[x]] <+> Scalar y = Matrix [[x <+> y]]
+  x <+> y = mjoin (first <+> y, top, left, rest <+> y)
+    where (first, top, left, rest) = msplit x
+  Scalar x <.> Scalar y = Scalar (x <.> y)
+  Scalar x <.> Matrix y = Matrix ((map.map) (x<.>) y)
+  Matrix x <.> Scalar y = Matrix ((map.map) (<.>y) x)
+  Matrix x <.> Matrix y = 
+    Matrix [ [ foldl1 (<+>) (zipWith (<.>) row col) | col <- cols ] 
+           | row <- x ] where cols = transpose y
+
+instance StarSemiring a => StarSemiring (Matrix a) where
+  star (Matrix [[x]]) = Matrix [[star x]]
+  star m = mjoin (first' <+> top' <.> rest' <.> left'
+                 ,top' <.> rest', rest' <.> left', rest')
+    where
+      (first, top, left, rest) = msplit m
+      first' = star first
+      top' = first' <.> top
+      left' = left <.> first'
+      rest' = star (rest <+> left' <.> top)
 ```
 
 ## Modules.
