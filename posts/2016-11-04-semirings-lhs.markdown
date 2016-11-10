@@ -26,7 +26,7 @@ import Data.Maybe
 import Data.List hiding (insert)
 ```
 
-I've been playing around a lot with [semirings](https://en.wikipedia.org/wiki/Semiring) recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
+I've been playing around a lot with semirings recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
 
 
 ```{.haskell .literate}
@@ -57,7 +57,9 @@ x <.> (y <+> z) = (x <.> y) <+> (x <.> z)
 zero <.> a = a <.> zero = zero
 ```
 
-At first glance, it looks quite numeric. Indeed, [PureScript](https://pursuit.purescript.org/packages/purescript-prelude/1.1.0/docs/Data.Semiring) uses it as the basis for its numeric hierarchy. It certainly works a lot nicer than Haskell's [`Num`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Prelude.html#g:5).
+I should note that what I'm calling a semiring here is often called a [rig](https://ncatlab.org/nlab/show/rig). I actually prefer the name "rig": a rig is a ring without **n**egatives (cute!); whereas a *semi*ring is a rig without neutral elements, which mirrors the definition of a semigroup. The nomenclature in this area is a mess, though (more on that later), so I went with the more commonly-used name for the sake of googleability.
+
+At first glance, it looks quite numeric. Indeed, [PureScript](https://pursuit.purescript.org/packages/purescript-prelude/1.1.0/docs/Data.Semiring) uses it as the basis for its numeric hierarchy. It certainly works a lot nicer than Haskell's [`Num`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Prelude.html#t:Num).
 
 ```{.haskell .literate}
 instance Semiring Integer where
@@ -73,7 +75,7 @@ instance Semiring Double where
   (<.>) = (*)
 ```
 
-However, `Bool`{.haskell} also conforms:
+It's more general than just numbers. `Bool`{.haskell} also conforms:
 
 ```{.haskell .literate}
 instance Semiring Bool where
@@ -126,7 +128,7 @@ So far, so easy.
 
 ## A Semiring Map
 
-I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to write one map-like type, and have its behaviour change between the whole Boom hierarchy [@bunkenburg_boom_1994] depending on the type annotations. I also wanted to avoid newtypes.
+I got using semirings first to try and avoid code duplication for a trie implementation. Basically, I wanted to write one map-like type, and have its behaviour change between the Boom Hierarchy [@boom_further_1981] plus maps, depending on the type annotations. I also wanted to avoid newtypes.
 
 ```{.haskell .literate}
 newtype GeneralMap a b = GeneralMap
@@ -163,7 +165,7 @@ assoc  :: Ord a => a -> b -> MultiMap a b -> MultiMap a b
 delete :: Ord a => a -> MultiMap a b -> MultiMap a b
 ```
 
-Sets need `one`{.haskell}, though:
+For data structures with no "keys" (sets), you need `one`{.haskell}:
 
 ```{.haskell .literate}
 insert :: (Ord a, Semiring b) => a -> GeneralMap a b -> GeneralMap a b
@@ -207,33 +209,35 @@ intersection (GeneralMap x) (GeneralMap y) =
   GeneralMap (Map.intersectionWith (<.>) x y)
 ```
 
-While it works for `Set`s, it doesn't make sense for `MultiSet`s, and it doesn't work for `Map`s. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
+While it works for sets, it doesn't make sense for multisets, and it doesn't work for maps. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
 
 ## A Probability Semiring
 
-While searching, though, I came across some other interesting semirings. The *Probability* semiring, in particular, was pretty interesting. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1. You could combine it with a list to get the traditional probability monad: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
+While searching, though, I came across some other semirings. The *probability* semiring, for instance. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1.
 
-The normal, standard definition of probability is this:
+It's useful in some cool ways. For instance, you could combine it with a list to get the probability monad [@erwig_functional_2006]: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
 
 ```{.haskell}
-newtype Prob s a = Prob { runProb :: [(a, s)]}
+newtype Prob s a = Prob { runProb :: [(a,s)] }
 ```
 
-Fiddling with that definition can get you some pretty cool definitions. For instance, you can build the monad out of smaller transformers:
+Interestingly, the above type can be constructed from more primitive types. For instance, extracting the `WriterT`{.haskell} monad transformer gives you:
 
 ```{.haskell}
 WriterT (Product Double) []
 ```
 
-Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/).
+Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/) [and his paper in -@kidd_build_2007].
 
-Of course, the boring version:
+The representation above is unfortunately too slow to be useful, usually. In particular, there's a combinatorial explosion on every monadic bind. One of the strategies to reduce this explosion is to replace the association list with a map:
 
 ```{.haskell}
-newtype Prob s a = Prob { runProb :: [(a, s)]}
+newtype Prob s a = Prob { runProb :: Map a s }
 ```
 
-Looks like an inefficient version of a `Map`. Or, to put it a different way, the general map from above.
+The `Ord`{.haskell} constraint on `a`{.haskell} prevent the above representation from conforming to `Monad`{.haskell}. (at least the standard version in the prelude)
+
+This is, of course, equivalent to the generalized map types above.
 
 ## Cont
 
@@ -244,7 +248,9 @@ infixr 0 $*
 newtype Linear r a = Linear { ($*) :: (a -> r) -> r }
 ```
 
-Or, as it's also known: [Cont](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Cont.html#t:Cont). This can actually encode all the functionality you might need: (and even a sensible `<|>`{.haskell} definition)
+The above type is also known as [Cont](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Cont.html#t:Cont), the continuation monad. And it turns out that probabilities are totally representable using this type. Almost. It encodes pretty much all of the functionality of the traditional representation (and even a sensible `<|>`{.haskell} definition):
+
+
 
 ```{.haskell .literate}
 fromProbs :: (Semiring s, Applicative m) => [(a,s)] -> ContT s m a
@@ -267,9 +273,13 @@ uniform xs =
   in fromProbs (map (flip (,) s) xs)
 ```
 
-I wonder if this representation has something to do with modules over monads [@hirschowitz_modules_2010].
+Multiplication isn't paid for on every bind, making this (potentially) a more efficient implementation than the naive versions above. However it doesn't let you inspect individual values without enumerating over the entire input.
 
-In fact, you can beef up the `<|>`{.haskell} operator a little, with something like [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
+Finally I have a name for the probability monad / generalized map thing: a covector. (I'm not sure if this is totally correct)
+
+The `ContT`{.haskell} transformer is related to this, also. This possibly encodes some "transformer" interpretation of the covector. It may have something to do with modules over monads [@hirschowitz_modules_2010].
+
+As a short digression, you can beef up the `<|>`{.haskell} operator a little, with something like [the conditional choice operator](http://zenzike.com/posts/2011-08-01-the-conditional-choice-operator):
 
 ```{.haskell .literate}
 data BiWeighted s = s :|: s
@@ -298,7 +308,7 @@ probOf ('a'==) (uniform "a" <| 0.4 :|: 0.6 |> uniform "b")
 
 ## UnLeak
 
-Another optimization is to transform the leaky [`WriterT`](https://twitter.com/gabrielg439/status/659170544038707201) into a state monad:
+Another optimization to the probability monad is to transform the leaky [`WriterT`](https://twitter.com/gabrielg439/status/659170544038707201) into a state monad:
 
 ```{.haskell .literate}
 newtype WeightedT s m a = WeightedT 
@@ -318,7 +328,9 @@ instance Monad m => Monad (WeightedT s m) where
     getWeightedT (f x) p
 ```
 
-(I think this might have something to do with Cont) You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
+(I think this might have something to do with the isomorphism between `Cont ((->) s)`{.haskell} and `State s` [@kmett_free_2011]) 
+
+You can even make it look like a normal (non-transformer) writer with some pattern synonyms:
 
 ```{.haskell .literate}
 type Weighted s = WeightedT s Identity
@@ -354,7 +366,7 @@ newtype FreeMonoid a = FreeMonoid
 
 [@doel_free_2015]
 
-So this big map-like thing, which represents probability, and continuations, and whatnot, has something to do with the free semiring.
+So possibly covectors represent the free semiring, in some way.
 
 Another encoding which looks free-ish is one of the efficient implementations of the probability monad:
 
@@ -362,18 +374,22 @@ Another encoding which looks free-ish is one of the efficient implementations of
 data Dist a where
   Certainly :: a -> Dist a -- only possible value
   Choice :: Probability -> Dist a -> Dist a -> Dist a
-  Fmap ::(a -> b) -> Dist a -> Dist b
+  Fmap :: (a -> b) -> Dist a -> Dist b
   Join :: Dist (Dist a) -> Dist a
 ```
 
 [@larsen_memory_2011]
 
-It looks like almost a semigroup in the category of endofunctors! [@rivas_monoids_2015] Alternatively it resembles a free `MonadPlus`{.haskell}, although that's probably misleading. You need an extra law to make even a *near*-semiring, and most members of the above classes *don't* follow that extra law. The only things which really do are basically lists! (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
+This looks an awful lot like a weighted [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html). Is it a free semiring, then?
+
+Well, maybe. The observation that, as monads are monoids in the category of endofunctors, alternatives are semirings in the category of endofunctors, is exciting [@rivas_monoids_2015].
+
+However, it's not the whole story. First of all, full semirings are probably out of reach for most reasonable monads. A *near*-semiring is one in which multiplication only distributes over plus on one side, and addition isn't necessarily commutative. (usually. Nomenclature is unclear again, here) Even with that lower bar, very few current `Alternative`s follow the required laws. Those that do seem to be better described as nondeterminism structures, rather than `Alternative`s. (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
 
 An actual free near-semiring looks like this:
 
 ```{.haskell}
-data Free f x = Free {unFree :: [FFree f x] }
+data Free f x = Free { unFree :: [FFree f x] }
 data FFree f x = Pure x | Con (f (Free f x))
 ```
 
