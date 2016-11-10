@@ -811,9 +811,6 @@ toList (DiffList x) = appEndo x []
 runCPS :: (a -> c) -> Cont c a -> c
 runCPS = flip runCont
 
-instance Computation DiffList where
-  yield = singleton
-
 backtrack :: Cont (DiffList a) a -> [a]
 backtrack = toList . runCPS yield
 
@@ -872,12 +869,13 @@ Also, it will let you choose greedy or lazy execution *after* the replication is
 
 The real power of the library is only obvious when combined with the [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects) library. Given a replication, you can execute the replication *in any permutation. Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
 
-## Modules.
+## References
 
 permutations, replications.
 Weighted parsers, regexes, natural lang, constraint programming
+provenance, modules
+linear equations, graphing
 
-## References
 
 
 
