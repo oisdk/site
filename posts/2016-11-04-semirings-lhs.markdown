@@ -596,11 +596,151 @@ False
 
 ## Efficiency
 
-Of course, that's about as slow as it gets when it comes to regexes. A faster representation is a [nondeterministic finite automaton](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton). This is a thing which has multiple states, and can transition between each state based on which character we receive. 
+Of course, that's about as slow as it gets when it comes to regexes. A faster representation is a [nondeterministic finite automaton](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton). One such implementation in haskell is [Gabriel Gonzalez's](https://github.com/Gabriel439/slides/blob/master/regex/regex.md).
 
-Each state is represented by something like a number. Alternatively, you can represent the state machine with a matrix, where each entry indicates whether or not that transition can occur. Actually, each entry can be an arbitrary semiring. So the whole thing is kind of like a map from indices to semirings (sound familiar?)
+The regex type itself can be immediately made to conform to `Semiring`{.haskell} and `StarSemiring`{.haskell}. However, it might be more interesting to translate the *implementation* into using semirings. The core is this type:
 
-Taking some code from @dolan_fun_2013:
+```{.haskell}
+type State = Int
+
+{ _startingStates         :: Set State
+, _transitionFunction     :: Char -> State -> Set State
+, _acceptingStates        :: Set State }
+```
+
+As you might note, the set data structure can be reformulated as a map from states to some semiring. In fact, the whole code can be translated into using some arbitrary semiring pretty readily:
+
+```{.haskell .literate}
+newtype StateMap a b = StateMap
+  { getStateMap :: Map a b
+  } deriving (Functor, Show, Eq, Ord, Foldable)
+
+getState :: (Ord a, Semiring b) => a -> StateMap a b -> b
+getState x = fromMaybe zero . Map.lookup x . getStateMap
+
+assoc :: (Ord a, Semiring b)
+      => a -> b -> StateMap a b -> StateMap a b
+assoc k v = StateMap . Map.insertWith (<+>) k v . getStateMap
+
+singleton :: Semiring b => a -> StateMap a b
+singleton x = StateMap (Map.singleton x one)
+
+instance (Ord a, Semiring b) => Monoid (StateMap a b) where
+  mempty = StateMap Map.empty
+  mappend (StateMap x) (StateMap y) = 
+    StateMap (Map.unionWith (<+>) x y)
+    
+intersection :: (Ord a, Semiring b)
+             => StateMap a b -> StateMap a b -> StateMap a b
+intersection (StateMap x) (StateMap y) =
+  StateMap (Map.intersectionWith (<.>) x y)
+
+type State = Int
+
+data Regex i s = Regex
+  { _numberOfStates     :: Int 
+  , _startingStates     :: StateMap State s
+  , _transitionFunction :: i -> State -> StateMap State s
+  , _acceptingStates    :: StateMap State s }
+
+isEnd :: Semiring s => Regex i s -> s
+isEnd (Regex _ as _ bs) = add (intersection as bs)
+
+match :: Regex Char Bool -> String -> Bool
+match r = isEnd . foldl' run r where
+  run (Regex n (StateMap as) f bs) i = Regex n as' f bs
+    where as' = mconcat [ fmap (v<.>) (f i k)  | (k,v) <- Map.assocs as ]
+
+        
+satisfy :: Semiring s => (i -> s) -> Regex i s
+satisfy predicate = Regex 2 as f bs
+  where
+    as = singleton 0
+    bs = singleton 1
+
+    f i 0 = assoc 1 (predicate i) mempty
+    f _ _ = mempty
+
+once :: Eq i => i -> Regex i Bool
+once x = satisfy (== x)
+
+shift :: Int -> StateMap State s -> StateMap State s
+shift n = StateMap . Map.fromAscList . (map.first) (+ n) . Map.toAscList . getStateMap
+
+instance Semiring s => Semiring (Regex i s) where
+
+  one = Regex 1 (singleton 0) (\_ _ -> mempty) (singleton 0)
+  zero = Regex 0 mempty (\_ _ -> mempty) mempty
+
+  Regex nL asL fL bsL <+> Regex nR asR fR bsR = Regex n as f bs
+    where
+      n  = nL + nR
+      as = mappend asL (shift nL asR)
+      bs = mappend bsL (shift nL bsR)
+      f i s | s < nL    = fL i s
+            | otherwise = shift nL (fR i (s - nL))
+
+  Regex nL asL fL bsL <.> Regex nR asR fR bsR = Regex n as f bs where
+    
+    n = nL + nR
+
+    as = let ss = add (intersection asL bsL)
+         in mappend asL (fmap (ss<.>) (shift nL asR))
+
+    f i s =
+        if s < nL
+        then let ss = add (intersection r bsL)
+             in mappend r (fmap (ss<.>) (shift nL asR))
+        else shift nL (fR i (s - nL))
+      where
+        r = fL i s
+    bs = shift nL bsR
+
+instance StarSemiring s => StarSemiring (Regex i s) where
+  star (Regex n as f bs) = Regex n as f' as
+    where
+      f' i s =
+          let r = f i s
+              ss = add (intersection r bs)
+          in mappend r (fmap (ss<.>) as)
+  
+  plus (Regex n as f bs) = Regex n as f' bs
+    where
+      f' i s =
+          let r = f i s
+              ss = add (intersection r bs)
+          in mappend r (fmap (ss<.>) as)
+  
+instance IsString (Regex Char Bool) where
+  fromString = mul . map once
+```
+
+Now that same regex machinery can be used with probabilistic parsing, or other more exotic kinds, with the same base implementation.
+
+There's another well-known optimization which can be made here: the state transfer can be represented by a square matrix. Here's the idea. Take a state transfer function with three possible input states, and three outputs:
+
+$transfer = \begin{cases}
+1 \quad & \{ 2, 3 \} \\
+2 \quad & \{ 1 \} \\
+3 \quad & \emptyset
+\end{cases}$
+
+Transform it to return a vector (map from integers to bools)
+
+$transfer = \begin{cases}
+1 \quad & \begin{array} ( 0 & 1 & 1 ) \end{array} \\
+2 \quad & \begin{array} ( 1 & 0 & 0 ) \end{array} \\
+3 \quad & \begin{array} ( 0 & 0 & 0 ) \end{array}
+\end{cases}$
+
+Then, the matrix representation is obvious:
+
+$transfer = \left( \begin{array}{ccc}
+0 & 1 & 1 \\
+1 & 0 & 0 \\
+0 & 0 & 0 \end{array} \right)$
+
+Interestingly, a square matrix of semirings itself forms a semiring. So we can use these matrices directly in building up regular expressions. Taking some code from @dolan_fun_2013:
 
 ```{.haskell .literate}
 data Matrix a = Scalar a
@@ -645,7 +785,92 @@ instance StarSemiring a => StarSemiring (Matrix a) where
       top' = first' <.> top
       left' = left <.> first'
       rest' = star (rest <+> left' <.> top)
+-- ?? --
 ```
+
+Here we can replace the underlying implementation with any other of the semirings that follow the laws. We get probabilistic parsing for free!
+
+## Algebraic Search
+
+```{.haskell}
+-- Treating it as a multiset
+instance CommutativeMonoid [a]
+
+newtype DiffList a = DiffList
+  { runList :: Endo [a] } deriving (Nearsemiring, Starsemiring)
+
+class Computation c where
+  yield :: a -> c a
+
+singleton :: a -> DiffList a
+singleton = DiffList . Endo . (:)
+
+toList :: DiffList a -> [a]
+toList (DiffList x) = appEndo x []
+
+runCPS :: (a -> c) -> Cont c a -> c
+runCPS = flip runCont
+
+instance Computation DiffList where
+  yield = singleton
+
+backtrack :: Cont (DiffList a) a -> [a]
+backtrack = toList . runCPS yield
+
+newtype Levels a = Levels { levels :: [a] }
+
+runLevels :: Nearsemiring a => Levels a -> a
+runLevels = add . levels
+
+levelSearch :: Cont (Levels (DiffList a)) a -> [a]
+levelSearch = toList . runLevels . runCPS (Levels . pure . yield)
+
+instance Nearsemiring a => Nearsemiring (Levels a) where
+  zero = Levels []
+  (<+>) x y = Levels (zero : merge (levels x) (levels y))
+
+merge [] ys = ys
+merge xs [] = xs
+merge (x:xs) (y:ys) = (x <+> y) : merge xs ys
+```
+
+## Permutation parsing
+
+A lot of the use from semirings comes from "attaching" them to other values. Attaching probability to values gives you the probability monad; attaching values to the free near-semiring gives you search, etc. Is this a module??
+
+Attaching a semiring to effects can give you something interesting, also. The excellent [ReplicateEffects](http://hackage.haskell.org/package/ReplicateEffects) library explores this concept in depth.
+
+It's based on this type:
+
+```{.haskell}
+data Replicate a b
+  = Nil
+  | Cons (Maybe b) (Replicate a (a -> b))
+```
+
+The idea is that you attach a *number* to an effect, representing its repetitions. In a simple case, it's the same as [`replicateM`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#v:replicateM). However, using `<|>`{.haskell}, it can do some more complex manipulation. It can, for instance, perform an action `atLeast`{.haskell} a given number of times. Now, you can build a lot of these combinators on the basic `Alternative`{.haskell} class:
+
+```{.haskell}
+atLeast :: Alternative f => Int -> f a -> f [a]
+atLeast m f = go (max 0 m) where
+  go 0 = many f
+  go n = liftA2 (:) f (go (n-1))
+  
+atMost :: Alternative f => Int -> f a -> f [a]
+atMost m f = go (max 0 m) where
+  go 0 = pure []
+  go n = liftA2 (:) f (go (n-1)) <|> pure []
+```
+
+But replicate gives you something a little different. For instance, it uses `Arrow`{.haskell}, to encode a lot of the replication information statically:
+
+```{.haskell}
+two :: Replicate a (a, a)
+```
+
+Also, it will let you choose greedy or lazy execution *after* the replication is built.
+
+The real power of the library is only obvious when combined with the [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects) library. Given a replication, you can execute the replication *in any permutation. Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
 
 ## Modules.
 
@@ -654,7 +879,5 @@ Weighted parsers, regexes, natural lang, constraint programming
 
 ## References
 
-[Permute](http://hackage.haskell.org/package/PermuteEffects-0.2/docs/Control-Permute.html)
 
-[Replicate](http://hackage.haskell.org/package/ReplicateEffects-0.2/docs/Control-Replicate.html#t:Replicate)
 
