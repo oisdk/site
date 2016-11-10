@@ -215,7 +215,7 @@ While it works for sets, it doesn't make sense for multisets, and it doesn't wor
 
 While searching, though, I came across some other semirings. The *probability* semiring, for instance. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1.
 
-It's useful in some cool ways. For instance, you could combine it with a list to get the probability monad [@erwig_functional_2006]: there's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
+It's useful in some cool ways. For instance, you could combine it with a list to get the probability monad [@erwig_functional_2006]. There's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
 
 ```{.haskell}
 newtype Prob s a = Prob { runProb :: [(a,s)] }
@@ -308,7 +308,7 @@ probOf ('a'==) (uniform "a" <| 0.4 :|: 0.6 |> uniform "b")
 
 ## UnLeak
 
-Another optimization to the probability monad is to transform the leaky [`WriterT`](https://twitter.com/gabrielg439/status/659170544038707201) into a state monad:
+Another optimization to the probability monad is to transform the [leaky](https://twitter.com/gabrielg439/status/659170544038707201) `WriterT`{.haskell} into a state monad:
 
 ```{.haskell .literate}
 newtype WeightedT s m a = WeightedT 
@@ -382,9 +382,11 @@ data Dist a where
 
 This looks an awful lot like a weighted [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html). Is it a free semiring, then?
 
-Well, maybe. The observation that, as monads are monoids in the category of endofunctors, alternatives are semirings in the category of endofunctors, is exciting [@rivas_monoids_2015].
+Maybe. There's a parallel between the relationship between monoids and semirings and applicatives and alternatives [@rivas_monoids_2015]. In a way, where monads are monoids in the category of endofunctors, alternatives are *semirings* in the category of endofunctors.
 
-However, it's not the whole story. First of all, full semirings are probably out of reach for most reasonable monads. A *near*-semiring is one in which multiplication only distributes over plus on one side, and addition isn't necessarily commutative. (usually. Nomenclature is unclear again, here) Even with that lower bar, very few current `Alternative`s follow the required laws. Those that do seem to be better described as nondeterminism structures, rather than `Alternative`s. (Edward Kmett has an explanation [here](https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/))
+This parallel probably isn't as consistent as I first thought. First of all, the paper from @rivas_monoids_2015 uses near-semirings, not semirings. A near-semiring is a semiring where the requirements for left distribution of multiplication over addition and commutative addition are dropped. Secondly, the class which most mirrors near-semirings is [`MonadPlus`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#t:MonadPlus), not Alternative. (alternative doesn't have annihilation) Thirdly, right distribution of multiplication over addition *isn't* required `MonadPlus`{.haskell}: it's a further law required on top of the existing laws. Fourthly, most types in the Haskell ecosystem today which conform to `MonadPlus`{.haskell} *don't* conform to this extra law: in fact, those that do seem to be lists of some kind or another.
+
+Another class is probably needed on top of the two already there. (this is called `Nondet`{.haskell} by @fischer_reinventing_2009)
 
 An actual free near-semiring looks like this:
 
@@ -453,7 +455,7 @@ Subbing in `Maybe`{.haskell} for `f`{.haskell}, you get a non-empty list. A *wei
 
 ## Generalizing Semirings
 
-As you might have noticed, semirings seem to have a lot to do with "both" and "either" things. For instance: `Arrow`, `ArrowChoice`; `Monad`, `MonadPlus`; `Applicative`, `Alternative`; `List`, `ZipList`, etc. Becoming more general still, you can describe types as a semiring:
+Types in haskell also form a semiring.
 
 ```{.haskell}
 (<.>) = (,)
@@ -507,7 +509,7 @@ $a* = \begin{cases}
 So, combining the probability with the type-level business, the star of `Writer s a` is:
 
 ```{.haskell}
-Either a (a, inverse of s, star (Writer s a))
+Either (1, a) (a, s / (1 - s), star (Writer s a))
 ```
 
 Or, to put it another way: the `Odds`{.haskell} monad!
@@ -546,7 +548,7 @@ interpret f = \case
   Star x -> star (interpret f x)
 ```
 
-This may be more efficiently encoded using the more initial approach. Using another semiring (near-semiring, specifically; and it requires the underlying monoid to be commutative):
+It may be more efficient to use the initial encoding. Using another semiring (near-semiring, specifically; and it requires the underlying monoid to be commutative):
 
 ```{.haskell .literate}
 instance Monoid a => Semiring (Endo a) where
@@ -612,9 +614,9 @@ False
 
 ## Efficiency
 
-Of course, that's about as slow as it gets when it comes to regexes. A faster representation is a [nondeterministic finite automaton](https://en.wikipedia.org/wiki/Nondeterministic_finite_automaton). One such implementation in haskell is [Gabriel Gonzalez's](https://github.com/Gabriel439/slides/blob/master/regex/regex.md).
+Of course, that's about as slow as it gets when it comes to regexes. A faster representation is a [nondeterministic finite automaton](https://swtch.com/~rsc/regexp/regexp1.html). One such implementation in haskell is [Gabriel Gonzalez's](https://github.com/Gabriel439/slides/blob/master/regex/regex.md).
 
-The regex type itself can be immediately made to conform to `Semiring`{.haskell} and `StarSemiring`{.haskell}. However, it might be more interesting to translate the *implementation* into using semirings. The core is this type:
+The regex type in that example can be immediately made to conform to `Semiring`{.haskell} and `StarSemiring`{.haskell}. However, it might be more interesting to translate the *implementation* into using semirings. The type of a regex looks like this:
 
 ```{.haskell}
 type State = Int
@@ -731,9 +733,16 @@ instance IsString (Regex Char Bool) where
   fromString = mul . map once
 ```
 
-Now that same regex machinery can be used with probabilistic parsing, or other more exotic kinds, with the same base implementation.
+The same regex machinery can now be used with any covector. Use a map from states to bools for a normal regex.
 
-There's another well-known optimization which can be made here: the state transfer can be represented by a square matrix. Here's the idea. Take a state transfer function with three possible input states, and three outputs:
+Swap in the [tropical semiring](https://ncatlab.org/nlab/show/max-plus+algebra): a semiring over the reals where addition is the max function, and multiplication is addition of reals. Now you've got a depth-first parser.
+
+
+Use integers to represent your map from states to bools (each bit being a value, the keys being the bit position) and you've got a super-fast implementation.
+
+Use the probability semiring, and you've got probabilistic parsing.
+
+You get the idea. There's another semiring which is especially relevant here: the square matrix. In particular, a square matrix can represent your function from input states to output states. Take, for instance, a regular expression with three possible states. Its state transfer function might look like this:
 
 $transfer = \begin{cases}
 1 \quad & \{ 2, 3 \} \\
@@ -741,7 +750,13 @@ $transfer = \begin{cases}
 3 \quad & \emptyset
 \end{cases}$
 
-Transform it to return a vector (map from integers to bools)
+It has the type of:
+
+```{.haskell}
+State -> Set State
+```
+
+Where `State`{.haskell} is an integer. You can represent the set as a vector, where each position is a key, and each value is whether or not that key is present:
 
 $transfer = \begin{cases}
 1 \quad & \begin{array} ( 0 & 1 & 1 ) \end{array} \\
@@ -756,7 +771,9 @@ $transfer = \left( \begin{array}{ccc}
 1 & 0 & 0 \\
 0 & 0 & 0 \end{array} \right)$
 
-Interestingly, a square matrix of semirings itself forms a semiring. So we can use these matrices directly in building up regular expressions. Taking some code from @dolan_fun_2013:
+This is the semiring of square matrices. It is, of course, yet *another* covector. The "keys" are the transfers: `1 -> 2`{.haskell} or `2 -> 3`{.haskell}, represented by the indices of the matrix. The "values" are whether or not that transfer is permitted.
+
+The algorithms for the usual semiring operations on matrices like this are well-known and well-optimized. I haven't yet implemented them myself in Haskell, so I don't know how fast they can be. There's an elegant list-based implementation in @dolan_fun_2013:
 
 ```{.haskell .literate}
 data Matrix a = Scalar a
@@ -801,10 +818,7 @@ instance StarSemiring a => StarSemiring (Matrix a) where
       top' = first' <.> top
       left' = left <.> first'
       rest' = star (rest <+> left' <.> top)
--- ?? --
 ```
-
-Here we can replace the underlying implementation with any other of the semirings that follow the laws. We get probabilistic parsing for free!
 
 ## Algebraic Search
 
@@ -883,7 +897,7 @@ two :: Replicate a (a, a)
 
 Also, it will let you choose greedy or lazy execution *after* the replication is built.
 
-The real power of the library is only obvious when combined with the [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects) library. Given a replication, you can execute the replication *in any permutation. Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
+The real power of the library is only obvious when combined with the [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects) library. Given a replication, you can execute the replication in any permutation. Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
 
 ## References
 
