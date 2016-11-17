@@ -4,18 +4,18 @@ tags: Haskell
 bibliography: Semirings.bib
 ---
 ```{.haskell .literate .hidden_source}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, TypeFamilies #-}
 {-# LANGUAGE DeriveFunctor, DeriveFoldable, DeriveTraversable #-}
 {-# LANGUAGE PatternSynonyms, ViewPatterns, LambdaCase #-}
-{-# LANGUAGE RankNTypes, FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings, OverloadedLists, MonadComprehensions #-}
 
 module Semirings where
 
 import qualified Data.Map.Strict as Map
 import Data.Monoid
 import Data.Array
-import Data.Foldable
+import Data.Foldable hiding (toList)
 import Data.Ratio
 import Control.Applicative
 import Control.Arrow (first)
@@ -122,6 +122,13 @@ newtype Mul a = Mul
   { getMul :: a
   } deriving (Eq, Ord, Read, Show, Semiring)
 ```
+```{.haskell .literate .hidden_source}
+instance Functor Add where
+  fmap f (Add x) = Add (f x)
+instance Applicative Add where
+  pure = Add
+  Add f <*> Add x = Add (f x)
+```
 
 I'm using `Add`{.haskell} and `Mul`{.haskell} here to avoid name clashing.
 
@@ -205,7 +212,7 @@ type MultiMap a b = GeneralMap a [b]
 
 Each of the functions from above specialises like this:
 
-```{.haskell .literate}
+```{.haskell}
 -- Set
 insert :: Ord a => a -> Set a -> Set a
 lookup :: Ord a => a -> Set a -> Add Bool
@@ -245,6 +252,9 @@ instance (Ord a, Monoid b) => Monoid (GeneralMap a b) where
   mempty = GeneralMap Map.empty
   mappend (GeneralMap x) (GeneralMap y) = 
     GeneralMap (Map.unionWith mappend x y)
+    
+singleton :: Semiring b => a -> GeneralMap a b
+singleton x = GeneralMap (Map.singleton x one)
 ```
 
 On the other hand, some of the constraints aren't very nice. `Applicative`{.haskell} on the wrappers for the map and multimap, for instance. The fact that the lookup on sets and multisets returns a wrapped value is annoying. And I couldn't figure out a definition for `intersection`{.haskell}:
@@ -579,7 +589,7 @@ One of the most important applications (and a source of much of the notation) ar
 ```{.haskell .literate}
 data FreeStar a
  = Gen a
- | Zero
+ | Zer
  | One
  | FreeStar a :<+> FreeStar a
  | FreeStar a :<.> FreeStar a
@@ -588,7 +598,7 @@ data FreeStar a
 instance Semiring (FreeStar a) where
   (<+>) = (:<+>)
   (<.>) = (:<.>)
-  zero = Zero
+  zero = Zer
   one = One
   
 instance StarSemiring (FreeStar a) where
@@ -597,7 +607,7 @@ instance StarSemiring (FreeStar a) where
 interpret :: StarSemiring s => (a -> s) -> FreeStar a -> s
 interpret f = \case
   Gen x -> f x
-  Zero -> zero
+  Zer -> zero
   One -> one
   l :<+> r -> interpret f l <+> interpret f r
   l :<.> r -> interpret f l <.> interpret f r
@@ -689,9 +699,6 @@ type State = Int
 As you might note, the set data structure can be reformulated as a map from states to some semiring. In fact, the whole code can be translated into using some arbitrary semiring pretty readily:
 
 ```{.haskell .literate}
-singleton :: Semiring b => a -> GeneralMap a b
-singleton x = GeneralMap (Map.singleton x one)
-
 type State = Int
 
 data Regex i s = Regex
@@ -708,65 +715,67 @@ match r = getAdd . isEnd . foldl' run r where
   run (Regex n (GeneralMap as) f bs) i = Regex n as' f bs
     where as' = mconcat [ fmap (v<.>) (f i k)  | (k,v) <- Map.assocs as ]
 
-satisfy :: Semiring s => (i -> s) -> Regex i s
+
+satisfy :: Semiring s => (i -> s) -> Regex i (Add s)
 satisfy predicate = Regex 2 as f bs
   where
-    as = singleton 0 one
-    bs = singleton 1 one
+    as = singleton 0
+    bs = singleton 1
 
-    f i 0 = assoc 1 (predicate i) mapEmpty
-    f _ _ = mapEmpty
+    f i 0 = assoc 1 (predicate i) mempty
+    f _ _ = mempty
 
 once :: Eq i => i -> Regex i (Add Bool)
-once x = satisfy (x==)
+once x = satisfy (== x)
 
 shift :: Int -> GeneralMap State s -> GeneralMap State s
 shift n = GeneralMap . Map.fromAscList . (map.first) (+ n) . Map.toAscList . getMap
 
-instance Semiring s => Semiring (Regex i s) where
+instance (Semiring s, Monoid s) => Semiring (Regex i s) where
 
-  one = Regex 1 (singleton 0) (\_ _ -> mapEmpty) (singleton 0)
-  zero = Regex 0 mapEmpty (\_ _ -> mapEmpty) mapEmpty
+  one = Regex 1 (singleton 0) (\_ _ -> mempty) (singleton 0)
+  zero = Regex 0 mempty (\_ _ -> mempty) mempty
 
   Regex nL asL fL bsL <+> Regex nR asR fR bsR = Regex n as f bs
     where
       n  = nL + nR
-      as = mapAdd asL (shift nL asR)
-      bs = mapAdd bsL (shift nL bsR)
+      as = mappend asL (shift nL asR)
+      bs = mappend bsL (shift nL bsR)
       f i s | s < nL    = fL i s
             | otherwise = shift nL (fR i (s - nL))
 
   Regex nL asL fL bsL <.> Regex nR asR fR bsR = Regex n as f bs where
-    
+
     n = nL + nR
 
     as = let ss = add (intersection asL bsL)
-         in mapAdd asL (fmap (ss<.>) (shift nL asR))
+         in mappend asL (fmap (ss<.>) (shift nL asR))
 
     f i s =
         if s < nL
         then let ss = add (intersection r bsL)
-             in mapAdd r (fmap (ss<.>) (shift nL asR))
+             in mappend r (fmap (ss<.>) (shift nL asR))
         else shift nL (fR i (s - nL))
       where
         r = fL i s
     bs = shift nL bsR
 
-instance StarSemiring s => StarSemiring (Regex i s) where
+instance (StarSemiring s, Monoid s) => StarSemiring (Regex i s) where
   star (Regex n as f bs) = Regex n as f' as
     where
       f' i s =
           let r = f i s
               ss = add (intersection r bs)
-          in mapAdd r (fmap (ss<.>) as)
-  
+          in mappend r (fmap (ss<.>) as)
+
   plus (Regex n as f bs) = Regex n as f' bs
     where
       f' i s =
           let r = f i s
               ss = add (intersection r bs)
-          in mapAdd r (fmap (ss<.>) as)
-  
+          in mappend r (fmap (ss<.>) as)
+
+
 instance IsString (Regex Char (Add Bool)) where
   fromString = mul . map once
 ```
@@ -857,71 +866,9 @@ instance StarSemiring a => StarSemiring (Matrix a) where
       rest' = star (rest <+> left' <.> top)
 ```
 
-## Algebraic Search
-
-Do-notation and list comprehensions are elegant and useful ways to express search problems. The classic example is Pythagorean triples:
-
-```{.haskell}
-trips = do
-  x <- [1..]
-  y <- [1..]
-  z <- [1..]
-  guard (x*x + y*y == z*z)
-  return (x,y,z)
-```
-
-However, with normal lists, this will diverge. It performs depth-first search, trying to iterate through every positive integer for `x`{.haskell} before incrementing `y`{.haskell} or `z`{.haskell}.
-
-The solution, using either breadth-first or depth-bounded search, can be elegantly expressed using the same notation. It's explored in @fischer_reinventing_2009 and @spivey_algebras_2009.
-
-Turns out that this can also be expressed using the same semirings as above:
-
-```{.haskell}
--- Treating it as a multiset
-instance CommutativeMonoid [a]
-
-newtype DiffList a = DiffList
-  { runList :: Endo [a] } deriving (Nearsemiring, Starsemiring)
-
-class Computation c where
-  yield :: a -> c a
-
-singleton :: a -> DiffList a
-singleton = DiffList . Endo . (:)
-
-toList :: DiffList a -> [a]
-toList (DiffList x) = appEndo x []
-
-runCPS :: (a -> c) -> Cont c a -> c
-runCPS = flip runCont
-
-backtrack :: Cont (DiffList a) a -> [a]
-backtrack = toList . runCPS yield
-
-newtype Levels a = Levels { levels :: [a] }
-
-runLevels :: Nearsemiring a => Levels a -> a
-runLevels = add . levels
-
-levelSearch :: Cont (Levels (DiffList a)) a -> [a]
-levelSearch = toList . runLevels . runCPS (Levels . pure . yield)
-
-instance Nearsemiring a => Nearsemiring (Levels a) where
-  zero = Levels []
-  (<+>) x y = Levels (zero : merge (levels x) (levels y))
-
-merge [] ys = ys
-merge xs [] = xs
-merge (x:xs) (y:ys) = (x <+> y) : merge xs ys
-```
-
-The merge function above is especially reminiscent of the semiring for formal power series.
-
 ## Permutation parsing
 
-A lot of the use from semirings comes from "attaching" them to other values. Attaching probability to values gives you the probability monad; attaching values to the free near-semiring gives you search, etc. Is this a module??
-
-Attaching a semiring to effects can give you something interesting, also. The excellent [ReplicateEffects](http://hackage.haskell.org/package/ReplicateEffects) library explores this concept in depth.
+A lot of the use from semirings comes from "attaching" them to other values. Attaching a semiring to effects (in the form of an applicative) can give you *repetition* of those effects. The excellent [ReplicateEffects](http://hackage.haskell.org/package/ReplicateEffects) library explores this concept in depth.
 
 It's based on this type:
 
@@ -931,7 +878,9 @@ data Replicate a b
   | Cons (Maybe b) (Replicate a (a -> b))
 ```
 
-The idea is that you attach a *number* to an effect, representing its repetitions. In a simple case, it's the same as [`replicateM`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#v:replicateM). However, using `<|>`{.haskell}, it can do some more complex manipulation. It can, for instance, perform an action `atLeast`{.haskell} a given number of times. Now, you can build a lot of these combinators on the basic `Alternative`{.haskell} class:
+This type can be made to conform to `Semiring`{.haskell} (and `Starsemiring`{.haskell}, etc) trivially.
+
+In the simplest case, it has the same behaviour as [`replicateM`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#v:replicateM). Even the more complex combinators, like `atLeast`{.haskell}, can be built on `Alternative`{.haskell}:
 
 ```{.haskell}
 atLeast :: Alternative f => Int -> f a -> f [a]
@@ -945,19 +894,133 @@ atMost m f = go (max 0 m) where
   go n = liftA2 (:) f (go (n-1)) <|> pure []
 ```
 
-But replicate gives you something a little different. For instance, it uses `Arrow`{.haskell}, to encode a lot of the replication information statically:
+There are two main benefits over using the standard alternative implementation. First, you can choose greedy or lazy evaluation of the effects *after* the replication is built.
+
+Secondly, the *order* of the effects doesn't have to be specified. This allows you to execute permutations of the effects, in a permutation parser, for instance. The permutation is totally decoupled from the declaration of the repetition (it's in a totally separate library, in fact: [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects)). Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
+
+Having the replicate type conform to `Semiring`{.haskell} is all well and good: what I'm interested in is seeing if its implementation is another semiring-based object in disguise. I'll revisit this in another post.
+
+## Algebraic Search
+
+List comprehension notation is one of my all-time favourite bits of syntactic sugar. It seems almost *too* declarative to have a reasonable implementation strategy. The vast majority of the time, it actually works in a sensible way. There are exceptions, though. Take a reasonable definition of a list of Pythagorean triples:
 
 ```{.haskell}
-two :: Replicate a (a, a)
+[ (x,y,z) | x <- [1..], y <- [1..], z <- [1..], x*x + y*y == z*z ]
 ```
 
-Also, it will let you choose greedy or lazy execution *after* the replication is built.
+The above expression will diverge. It will search through every possible value for `z`{.haskell} before incrementing either `x`{.haskell} or `y`{.haskell}. Since there are infinite values for `z`{.haskell}, it will never find a triple. For search problems like the above, a list comprehension is equivalent to depth-first search. 
 
-The real power of the library is only obvious when combined with the [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects) library. Given a replication, you can execute the replication in any permutation. Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
+In order to express another kind of search (either breadth-first or depth-bounded), a different monad is needed. These monads explored in @fischer_reinventing_2009 and @spivey_algebras_2009.
+
+You can actually use the *exact* same notation as above with another monad using `-XMonadComprehensions`{.haskell} and `-XOverloadedLists`{.haskell}.
+
+```{.haskell .literate}
+trips :: ( Alternative m
+         , Monad m
+         , IsList (m Integer)
+         , Enum (Item (m Integer))
+         , Num (Item (m Integer)))
+      => m (Integer,Integer,Integer)
+trips = [ (x,y,z) | x <- [1..], y <- [1..], z <- [1..], x*x + y*y == z*z ]
+```
+
+So then, here's the challenge: swap in different `m`{.haskell}s via a type annotation, and prevent the above expression from diverging.
+
+As one example, here's some code adapted from @fischer_reinventing_2009:
+
+```{.haskell .literate}
+instance (Monoid r, Applicative m) => Monoid (ContT r m a) where
+  mempty = ContT (const (pure mempty))
+  mappend (ContT f) (ContT g) = ContT (\x -> liftA2 mappend (f x) (g x))
+  
+newtype List a = List { runList :: forall m. Monoid m => Cont m a } deriving Functor
+
+instance Foldable List where foldMap = flip (runCont.runList)
+  
+instance Show a => Show (List a) where show = show . foldr (:) []
+
+instance Monoid (List a) where
+  mappend (List x) (List y) = List (mappend x y)
+  mempty = List mempty
+  
+instance Monoid a => Semiring (List a) where
+  zero = mempty
+  (<+>) = mappend
+  (<.>) = liftA2 mappend
+  one = pure mempty
+
+bfs :: List a -> [a]
+bfs = toList . fold . levels . anyOf
+
+newtype Levels a = Levels { levels :: [List a] } deriving Functor
+
+instance Applicative Levels where
+  pure x = Levels [pure x]
+  Levels fs <*> Levels xs = Levels [ f <*> x | f <- fs, x <- xs ]
+  
+instance Alternative Levels where
+  empty = Levels []
+  Levels x <|> Levels y = Levels (mempty : merge x y)
+
+instance IsList (List a) where
+  type Item (List a) = a
+  fromList = anyOf
+  toList = foldr (:) []
+  
+instance Applicative List where
+  pure x = List (pure x)
+  (<*>) = ap
+
+instance Alternative List where
+  empty = mempty
+  (<|>) = mappend
+
+instance Monad List where
+  x >>= f = foldMap f x
+
+anyOf :: (Alternative m, Foldable f) => f a -> m a
+anyOf = getAlt . foldMap (Alt . pure)
+
+merge :: [List a] -> [List a] -> [List a]
+merge []      ys    = ys
+merge xs      []    = xs
+merge (x:xs) (y:ys) = mappend x y : merge xs ys
+```
+```{.haskell .literate .example}
+take 3 (bfs trips)
+[(3,4,5),(4,3,5),(6,8,10)]
+```
+
+The only relevance to semirings is the merge function. The semiring over lists is the semiring over polynomials:
+
+```{.haskell .literate}
+instance Semiring a => Semiring [a] where
+  one = [one]
+  zero = []
+  [] <+> ys = ys
+  xs <+> [] = xs
+  (x:xs) <+> (y:ys) = (x <+> y) : (xs <+> ys)
+  [] <.> _ = []
+  _ <.> [] = []
+  (x:xs) <.> (y:ys) =
+    (x <.> y) : (map (x <.>) ys <+> map (<.> y) xs <+> (xs <.> ys))
+```
+
+The `<+>`{.haskell} is the same as the `merge`{.haskell} function. I think the `<.>`{.haskell} might be a more valid definition of the `<*>`{.haskell} function, also.
+
+```{.haskell}
+instance Applicative Levels where
+  pure x = Levels [pure x]
+  Levels [] <*> _ = Levels []
+  _ <*> Levels [] = Levels []
+  Levels (f:fs) <*> Levels (x:xs) = Levels $
+    (f <*> x) : levels (Levels (fmap (f <*>) xs) 
+             <|> Levels (fmap (<*> x) fs)
+             <|> (Levels fs <*> Levels xs))
+```
 
 ## Conclusion
 
-Most of this stuff is vague ideas around the use of semirings. If I get a chance sometime in the future, I intend to implement some of this stuff in a library, with regular expressions, permutations, matrix algorithms, and the probability monads.
-
+I've only scratched the surface of this abstraction. There are several other interesting semirings: polynomials, logs, Viterbi, Łukasiewicz, languages, multisets, bidirectional parsers, etc. Hopefully I'll eventually be able to put this stuff into a library or something. In the meantime, I definitely will write some posts on the application to context-free parsing, bidirectional parsing (I just read @breitner_showcasing_2016) and search. 
 
 ## References
