@@ -286,7 +286,7 @@ This representation is unfortunately too slow to be useful (usually). In particu
 newtype Prob s a = Prob { runProb :: Map.Map a s }
 ```
 
-Because this doesn't allow duplicate keys, it will flatten association list on every bind. Unfortunately, there's no huge efficiency gain, and even some efficiency *loss* [@larsen_memory_2011]. Also, the `Ord`{.haskell} constraint on `a`{.haskell} prevent the above representation from conforming to `Monad`{.haskell}. (at least the standard version in the prelude)
+Because this doesn't allow duplicate keys, it will flatten the association list on every bind. Unfortunately, there's no huge efficiency gain, and in some cases an efficiency *loss* [@larsen_memory_2011]. Also, the `Ord`{.haskell} constraint on `a`{.haskell} prevents the above representation from conforming to `Monad`{.haskell}. (at least the standard version in the prelude)
 
 Interestingly, this type is exactly the same as the `GeneralMap`{.haskell} from above. This is a theme I kept running into, actually: the `GeneralMap`{.haskell} type represents not just maps, multimaps, sets, multisets, but also a whole host of other data structures.
 
