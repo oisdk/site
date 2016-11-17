@@ -111,8 +111,7 @@ tsInsert <span class="fu">=</span> foldr f b <span class="kw">where</span>
 fromList [<span class="st">&quot;ab&quot;</span>,<span class="st">&quot;abc&quot;</span>,<span class="st">&quot;cb&quot;</span>,<span class="st">&quot;ced&quot;</span>]</code></pre></div>
 <h1 id="further-generalizing">Further Generalizing</h1>
 <p>Most implementations of tries that I’ve seen are map-like data structures, rather than set-like. In other words, instead of holding a <code class="sourceCode haskell"><span class="dt">Bool</span></code> at the value position, it holds a <code class="sourceCode haskell"><span class="dt">Maybe</span></code> something.</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">
-<span class="kw">data</span> <span class="dt">Trie</span> a b <span class="fu">=</span> <span class="dt">Trie</span>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Trie</span> a b <span class="fu">=</span> <span class="dt">Trie</span>
   {<span class="ot"> endHere  ::</span> b
   ,<span class="ot"> children ::</span> <span class="dt">Map</span> a (<span class="dt">Trie</span> a b) 
   } <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Ord</span>, <span class="dt">Show</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Traversable</span>)</code></pre></div>
@@ -211,7 +210,7 @@ x <span class="fu">&lt;.&gt;</span> y <span class="fu">=</span> fromMult (toMult
   fromAdd  <span class="fu">=</span> getSum
   toMult   <span class="fu">=</span> <span class="dt">Product</span>
   fromMult <span class="fu">=</span> getProduct
-  
+
 <span class="kw">instance</span> <span class="dt">SemiringIso</span> <span class="dt">Bool</span> <span class="dt">Any</span> <span class="dt">All</span> <span class="kw">where</span>
   toAdd    <span class="fu">=</span> <span class="dt">Any</span>
   fromAdd  <span class="fu">=</span> getAny
@@ -229,6 +228,7 @@ add xs <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
 <div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="kw">instance</span> (<span class="dt">Ord</span> a, <span class="dt">Semiring</span> b) <span class="ot">=&gt;</span> <span class="dt">IsList</span> (<span class="dt">Trie</span> a b) <span class="kw">where</span>
   <span class="kw">type</span> <span class="dt">Item</span> (<span class="dt">Trie</span> a b) <span class="fu">=</span> [a]
   fromList <span class="fu">=</span> foldr add mempty
+  toList <span class="fu">=</span> undefined
 <span class="ot">ans ::</span> <span class="dt">Semiring</span> b <span class="ot">=&gt;</span> b</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">ans <span class="fu">=</span> lookup <span class="st">&quot;abc&quot;</span> (fromList [<span class="st">&quot;abc&quot;</span>, <span class="st">&quot;def&quot;</span>, <span class="st">&quot;abc&quot;</span>, <span class="st">&quot;ghi&quot;</span>])</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell"><span class="ot">ans ::</span> <span class="dt">Sum</span> <span class="dt">Int</span>
