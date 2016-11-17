@@ -717,7 +717,7 @@ merge (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class=
 <p>Doel, Dan. 2015. “Free monoids in haskell. The comonad.Reader.” <a href="http://comonad.com/reader/2015/free-monoids-in-haskell/" class="uri">http://comonad.com/reader/2015/free-monoids-in-haskell/</a>.</p>
 </div>
 <div id="ref-dolan_fun_2013">
-<p>Dolan, Stephen. 2013. “Fun with semirings: A functional pearl on the abuse of linear algebra.” In <em>ACM SIGPLAN notices</em>, 48:101–110. ACM. <a href="http://dl.acm.org/citation.cfm?id=2500613" class="uri">http://dl.acm.org/citation.cfm?id=2500613</a>.</p>
+<p>Dolan, Stephen. 2013. “Fun with semirings: A functional pearl on the abuse of linear algebra.” In <em>ACM SIGPLAN notices</em>, 48:101–110. ACM. <a href="https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf" class="uri">https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf</a>.</p>
 </div>
 <div id="ref-droste_semirings_2009">
 <p>Droste, Manfred, and Werner Kuich. 2009. “Semirings and formal power series.” In <em>Handbook of weighted automata</em>, ed by. Manfred Droste, Werner Kuich, and Heiko Vogler, 1:3–28. Monographs in theoretical computer science. an EATCS series. Springer Berlin Heidelberg. <a href="http://staff.mmcs.sfedu.ru/~ulysses/Edu/Marktoberdorf_2009/working_material/Esparsa/Kuich.%20Semirings%20and%20FPS.pdf">http://staff.mmcs.sfedu.ru/~ulysses/Edu/Marktoberdorf_2009/working_material/Esparsa/Kuich.%20Semirings%20and%20FPS.pdf</a>.</p>
@@ -729,7 +729,7 @@ merge (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class=
 <p>Fischer, Sebastian, and others. 2009. “Reinventing haskell backtracking.” In, 2875–2888. <a href="http://sebfisch.de/Reinventing.pdf" class="uri">http://sebfisch.de/Reinventing.pdf</a>.</p>
 </div>
 <div id="ref-hirschowitz_modules_2010">
-<p>Hirschowitz, André, and Marco Maggesi. 2010. “Modules over monads and initial semantics.” <em>Information and Computation</em> 208 (5). Special issue: 14th workshop on logic, language, information and computation (WoLLIC 2007) (May 1): 545–564. doi:<a href="https://doi.org/10.1016/j.ic.2009.07.003">10.1016/j.ic.2009.07.003</a>. <a href="http://www.sciencedirect.com/science/article/pii/S0890540109002405" class="uri">http://www.sciencedirect.com/science/article/pii/S0890540109002405</a>.</p>
+<p>Hirschowitz, André, and Marco Maggesi. 2010. “Modules over monads and initial semantics.” <em>Information and Computation</em> 208 (5). Special issue: 14th workshop on logic, language, information and computation (WoLLIC 2007) (May 1): 545–564. doi:<a href="https://doi.org/10.1016/j.ic.2009.07.003">10.1016/j.ic.2009.07.003</a>. <a href="https://pdfs.semanticscholar.org/3e0c/c79e8cda9246cb954da6fd8aaaa394fecdc3.pdf" class="uri">https://pdfs.semanticscholar.org/3e0c/c79e8cda9246cb954da6fd8aaaa394fecdc3.pdf</a>.</p>
 </div>
 <div id="ref-kidd_build_2007">
 <p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf</a>.</p>
