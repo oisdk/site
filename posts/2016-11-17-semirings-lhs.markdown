@@ -584,7 +584,7 @@ Or, to put it another way: the odds monad!
 
 So we've seen semirings for probabilities, maps, sets, etc. What else forms a semiring?
 
-One of the most important applications (and a source of much of the notation) are regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:
+One of the most important applications (and a source of much of the notation) is regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:
 
 ```{.haskell .literate}
 data FreeStar a
