@@ -376,7 +376,7 @@ star x <span class="fu">=</span> (x <span class="fu">&lt;.&gt;</span> star x) <s
 <p>Or, to put it another way: the odds monad!</p>
 <h2 id="some-examples">Some Examples</h2>
 <p>So we’ve seen semirings for probabilities, maps, sets, etc. What else forms a semiring?</p>
-<p>One of the most important applications (and a source of much of the notation) are regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:</p>
+<p>One of the most important applications (and a source of much of the notation) is regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">FreeStar</span> a
  <span class="fu">=</span> <span class="dt">Gen</span> a
  <span class="fu">|</span> <span class="dt">Zer</span>
