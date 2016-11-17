@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Using Protocols to Build a (very) Generic Deque - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Using Protocols to Build a (very) Generic Deque</h2>
+
+            <div class="info">
+    Posted on August 24, 2015
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Swift.html">Swift</a>
+    
+</div>
+
+<p>(Download the playground to use the code and see the outputs)</p>
+<p>This post is an update on a <a href="https://bigonotetaking.wordpress.com/2015/08/09/yet-another-root-of-all-evil/">previous implementation of a Deque</a>. A full implementation of this Deque is available <a href="https://github.com/oisdk/SwiftDataStructures/blob/master/SwiftDataStructures/Deque.swift">here</a>.</p>
+<p>A Deque is a data structure comprised of two stacks, facing opposite directions. In this way, operations at either end of the Deque have the same complexity as operations on one end of the underlying stack. This implementation uses two arrays, with the front reversed: appending, prepending, and removal of the first and last elements are all (amortized) O(1).</p>
+<p>The standard library has three <code class="sourceCode scala">Array</code> structs: <code class="sourceCode scala">Array</code>, <code class="sourceCode scala">ArraySlice</code>, and <code class="sourceCode scala">ContiguousArray</code>. They all have the same interface, with different underlying implementations. An <code class="sourceCode scala">Array</code> is a standard vector-like structure, which allows O(1) amortized appending, fast iteration, etc. A <code class="sourceCode scala">ContiguousArray</code> has stricter rules about contiguity, but it’s not bridged to Objective-C.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let array  = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]
+let cArray: ContiguousArray = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]</code></pre></div>
+<p>An <code class="sourceCode scala">ArraySlice</code> is a reference into an <code class="sourceCode scala">Array</code> or <code class="sourceCode scala">ContiguousArray</code>, for more efficient slicing. All the information an <code class="sourceCode scala">ArraySlice</code> contains is the beginning and end points of the slice (as well as any changes made to the slice separate from the array)</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let slice = array[<span class="dv">0</span>..&lt;<span class="dv">6</span>]</code></pre></div>
+<p>To replicate these semantics in a Deque requires three separate structs: one with an <code class="sourceCode scala">Array</code> as the stack, another with an <code class="sourceCode scala">ArraySlice</code> as the stack, and a third with a <code class="sourceCode scala">ContiguousArray</code>. The standard library seems to duplicate the structs, along with their methods and properties.</p>
+<p>It would be much nicer to just define a protocol that represented the <em>difference</em> between the deque types: then you could just write the methods and properties once, on top of it. Something like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol DequeType {
+  typealias Container : RangeReplaceableCollectionType, MutableSliceable
+  <span class="kw">var</span> front: Container { get set }
+  <span class="kw">var</span> back : Container { get set }
+  <span class="fu">init</span>()
+}</code></pre></div>
+<p>There’s one problem with this: both stacks need to be made public. It would be much nicer to hide the stacks (especially since an invariant needs to be checked and maintained on every mutation). If anyone has an idea of how to accomplish that, <a href="https://twitter.com/oisdk">tweet me</a>.</p>
+<p>The first method to implement is a subscript. Indexing is difficult, because the front stack will be reversed, so the index used to get in to the Deque will need to be translated into an equivalent index in the array.</p>
+<p>Any (valid) index will point into either the front or back queue, and the transformations applied to it in each case is different. If it’s in the front, the end result will look like <code class="sourceCode scala">front[front.<span class="fu">endIndex</span> - <span class="dv">1</span> - i]</code>, whereas if it’s in the back, it should be <code class="sourceCode scala">back[i - front.<span class="fu">endIndex</span>]</code>. There’s nothing specified about the Containers except that they’re <code class="sourceCode scala">RangeReplaceableCollectionType</code> and <code class="sourceCode scala">MutableSliceable</code>, so the index types will have to be as generic as possible. (you could specify <code class="sourceCode scala">where Index == Int</code>, but that’s more specific than needed, and not very extensible.)</p>
+<p>Both of those transformations are subtractions, an operation that’s possible on <code>RandomAccessIndexType</code>s with the <code class="sourceCode scala">advancedBy</code> method. <code class="sourceCode scala">advancedBy</code> takes the associated <code class="sourceCode scala">Distance</code> type of the <code class="sourceCode scala">RandomAccessIndexType</code>. That’s enough information to figure out that the Deque’s index type must be the same as the Distance of the Index of the Container.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType {
+  typealias Index = Container.<span class="fu">Index</span>.<span class="fu">Distance</span>
+}</code></pre></div>
+<p>The method that will translate an index into the relevant index in the stacks will return an enum:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public enum IndexLocation&lt;I&gt; {
+  <span class="kw">case</span> <span class="fu">Front</span>(I), <span class="fu">Back</span>(I)
+}</code></pre></div>
+<p>Then, the translate method itself:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
+  Container.<span class="fu">Index</span> : RandomAccessIndexType,
+  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {
+  
+  <span class="kw">private</span> func <span class="fu">translate</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>)
+    -&gt; IndexLocation&lt;Container.<span class="fu">Index</span>&gt; {
+    <span class="kw">return</span> i &lt; front.<span class="fu">count</span> ?
+      .<span class="fu">Front</span>(front.<span class="fu">endIndex</span>.<span class="fu">predecessor</span>().<span class="fu">advancedBy</span>(-i)) :
+      .<span class="fu">Back</span>(back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i - front.<span class="fu">count</span>))
+  }
+}</code></pre></div>
+<p>This performs two steps: 1. Check which stack it’s in. 2. Subtract in the appropriate order</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let d: Deque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>] <span class="co">// [1, 2, 3 | 4, 5, 6]</span>
+
+d.<span class="fu">translate</span>(<span class="dv">0</span>) <span class="co">// Front: 2</span>
+d.<span class="fu">translate</span>(<span class="dv">4</span>) <span class="co">// Back: 1</span></code></pre></div>
+<p>This means that the logic for converting distance to index is separated from the logic for actual indexing. Great! Here’s the indexing:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
+  Container.<span class="fu">Index</span> : RandomAccessIndexType,
+  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {
+  <span class="kw">var</span> startIndex: Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> <span class="dv">0</span> }
+  <span class="kw">var</span> endIndex  : Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> front.<span class="fu">count</span> + back.<span class="fu">count</span> }
+  <span class="fu">subscript</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>) -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span> {
+    get {
+      switch <span class="fu">translate</span>(i) {
+      <span class="kw">case</span> let .<span class="fu">Front</span>(i): <span class="kw">return</span> front[i]
+      <span class="kw">case</span> let .<span class="fu">Back</span>(i): <span class="kw">return</span> back[i]
+      }
+    } set {
+      switch <span class="fu">translate</span>(i) {
+      <span class="kw">case</span> let .<span class="fu">Front</span>(i): front[i] = newValue
+      <span class="kw">case</span> let .<span class="fu">Back</span>(i): back[i] = newValue
+      }
+    }
+  }
+}</code></pre></div>
+<p>This makes things much easier to test and debug.</p>
+<p>Here’s where the power of protocols becomes obvious. If you go back to the original definition of <code class="sourceCode scala">DequeType</code>, you can add <code class="sourceCode scala">Indexable</code>. It may seem like now only indexable things can conform, but what happens in practice is that when <code class="sourceCode scala">Indexable</code> looks for its requirements, <em>it can use the implementations in DequeType</em>. That means that we’ve just made anything that can conform to <code class="sourceCode scala">DequeType</code> indexable. That’s awesome.</p>
+<p>Next job is ranged indices. This is a good bit more complicated than the individual indices, so it definitely will benefit from being separated into a translate method:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
+  Container.<span class="fu">Index</span> : RandomAccessIndexType,
+  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : BidirectionalIndexType {
+  
+  <span class="kw">private</span> func translate
+    (i: Range&lt;Container.<span class="fu">Index</span>.<span class="fu">Distance</span>&gt;)
+    -&gt; IndexRangeLocation&lt;Container.<span class="fu">Index</span>&gt; {
+      <span class="kw">if</span> i.<span class="fu">endIndex</span> &lt;= front.<span class="fu">count</span> {
+        let s = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">endIndex</span>)
+        <span class="kw">if</span> s == front.<span class="fu">startIndex</span> &amp;&amp; i.<span class="fu">isEmpty</span> { <span class="kw">return</span> .<span class="fu">Between</span> }
+        let e = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)
+        <span class="kw">return</span> .<span class="fu">Front</span>(s..&lt;e)
+      }
+      <span class="kw">if</span> i.<span class="fu">startIndex</span> &gt;= front.<span class="fu">count</span> {
+        let s = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">startIndex</span> - front.<span class="fu">count</span>)
+        let e = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)
+        <span class="kw">return</span> .<span class="fu">Back</span>(s..&lt;e)
+      }
+      let f = front.<span class="fu">startIndex</span>..&lt;front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)
+      let b = back.<span class="fu">startIndex</span>..&lt;back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)
+      <span class="kw">return</span> .<span class="fu">Over</span>(f, b)
+  }
+}
+
+let otherDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>] <span class="co">// [0, 1, 2 | 3, 4, 5]</span>
+
+otherDeque.<span class="fu">translate</span>(<span class="dv">0</span>...<span class="dv">2</span>) <span class="co">// Front: 0..&lt;3</span>
+otherDeque.<span class="fu">translate</span>(<span class="dv">4</span>...<span class="dv">5</span>) <span class="co">// Back: 1..&lt;3</span>
+otherDeque.<span class="fu">translate</span>(<span class="dv">2</span>...<span class="dv">5</span>) <span class="co">// Over: 0..&lt;1, 0..&lt;3</span>
+otherDeque.<span class="fu">translate</span>(<span class="dv">3</span>..&lt;<span class="dv">3</span>) <span class="co">// Between</span></code></pre></div>
+<p>The invariant that must be maintained in the deque is this: if either stack has more than one element, the other cannot be empty. If the invariant is violated, the longer stack is reversed, and put in place of the shorter.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public enum Balance {
+  <span class="kw">case</span> FrontEmpty, BackEmpty, Balanced
+}
+
+extension DequeType {
+  
+  public <span class="kw">var</span> balance: Balance {
+    <span class="fu">let</span> (f, b) = (front.<span class="fu">count</span>, back.<span class="fu">count</span>)
+    <span class="kw">if</span> f == <span class="dv">0</span> {
+      <span class="kw">if</span> b &gt; <span class="dv">1</span> {
+        <span class="kw">return</span> .<span class="fu">FrontEmpty</span>
+      }
+    } <span class="kw">else</span> <span class="kw">if</span> b == <span class="dv">0</span> {
+      <span class="kw">if</span> f &gt; <span class="dv">1</span> {
+        <span class="kw">return</span> .<span class="fu">BackEmpty</span>
+      }
+    }
+    <span class="kw">return</span> .<span class="fu">Balanced</span>
+  }
+  
+  public <span class="kw">var</span> isBalanced: Bool {
+    <span class="kw">return</span> balance == .<span class="fu">Balanced</span>
+  }
+}</code></pre></div>
+<p>A deque is a good data structure for certain uses, especially those that require popping and appending from either end. <code class="sourceCode scala"><span class="fu">popFirst</span>()</code> and <code class="sourceCode scala"><span class="fu">popLast</span>()</code> aren’t included in the standard <code class="sourceCode scala">RangeReplaceableCollectionType</code>, though, so we’ll have to add our own.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension RangeReplaceableCollectionType where Index : BidirectionalIndexType {
+  <span class="kw">private</span> mutating func <span class="fu">popLast</span>() -&gt; Generator.<span class="fu">Element</span>? {
+    <span class="kw">return</span> isEmpty ? nil : <span class="fu">removeLast</span>()
+  }
+}
+
+<span class="kw">var</span> mutableDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 5</span>
+mutableDeque           <span class="co">// [0, 1, 2 | 3, 4]</span>
+
+extension DequeType where Container.<span class="fu">Index</span> : BidirectionalIndexType {
+  public mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
+    <span class="kw">return</span> back.<span class="fu">popLast</span>()
+  }
+}</code></pre></div>
+<p>The method needs to include <code class="sourceCode scala"><span class="fu">check</span>()</code>, which we can do with <code>defer</code></p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
+  defer { <span class="fu">check</span>() }
+  <span class="kw">return</span> back.<span class="fu">popLast</span>()
+}
+
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 4</span>
+mutableDeque           <span class="co">// [0, 1, 2 | 3]</span>
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 3</span>
+mutableDeque           <span class="co">// [0 | 1, 2]</span></code></pre></div>
+<p>You also can’t just pop from the back queue in <code class="sourceCode scala"><span class="fu">popLast</span>()</code>, because it may be the case that the front stack has one element left</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
+  defer { <span class="fu">check</span>() }
+  <span class="kw">return</span> back.<span class="fu">popLast</span>() ?? front.<span class="fu">popLast</span>()
+}
+
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 2</span>
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 1</span>
+mutableDeque           <span class="co">// [0|]</span>
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// 0</span>
+mutableDeque           <span class="co">// [|]</span>
+mutableDeque.<span class="fu">popLast</span>() <span class="co">// nil</span></code></pre></div>
+<p>The rest of the Deque was easy, with little to no repetition. Using protocols in this way was really surprisingly powerful: now, you can define a <code class="sourceCode scala">DequeType</code>, with full access to all of the collection methods, all the way up to <code class="sourceCode scala">RangeReplaceableCollectionType</code>, in five lines:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public struct Deque&lt;Element&gt; : DequeType {
+  public <span class="kw">var</span> front, back: [Element]
+  public typealias SubSequence = DequeSlice&lt;Element&gt;
+  public <span class="fu">init</span>() { (front, back) = ([], []) }
+}
+
+public struct DequeSlice&lt;Element&gt; : DequeType {
+  public <span class="kw">var</span> front, back: ArraySlice&lt;Element&gt;
+  public typealias SubSequence = DequeSlice
+  public <span class="fu">init</span>() { (front, back) = ([], []) }
+}</code></pre></div>
+<p>There’s no performance hit, there’s no safety problems. I only have one version of code to test, one version to change, one version to read. It’s completely extensible: you could use any kind of stack for the front and back. Even another Deque, if you were so inclined:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct DequeDeque&lt;Element&gt; : DequeType {
+  <span class="kw">var</span> front, back: Deque&lt;Element&gt;
+  typealias SubSequence = DequeDequeSlice&lt;Element&gt;
+  <span class="fu">init</span>() { front = <span class="fu">Deque</span>(); back = <span class="fu">Deque</span>() }
+}
+
+struct DequeDequeSlice&lt;Element&gt; : DequeType {
+  <span class="kw">var</span> front, back: DequeSlice&lt;Element&gt;
+  typealias SubSequence = DequeDequeSlice
+  <span class="fu">init</span>() { front = <span class="fu">DequeSlice</span>(); back = <span class="fu">DequeSlice</span>() }
+}
+
+let dd: DequeDeque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>]
+dd.<span class="fu">front</span> <span class="co">// [4 | 3, 2, 1]</span>
+dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></code></pre></div>
+<p>Woo protocols!</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
