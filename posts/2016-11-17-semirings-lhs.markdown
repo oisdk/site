@@ -14,15 +14,12 @@ module Semirings where
 
 import qualified Data.Map.Strict as Map
 import Data.Monoid
-import Data.Array
 import Data.Foldable hiding (toList)
-import Data.Ratio
 import Control.Applicative
 import Control.Arrow (first)
 import Control.Monad.Cont
 import Data.Functor.Identity
 import GHC.Exts
-import Data.Maybe
 import Data.List hiding (insert)
 ```
 
