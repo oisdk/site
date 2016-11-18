@@ -44,15 +44,12 @@
 
 <span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span>
 <span class="kw">import </span><span class="dt">Data.Monoid</span>
-<span class="kw">import </span><span class="dt">Data.Array</span>
 <span class="kw">import </span><span class="dt">Data.Foldable</span> <span class="kw">hiding</span> (toList)
-<span class="kw">import </span><span class="dt">Data.Ratio</span>
 <span class="kw">import </span><span class="dt">Control.Applicative</span>
 <span class="kw">import </span><span class="dt">Control.Arrow</span> (first)
 <span class="kw">import </span><span class="dt">Control.Monad.Cont</span>
 <span class="kw">import </span><span class="dt">Data.Functor.Identity</span>
 <span class="kw">import </span><span class="dt">GHC.Exts</span>
-<span class="kw">import </span><span class="dt">Data.Maybe</span>
 <span class="kw">import </span><span class="dt">Data.List</span> <span class="kw">hiding</span> (insert)</code></pre></div>
 <p>I’ve been playing around a lot with semirings recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Semiring</span> a <span class="kw">where</span>
@@ -326,7 +323,7 @@ execWeighted (<span class="dt">Weighted</span> (_,s)) <span class="fu">=</span> 
 <p>This looks an awful lot like a weighted <a href="https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html">free alternative</a>. Is it a free semiring, then?</p>
 <p>Maybe. There’s a parallel between the relationship between monoids and semirings and applicatives and <a href="https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#t:Alternative"><code class="sourceCode haskell"><span class="dt">Alternative</span></code></a>s <span class="citation">(Rivas, Jaskelioff, and Schrijvers 2015)</span>. In a way, where monads are monoids in the category of endofunctors, alternatives are <em>semirings</em> in the category of endofunctors.</p>
 <p>This parallel probably isn’t as consistent as I first thought. First of all, the above paper uses near-semirings, not semirings. A near-semiring is a semiring where the requirements for left distribution of multiplication over addition and commutative addition are dropped. Secondly, the class which most mirrors near-semirings is <a href="https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#t:MonadPlus"><code class="sourceCode haskell"><span class="dt">MonadPlus</span></code></a>, not alternative. (alternative doesn’t have annihilation) Thirdly, right distribution of multiplication over addition <em>isn’t</em> required <code class="sourceCode haskell"><span class="dt">MonadPlus</span></code>: it’s a further law required on top of the existing laws. Fourthly, most types in the Haskell ecosystem today which conform to <code class="sourceCode haskell"><span class="dt">MonadPlus</span></code> <em>don’t</em> conform to this extra law: in fact, those that do seem to be lists of some kind or another.</p>
-<p>Another class is probably needed on top of the two already there, called <code class="sourceCode haskell"><span class="dt">Nondet</span></code> by <span class="citation">Fischer and others (2009)</span>.</p>
+<p>Another class is probably needed on top of the two already there, called <code class="sourceCode haskell"><span class="dt">Nondet</span></code> by <span class="citation">Fischer (2009)</span>.</p>
 <p>An actual free near-semiring looks like this:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Free</span> f x <span class="fu">=</span> <span class="dt">Free</span> {<span class="ot"> unFree ::</span> [<span class="dt">FFree</span> f x] }
 <span class="kw">data</span> <span class="dt">FFree</span> f x <span class="fu">=</span> <span class="dt">Pure</span> x <span class="fu">|</span> <span class="dt">Con</span> (f (<span class="dt">Free</span> f x))</code></pre></div>
@@ -342,7 +339,7 @@ execWeighted (<span class="dt">Weighted</span> (_,s)) <span class="fu">=</span> 
   <span class="fu">|</span> <span class="dt">Free</span> (f b)
 
 <span class="kw">type</span> <span class="dt">FreeNearSemiring</span> f <span class="fu">=</span> <span class="dt">FreeT</span> f []</code></pre></div>
-<p>These definitions all lend themselves to combinatorial search <span class="citation">(Spivey 2009, <span class="citation">Fischer and others (2009)</span>, <span class="citation">Piponi (2009)</span>)</span>, with one extra operation needed: <code class="sourceCode haskell">wrap</code>.</p>
+<p>These definitions all lend themselves to combinatorial search <span class="citation">(Spivey 2009, <span class="citation">Fischer (2009)</span>, <span class="citation">Piponi (2009)</span>)</span>, with one extra operation needed: <code class="sourceCode haskell">wrap</code>.</p>
 <h2 id="odds">Odds</h2>
 <p>Does the <a href="../posts/2016-09-27-odds-lhs.html">odds monad</a> fit in to any of this?</p>
 <p>While <code class="sourceCode haskell"><span class="dt">WriterT</span> (<span class="dt">Product</span> <span class="dt">Rational</span>) []</code> is a valid definition of the traditional probability monad, it’s <em>not</em> the same as the odds monad. If you take the odds monad, and parameterize it over the weight of the tail, you get this:</p>
@@ -625,7 +622,7 @@ atMost m f <span class="fu">=</span> go (max <span class="dv">0</span> m) <span 
 <p>List comprehension notation is one of my all-time favourite bits of syntactic sugar. It seems almost <em>too</em> declarative to have a reasonable implementation strategy. The vast majority of the time, it actually works in a sensible way. There are exceptions, though. Take a reasonable definition of a list of Pythagorean triples:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">[ (x,y,z) <span class="fu">|</span> x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], x<span class="fu">*</span>x <span class="fu">+</span> y<span class="fu">*</span>y <span class="fu">==</span> z<span class="fu">*</span>z ]</code></pre></div>
 <p>The above expression will diverge. It will search through every possible value for <code class="sourceCode haskell">z</code> before incrementing either <code class="sourceCode haskell">x</code> or <code class="sourceCode haskell">y</code>. Since there are infinite values for <code class="sourceCode haskell">z</code>, it will never find a triple. For search problems like the above, a list comprehension is equivalent to depth-first search.</p>
-<p>In order to express another kind of search (either breadth-first or depth-bounded), a different monad is needed. These monads explored in <span class="citation">Fischer and others (2009)</span> and <span class="citation">Spivey (2009)</span>.</p>
+<p>In order to express another kind of search (either breadth-first or depth-bounded), a different monad is needed. These monads explored in <span class="citation">Fischer (2009)</span> and <span class="citation">Spivey (2009)</span>.</p>
 <p>You can actually use the <em>exact</em> same notation as above with another monad using <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XMonadComprehensions</span></code> and <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XOverloadedLists</span></code>.</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">trips ::</span> ( <span class="dt">Alternative</span> m
          , <span class="dt">Monad</span> m
@@ -635,7 +632,7 @@ atMost m f <span class="fu">=</span> go (max <span class="dv">0</span> m) <span 
       <span class="ot">=&gt;</span> m (<span class="dt">Integer</span>,<span class="dt">Integer</span>,<span class="dt">Integer</span>)
 trips <span class="fu">=</span> [ (x,y,z) <span class="fu">|</span> x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], x<span class="fu">*</span>x <span class="fu">+</span> y<span class="fu">*</span>y <span class="fu">==</span> z<span class="fu">*</span>z ]</code></pre></div>
 <p>So then, here’s the challenge: swap in different <code class="sourceCode haskell">m</code>s via a type annotation, and prevent the above expression from diverging.</p>
-<p>As one example, here’s some code adapted from <span class="citation">Fischer and others (2009)</span>:</p>
+<p>As one example, here’s some code adapted from <span class="citation">Fischer (2009)</span>:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> (<span class="dt">Monoid</span> r, <span class="dt">Applicative</span> m) <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">ContT</span> r m a) <span class="kw">where</span>
   mempty <span class="fu">=</span> <span class="dt">ContT</span> (const (pure mempty))
   mappend (<span class="dt">ContT</span> f) (<span class="dt">ContT</span> g) <span class="fu">=</span> <span class="dt">ContT</span> (\x <span class="ot">-&gt;</span> liftA2 mappend (f x) (g x))
@@ -737,7 +734,7 @@ merge (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class=
 <p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. <a href="http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html#JFP06a" class="uri">http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html#JFP06a</a>.</p>
 </div>
 <div id="ref-fischer_reinventing_2009">
-<p>Fischer, Sebastian, and others. 2009. “Reinventing haskell backtracking.” In, 2875–2888. <a href="http://sebfisch.de/Reinventing.pdf" class="uri">http://sebfisch.de/Reinventing.pdf</a>.</p>
+<p>Fischer, Sebastian. 2009. “Reinventing haskell backtracking.” In <em>Informatik 2009, im fokus das leben (ATPS’09)</em>. GI Edition. <a href="http://www-ps.informatik.uni-kiel.de/~sebf/data/pub/atps09.pdf" class="uri">http://www-ps.informatik.uni-kiel.de/~sebf/data/pub/atps09.pdf</a>.</p>
 </div>
 <div id="ref-hirschowitz_modules_2010">
 <p>Hirschowitz, André, and Marco Maggesi. 2010. “Modules over monads and initial semantics.” <em>Information and Computation</em> 208 (5). Special issue: 14th workshop on logic, language, information and computation (WoLLIC 2007) (May 1): 545–564. doi:<a href="https://doi.org/10.1016/j.ic.2009.07.003">10.1016/j.ic.2009.07.003</a>. <a href="https://pdfs.semanticscholar.org/3e0c/c79e8cda9246cb954da6fd8aaaa394fecdc3.pdf" class="uri">https://pdfs.semanticscholar.org/3e0c/c79e8cda9246cb954da6fd8aaaa394fecdc3.pdf</a>.</p>
