@@ -376,7 +376,7 @@ probOf ('a'==) (uniform "a" <| 0.4 :|: 0.6 |> uniform "b")
 
 ## UnLeak
 
-If you fiddle around with the probability monad, you can break apart in interesting ways. For instance, extracting the `WriterT`{.haskell} monad transformer gives you:
+If you fiddle around with the probability monad, you can break it apart in interesting ways. For instance, extracting the `WriterT`{.haskell} monad transformer gives you:
 
 ```{.haskell}
 WriterT (Product Double) []
