@@ -384,7 +384,7 @@ WriterT (Product Double) []
 
 Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/) [and his paper in -@kidd_build_2007].
 
-Straight away, we can optimise this representation by transforming the [leaky](https://twitter.com/gabrielg439/status/659170544038707201) `WriterT`{.haskell} into a state monad:
+Straight away, we can optimise this representation by transforming the [leaky](https://mail.haskell.org/pipermail/libraries/2013-March/019528.html) `WriterT`{.haskell} into a state monad:
 
 ```{.haskell .literate}
 newtype WeightedT s m a = WeightedT 
