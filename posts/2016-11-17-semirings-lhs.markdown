@@ -13,14 +13,15 @@ bibliography: Semirings.bib
 module Semirings where
 
 import qualified Data.Map.Strict as Map
-import Data.Monoid
-import Data.Foldable hiding (toList)
-import Control.Applicative
-import Control.Arrow (first)
-import Control.Monad.Cont
-import Data.Functor.Identity
-import GHC.Exts
-import Data.List hiding (insert)
+import           Data.Map.Strict      (Map)
+import           Data.Monoid
+import           Data.Foldable hiding (toList)
+import           Control.Applicative
+import           Control.Arrow        (first)
+import           Control.Monad.Cont
+import           Data.Functor.Identity
+import           GHC.Exts
+import           Data.List hiding     (insert)
 ```
 
 I've been playing around a lot with semirings recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
@@ -53,7 +54,7 @@ x <.> (y <+> z) = (x <.> y) <+> (x <.> z)
 zero <.> a = a <.> zero = zero
 ```
 
-I should note that what I'm calling a semiring here is often called a [rig](https://ncatlab.org/nlab/show/rig). I actually prefer the name "rig": a rig is a ring without **n**egatives (cute!); whereas a *semi*ring is a rig without neutral elements, which mirrors the definition of a semigroup. The nomenclature in this area is a mess, though (more on that later), so I went with the more commonly-used name for the sake of googleability.
+I should note that what I'm calling a semiring here is often called a [rig](https://ncatlab.org/nlab/show/rig). I actually prefer the name "rig": a rig is a ring without **n**egatives (cute!); whereas a *semi*ring is a rig without neutral elements, which mirrors the definition of a semigroup. The nomenclature in this area is a bit of a mess, though, so I went with the more commonly-used name for the sake of googleability.
 
 At first glance, it looks quite numeric. Indeed, [PureScript](https://pursuit.purescript.org/packages/purescript-prelude/1.1.0/docs/Data.Semiring) uses it as the basis for its numeric hierarchy. (In my experience so far, it's nicer to use than Haskell's [`Num`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Prelude.html#t:Num))
 
@@ -71,10 +72,11 @@ instance Semiring Double where
   (<.>) = (*)
 ```
 
-However, there are far more types which can form a valid `Semiring`{.haskell} instance than can form a valid `Num`{.haskell} instance. For instance, the `negate`{.haskell} method on `Num`{.haskell} excludes types representing the natural numbers:
+However, there are far more types which can form a valid `Semiring`{.haskell} instance than can form a valid `Num`{.haskell} instance: the `negate`{.haskell} method, for example, excludes types representing the natural numbers:
 
 ```{.haskell .literate}
-newtype ChurchNat = ChurchNat { runNat :: forall a. (a -> a) -> a -> a}
+newtype ChurchNat = ChurchNat 
+  { runNat :: forall a. (a -> a) -> a -> a}
  
 data Nat = Zero | Succ Nat
 ```
@@ -118,10 +120,10 @@ newtype Add a = Add
 newtype Mul a = Mul
   { getMul :: a
   } deriving (Eq, Ord, Read, Show, Semiring)
-```
-```{.haskell .literate .hidden_source}
+
 instance Functor Add where
   fmap f (Add x) = Add (f x)
+
 instance Applicative Add where
   pure = Add
   Add f <*> Add x = Add (f x)
@@ -173,7 +175,7 @@ Using semirings, both of these data structures can have the same type:
 
 ```{.haskell .literate}
 newtype GeneralMap a b = GeneralMap
-  { getMap :: Map.Map a b
+  { getMap :: Map a b
   } deriving (Functor, Foldable, Show, Eq, Ord)
 ```
 
@@ -198,7 +200,7 @@ assoc :: (Ord a, Applicative f, Monoid (f b))
 assoc k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
 ```
 
-`lookup`{.haskell} is a function which should work on sets and multisets: however `Bool`{.haskell} and `Integer`{.haskell} don't have `Monoid`{.haskell} instances. To fix this, we can use the `Add`{.haskell} newtype from above. Now we have a decent interface for each of our data structures. It's helpful to think of each interpretation of the type like this:
+`lookup`{.haskell} is a function which should work on sets and multisets: however `Bool`{.haskell} and `Integer`{.haskell} don't have `Monoid`{.haskell} instances. To fix this, we can use the `Add`{.haskell} newtype from earlier. The interface for each of these data structures can now be expressed like this:
 
 ```{.haskell .literate}
 type Set      a   = GeneralMap a (Add Bool)
@@ -207,7 +209,7 @@ type Map      a b = GeneralMap a (First b)
 type MultiMap a b = GeneralMap a [b]
 ```
 
-Each of the functions from above specialises like this:
+And each of the functions on the `GeneralMap`{.haskell} specialises like this:
 
 ```{.haskell}
 -- Set
@@ -231,11 +233,13 @@ lookup :: Ord a => a -> MultiMap a b -> [b]
 delete :: Ord a => a -> MultiMap a b -> MultiMap a b
 ```
 
-This was actually where I first came across semirings: I was trying to avoid code duplication for a trie implementation. I wanted to get the Boom Hierarchy [@boom_further_1981] (plus maps) from the same underlying implementation.
+This was actually where I first came across semirings: I was trying to avoid code duplication for a trie implementation. I wanted to get the Boom Hierarchy [-@boom_further_1981] (plus maps) from the same underlying implementation.
 
 It works *okay*. On the one hand, it's nice that you don't have to wrap the map type itself to get the different behaviour. There's only one `delete`{.haskell} function, which works on sets, maps, multisets, etc. I don't need to import the `TrieSet`{.haskell} module qualified, to differentiate between the *four* `delete`{.haskell} functions I've written.
 
-The abstraction goes pretty far, also:
+On the other hand, the `Add`{.haskell} wrapper is a pain: having `lookup`{.haskell} return the wrapped values is ugly, and the `Applicative`{.haskell} constraint is unwieldy (we only use it for `pure`{.haskell}). Both of those problems could be solved by using something like the [`Newtype`{.haskell}](https://hackage.haskell.org/package/newtype-0.2/docs/Control-Newtype.html#t:Newtype) or [`Wrapped`{.haskell}](https://hackage.haskell.org/package/lens-4.15.1/docs/Control-Lens-Wrapped.html#t:Wrapped) class, which provide facilities for wrapping and unwrapping, but that might be overkill.
+
+While `Monoid`{.haskell} and `Semiring`{.haskell} can take you pretty far, even to a `Monoid`{.haskell} instance:
 
 ```{.haskell .literate}
 fromList :: (Ord a, Semiring b, Foldable f) => f a -> GeneralMap a b
@@ -249,12 +253,12 @@ instance (Ord a, Monoid b) => Monoid (GeneralMap a b) where
   mempty = GeneralMap Map.empty
   mappend (GeneralMap x) (GeneralMap y) = 
     GeneralMap (Map.unionWith mappend x y)
-    
+
 singleton :: Semiring b => a -> GeneralMap a b
 singleton x = GeneralMap (Map.singleton x one)
 ```
 
-On the other hand, some of the constraints aren't very nice. `Applicative`{.haskell} on the wrappers for the map and multimap, for instance. The fact that the lookup on sets and multisets returns a wrapped value is annoying. And I couldn't figure out a definition for `intersection`{.haskell}:
+They seem to fall down around functions like `intersection`{.haskell}:
 
 ```{.haskell .literate}
 intersection :: (Ord a, Semiring b)
@@ -263,29 +267,29 @@ intersection (GeneralMap x) (GeneralMap y) =
   GeneralMap (Map.intersectionWith (<.>) x y)
 ```
 
-While it works for sets, it doesn't make sense for multisets, and it doesn't work for maps. I couldn't find a more suitable semiring in order to represent what I wanted. (I'm probably after a different algebraic structure) 
+It works for sets, but it doesn't make sense for multisets, and it doesn't work for maps.
+
+I couldn't find a semiring for the map-like types which would give me a sensible intersection. I'm probably after a different algebraic structure.
 
 ## A Probability Semiring
 
-While looking for a semiring to represent a valid intersection, I came across some other semirings. The *probability* semiring, for instance. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1.
+While looking for a semiring to represent a valid intersection, I came across the probability semiring. It's just the normal semiring over the rationals, with a lower bound of 0, and an upper of 1.
 
-It's useful in some cool ways. For instance, you could combine it with a list to get the probability monad [@erwig_functional_2006]. There's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
+It's useful in some cool ways: you can combine it with a list to get the probability monad [@erwig_functional_2006]. There's an example in PureScript's [Distributions](https://pursuit.purescript.org/packages/purescript-distributions/) package.
 
 ```{.haskell}
 newtype Prob s a = Prob { runProb :: [(a,s)] }
 ```
 
-
-
-This representation is unfortunately too slow to be useful (usually). In particular, there's a combinatorial explosion on every monadic bind. One of the strategies to reduce this explosion is to use a map:
+There are some drawbacks to this representation, performance-wise. In particular, there's a combinatorial explosion on every monadic bind. One of the strategies to reduce this explosion is to use a map:
 
 ```{.haskell}
-newtype Prob s a = Prob { runProb :: Map.Map a s }
+newtype Prob s a = Prob { runProb :: Map a s }
 ```
 
-Because this doesn't allow duplicate keys, it will flatten the association list on every bind. Unfortunately, there's no huge efficiency gain, and in some cases an efficiency *loss* [@larsen_memory_2011]. Also, the `Ord`{.haskell} constraint on `a`{.haskell} prevents the above representation from conforming to `Monad`{.haskell}. (at least the standard version in the prelude)
+Because this doesn't allow duplicate keys, it will flatten the association list on every bind. Unfortunately, the performance gain doesn't always materialize, and in some cases there's a performance *loss* [@larsen_memory_2011]. Also, the `Ord`{.haskell} constraint on the keys prevents it from conforming to `Monad`{.haskell} (at least not without [difficulty](http://okmij.org/ftp/Haskell/set-monad.html)).
 
-Interestingly, this type is exactly the same as the `GeneralMap`{.haskell} from above. This is a theme I kept running into, actually: the `GeneralMap`{.haskell} type represents not just maps, multimaps, sets, multisets, but also a whole host of other data structures.
+Interestingly, this type is exactly the same as the `GeneralMap`{.haskell} from before. This is a theme I kept running into, actually: the `GeneralMap`{.haskell} type represents not just maps, multimaps, sets, multisets, but also a whole host of other data structures.
 
 ## Cont
 
@@ -296,7 +300,7 @@ infixr 0 $*
 newtype Linear r a = Linear { ($*) :: (a -> r) -> r }
 ```
 
-Also known as [`Cont`{.haskell}](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Cont.html#t:Cont), the continuation monad. What's interesting about the above type is that it can encode the probability monad:
+Also known as [`Cont`{.haskell}](https://hackage.haskell.org/package/mtl-2.2.1/docs/Control-Monad-Cont.html#t:Cont), the continuation monad. It can encode the probability monad:
 
 ```{.haskell .literate}
 fromProbs :: (Semiring s, Applicative m) => [(a,s)] -> ContT s m a
@@ -322,7 +326,7 @@ You can actually make the whole thing a semiring:
 ```{.haskell .literate}
 instance (Semiring r, Applicative m) => Semiring (ContT r m a) where
   one  = ContT (const (pure one))
-  zero = ContT (const (pure one))
+  zero = ContT (const (pure zero))
   f <+> g = ContT (\k -> liftA2 (<+>) (runContT f k) (runContT g k))
   f <.> g = ContT (\k -> liftA2 (<.>) (runContT f k) (runContT g k))
 ```
@@ -335,9 +339,9 @@ instance (Semiring r, Applicative m) => Alternative (ContT r m) where
   empty = zero
 ```
 
-The multiplication here is equivalent to the unsatisfactory intersection from above. Zero is the empty map, one is the map where *every* key has a value of one. To make one in the previous implementations, you would have to enumerate over every possible value for the keys. In this version, to *inspect* the values you have to enumerate over every possible key.
+This sheds some light on what was going on with the unsatisfactory `intersection`{.haskell} function on `GeneralMap`{.haskell}: it's actually *multiplication*. If you wanted to stretch the analogy and make `GeneralMap`{.haskell} conform to `Semiring`{.haskell}, you could use the empty map for `zero`{.haskell}, `mappend`{.haskell} for `<+>`{.haskell}, but you'd run into trouble for `one`{.haskell}. `one`{.haskell} is the map where every possible key has a value of one. In other words, you'd have to enumerate over every possible value for the keys. Interestingly, there's kind of the inverse problem for Cont: while it has an easy `Semiring`{.haskell} instance, in order to *inspect* the values you have to enumerate over all the possible keys.
 
-I think I now have a name for the probability monad / general map / Cont thing: a *covector*.
+I now have a name for the probability monad / general map / Cont thing: a *covector*.
 
 I think that the transformer version of Cont has a valid interpretation, also. If I ever understand @hirschowitz_modules_2010 I'll put it into a later follow-up post.
 
@@ -372,7 +376,7 @@ probOf ('a'==) (uniform "a" <| 0.4 :|: 0.6 |> uniform "b")
 
 ## UnLeak
 
-Interestingly, the probability monad can be constructed from more primitive types. For instance, extracting the `WriterT`{.haskell} monad transformer gives you:
+If you fiddle around with the probability monad, you can break apart in interesting ways. For instance, extracting the `WriterT`{.haskell} monad transformer gives you:
 
 ```{.haskell}
 WriterT (Product Double) []
@@ -380,7 +384,7 @@ WriterT (Product Double) []
 
 Eric Kidd describes it as `PerhapsT`{.haskell}: a `Maybe`{.haskell} with attached probability in his [excellent blog post](http://www.randomhacks.net/2007/02/21/refactoring-probability-distributions/) [and his paper in -@kidd_build_2007].
 
-Straight away, we can optimise this representation by transforming [leaky](https://twitter.com/gabrielg439/status/659170544038707201) `WriterT`{.haskell} into a state monad:
+Straight away, we can optimise this representation by transforming the [leaky](https://twitter.com/gabrielg439/status/659170544038707201) `WriterT`{.haskell} into a state monad:
 
 ```{.haskell .literate}
 newtype WeightedT s m a = WeightedT 
@@ -438,7 +442,7 @@ newtype FreeMonoid a = FreeMonoid
 
 So possibly covectors represent the free semiring, in some way.
 
-Another encoding which looks free-ish is another efficient implementation of the probability monad from @larsen_memory_2011:
+Another encoding which looks free-ish is one of the efficient implementations of the probability monad from @larsen_memory_2011:
 
 ```{.haskell}
 data Dist a where
@@ -452,9 +456,9 @@ This looks an awful lot like a weighted [free alternative](https://hackage.haske
 
 Maybe. There's a parallel between the relationship between monoids and semirings and applicatives and [`Alternative`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Applicative.html#t:Alternative)s [@rivas_monoids_2015]. In a way, where monads are monoids in the category of endofunctors, alternatives are *semirings* in the category of endofunctors.
 
-This parallel probably isn't as consistent as I first thought. First of all, the above paper uses near-semirings, not semirings. A near-semiring is a semiring where the requirements for left distribution of multiplication over addition and commutative addition are dropped. Secondly, the class which most mirrors near-semirings is [`MonadPlus`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#t:MonadPlus), not alternative. (alternative doesn't have annihilation) Thirdly, right distribution of multiplication over addition *isn't* required `MonadPlus`{.haskell}: it's a further law required on top of the existing laws. Fourthly, most types in the Haskell ecosystem today which conform to `MonadPlus`{.haskell} *don't* conform to this extra law: in fact, those that do seem to be lists of some kind or another.
+This parallel probably isn't what I first thought it was. First of all, the above paper uses near-semirings, not semirings. A near-semiring is a semiring where the requirements for left distribution of multiplication over addition and commutative addition are dropped. Secondly, the class which most mirrors near-semirings is [`MonadPlus`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Control-Monad.html#t:MonadPlus), not alternative. (alternative doesn't have annihilation) Thirdly, right distribution of multiplication over addition *isn't* required `MonadPlus`{.haskell}: it's a further law required on top of the existing laws. Fourthly, most types in the Haskell ecosystem today which conform to `MonadPlus`{.haskell} *don't* conform to this extra law: in fact, those that do seem to be lists of some kind or another.
 
-Another class is probably needed on top of the two already there, called `Nondet`{.haskell} by @fischer_reinventing_2009.
+A further class is probably needed on top of the two already there, with the extra laws [called `Nondet`{.haskell} in @fischer_reinventing_2009].
 
 An actual free near-semiring looks like this:
 
@@ -495,23 +499,21 @@ While `WriterT (Product Rational) []`{.haskell} is a valid definition of the tra
 data Odds m a = Certain a | Choice (m (a, Odds a))
 ```
 
-Which looks remarkably like [`ListT`{.haskell} done right](https://wiki.haskell.org/ListT_done_right):
+Which looks remarkably like [`ListT`{.haskell} done right](http://www.haskellforall.com/2016/07/list-transformer-beginner-friendly-listt.html):
 
 ```{.haskell .literate}
 newtype ListT m a = ListT { next :: m (Step m a) }
 data Step m a = Cons a (ListT m a) | Nil
 ```
 
-(I'm using [Gabriel Gonzalez](http://www.haskellforall.com/2016/07/list-transformer-beginner-friendly-listt.html)'s version here)
-
-Except that it allows empty lists. It looks like you can express the relationship between probability and odds as:
+That suggests a relationship between probability and odds:
 
 ```{.haskell}
 WriterT (Product  Rational) [] = Probability
 ListT   (Weighted Rational)    = Odds
 ```
 
-To disallow empty lists, you can use the [Cofree Comonad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Comonad-Cofree.html):
+`ListT`{.haskell} isn't a perfect match, though: it allows empty lists. To correct this, you could use the [Cofree Comonad](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Comonad-Cofree.html):
 
 ```{.haskell .literate}
 data Cofree f a = a :< (f (Cofree f a))
@@ -611,7 +613,7 @@ interpret f = \case
   Star x -> star (interpret f x)
 ```
 
-Using another semiring (near-semiring, specifically; and it requires the underlying monoid to be commutative):
+We'll need the near-semiring of endomorphisms over commutative monoids:
 
 ```{.haskell .literate}
 instance Monoid a => Semiring (Endo a) where
@@ -693,7 +695,7 @@ type State = Int
 , _acceptingStates        :: Set State }
 ```
 
-As you might note, the set data structure can be reformulated as a map from states to some semiring. In fact, the whole code can be translated into using some arbitrary semiring pretty readily:
+The set data structure jumps out as an opportunity to sub in arbitrary semirings.Swapping in the `GeneralMap`{.haskell} is reasonably easy:
 
 ```{.haskell .literate}
 type State = Int
@@ -777,15 +779,18 @@ instance IsString (Regex Char (Add Bool)) where
   fromString = mul . map once
 ```
 
-This begins to show some of the real power of using semirings and covectors. We have a normal regular expression implementation when we use the covector over bools. Use the probability semiring, and you've got probabilistic parsing. Instead of a map, if you use an integer (each bit being a value, the keys being the bit position), you have a super-fast implementation (and the final implementation used in the original example).
+This begins to show some of the real power of using semirings and covectors. We have a normal regular expression implementation when we use the covector over bools. Use the probability semiring, and you've got probabilistic parsing. 
 
 Swap in the [tropical semiring](https://ncatlab.org/nlab/show/max-plus+algebra): a semiring over the reals where addition is the max function, and multiplication is addition of reals. Now you've got a depth-first parser.
 
-That's how you might swap in different interpretations. How about swapping in different *implementations*? Well, there might be some use to swapping in the [CYK algorithm](https://en.wikipedia.org/wiki/CYK_algorithm), or the Gauss-Jordan-Floyd-Warshall-McNaughton-Yamada algorithm [@oconnor_very_2011]. You can use these in combination with a different representation of the underlying data structure: a matrix.
+
+That's how you might swap in different interpretations. How about swapping in different *implementations*? Well, there might be some use to swapping in the [CYK algorithm](https://en.wikipedia.org/wiki/CYK_algorithm), or the Gauss-Jordan-Floyd-Warshall-McNaughton-Yamada algorithm [@oconnor_very_2011].
+
+Alternatively, you can swap in the underlying data structure. Instead of a map, if you use an integer (each bit being a value, the keys being the bit position), you have a super-fast implementation (and the final implementation used in the original example). Finally, you could use a different representation of the state transfer function: a matrix.
 
 ## Square Matrices
 
-A square matrix can represent your function from input states to output states. Take, for instance, a regular expression with three possible states. Its state transfer function might look like this:
+A square matrix can be understood as a map from pairs of indices to values. This lets us use it to represent the state transfer function. Take, for instance, a regular expression with three possible states. Its state transfer function might look like this:
 
 $transfer = \begin{cases}
 1 \quad & \{ 2, 3 \} \\
@@ -816,7 +821,7 @@ $transfer = \left( \begin{array}{ccc}
 
 This is the semiring of square matrices. It is, of course, yet *another* covector. The "keys" are the transfers: `1 -> 2`{.haskell} or `2 -> 3`{.haskell}, represented by the indices of the matrix. The "values" are whether or not that transfer is permitted.
 
-The algorithms for the usual semiring operations on matrices like this are well-known and well-optimized. I haven't yet fiddled around with them Haskell, so I don't know how fast they can be. For now, though, there's an elegant list-based implementation in @dolan_fun_2013:
+The algorithms for the usual semiring operations on matrices like this are well-known and well-optimized. I haven't yet benchmarked them in Haskell using the matrix libraries, so I don't know how they compare to the other approaches. In the meantime, there's an elegant list-based implementation in @dolan_fun_2013:
 
 ```{.haskell .literate}
 data Matrix a = Scalar a
@@ -895,7 +900,7 @@ There are two main benefits over using the standard alternative implementation. 
 
 Secondly, the *order* of the effects doesn't have to be specified. This allows you to execute permutations of the effects, in a permutation parser, for instance. The permutation is totally decoupled from the declaration of the repetition (it's in a totally separate library, in fact: [PermuteEffects](http://hackage.haskell.org/package/PermuteEffects)). Its construction is reminiscent of the [free alternative](https://hackage.haskell.org/package/free-4.12.4/docs/Control-Alternative-Free.html#t:AltF).
 
-Having the replicate type conform to `Semiring`{.haskell} is all well and good: what I'm interested in is seeing if its implementation is another semiring-based object in disguise. I'll revisit this in another post.
+Having the replicate type conform to `Semiring`{.haskell} is all well and good: what I'm interested in is seeing if its implementation is another semiring-based object in disguise. I'll revisit this in a later post.
 
 ## Algebraic Search
 
@@ -905,11 +910,11 @@ List comprehension notation is one of my all-time favourite bits of syntactic su
 [ (x,y,z) | x <- [1..], y <- [1..], z <- [1..], x*x + y*y == z*z ]
 ```
 
-The above expression will diverge. It will search through every possible value for `z`{.haskell} before incrementing either `x`{.haskell} or `y`{.haskell}. Since there are infinite values for `z`{.haskell}, it will never find a triple. For search problems like the above, a list comprehension is equivalent to depth-first search. 
+This expression will diverge without yielding a single triple. It will search through every possible value for `z`{.haskell} before incrementing either `x`{.haskell} or `y`{.haskell}. Since there are infinite values for `z`{.haskell}, it will never find a triple. In other words, vanilla list comprehensions in Haskell perform depth-first search.
 
-In order to express another kind of search (either breadth-first or depth-bounded), a different monad is needed. These monads explored in @fischer_reinventing_2009 and @spivey_algebras_2009.
+In order to express other kinds of search (either breadth-first or depth-bounded), different monads are needed. These monads are explored in @fischer_reinventing_2009 and @spivey_algebras_2009.
 
-You can actually use the *exact* same notation as above with another monad using `-XMonadComprehensions`{.haskell} and `-XOverloadedLists`{.haskell}.
+You can actually use the *exact* same notation as above with arbitrary alternative monads using `-XMonadComprehensions`{.haskell} and `-XOverloadedLists`{.haskell}.
 
 ```{.haskell .literate}
 trips :: ( Alternative m
@@ -921,7 +926,7 @@ trips :: ( Alternative m
 trips = [ (x,y,z) | x <- [1..], y <- [1..], z <- [1..], x*x + y*y == z*z ]
 ```
 
-So then, here's the challenge: swap in different `m`{.haskell}s via a type annotation, and prevent the above expression from diverging.
+So then, here's the challenge: swap in different `m`{.haskell}s via a type annotation, and prevent `trips`{.haskell} from diverging before getting any triples.
 
 As one example, here's some code adapted from @fischer_reinventing_2009:
 
@@ -930,7 +935,8 @@ instance (Monoid r, Applicative m) => Monoid (ContT r m a) where
   mempty = ContT (const (pure mempty))
   mappend (ContT f) (ContT g) = ContT (\x -> liftA2 mappend (f x) (g x))
   
-newtype List a = List { runList :: forall m. Monoid m => Cont m a } deriving Functor
+newtype List a = List 
+  { runList :: forall m. Monoid m => Cont m a } deriving Functor
 
 instance Foldable List where foldMap = flip (runCont.runList)
   
