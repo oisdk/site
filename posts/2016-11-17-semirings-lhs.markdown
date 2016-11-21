@@ -14,7 +14,7 @@ module Semirings where
 
 import qualified Data.Map.Strict as Map
 import           Data.Map.Strict      (Map)
-import           Data.Monoid
+import           Data.Monoid  hiding  (Endo(..))
 import           Data.Foldable hiding (toList)
 import           Control.Applicative
 import           Control.Arrow        (first)
@@ -580,9 +580,60 @@ Either (1, a) (a, s / (1 - s), star (Writer s a))
 
 Or, to put it another way: the odds monad!
 
-## Some Examples
+## Endo
 
-So we've seen semirings for probabilities, maps, sets, etc. What else forms a semiring?
+An [endomorphism](https://ncatlab.org/nlab/show/endomorphism) is a morphism from an object to itself. In a less general setting, (and the one [most often used](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Endo) in Haskell) it's a function of the type `a -> a`{.haskell}:
+
+```{.haskell .literate}
+newtype Endo a = Endo { appEndo :: a -> a }
+```
+
+It forms a monoid under composition:
+
+```{.haskell .literate}
+instance Monoid (Endo a) where
+  mempty = Endo id
+  mappend (Endo f) (Endo g) = Endo (f . g)
+```
+
+
+If the underlying type is itself a commutative monoid, it also forms near-semiring:
+
+```{.haskell .literate}
+instance Monoid a => Semiring (Endo a) where
+  Endo f <+> Endo g = Endo (\x -> f x <> g x)
+  zero = Endo (const mempty)
+  one = Endo id
+  Endo f <.> Endo g = Endo (f . g)
+  
+instance (Monoid a, Eq a) => StarSemiring (Endo a) where
+  star (Endo f) = Endo converge where
+    converge x = x <> (if y == mempty then y else converge y) where
+      y = f x
+```
+
+Here's something interesting: there's a similarity here to the semiring for church numerals. In fact, as far as I can tell, the functions are *exactly* the same when applied to endomorphisms of endomorphisms. To the extent that you could define church numerals with something as simple as this:
+
+```{.haskell .literate}
+type ChurchEndoNat = forall a. Endo (Endo a)
+```
+
+And it works!
+
+```{.haskell .literate}
+two, three :: ChurchEndoNat
+two = one <+> one
+three = one <+> two
+
+unChurch :: Num a => ChurchEndoNat -> a
+unChurch f = appEndo (appEndo f (Endo (1+))) 0
+```
+```{.haskell .literate .example}
+unChurch (two <.> three)
+6
+```
+
+## Regex
 
 One of the most important applications (and a source of much of the notation) is regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:
 
@@ -614,22 +665,7 @@ interpret f = \case
   Star x -> star (interpret f x)
 ```
 
-We'll need the near-semiring of endomorphisms over commutative monoids:
-
-```{.haskell .literate}
-instance Monoid a => Semiring (Endo a) where
-  Endo f <+> Endo g = Endo (\x -> f x <> g x)
-  zero = Endo (const mempty)
-  one = Endo id
-  Endo f <.> Endo g = Endo (f . g)
-  
-instance (Monoid a, Eq a) => StarSemiring (Endo a) where
-  star (Endo f) = Endo converge where
-    converge x = x <> (if y == mempty then y else converge y) where
-      y = f x
-```
-
-Then, interpreting the regex is as simple as writing an interpreter:
+Then, interpreting the regex is as simple as writing an interpreter (with some help from `Endo`{.haskell}):
 
 ```{.haskell .literate}
 asRegex :: Eq a => FreeStar (a -> Bool) -> [a] -> Bool
