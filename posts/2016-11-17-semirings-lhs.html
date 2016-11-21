@@ -44,7 +44,7 @@
 
 <span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span>
 <span class="kw">import           </span><span class="dt">Data.Map.Strict</span>      (<span class="dt">Map</span>)
-<span class="kw">import           </span><span class="dt">Data.Monoid</span>
+<span class="kw">import           </span><span class="dt">Data.Monoid</span>  <span class="kw">hiding</span>  (<span class="dt">Endo</span>(..))
 <span class="kw">import           </span><span class="dt">Data.Foldable</span> <span class="kw">hiding</span> (toList)
 <span class="kw">import           </span><span class="dt">Control.Applicative</span>
 <span class="kw">import           </span><span class="dt">Control.Arrow</span>        (first)
@@ -388,8 +388,36 @@ star x <span class="fu">=</span> (x <span class="fu">&lt;.&gt;</span> star x) <s
 <p>So, combining the probability with the type-level business, the star of <code>Writer s a</code> is:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">Either</span> (<span class="dv">1</span>, a) (a, s <span class="fu">/</span> (<span class="dv">1</span> <span class="fu">-</span> s), star (<span class="dt">Writer</span> s a))</code></pre></div>
 <p>Or, to put it another way: the odds monad!</p>
-<h2 id="some-examples">Some Examples</h2>
-<p>So we’ve seen semirings for probabilities, maps, sets, etc. What else forms a semiring?</p>
+<h2 id="endo">Endo</h2>
+<p>An <a href="https://ncatlab.org/nlab/show/endomorphism">endomorphism</a> is a morphism from an object to itself. In a less general setting, (and the one <a href="https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Endo">most often used</a> in Haskell) it’s a function of the type <code class="sourceCode haskell">a <span class="ot">-&gt;</span> a</code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Endo</span> a <span class="fu">=</span> <span class="dt">Endo</span> {<span class="ot"> appEndo ::</span> a <span class="ot">-&gt;</span> a }</code></pre></div>
+<p>It forms a monoid under composition:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Endo</span> id
+  mappend (<span class="dt">Endo</span> f) (<span class="dt">Endo</span> g) <span class="fu">=</span> <span class="dt">Endo</span> (f <span class="fu">.</span> g)</code></pre></div>
+<p>If the underlying type is itself a commutative monoid, it also forms near-semiring:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Semiring</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
+  <span class="dt">Endo</span> f <span class="fu">&lt;+&gt;</span> <span class="dt">Endo</span> g <span class="fu">=</span> <span class="dt">Endo</span> (\x <span class="ot">-&gt;</span> f x <span class="fu">&lt;&gt;</span> g x)
+  zero <span class="fu">=</span> <span class="dt">Endo</span> (const mempty)
+  one <span class="fu">=</span> <span class="dt">Endo</span> id
+  <span class="dt">Endo</span> f <span class="fu">&lt;.&gt;</span> <span class="dt">Endo</span> g <span class="fu">=</span> <span class="dt">Endo</span> (f <span class="fu">.</span> g)
+  
+<span class="kw">instance</span> (<span class="dt">Monoid</span> a, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span> <span class="dt">StarSemiring</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
+  star (<span class="dt">Endo</span> f) <span class="fu">=</span> <span class="dt">Endo</span> converge <span class="kw">where</span>
+    converge x <span class="fu">=</span> x <span class="fu">&lt;&gt;</span> (<span class="kw">if</span> y <span class="fu">==</span> mempty <span class="kw">then</span> y <span class="kw">else</span> converge y) <span class="kw">where</span>
+      y <span class="fu">=</span> f x</code></pre></div>
+<p>Here’s something interesting: there’s a similarity here to the semiring for church numerals. In fact, as far as I can tell, the functions are <em>exactly</em> the same when applied to endomorphisms of endomorphisms. To the extent that you could define church numerals with something as simple as this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">ChurchEndoNat</span> <span class="fu">=</span> forall a<span class="fu">.</span> <span class="dt">Endo</span> (<span class="dt">Endo</span> a)</code></pre></div>
+<p>And it works!</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">two,<span class="ot"> three ::</span> <span class="dt">ChurchEndoNat</span>
+two <span class="fu">=</span> one <span class="fu">&lt;+&gt;</span> one
+three <span class="fu">=</span> one <span class="fu">&lt;+&gt;</span> two
+
+<span class="ot">unChurch ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">ChurchEndoNat</span> <span class="ot">-&gt;</span> a
+unChurch f <span class="fu">=</span> appEndo (appEndo f (<span class="dt">Endo</span> (<span class="dv">1</span><span class="fu">+</span>))) <span class="dv">0</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell">unChurch (two <span class="fu">&lt;.&gt;</span> three)
+<span class="dv">6</span></code></pre></div>
+<h2 id="regex">Regex</h2>
 <p>One of the most important applications (and a source of much of the notation) is regular expressions. In fact, the free semiring looks like a haskell datatype for regular expressions:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">FreeStar</span> a
  <span class="fu">=</span> <span class="dt">Gen</span> a
@@ -416,18 +444,7 @@ interpret f <span class="fu">=</span> \<span class="kw">case</span>
   l <span class="fu">:&lt;+&gt;</span> r <span class="ot">-&gt;</span> interpret f l <span class="fu">&lt;+&gt;</span> interpret f r
   l <span class="fu">:&lt;.&gt;</span> r <span class="ot">-&gt;</span> interpret f l <span class="fu">&lt;.&gt;</span> interpret f r
   <span class="dt">Star</span> x <span class="ot">-&gt;</span> star (interpret f x)</code></pre></div>
-<p>We’ll need the near-semiring of endomorphisms over commutative monoids:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Semiring</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
-  <span class="dt">Endo</span> f <span class="fu">&lt;+&gt;</span> <span class="dt">Endo</span> g <span class="fu">=</span> <span class="dt">Endo</span> (\x <span class="ot">-&gt;</span> f x <span class="fu">&lt;&gt;</span> g x)
-  zero <span class="fu">=</span> <span class="dt">Endo</span> (const mempty)
-  one <span class="fu">=</span> <span class="dt">Endo</span> id
-  <span class="dt">Endo</span> f <span class="fu">&lt;.&gt;</span> <span class="dt">Endo</span> g <span class="fu">=</span> <span class="dt">Endo</span> (f <span class="fu">.</span> g)
-  
-<span class="kw">instance</span> (<span class="dt">Monoid</span> a, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span> <span class="dt">StarSemiring</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
-  star (<span class="dt">Endo</span> f) <span class="fu">=</span> <span class="dt">Endo</span> converge <span class="kw">where</span>
-    converge x <span class="fu">=</span> x <span class="fu">&lt;&gt;</span> (<span class="kw">if</span> y <span class="fu">==</span> mempty <span class="kw">then</span> y <span class="kw">else</span> converge y) <span class="kw">where</span>
-      y <span class="fu">=</span> f x</code></pre></div>
-<p>Then, interpreting the regex is as simple as writing an interpreter:</p>
+<p>Then, interpreting the regex is as simple as writing an interpreter (with some help from <code class="sourceCode haskell"><span class="dt">Endo</span></code>):</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">asRegex ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> <span class="dt">FreeStar</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span>
 asRegex fs <span class="fu">=</span> any null <span class="fu">.</span> appEndo (interpret f fs) <span class="fu">.</span> pure <span class="kw">where</span>
   f p <span class="fu">=</span> <span class="dt">Endo</span> <span class="fu">.</span> mapMaybe <span class="fu">$</span> \<span class="kw">case</span>
