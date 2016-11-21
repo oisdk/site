@@ -582,7 +582,7 @@ Or, to put it another way: the odds monad!
 
 ## Endo
 
-An [endomorphism](https://ncatlab.org/nlab/show/endomorphism) is a morphism from an object to itself. In a less general setting, (and the one [most often used](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Endo) in Haskell) it's a function of the type `a -> a`{.haskell}:
+An [endomorphism](https://ncatlab.org/nlab/show/endomorphism) is a morphism from an object to itself. A less general definition (and the one [most often used](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Endo) in Haskell) is a function of the type `a -> a`{.haskell}:
 
 ```{.haskell .literate}
 newtype Endo a = Endo { appEndo :: a -> a }
