@@ -22,6 +22,7 @@ import           Control.Monad.Cont
 import           Data.Functor.Identity
 import           GHC.Exts
 import           Data.List hiding     (insert)
+import           Data.Maybe           (mapMaybe)
 ```
 
 I've been playing around a lot with semirings recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:
@@ -159,10 +160,10 @@ mul xs == product (xs :: [Integer])
 But they now work with a wider array of types: non-negative numbers, as we've seen, but specialised to `Bool`{.haskell} we get the familiar [`Any`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Any) and [`All`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:All) newtypes (and their corresponding folds).
 
 ```{.haskell .literate .prop}
-add xs == any id (xs :: [Bool])
+add xs == or (xs :: [Bool])
 ```
 ```{.haskell .literate .prop}
-mul xs == all id (xs :: [Bool])
+mul xs == and (xs :: [Bool])
 ```
 
 So far, nothing amazing. We avoid a little bit of code duplication, that's all.
@@ -202,7 +203,7 @@ assoc k v = GeneralMap . Map.insertWith mappend k (pure v) . getMap
 
 `lookup`{.haskell} is a function which should work on sets and multisets: however `Bool`{.haskell} and `Integer`{.haskell} don't have `Monoid`{.haskell} instances. To fix this, we can use the `Add`{.haskell} newtype from earlier. The interface for each of these data structures can now be expressed like this:
 
-```{.haskell .literate}
+```{.haskell}
 type Set      a   = GeneralMap a (Add Bool)
 type MultiSet a   = GeneralMap a (Add Integer)
 type Map      a b = GeneralMap a (First b)
