@@ -40,7 +40,8 @@
 <span class="kw">import           </span><span class="dt">Control.Monad.Cont</span>
 <span class="kw">import           </span><span class="dt">Data.Functor.Identity</span>
 <span class="kw">import           </span><span class="dt">GHC.Exts</span>
-<span class="kw">import           </span><span class="dt">Data.List</span> <span class="kw">hiding</span>     (insert)</code></pre></div>
+<span class="kw">import           </span><span class="dt">Data.List</span> <span class="kw">hiding</span>     (insert)
+<span class="kw">import           </span><span class="dt">Data.Maybe</span>           (mapMaybe)</code></pre></div>
 <p>I’ve been playing around a lot with semirings recently. A semiring is anything with addition, multiplication, zero and one. You can represent that in Haskell as:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Semiring</span> a <span class="kw">where</span>
 <span class="ot">  zero ::</span> a
@@ -131,8 +132,8 @@ mul <span class="fu">=</span> getMul <span class="fu">.</span> foldMap <span cla
 <div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">add xs <span class="fu">==</span> sum (<span class="ot">xs ::</span> [<span class="dt">Integer</span>])</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">mul xs <span class="fu">==</span> product (<span class="ot">xs ::</span> [<span class="dt">Integer</span>])</code></pre></div>
 <p>But they now work with a wider array of types: non-negative numbers, as we’ve seen, but specialised to <code class="sourceCode haskell"><span class="dt">Bool</span></code> we get the familiar <a href="https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:Any"><code class="sourceCode haskell"><span class="dt">Any</span></code></a> and <a href="https://hackage.haskell.org/package/base-4.9.0.0/docs/Data-Monoid.html#t:All"><code class="sourceCode haskell"><span class="dt">All</span></code></a> newtypes (and their corresponding folds).</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">add xs <span class="fu">==</span> any id (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">mul xs <span class="fu">==</span> all id (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">add xs <span class="fu">==</span> or (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">mul xs <span class="fu">==</span> and (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])</code></pre></div>
 <p>So far, nothing amazing. We avoid a little bit of code duplication, that’s all.</p>
 <h2 id="a-semiring-map">A Semiring Map</h2>
 <p>In older versions of Python, <a href="https://www.python.org/dev/peps/pep-0218/">there was no native set type</a>. In its place, dictionaries were used, where the values would be booleans. In a similar fashion, before the <a href="https://docs.python.org/2/library/collections.html#collections.Counter">Counter</a> type was added in 2.7, the traditional way of representing a multiset was using a dictionary where the values were integers.</p>
@@ -154,7 +155,7 @@ lookup x <span class="fu">=</span> fold <span class="fu">.</span> Map.lookup x <
       <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">GeneralMap</span> a (f b) <span class="ot">-&gt;</span> <span class="dt">GeneralMap</span> a (f b)
 assoc k v <span class="fu">=</span> <span class="dt">GeneralMap</span> <span class="fu">.</span> Map.insertWith mappend k (pure v) <span class="fu">.</span> getMap</code></pre></div>
 <p><code class="sourceCode haskell">lookup</code> is a function which should work on sets and multisets: however <code class="sourceCode haskell"><span class="dt">Bool</span></code> and <code class="sourceCode haskell"><span class="dt">Integer</span></code> don’t have <code class="sourceCode haskell"><span class="dt">Monoid</span></code> instances. To fix this, we can use the <code class="sourceCode haskell"><span class="dt">Add</span></code> newtype from earlier. The interface for each of these data structures can now be expressed like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Set</span>      a   <span class="fu">=</span> <span class="dt">GeneralMap</span> a (<span class="dt">Add</span> <span class="dt">Bool</span>)
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Set</span>      a   <span class="fu">=</span> <span class="dt">GeneralMap</span> a (<span class="dt">Add</span> <span class="dt">Bool</span>)
 <span class="kw">type</span> <span class="dt">MultiSet</span> a   <span class="fu">=</span> <span class="dt">GeneralMap</span> a (<span class="dt">Add</span> <span class="dt">Integer</span>)
 <span class="kw">type</span> <span class="dt">Map</span>      a b <span class="fu">=</span> <span class="dt">GeneralMap</span> a (<span class="dt">First</span> b)
 <span class="kw">type</span> <span class="dt">MultiMap</span> a b <span class="fu">=</span> <span class="dt">GeneralMap</span> a [b]</code></pre></div>
