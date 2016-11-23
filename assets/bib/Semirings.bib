@@ -43,6 +43,7 @@
 }
 
 @incollection{droste_semirings_2009,
+	location = {Berlin, Heidelberg},
 	title = {Semirings and Formal Power Series},
 	volume = {1},
 	rights = {©2009 Springer-Verlag Berlin Heidelberg},
@@ -61,37 +62,6 @@
 	note = {{DOI}: 10.1007/978-3-642-01492-5\_1},
 	keywords = {Computation by Abstract Devices, Language Translation and Linguistics, Logics and Meanings of Programs, Mathematical Logic and Formal Languages, Mathematical Logic and Foundations, Theory of Computation},
 	file = {[PDF] sfedu.ru:files/1433/Droste and Kuich - Semirings and Formal Power Series.pdf:application/pdf}
-}
-
-@inproceedings{dolan_fun_2013,
-	title = {Fun with semirings: a functional pearl on the abuse of linear algebra},
-	volume = {48},
-	url = {https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf},
-	shorttitle = {Fun with semirings},
-	pages = {101--110},
-	booktitle = {{ACM} {SIGPLAN} Notices},
-	publisher = {{ACM}},
-	author = {Dolan, Stephen},
-	urldate = {2016-10-31},
-	date = {2013},
-	file = {[PDF] cam.ac.uk:files/1468/Dolan - Fun with Semirings.pdf:application/pdf}
-}
-
-@inproceedings{rivas_monoids_2015,
-	title = {From monoids to near-semirings: the essence of {MonadPlus} and Alternative},
-	url = {http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf},
-	shorttitle = {From monoids to near-semirings},
-	abstract = {It is well-known that monads are monoids in the category of endo-functors, and in fact so are applicative functors. Unfortunately, the benefits of this unified view are lost when the additional non-determinism structure of {\textbar}{MonadPlus}{\textbar} or {\textbar}Alternative{\textbar} is required.
-
-This article recovers the essence of these two type classes by extending monoids to near-semirings with both additive and multiplicative structure. This unified algebraic view enables us to generically define the free construction as well as a novel double Cayley representation that optimises both left-nested sums and left-nested products.},
-	pages = {196--207},
-	booktitle = {Proceedings of the 17th International Symposium on Principles and Practice of Declarative Programming},
-	publisher = {{ACM}},
-	author = {Rivas, Exequiel and Jaskelioff, Mauro and Schrijvers, Tom},
-	urldate = {2016-10-31},
-	date = {2015},
-	note = {https://www.reddit.com/r/haskell/comments/3dlz6b/from\_monoids\_to\_nearsemirings\_the\_essence\_of/?},
-	file = {[PDF] unr.edu.ar:files/1525/Rivas et al. - From monoids to near-semirings the essence of Mon.pdf:application/pdf}
 }
 
 @article{mu_programming_2012,
@@ -293,13 +263,16 @@ This article recovers the essence of these two type classes by extending monoids
 @article{spivey_algebras_2009,
 	title = {Algebras for combinatorial search},
 	volume = {19},
-	url = {https://pdfs.semanticscholar.org/0e59/fbb5bd4dab059e1736edb936d98ae0317efd.pdf},
+	issn = {0956-7968, 1469-7653},
+	url = {http://www.journals.cambridge.org/abstract_S0956796809007321},
+	doi = {10.1017/S0956796809007321},
 	pages = {469--487},
 	number = {3},
 	journaltitle = {Journal of Functional Programming},
 	author = {Spivey, J. Michael},
 	urldate = {2016-11-06},
 	date = {2009},
+	langid = {english},
 	file = {[PDF] semanticscholar.org:files/2087/Spivey - 2006 - Algebras for combinatorial search.pdf:application/pdf}
 }
 
@@ -422,61 +395,6 @@ So this is definitely the essence of something nice to have, it just isn't the e
 	note = {{DOI}: 10.1007/978-1-4471-3236-3\_1},
 	keywords = {Programming Techniques},
 	file = {10.1.1.49.3252.pdf:files/2148/10.1.1.49.3252.pdf:application/pdf;Snapshot:files/2147/10.html:text/html}
-}
-
-@article{schrijvers_monadic_2009,
-	title = {Monadic constraint programming},
-	volume = {19},
-	issn = {1469-7653, 0956-7968},
-	url = {http://homepages.inf.ed.ac.uk/wadler/topics/monads.html#constraints},
-	doi = {10.1017/S0956796809990086},
-	abstract = {{AbstractA} constraint programming system combines two essential components: a constraint solver and a search engine. The constraint solver reasons about satisfiability of conjunctions of constraints, and the search engine controls the search for solutions by iteratively exploring a disjunctive search tree defined by the constraint program. In this paper we give a monadic definition of constraint programming in which the solver is defined as a monad threaded through the monadic search tree. We are then able to define search and search strategies as first-class objects that can themselves be built or extended by composable search transformers. Search transformers give a powerful and unifying approach to viewing search in constraint programming, and the resulting constraint programming system is first class and extremely flexible.},
-	pages = {663--697},
-	number = {6},
-	journaltitle = {Journal of Functional Programming},
-	author = {Schrijvers, Tom and Stuckey, Peter and Wadler, Philip},
-	urldate = {2016-11-07},
-	date = {2009-11},
-	file = {constraints.pdf:files/2152/constraints.pdf:application/pdf}
-}
-
-@article{lindley_idioms_2011,
-	title = {Idioms are Oblivious, Arrows are Meticulous, Monads are Promiscuous},
-	volume = {229},
-	issn = {1571-0661},
-	url = {http://homepages.inf.ed.ac.uk/wadler/topics/monads.html#arrows-and-idioms},
-	doi = {10.1016/j.entcs.2011.02.018},
-	series = {Proceedings of the Second Workshop on Mathematically Structured Functional Programming ({MSFP} 2008)},
-	abstract = {We revisit the connection between three notions of computation: Moggiʼs monads, Hughesʼs arrows and {McBride} and Patersonʼs idioms (also called applicative functors). We show that idioms are equivalent to arrows that satisfy the type isomorphism A↝B≃1↝(A→B) and that monads are equivalent to arrows that satisfy the type isomorphism A↝B≃A→(1↝B). Further, idioms embed into arrows and arrows embed into monads.},
-	pages = {97--117},
-	number = {5},
-	journaltitle = {Electronic Notes in Theoretical Computer Science},
-	shortjournal = {Electronic Notes in Theoretical Computer Science},
-	author = {Lindley, Sam and Wadler, Philip and Yallop, Jeremy},
-	urldate = {2016-11-07},
-	date = {2011-03-08},
-	keywords = {applicative functors, arrows, idioms, monads},
-	file = {arrows-and-idioms.pdf:files/2155/arrows-and-idioms.pdf:application/pdf}
-}
-
-@incollection{king_combining_1993,
-	title = {Combining Monads},
-	rights = {©1993 British Computer Society},
-	isbn = {978-3-540-19820-8 978-1-4471-3215-8},
-	url = {http://homepages.inf.ed.ac.uk/wadler/topics/monads.html#combining-monads},
-	series = {Workshops in Computing},
-	abstract = {Monads provide a way of structuring functional programs. Most real applications require a combination of primitive monads. Here we describe how some monads may be combined with others to yield a combined monad.},
-	pages = {134--143},
-	booktitle = {Functional Programming, Glasgow 1992},
-	publisher = {Springer London},
-	author = {King, David J. and Wadler, Philip},
-	editor = {{MSc}, John Launchbury {MA} (Oxon) and (Hons), Patrick Sansom {BSc}},
-	urldate = {2016-11-07},
-	date = {1993},
-	langid = {english},
-	note = {{DOI}: 10.1007/978-1-4471-3215-8\_12},
-	keywords = {Mathematical Logic and Formal Languages, Processor Architectures, Programming Languages, Compilers, Interpreters, Programming Techniques, Software Engineering, Software Engineering/Programming and Operating Systems},
-	file = {monadscomb.ps:files/2159/monadscomb.ps:application/postscript}
 }
 
 @incollection{hutchison_typed_2012,
@@ -631,4 +549,40 @@ It turns out that the technique can be used to build monads for non-determinism 
 	author = {Fischer, Sebastian},
 	date = {2009},
 	file = {atps09.pdf:files/2310/atps09.pdf:application/pdf}
+}
+
+@inproceedings{dolan_fun_2013,
+	title = {Fun with semirings: a functional pearl on the abuse of linear algebra},
+	volume = {48},
+	isbn = {978-1-4503-2326-0},
+	url = {https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf},
+	doi = {10.1145/2500365.2500613},
+	shorttitle = {Fun with semirings},
+	pages = {101},
+	publisher = {{ACM} Press},
+	author = {Dolan, Stephen},
+	urldate = {2016-11-23},
+	date = {2013},
+	langid = {english},
+	file = {[PDF] cam.ac.uk:files/1468/Dolan - Fun with Semirings.pdf:application/pdf}
+}
+
+@inproceedings{rivas_monoids_2015,
+	title = {From monoids to near-semirings: the essence of {MonadPlus} and Alternative},
+	isbn = {978-1-4503-3516-4},
+	url = {http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf},
+	doi = {10.1145/2790449.2790514},
+	shorttitle = {From monoids to near-semirings},
+	abstract = {It is well-known that monads are monoids in the category of endo-functors, and in fact so are applicative functors. Unfortunately, the benefits of this unified view are lost when the additional non-determinism structure of {\textbar}{MonadPlus}{\textbar} or {\textbar}Alternative{\textbar} is required.
+
+This article recovers the essence of these two type classes by extending monoids to near-semirings with both additive and multiplicative structure. This unified algebraic view enables us to generically define the free construction as well as a novel double Cayley representation that optimises both left-nested sums and left-nested products.},
+	pages = {196--207},
+	booktitle = {Proceedings of the 17th International Symposium on Principles and Practice of Declarative Programming},
+	publisher = {{ACM}},
+	author = {Rivas, Exequiel and Jaskelioff, Mauro and Schrijvers, Tom},
+	urldate = {2016-11-23},
+	date = {2015},
+	langid = {english},
+	note = {https://www.reddit.com/r/haskell/comments/3dlz6b/from\_monoids\_to\_nearsemirings\_the\_essence\_of/?},
+	file = {[PDF] unr.edu.ar:files/1525/Rivas et al. - From monoids to near-semirings the essence of Mon.pdf:application/pdf}
 }
