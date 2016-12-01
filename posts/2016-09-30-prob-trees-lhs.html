@@ -47,7 +47,7 @@
 <span class="kw">import </span><span class="dt">Control.Arrow</span>
 <span class="kw">import </span><span class="dt">Data.Ratio</span>
 <span class="kw">import </span><span class="dt">Data.Foldable</span></code></pre></div>
-<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation">(especially Erwig and Kollmansberger 2006; and Kidd 2007)</span>.</p>
+<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation">(especially Erwig and Kollmansberger <a href="#ref-erwig_functional_2006">2006</a>; and Kidd <a href="#ref-kidd_build_2007">2007</a>)</span>.</p>
 <p>I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">ProperProb</span> a <span class="fu">=</span> <span class="dt">ProperProb</span>
   {<span class="ot"> yes ::</span> <span class="dt">Map</span> a (<span class="dt">Product</span> <span class="dt">Rational</span>) }</code></pre></div>
@@ -135,7 +135,7 @@ counts <span class="fu">=</span>
       
 <span class="ot">compress ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
 compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="dt">Just</span> ys <span class="fu">=</span> (fromDistrib <span class="fu">.</span> counts <span class="fu">.</span> toDistrib) xs <span class="kw">in</span> ys</code></pre></div>
-<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation">Larsen (2011)</span>, and <span class="citation">Scibior, Ghahramani, and Gordon (2015)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
+<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation">Scibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
 <h3 id="references" class="unnumbered">References</h3>
 <div id="refs" class="references">
 <div id="ref-erwig_functional_2006">
