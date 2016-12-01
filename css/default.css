@@ -1,13 +1,13 @@
 body {
     color: black;
     font-family: Garamond, Times New Roman, serif;
-    font-size: 0.93em;
+    font-size: 93%;
     margin: 0px auto 0px auto;
     max-width: 500px
 }
 
 math {
-    font-size: 0.8em;
+    font-size: 80%;
 }
 
 img {
@@ -23,7 +23,7 @@ div#header {
 div#logo a {
     color: black;
     float: left;
-    font-size: 1.2em;
+    font-size: 120%;
     text-decoration: none
 }
 
@@ -34,7 +34,7 @@ div#header #navigation {
 div#header #navigation a {
     color: black;
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 1.2em;
+    font-size: 120%;
     margin-left: 12px;
     text-decoration: none;
     text-transform: uppercase
@@ -44,7 +44,7 @@ div#footer {
     font-family: Garamond, Times New Roman, Serif;
     border-top: solid 2px black;
     color: #555;
-    font-size: 0.8em;
+    font-size: 80%;
     margin-top: 30px;
     padding: 12px 0px 12px 0px;
     text-align: right
@@ -52,19 +52,19 @@ div#footer {
 
 h1 {
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 1.5em;
+    font-size: 150%;
     font-weight: normal
 }
 
 h2 {
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 1.3em;
+    font-size: 130%;
     font-weight: normal
 }
 
 div.info {
     color: #555;
-    font-size: 0.90em;
+    font-size: 90%;
     font-style: italic
 }
 
