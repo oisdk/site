@@ -4,12 +4,20 @@
 
 
 import           Control.Monad
+
 import           Data.Char           (toUpper)
+
+import qualified Data.Map            as Map
+
 import           Data.Maybe
 import           Data.Monoid
+
 import           Hakyll
 import           Hakyll.Web.Series
-import           Text.Pandoc         (Pandoc)
+
+import qualified Text.CSL            as CSL
+import           Text.CSL.Pandoc     (processCites)
+import           Text.Pandoc
 import           Text.Pandoc.Options
 
 --------------------------------------------------------------------------------
@@ -98,6 +106,31 @@ postCompiler =
                        , writerHighlight = True }) <$>
   readPandocOptionalBiblio
 
+readPandocBiblioLinkCit :: ReaderOptions
+                   -> Item CSL
+                   -> Item Biblio
+                   -> Item String
+                   -> Compiler (Item Pandoc)
+readPandocBiblioLinkCit ropt csl biblio item = do
+    -- Parse CSL file, if given
+    style <- unsafeCompiler $ CSL.readCSLFile Nothing . toFilePath . itemIdentifier $ csl
+
+    -- We need to know the citation keys, add then *before* actually parsing the
+    -- actual page. If we don't do this, pandoc won't even consider them
+    -- citations!
+    let Biblio refs = itemBody biblio
+    pandoc <- itemBody <$> readPandocWith ropt item
+    let pandoc' = processCites style refs (addLinkCitations pandoc) -- here's the change
+
+    return $ fmap (const pandoc') item
+
+addLinkCitations (Pandoc meta a) =
+  let prevMap = unMeta meta
+      newMap = Map.insert "link-citations" (MetaBool True) prevMap
+      newMeta = Meta newMap
+  in  Pandoc newMeta a
+
+
 readPandocOptionalBiblio :: Compiler (Item Pandoc)
 readPandocOptionalBiblio = do
   item <- getUnderlying
@@ -105,7 +138,7 @@ readPandocOptionalBiblio = do
     Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
     Just bibFile -> do
       maybeCsl <- getMetadataField item "csl"
-      join $ readPandocBiblio defaultHakyllReaderOptions
+      join $ readPandocBiblioLinkCit defaultHakyllReaderOptions
                           <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
                           <*> load (fromFilePath ("assets/bib/" ++ bibFile))
                           <*> getResourceBody
