@@ -536,7 +536,7 @@ zero = Void
 
 There's a subset of semirings which are [star semirings](https://en.wikipedia.org/wiki/Semiring#Star_semirings). They have an operation $*$ such that:
 
-$a* = 1 + aa* = 1 + a*a$
+$$a* = 1 + aa* = 1 + a*a$$
 
 Or, as a class:
 
@@ -567,10 +567,10 @@ Also known as [`many`{.haskell}](https://hackage.haskell.org/package/base-4.9.0.
 
 The $*$ for rationals is defined as [@droste_semirings_2009, p8]:
 
-$a* = \begin{cases}
+$$a* = \begin{cases}
   \frac{1}{1 - a} & \quad \text{if  } & 0 \leq a \lt 1, \\
   \infty          & \quad \text{if  } & a \geq 1.
-\end{cases}$
+\end{cases}$$
 
 So, combining the probability with the type-level business, the star of `Writer s a` is:
 
@@ -829,11 +829,11 @@ Alternatively, you can swap in the underlying data structure. Instead of a map, 
 
 A square matrix can be understood as a map from pairs of indices to values. This lets us use it to represent the state transfer function. Take, for instance, a regular expression with three possible states. Its state transfer function might look like this:
 
-$transfer = \begin{cases}
+$$transfer = \begin{cases}
 1 \quad & \{ 2, 3 \} \\
 2 \quad & \{ 1 \} \\
 3 \quad & \emptyset
-\end{cases}$
+\end{cases}$$
 
 It has the type of:
 
@@ -843,18 +843,18 @@ State -> Set State
 
 Where `State`{.haskell} is an integer. You can represent the set as a vector, where each position is a key, and each value is whether or not that key is present:
 
-$transfer = \begin{cases}
+$$transfer = \begin{cases}
 1 \quad & \begin{array} ( 0 & 1 & 1 ) \end{array} \\
 2 \quad & \begin{array} ( 1 & 0 & 0 ) \end{array} \\
 3 \quad & \begin{array} ( 0 & 0 & 0 ) \end{array}
-\end{cases}$
+\end{cases}$$
 
 Then, the matrix representation is obvious:
 
-$transfer = \left( \begin{array}{ccc}
+$$transfer = \left( \begin{array}{ccc}
 0 & 1 & 1 \\
 1 & 0 & 0 \\
-0 & 0 & 0 \end{array} \right)$
+0 & 0 & 0 \end{array} \right)$$
 
 This is the semiring of square matrices. It is, of course, yet *another* covector. The "keys" are the transfers: `1 -> 2`{.haskell} or `2 -> 3`{.haskell}, represented by the indices of the matrix. The "values" are whether or not that transfer is permitted.
 
