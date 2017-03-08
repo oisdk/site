@@ -1,6 +1,7 @@
 ---
 title: Constrained Applicatives
 tags: Haskell
+bibliography: Restricted Monads.bib
 ---
 
 In Haskell restricted monads are monads which can't contain every type. `Set`{.haskell} is a good example. If you look in the documentation for [Data.Set](https://hackage.haskell.org/package/containers-0.5.10.1/docs/Data-Set.html) you'll see several functions which correspond to functions in the Functor/Applicative/Monad typeclass hierarchy:
@@ -350,4 +351,76 @@ liftAM = go pure where
 
 Using these definitions, we can make `Set`{.haskell}, `Text`{.haskell}, and all the rest of them applicatives, while preserving the applicative operations. Also, from my preliminary testing, there seems to be *no* overhead in using these new definitions for `<*>`{.haskell}.
 
-The final piece of the puzzle is `-XApplicativeDo`{.haskell}: it would be really nice if the do notation could desugar to use the `liftA` family of functions in stead of `<*>`{.haskell}. I haven't figured out a way to do it yet, though.
+## Normalized Embedding
+
+In @sculthorpe_constrained-monad_2013, there's discussion of this type:
+
+```{.haskell}
+data NM :: (* -> Constraint) -> (* -> *) -> * -> * where
+  Return :: a -> NM c t a
+  Bind :: c x => t x -> (x -> NM c t a) -> NM c t a
+```
+
+This type allows constrained monads to become normal monads. It can be used for the same purpose as the `FreeT`{.haskell} type from above. In the paper, the free type is called `RCodT`{.haskell}.
+
+One way to look at the type is as a concrete representation of the monad class, with each method being a constructor.
+
+You might wonder if there are similar constructs for functor and applicative. Functor is simple:
+
+```{.haskell}
+data NF :: (* -> Constraint) -> (* -> *) -> * -> * where
+  FMap :: c x => (x -> a) -> t x -> NF c t a
+```
+
+Again, this can conform to functor (and *only* functor), and can be interpreted when the final type is `Suitable`{.haskell}.
+
+Like above, it has a continuation version, [Yoneda](https://hackage.haskell.org/package/kan-extensions-5.0.1/docs/Data-Functor-Yoneda.html).
+
+For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. It turned out to be much more difficult than I anticipated! I got close, though.
+
+The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Anyway, here's the implementation:
+
+```{.haskell}
+infixl 5 :>|
+data FreeAppVect :: (* -> *) -> [*] -> * where
+        NilAppl :: FreeAppVect f '[]
+        (:>|) ::
+            Suitable f x =>
+            FreeAppVect f xs -> App f x -> FreeAppVect f (x ': xs)
+
+data App :: (* -> *) -> * -> * where
+        Pure :: a -> App f a
+        Appl :: FunType xs a -> FreeAppVect f xs -> App f a
+        Lift :: Suitable f a => f a -> App f a
+
+infixl 4 <*>
+(<*>) :: Suitable f a => App f (a -> b) -> App f a -> App f b
+Pure f <*> x = Appl f (NilAppl :>| x)
+Appl fs xs <*> ys = Appl fs (xs :>| ys)
+Lift f <*> x = Appl ($) (NilAppl :>| Lift f :>| x)
+
+infixl 4 <$>
+(<$>) :: Suitable f a => (a -> b) -> App f a -> App f b
+f <$> x = Pure f <*> x
+
+fmap :: Suitable f a => (a -> b) -> App f a -> App f b
+fmap = (<$>)
+
+pure :: a -> App f a
+pure = Pure
+
+lower
+    :: (Applicative f, Suitable f a)
+    => App f a -> f a
+lower (Pure x) = Constrained.pure x
+lower (Lift x) = x
+lower (Appl fs xs) = liftA fs (lowerVect xs)
+  where
+    lowerVect
+        :: Applicative f
+        => FreeAppVect f xs -> AppVect f xs
+    lowerVect NilAppl = Nil
+    lowerVect (ys :>| y) = lowerVect ys :> lower y
+```
+
+Currently, the type inference isn't working with `-XApplicativeDo`{.haskell}, but I'm getting there.
