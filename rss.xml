@@ -69,12 +69,12 @@ runFree xs f <span class="fu">=</span> runIdentity (runFreeT xs (pure <span clas
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap<span class="ot"> ::</span> (<span class="dt">Suitable</span> f a, <span class="dt">Suitable</span> f b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
 <p>I don’t want to constrain <code class="sourceCode haskell">a</code>: I figure if you can get something <em>into</em> your monad, it <em>must</em> be suitable. And I really want to reduce the syntactic overhead of writing extra types next to your functions.</p>
 <p>There’s also the <a href="https://hackage.haskell.org/package/supermonad-0.1/docs/Control-Supermonad-Constrained.html">supermonad</a> library out there which is much more general than any of these examples: it supports indexed monads as well as constrained.</p>
-<p>Anyway, with the <code class="sourceCode haskell"><span class="dt">Functor</span></code> class, we can make <code class="sourceCode haskell"><span class="dt">Monad</span></code> similarly:</p>
+<p>Anyway,<code class="sourceCode haskell"><span class="dt">Monad</span></code> is defined similarly to <code class="sourceCode haskell"><span class="dt">Functor</span></code>:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> m <span class="ot">=&gt;</span> <span class="dt">Monad</span> m <span class="kw">where</span>
 <span class="ot">  return ::</span> <span class="dt">Suitable</span> m a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> m a
 <span class="ot">  (&gt;&gt;=) ::</span> <span class="dt">Suitable</span> m b <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre></div>
 <p>Again, I want to minimize the use of <code class="sourceCode haskell"><span class="dt">Suitable</span></code>, so for <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> there’s only a constraint on <code class="sourceCode haskell">b</code>.</p>
-<p>Finally, here’s the set instance:</p>
+<p>Finally, here’s the <code class="sourceCode haskell"><span class="dt">Set</span></code> instance:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Set</span> <span class="kw">where</span>
     <span class="kw">type</span> <span class="dt">Suitable</span> <span class="dt">Set</span> a <span class="fu">=</span> <span class="dt">Ord</span> a
     fmap <span class="fu">=</span> Set.map</code></pre></div>
@@ -135,11 +135,11 @@ reflect x <span class="fu">=</span> <span class="dt">FreeT</span> (x <span class
 <p>The issue is <code class="sourceCode haskell">f (a <span class="ot">-&gt;</span> b)</code>. There’s no <em>way</em> you’re getting some type like that into <code class="sourceCode haskell"><span class="dt">Set</span></code>. This means that <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> is effectively useless. No problem, you think: define <code class="sourceCode haskell">liftA2</code> instead:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
 <span class="ot">  pure ::</span> <span class="dt">Suitable</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> f a
-<span class="ot">  liftA2 ::</span> <span class="dt">Suitable</span> f b <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+<span class="ot">  liftA2 ::</span> <span class="dt">Suitable</span> f c <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
 
-<span class="ot">(&lt;*&gt;) ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Suitable</span> f b) <span class="ot">=&gt;</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f c
+<span class="ot">(&lt;*&gt;) ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Suitable</span> f b) <span class="ot">=&gt;</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b
 (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> liftA2 (<span class="fu">$</span>)</code></pre></div>
-<p>Great! Now we can use it with set. However, there’s no way (that I can see) to defined the other lift functions: <code class="sourceCode haskell">liftA3</code>, etc. Of course, if <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> is available, it’s as simple as:</p>
+<p>Great! Now we can use it with set. However, there’s no way (that I can see) to define the other lift functions: <code class="sourceCode haskell">liftA3</code>, etc. Of course, if <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> is available, it’s as simple as:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">liftA3 f xs ys zs <span class="fu">=</span> <span class="kw">do</span>
   x <span class="ot">&lt;-</span> xs
   y <span class="ot">&lt;-</span> ys
@@ -205,7 +205,7 @@ liftAM f (x <span class="fu">:*</span> xs) <span class="fu">=</span> x <span cla
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">FunType</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>]) (<span class="ot">y ::</span> <span class="fu">*</span>)<span class="ot"> ::</span> <span class="fu">*</span> <span class="kw">where</span>
   <span class="dt">FunType</span> <span class="ch">&#39;[] y = y</span>
   <span class="dt">FunType</span> (x <span class="ch">&#39;: xs) y = x -&gt; FunType xs y</span></code></pre></div>
-<p>It gets really difficult to define <code class="sourceCode haskell">liftA</code> using <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> now, though. <code class="sourceCode haskell">liftAM</code> is a breeze, though:</p>
+<p>It gets really difficult to define <code class="sourceCode haskell">liftA</code> using <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> now, though. <code class="sourceCode haskell">liftAM</code>, on the other hand, is a breeze:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAM ::</span> <span class="dt">Monad</span> f <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a
 liftAM f <span class="dt">Nil</span> <span class="fu">=</span> pure f
 liftAM f (x <span class="fu">:&lt;</span> xs) <span class="fu">=</span> x <span class="fu">&gt;&gt;=</span> \y <span class="ot">-&gt;</span> liftAM (f y) xs</code></pre></div>
@@ -228,7 +228,7 @@ liftA
 liftAP f <span class="dt">Nil</span> <span class="fu">=</span> Prelude.pure f
 liftAP f (<span class="dt">Nil</span> <span class="fu">:&gt;</span> xs) <span class="fu">=</span> Prelude.fmap f xs
 liftAP f (ys <span class="fu">:&gt;</span> xs) <span class="fu">=</span> liftAP f ys <span class="fu">Prelude.&lt;*&gt;</span> xs</code></pre></div>
-<p>But what about <code class="sourceCode haskell">liftAM</code>? It’s much more difficult, fundamentally because <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> builds up arguments as a cons-list. To convert between the two efficiently, we need to use the trick for reversing lists efficiently: build up the reversed list as you go:</p>
+<p>But what about <code class="sourceCode haskell">liftAM</code>? It’s much more difficult, fundamentally because <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> builds up arguments as a cons-list. To convert between the two efficiently, we need to use the trick for reversing lists efficiently: build up the reversed list as you go.</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAM ::</span> (<span class="dt">Monad</span> f, <span class="dt">Suitable</span> f a) <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a
 liftAM <span class="fu">=</span> go pure <span class="kw">where</span>
 <span class="ot">  go ::</span> (<span class="dt">Suitable</span> f b, <span class="dt">Monad</span> f) 
