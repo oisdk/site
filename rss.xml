@@ -7,8 +7,242 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Thu, 17 Nov 2016 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Wed, 08 Mar 2017 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Constrained Applicatives</title>
+    <link>http://doisinkidney.com/posts/2017-03-08-constrained-applicatives-lhs.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on March  8, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>In Haskell restricted monads are monads which can’t contain every type. <code class="sourceCode haskell"><span class="dt">Set</span></code> is a good example. If you look in the documentation for <a href="https://hackage.haskell.org/package/containers-0.5.10.1/docs/Data-Set.html">Data.Set</a> you’ll see several functions which correspond to functions in the Functor/Applicative/Monad typeclass hierarchy:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">map<span class="ot"> ::</span> <span class="dt">Ord</span> b <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Set</span> a <span class="ot">-&gt;</span> <span class="dt">Set</span> b
+<span class="ot">singleton ::</span> a <span class="ot">-&gt;</span> <span class="dt">Set</span> a
+foldMap<span class="ot"> ::</span> <span class="dt">Ord</span> b <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Set</span> b) <span class="ot">-&gt;</span> <span class="dt">Set</span> a <span class="ot">-&gt;</span> <span class="dt">Set</span> b <span class="co">-- specialized</span></code></pre></div>
+<p>Unfortunately, though, <code class="sourceCode haskell"><span class="dt">Set</span></code> can’t conform to <code class="sourceCode haskell"><span class="dt">Functor</span></code>, because the signature of <code class="sourceCode haskell">fmap</code> looks like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap<span class="ot"> ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<p>It doesn’t have an <code class="sourceCode haskell"><span class="dt">Ord</span></code> constraint.</p>
+<p>This is annoying: when using <code class="sourceCode haskell"><span class="dt">Set</span></code>, lots of things have to be imported qualified, and you have to remember the slightly different names of extra functions like <code class="sourceCode haskell">map</code>. More importantly, you’ve lost the ability to write generic code over <code class="sourceCode haskell"><span class="dt">Functor</span></code> or <code class="sourceCode haskell"><span class="dt">Monad</span></code> which will work on <code class="sourceCode haskell"><span class="dt">Set</span></code>.</p>
+<p>There are a number of ways to get around this problem. <a href="http://okmij.org/ftp/Haskell/set-monad.html#set-cps">Here</a>, an approach using reflection-reification is explored. These are the types involved:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">SetC</span> a <span class="fu">=</span> 
+       <span class="dt">SetC</span>{<span class="ot">unSetC ::</span> forall r<span class="fu">.</span> <span class="dt">Ord</span> r <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Set</span> r) <span class="ot">-&gt;</span> <span class="dt">Set</span> r}
+
+<span class="ot">reifySet ::</span> <span class="dt">Ord</span> r <span class="ot">=&gt;</span> <span class="dt">SetC</span> r <span class="ot">-&gt;</span> <span class="dt">Set</span> r
+reifySet m <span class="fu">=</span> unSetC m singleton
+
+<span class="ot">reflectSet ::</span> <span class="dt">Ord</span> r <span class="ot">=&gt;</span> <span class="dt">Set</span> r <span class="ot">-&gt;</span> <span class="dt">SetC</span> r
+reflectSet s <span class="fu">=</span> <span class="dt">SetC</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> S.foldr (\x r <span class="ot">-&gt;</span> k x <span class="ot">`union`</span> r) S.empty s</code></pre></div>
+<p><code class="sourceCode haskell"><span class="dt">SetC</span></code> is just <code class="sourceCode haskell"><span class="dt">Cont</span></code> in disguise. In fact, we can generalize this pattern, using Constraint Kinds:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">FreeT</span> c m a <span class="fu">=</span> 
+       <span class="dt">FreeT</span> {<span class="ot"> runFreeT ::</span> forall r<span class="fu">.</span> c r <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m r) <span class="ot">-&gt;</span> m r}
+
+<span class="ot">reifySet ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">FreeT</span> <span class="dt">Ord</span> <span class="dt">Set</span> a <span class="ot">-&gt;</span> <span class="dt">Set</span> a
+reifySet m <span class="fu">=</span> runFreeT m singleton
+
+<span class="ot">reflectSet ::</span> <span class="dt">Set</span> r <span class="ot">-&gt;</span> <span class="dt">FreeT</span> <span class="dt">Ord</span> <span class="dt">Set</span> r
+reflectSet s <span class="fu">=</span> <span class="dt">FreeT</span> <span class="fu">$</span> \k <span class="ot">-&gt;</span> S.foldr (\x r <span class="ot">-&gt;</span> k x <span class="ot">`union`</span> r) S.empty s</code></pre></div>
+<p><code class="sourceCode haskell"><span class="dt">FreeT</span></code> looks an <em>awful lot</em> like <code class="sourceCode haskell"><span class="dt">ContT</span></code> by now. The type has some other interesting applications, though. For instance, this type:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">FM</span> <span class="fu">=</span> <span class="dt">FreeT</span> <span class="dt">Monoid</span> <span class="dt">Identity</span></code></pre></div>
+<p>Is the free monoid. If we use a transformers-style type synonym, the naming becomes even nicer:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Free</span> c <span class="fu">=</span> <span class="dt">FreeT</span> c <span class="dt">Identity</span>
+
+<span class="ot">runFree ::</span> c r <span class="ot">=&gt;</span> <span class="dt">Free</span> c a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> r
+runFree xs f <span class="fu">=</span> runIdentity (runFreeT xs (pure <span class="fu">.</span> f))
+
+<span class="kw">instance</span> <span class="dt">Foldable</span> (<span class="dt">Free</span> <span class="dt">Monoid</span>) <span class="kw">where</span>
+  foldMap <span class="fu">=</span> flip runFree</code></pre></div>
+<p>Check out <a href="https://hackage.haskell.org/package/free-functors">this package</a> for an implementation of the non-transformer <code class="sourceCode haskell"><span class="dt">Free</span></code>.</p>
+<h2 id="different-classes">Different Classes</h2>
+<p>This is still unsatisfying, though. Putting annotations around your code feels inelegant. The next solution is to replace the monad class altogether with our own, and turn on <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XRebindableSyntax</span></code>. There are a few ways to design this new class. One option is to use <a href="http://okmij.org/ftp/Haskell/types.html#restricted-datatypes">multi-parameter type classes</a>. Another solution is with an associated type:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">Suitable</span> f<span class="ot"> a ::</span> <span class="dt">Constraint</span>
+<span class="ot">  fmap ::</span> <span class="dt">Suitable</span> f b <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<p>This is similar to the approach taken in the <a href="https://hackage.haskell.org/package/rmonad">rmonad</a> library, except that library doesn’t use constraint kinds (they weren’t available when the library was made), so it has to make do with a <code class="sourceCode haskell"><span class="dt">Suitable</span></code> class. Also, the signature for <code class="sourceCode haskell">fmap</code> in rmonad is:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">fmap<span class="ot"> ::</span> (<span class="dt">Suitable</span> f a, <span class="dt">Suitable</span> f b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<p>I don’t want to constrain <code class="sourceCode haskell">a</code>: I figure if you can get something <em>into</em> your monad, it <em>must</em> be suitable. And I really want to reduce the syntactic overhead of writing extra types next to your functions.</p>
+<p>There’s also the <a href="https://hackage.haskell.org/package/supermonad-0.1/docs/Control-Supermonad-Constrained.html">supermonad</a> library out there which is much more general than any of these examples: it supports indexed monads as well as constrained.</p>
+<p>Anyway, with the <code class="sourceCode haskell"><span class="dt">Functor</span></code> class, we can make <code class="sourceCode haskell"><span class="dt">Monad</span></code> similarly:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> m <span class="ot">=&gt;</span> <span class="dt">Monad</span> m <span class="kw">where</span>
+<span class="ot">  return ::</span> <span class="dt">Suitable</span> m a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> m a
+<span class="ot">  (&gt;&gt;=) ::</span> <span class="dt">Suitable</span> m b <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</code></pre></div>
+<p>Again, I want to minimize the use of <code class="sourceCode haskell"><span class="dt">Suitable</span></code>, so for <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> there’s only a constraint on <code class="sourceCode haskell">b</code>.</p>
+<p>Finally, here’s the set instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Set</span> <span class="kw">where</span>
+    <span class="kw">type</span> <span class="dt">Suitable</span> <span class="dt">Set</span> a <span class="fu">=</span> <span class="dt">Ord</span> a
+    fmap <span class="fu">=</span> Set.map</code></pre></div>
+<h2 id="monomorphic">Monomorphic</h2>
+<p>With equality constraints, you can actually make <em>monomorphic</em> containers conform to these classes (or, at least, wrappers around them).</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import qualified</span> <span class="dt">Data.Text</span> <span class="kw">as</span> <span class="dt">Text</span>
+
+<span class="kw">data</span> <span class="dt">Text</span> a <span class="kw">where</span>
+  <span class="dt">Text</span><span class="ot"> ::</span> <span class="dt">Text.Text</span> <span class="ot">-&gt;</span> <span class="dt">Text</span> <span class="dt">Char</span>
+
+<span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Text</span> <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">Suitable</span> <span class="dt">Text</span> a <span class="fu">=</span> a <span class="fu">~</span> <span class="dt">Char</span>
+  fmap f (<span class="dt">Text</span> xs) <span class="fu">=</span> <span class="dt">Text</span> (Text.map f xs)</code></pre></div>
+<p>This pattern can be generalized with some more GADT magic:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Monomorphic</span> xs a b <span class="kw">where</span>
+        <span class="dt">Monomorphic</span><span class="ot"> ::</span> (a <span class="fu">~</span> b) <span class="ot">=&gt;</span> xs <span class="ot">-&gt;</span> <span class="dt">Monomorphic</span> xs a b
+
+<span class="kw">instance</span> (<span class="dt">MonoFunctor</span> xs, a <span class="fu">~</span> <span class="dt">Element</span> xs) <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Monomorphic</span> xs a) <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">Suitable</span> (<span class="dt">Monomorphic</span> xs a) b <span class="fu">=</span> a <span class="fu">~</span> b
+  fmap f (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> <span class="dt">Monomorphic</span> (omap f xs)</code></pre></div>
+<p>Where <code class="sourceCode haskell">omap</code> comes from the <a href="https://hackage.haskell.org/package/mono-traversable">mono-traversable</a> package. You could go a little further, to <code class="sourceCode haskell"><span class="dt">Foldable</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> (<span class="dt">MonoFoldable</span> xs, element <span class="fu">~</span> <span class="dt">Element</span> xs) <span class="ot">=&gt;</span>
+         <span class="dt">Foldable</span> (<span class="dt">Monomorphic</span> xs element) <span class="kw">where</span>
+    foldr f b (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> ofoldr f b xs
+    foldMap f (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> ofoldMap f xs
+    foldl&#39; f b (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> ofoldl&#39; f b xs
+    toList (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> otoList xs
+    null (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> onull xs
+    length (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> olength xs
+    foldr1 f (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> ofoldr1Ex f xs
+    elem x (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> oelem x xs
+    maximum (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> maximumEx xs
+    minimum (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> minimumEx xs
+    sum (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> osum xs
+    product (<span class="dt">Monomorphic</span> xs) <span class="fu">=</span> oproduct xs</code></pre></div>
+<h2 id="back-to-normal">Back to normal</h2>
+<p>Changing the <code class="sourceCode haskell"><span class="dt">FreeT</span></code> type above a little, we can go back to normal functors and monads, and write more general reify and reflect functions:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">FreeT</span> m a <span class="fu">=</span> 
+       <span class="dt">FreeT</span> {<span class="ot"> runFreeT ::</span> forall r<span class="fu">.</span> <span class="dt">Suitable</span> m r <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m r) <span class="ot">-&gt;</span> m r}
+       
+<span class="ot">reify ::</span> (<span class="dt">Monad</span> m, <span class="dt">Suitable</span> m a) <span class="ot">=&gt;</span> <span class="dt">FreeT</span> m a <span class="ot">-&gt;</span> m a
+reify <span class="fu">=</span> flip runFreeT return
+
+<span class="ot">reflect ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> <span class="dt">FreeT</span> m a
+reflect x <span class="fu">=</span> <span class="dt">FreeT</span> (x <span class="fu">&gt;&gt;=</span>)</code></pre></div>
+<p>So now our types, when wrapped, can conform to the Prelude’s <code class="sourceCode haskell"><span class="dt">Functor</span></code>. It would be nice if this type could be written like so:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">reify ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">FreeT</span> (<span class="dt">Suitable</span> m) m a <span class="ot">-&gt;</span> m a
+reify <span class="fu">=</span> flip runFreeT return
+
+<span class="ot">reflect ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> m a <span class="ot">-&gt;</span> <span class="dt">FreeT</span> (<span class="dt">Suitable</span> m) m a
+reflect x <span class="fu">=</span> <span class="dt">FreeT</span> (x <span class="fu">&gt;&gt;=</span>)</code></pre></div>
+<p>But unfortunately type families cannot be partially applied.</p>
+<h2 id="applicatives">Applicatives</h2>
+<p>The classes above aren’t very modern: they’re missing applicative. This one is tricky:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure ::</span> <span class="dt">Suitable</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  (&lt;*&gt;) ::</span> <span class="dt">Suitable</span> f b <span class="ot">=&gt;</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</code></pre></div>
+<p>The issue is <code class="sourceCode haskell">f (a <span class="ot">-&gt;</span> b)</code>. There’s no <em>way</em> you’re getting some type like that into <code class="sourceCode haskell"><span class="dt">Set</span></code>. This means that <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> is effectively useless. No problem, you think: define <code class="sourceCode haskell">liftA2</code> instead:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> f <span class="kw">where</span>
+<span class="ot">  pure ::</span> <span class="dt">Suitable</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> f a
+<span class="ot">  liftA2 ::</span> <span class="dt">Suitable</span> f b <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+
+<span class="ot">(&lt;*&gt;) ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Suitable</span> f b) <span class="ot">=&gt;</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f c
+(<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span> liftA2 (<span class="fu">$</span>)</code></pre></div>
+<p>Great! Now we can use it with set. However, there’s no way (that I can see) to defined the other lift functions: <code class="sourceCode haskell">liftA3</code>, etc. Of course, if <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> is available, it’s as simple as:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">liftA3 f xs ys zs <span class="fu">=</span> <span class="kw">do</span>
+  x <span class="ot">&lt;-</span> xs
+  y <span class="ot">&lt;-</span> ys
+  z <span class="ot">&lt;-</span> zs
+  pure (f x y z)</code></pre></div>
+<p>But now we can’t define it for non-monadic applicatives (square matrices, ZipLists, etc.). This also forces us to use <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> when <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> <a href="https://simonmar.github.io/posts/2015-10-20-Fun-With-Haxl-1.html">may have been more efficient</a>.</p>
+<p>The functions we’re interested in defining look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftA2 ::</span> <span class="dt">Suitable</span> f c <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+<span class="ot">liftA3 ::</span> <span class="dt">Suitable</span> f d <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c <span class="ot">-&gt;</span> f d
+<span class="ot">liftA4 ::</span> <span class="dt">Suitable</span> f e <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d <span class="ot">-&gt;</span> e) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c <span class="ot">-&gt;</span> f d <span class="ot">-&gt;</span> f e</code></pre></div>
+<p>There’s a clear pattern, but no obvious way to abstract over it. Type-level shenanigans to the rescue!</p>
+<p>The pattern might be expressed like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftA ::</span> <span class="dt">Func</span> args <span class="ot">-&gt;</span> <span class="dt">Func</span> lifted args</code></pre></div>
+<p>We can store these types as heterogeneous lists:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">Vect</span> xs <span class="kw">where</span>
+  <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">Vect</span> <span class="ch">&#39;[]</span>
+<span class="ot">  (:-) ::</span> x <span class="ot">-&gt;</span> <span class="dt">Vect</span> xs <span class="ot">-&gt;</span> <span class="dt">Vect</span> (x <span class="ch">&#39;: xs)</span>
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:*</span>
+<span class="kw">data</span> <span class="dt">AppVect</span> f xs <span class="kw">where</span>
+  <span class="dt">NilA</span><span class="ot"> ::</span> <span class="dt">AppVect</span> f <span class="ch">&#39;[]</span>
+<span class="ot">  (:*) ::</span> f x <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f (x <span class="ch">&#39;: xs)</span></code></pre></div>
+<p>And <code class="sourceCode haskell">liftA</code> can be represented like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">liftA
+<span class="ot">    ::</span> <span class="dt">Suitable</span> f b
+    <span class="ot">=&gt;</span> (<span class="dt">Vect</span> xs <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f b
+
+liftA2
+<span class="ot">    ::</span> <span class="dt">Suitable</span> f c
+    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c
+liftA2 f xs ys <span class="fu">=</span>
+    liftA
+        (\(x <span class="fu">:-</span> y <span class="fu">:-</span> <span class="dt">Nil</span>) <span class="ot">-&gt;</span>
+              f x y)
+        (xs <span class="fu">:*</span> ys <span class="fu">:*</span> <span class="dt">NilA</span>)
+
+liftA3
+<span class="ot">    ::</span> <span class="dt">Suitable</span> f d
+    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c <span class="ot">-&gt;</span> f d
+liftA3 f xs ys zs <span class="fu">=</span>
+    liftA
+        (\(x <span class="fu">:-</span> y <span class="fu">:-</span> z <span class="fu">:-</span> <span class="dt">Nil</span>) <span class="ot">-&gt;</span>
+              f x y z)
+        (xs <span class="fu">:*</span> ys <span class="fu">:*</span> zs <span class="fu">:*</span> <span class="dt">NilA</span>)</code></pre></div>
+<p>Cool! For unrestricted applicatives, we can define <code class="sourceCode haskell">liftA</code> in terms of <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAP ::</span> (<span class="dt">Prelude.Applicative</span> f) 
+       <span class="ot">=&gt;</span> (<span class="dt">Vect</span> xs <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (<span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f b)
+liftAP f <span class="dt">NilA</span> <span class="fu">=</span> Prelude.pure (f <span class="dt">Nil</span>)
+liftAP f (x <span class="fu">:*</span> <span class="dt">NilA</span>) 
+  <span class="fu">=</span> Prelude.fmap (f <span class="fu">.</span> (<span class="fu">:-</span><span class="dt">Nil</span>)) x
+liftAP f (x <span class="fu">:*</span> xs) 
+  <span class="fu">=</span>  ((f <span class="fu">.</span>) <span class="fu">.</span> (<span class="fu">:-</span>)) <span class="fu">Prelude.&lt;$&gt;</span> x <span class="fu">Prelude.&lt;*&gt;</span> liftAP id xs</code></pre></div>
+<p>And for types with a monad instance, we can define it in terms of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAM ::</span> (<span class="dt">Monad</span> f, <span class="dt">Suitable</span> f b) 
+       <span class="ot">=&gt;</span> (<span class="dt">Vect</span> xs <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (<span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f b)
+liftAM f <span class="dt">NilA</span> <span class="fu">=</span> pure (f <span class="dt">Nil</span>)
+liftAM f (x <span class="fu">:*</span> <span class="dt">NilA</span>) <span class="fu">=</span> fmap (f <span class="fu">.</span> (<span class="fu">:-</span><span class="dt">Nil</span>)) x
+liftAM f (x <span class="fu">:*</span> xs) <span class="fu">=</span> x <span class="fu">&gt;&gt;=</span> \y <span class="ot">-&gt;</span> liftAM (f <span class="fu">.</span> (y<span class="fu">:-</span>)) xs</code></pre></div>
+<h2 id="efficiency">Efficiency</h2>
+<p>This approach is <em>really</em> slow. Every function wraps up its arguments in a <code class="sourceCode haskell"><span class="dt">Vect</span></code>, and it’s just generally awful.</p>
+<p>What about <em>not</em> wrapping up the function? Type families can help here:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">FunType</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>]) (<span class="ot">y ::</span> <span class="fu">*</span>)<span class="ot"> ::</span> <span class="fu">*</span> <span class="kw">where</span>
+  <span class="dt">FunType</span> <span class="ch">&#39;[] y = y</span>
+  <span class="dt">FunType</span> (x <span class="ch">&#39;: xs) y = x -&gt; FunType xs y</span></code></pre></div>
+<p>It gets really difficult to define <code class="sourceCode haskell">liftA</code> using <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> now, though. <code class="sourceCode haskell">liftAM</code> is a breeze, though:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAM ::</span> <span class="dt">Monad</span> f <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a
+liftAM f <span class="dt">Nil</span> <span class="fu">=</span> pure f
+liftAM f (x <span class="fu">:&lt;</span> xs) <span class="fu">=</span> x <span class="fu">&gt;&gt;=</span> \y <span class="ot">-&gt;</span> liftAM (f y) xs</code></pre></div>
+<p>And no vector constructors on the right of the bind!</p>
+<p>Still, no decent definition using <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>. The problem is that we’re using a cons-list to represent a function’s arguments, but <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> is left-associative, so it builds up arguments as a snoc list. Lets try using a snoc-list as the type family:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixl</span> <span class="dv">5</span> <span class="fu">:&gt;</span>
+<span class="kw">data</span> <span class="dt">AppVect</span> f xs <span class="kw">where</span>
+  <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">AppVect</span> f <span class="ch">&#39;[]</span>
+<span class="ot">  (:&gt;) ::</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f x <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f (x <span class="ch">&#39;: xs)</span>
+
+<span class="kw">type</span> family <span class="dt">FunType</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>]) (<span class="ot">y ::</span> <span class="fu">*</span>)<span class="ot"> ::</span> <span class="fu">*</span> <span class="kw">where</span>
+  <span class="dt">FunType</span> <span class="ch">&#39;[] y = y</span>
+  <span class="dt">FunType</span> (x <span class="ch">&#39;: xs) y = FunType xs (x -&gt; y)</span>
+
+liftA
+<span class="ot">    ::</span> <span class="dt">Suitable</span> f a
+    <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a</code></pre></div>
+<p><code class="sourceCode haskell">liftAP</code> now gets a natural definition:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAP ::</span> <span class="dt">Prelude.Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a
+liftAP f <span class="dt">Nil</span> <span class="fu">=</span> Prelude.pure f
+liftAP f (<span class="dt">Nil</span> <span class="fu">:&gt;</span> xs) <span class="fu">=</span> Prelude.fmap f xs
+liftAP f (ys <span class="fu">:&gt;</span> xs) <span class="fu">=</span> liftAP f ys <span class="fu">Prelude.&lt;*&gt;</span> xs</code></pre></div>
+<p>But what about <code class="sourceCode haskell">liftAM</code>? It’s much more difficult, fundamentally because <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> builds up arguments as a cons-list. To convert between the two efficiently, we need to use the trick for reversing lists efficiently: build up the reversed list as you go:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftAM ::</span> (<span class="dt">Monad</span> f, <span class="dt">Suitable</span> f a) <span class="ot">=&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f a
+liftAM <span class="fu">=</span> go pure <span class="kw">where</span>
+<span class="ot">  go ::</span> (<span class="dt">Suitable</span> f b, <span class="dt">Monad</span> f) 
+     <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f b
+  go f g <span class="dt">Nil</span> <span class="fu">=</span> f g
+  go f g (xs <span class="fu">:&gt;</span> x) <span class="fu">=</span> go (\c <span class="ot">-&gt;</span> x <span class="fu">&gt;&gt;=</span> f <span class="fu">.</span> c) g xs</code></pre></div>
+<p>Using these definitions, we can make <code class="sourceCode haskell"><span class="dt">Set</span></code>, <code class="sourceCode haskell"><span class="dt">Text</span></code>, and all the rest of them applicatives, while preserving the applicative operations. Also, from my preliminary testing, there seems to be <em>no</em> overhead in using these new definitions for <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>.</p>
+<p>The final piece of the puzzle is <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XApplicativeDo</span></code>: it would be really nice if the do notation could desugar to use the <code>liftA</code> family of functions in stead of <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>. I haven’t figured out a way to do it yet, though.</p>
+]]></description>
+    <pubDate>Wed, 08 Mar 2017 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2017-03-08-constrained-applicatives-lhs.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Semirings</title>
     <link>http://doisinkidney.com/posts/2016-11-17-semirings-lhs.html</link>
     <description><![CDATA[<div class="info">
@@ -2196,256 +2430,6 @@ dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></code>
 ]]></description>
     <pubDate>Mon, 24 Aug 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>A Trie in Swift</title>
-    <link>http://doisinkidney.com/posts/2015-08-11-swift-trie.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on August 11, 2015
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Swift.html">Swift</a>
-    
-</div>
-
-<p>If you google “cool data structures” you’ll get <a href="http://stackoverflow.com/questions/500607/what-are-the-lesser-known-but-useful-data-structures">this</a> as your first result. It’s a stackoverflow question: “What are the lesser known but useful data structures?”. And the top answer is a Trie. I read up on them, and found out a lot of cool things about their use (as well as finding out that I’m now the kind of person who googles “cool data structures”). So I rocked on up to my playground, and got writing.</p>
-<p>A Trie is a prefix tree. It’s another recursive data structure: each Trie contains other children Tries, identifiable by their prefixes.</p>
-<p>It’s a bit of a hipster data structure, not very widely used, but it’s got some useful applications. It’s got set-like operations, with insertion and searching each at <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math>, where <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> is the length of the sequence being searched for. A Set is the only way to go for hashable, unordered elements. But, if you’ve got <em>sequences</em> of hashable elements, a Trie might be for you. (one thing to note is that Sets are hashable themselves, so if the sequences you want to store are unordered, a Set of Sets is more applicable)</p>
-<div class="figure">
-<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Trie_example.svg/1092px-Trie_example.svg.png" alt="A trie for keys" />
-<p class="caption">A trie for keys</p>
-</div>
-<p>In Swift, we can do this by having every Trie contain a dictionary of prefixes and Tries. Something like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public struct Trie&lt;Element : Hashable&gt; {
-  <span class="kw">private</span> <span class="kw">var</span> children: [Element:Trie&lt;Element&gt;]
-}</code></pre></div>
-<p>We don’t run into the problem of structs not being allowed to be recursive here, because we don’t directly store a Trie within a Trie - we store a <em>dictionary</em>, and therefore a reference to the child Tries. In this dictionary, the keys correspond to the prefixes. So how do we fill it up? Like lists, we can use the decomposition properties of generators:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> init&lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;(<span class="kw">var</span> gen: G) {
-    <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {
-      children = [head:<span class="fu">Trie</span>(gen:gen)]
-    } <span class="kw">else</span> {
-      children = [:]
-    }
-  }
-  public init
-    &lt;S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element&gt;
-    (_ seq: S) {
-      self.<span class="fu">init</span>(gen: seq.<span class="fu">generate</span>())
-  }
-}</code></pre></div>
-<p>That’s not really enough. That can store one sequence, but we need an <code class="sourceCode scala">insert</code> function. Here ya go:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> mutating func insert
-    &lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;
-    (<span class="kw">var</span> gen: G) {
-      <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {
-        children[head]?.<span class="fu">insert</span>(gen) ?? {children[head] = <span class="fu">Trie</span>(gen: gen)}()
-      }
-  }
-  public mutating func insert
-    &lt;S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element&gt;
-    (seq: S) {
-      <span class="fu">insert</span>(seq.<span class="fu">generate</span>())
-  }
-}</code></pre></div>
-<p>There’s a line in there that some may find offensive:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">children[head]?.<span class="fu">insert</span>(gen) ?? {children[head] = <span class="fu">Trie</span>(gen: gen)}()</code></pre></div>
-<p>And, to be honest, I’m not a huge fan of it myself. It’s making use of the fact that you can call mutating methods on optionals with chaining. When you do it in this example, the optional is returned by the dictionary lookup: we then want to mutate that value, if it’s there, with an insertion.</p>
-<p>If it’s <em>not</em> there, though, we want to add it in, so we’ve got to have some way of understanding and dealing with that. We could try and extract the child Trie, like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> let head = gen.<span class="fu">next</span>() {
-  <span class="kw">if</span> <span class="kw">var</span> child = children[head] {
-    child.<span class="fu">insert</span>(gen)
-  } <span class="kw">else</span> {
-    children[head] = <span class="fu">Trie</span>(gen: gen)
-  }
-}</code></pre></div>
-<p>But the child there is just a copy of the actual child in the Trie we want to mutate. We could then set it back to the dictionary entry - but at this stage it feels like a lot of extra, inefficient work.</p>
-<p>So, you can make use of the fact the functions which don’t return anything actually <em>do</em> return something: a special value called <code class="sourceCode scala">Void</code>, or <code class="sourceCode scala">()</code>. Except that, in this case, it’s <code class="sourceCode scala">()?</code> (or <code class="sourceCode scala">Optional&amp;lt;Void&amp;gt;</code>). We’re not interested in the void itself, obviously, just whether or not it’s <code class="sourceCode scala">nil</code>. So, one way you could use it would be like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> let _ = children[head]?.<span class="fu">insert</span>(gen) { <span class="kw">return</span> }
-children[head] = <span class="fu">Trie</span>(gen: gen)</code></pre></div>
-<p>Or, to use <code class="sourceCode scala">guard</code>:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">guard let _ = children[head]?.<span class="fu">insert</span>(gen) <span class="kw">else</span> { children[head] = <span class="fu">Trie</span>(gen: gen) }</code></pre></div>
-<p>But I think the nil coalescing operator is a little clearer, without the distraction of <code class="sourceCode scala">let</code> or <code class="sourceCode scala">_</code>.</p>
-<p>This data structure, as you can see, has a very different feel to the list. For a start, it’s much more mutable, with in-place mutating methods being a little easier than methods that return a new Trie. Also, laziness is pretty much out of the question: almost every imaginable useful method would involve evaluation of the entire Trie. (if anyone <em>does</em> have a useful way of thinking about Tries lazily, I’d love to hear it)</p>
-<p>The contains function, the most important of them all, is here:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> func contains
-    &lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;
-    (<span class="kw">var</span> gen: G) -&gt; Bool {
-      <span class="kw">return</span> gen.<span class="fu">next</span>().<span class="fu">map</span>{self.<span class="fu">children</span>[$<span class="dv">0</span>]?.<span class="fu">contains</span>(gen) ?? <span class="kw">false</span>} ?? <span class="kw">true</span>
-  }
-  public func contains
-    &lt;S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element&gt;
-    (seq: S) -&gt; Bool {
-      <span class="kw">return</span> <span class="fu">contains</span>(seq.<span class="fu">generate</span>())
-  }
-}</code></pre></div>
-<p>So this uses more generators. If the generator is empty (<code class="sourceCode scala">gen.<span class="fu">next</span>()</code> returns <code class="sourceCode scala">nil</code>), then the Trie contains that sequence, as we have not yet found a dictionary without that element. Within the <code class="sourceCode scala"><span class="fu">map</span>()</code> we search for the next element from the generator. If <em>that</em> returns <code class="sourceCode scala">nil</code>, then the Trie doesn’t contain that sequence. Finally, if none of that works, return whether or not the child Trie contains the rest of the generator. Let’s try it out:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">var</span> jo = <span class="fu">Trie</span>([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>])
-jo.<span class="fu">insert</span>([<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>])
-jo.<span class="fu">insert</span>([<span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>])
-
-jo.<span class="fu">contains</span>([<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]) <span class="co">// true</span>
-jo.<span class="fu">contains</span>([<span class="dv">2</span>, <span class="dv">1</span>, <span class="dv">3</span>]) <span class="co">// false</span></code></pre></div>
-<p>There’s a catch. The <code class="sourceCode scala">contains</code> method doesn’t work as we’d like it to:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">jo.<span class="fu">contains</span>([<span class="dv">1</span>, <span class="dv">2</span>]) <span class="co">// true</span></code></pre></div>
-<p>Because we return <code class="sourceCode scala"><span class="kw">true</span></code> <em>whenever</em> the generator runs out, our Trie “contains” every prefix of the sequences that have been inserted. This is not what we want. One way to solve this may be to return <code class="sourceCode scala"><span class="kw">true</span></code> only if the last Trie found has no children. Something like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> func contains
-    &lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;
-    (<span class="kw">var</span> gen: G) -&gt; Bool {
-      <span class="kw">return</span> gen.<span class="fu">next</span>().<span class="fu">map</span>{self.<span class="fu">children</span>[$<span class="dv">0</span>]?.<span class="fu">contains</span>(gen) ?? <span class="kw">false</span>} ?? children.<span class="fu">isEmpty</span>
-  }
-}</code></pre></div>
-<p>But this doesn’t really work either. what if we did <code class="sourceCode scala">jo.<span class="fu">insert</span>([<span class="dv">1</span>, <span class="dv">2</span>])</code>? Now, if we check if the Trie contains <code class="sourceCode scala">[<span class="dv">1</span>, <span class="dv">2</span>]</code>, we’ll get back <code class="sourceCode scala"><span class="kw">false</span></code>.</p>
-<p>It’s time for flags. We need to add an extra variable to our Trie: a Boolean, which describes whether or not that Trie represents the end of a sequence.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public struct Trie&lt;Element : Hashable&gt; {
-  <span class="kw">private</span> <span class="kw">var</span> children: [Element:Trie&lt;Element&gt;]
-  <span class="kw">private</span> <span class="kw">var</span> endHere : Bool
-}</code></pre></div>
-<p>We’ll also need to change our <code class="sourceCode scala">insert</code> and <code class="sourceCode scala">init</code> functions, so that when the generator returns <code class="sourceCode scala">nil</code>, <code class="sourceCode scala">endHere</code> gets initialised to <code class="sourceCode scala"><span class="kw">true</span></code>.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> init&lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;(<span class="kw">var</span> gen: G) {
-    <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {
-      (children, endHere) = ([head:<span class="fu">Trie</span>(gen:gen)], <span class="kw">false</span>)
-    } <span class="kw">else</span> {
-      (children, endHere) = ([:], <span class="kw">true</span>)
-    }
-  }
-}
-
-extension Trie {
-  <span class="kw">private</span> mutating func insert
-    &lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;
-    (<span class="kw">var</span> gen: G) {
-      <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {
-        children[head]?.<span class="fu">insert</span>(gen) ?? {children[head] = <span class="fu">Trie</span>(gen: gen)}()
-      } <span class="kw">else</span> {
-        endHere = <span class="kw">true</span>
-      }
-  }
-}</code></pre></div>
-<p>And the contains function now returns <code class="sourceCode scala">endHere</code>, instead of true:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public extension Trie {
-  <span class="kw">private</span> func contains
-    &lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;
-    (<span class="kw">var</span> gen: G) -&gt; Bool {
-      <span class="kw">return</span> gen.<span class="fu">next</span>().<span class="fu">map</span>{self.<span class="fu">children</span>[$<span class="dv">0</span>]?.<span class="fu">contains</span>(gen) ?? <span class="kw">false</span>} ?? endHere
-  }
-}</code></pre></div>
-<p>While we’re improving the <code class="sourceCode scala">contains</code> function, we could use <code class="sourceCode scala">guard</code> to make it much more readable:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public extension Trie {
-  <span class="kw">private</span> func contains&lt;
-    G : GeneratorType where G.<span class="fu">Element</span> == Element
-    &gt;(<span class="kw">var</span> gen: G) -&gt; Bool {
-      guard let head = gen.<span class="fu">next</span>() <span class="kw">else</span> { <span class="kw">return</span> endHere }
-      <span class="kw">return</span> children[head]?.<span class="fu">contains</span>(gen) ?? <span class="kw">false</span>
-  }
-}</code></pre></div>
-<p><a href="https://twitter.com/chriseidhof/status/629215881843884032">Chris Eidhof gave me this idea.</a> (Apparently there’s a Trie implementation in <a href="http://www.objc.io/books/fpinswift/">Functional Programming in Swift</a>, his book. I’ve not read it, but it’s on my list. If <a href="http://www.objc.io/books/advanced-swift/">Advanced Swift</a>is anything to go by, it should be fantastic.)</p>
-<p>The objective of this Trie is to replicate all of the Set methods: Union, Intersect, etc. Most of those are manageable to build from just <code class="sourceCode scala">insert</code>, <code class="sourceCode scala">init</code>, and <code class="sourceCode scala">contains</code>, but there’s one other function that comes in handy: <code class="sourceCode scala">remove</code>.</p>
-<p>Remove is deceptively difficult. You could just walk to the end of your given sequence to remove, and switch <code class="sourceCode scala">endHere</code> from <code class="sourceCode scala"><span class="kw">true</span></code> to <code class="sourceCode scala"><span class="kw">false</span></code>, but that’s kind of cheating. I mean, you’ll be storing the same amount of information that way after a removal. No, what you need is something that deletes branches of a tree that aren’t being used any more.</p>
-<p>Again, this is a little complicated. You can’t just find the head of the sequence you want to remove, and then delete all children: you may be deleting other entries along with that. You <em>also</em> can’t just delete when a given Trie only contains one child: that child may branch off subsequently, or it may contain prefixes for the sequence you want to remove.</p>
-<p>Crucially, all of the information telling you whether or not you can delete a given entry in a given Trie will come from the <em>children</em> of that Trie. What I decided to go with was this: I’ll have some mutating method that does the work recursively. However, this method also <em>returns</em> a value, representing some important information for whatever called it. In this case, the <code class="sourceCode scala">remove</code> method would remove, as you’d imagine, but it will also return a Boolean, signifying whether the Trie it was called on can be removed. Since I used the normal structure of having a private method take a generator, and then a public wrapper method take a sequence, I could have the public method just discard the Boolean.</p>
-<p>Let’s go through it. Here’s the signature:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">private</span> mutating func remove&lt;
-  G : GeneratorType where G.<span class="fu">Element</span> == Element
-  &gt;(<span class="kw">var</span> g: G) -&gt; Bool {</code></pre></div>
-<p>No surprises there. Similar to the other methods. Then, get the head from the generator:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> let head = g.<span class="fu">next</span>() {</code></pre></div>
-<p>Within that if block is the meat of the logic, so I might skip to what happens if <code class="sourceCode scala">g.<span class="fu">next</span>()</code> returns <code class="sourceCode scala">nil</code> for the start:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">private</span> mutating func remove&lt;
-  G : GeneratorType where G.<span class="fu">Element</span> == Element
-  &gt;(<span class="kw">var</span> g: G) -&gt; Bool {
-    <span class="kw">if</span> let head = g.<span class="fu">next</span>() {...}
-    endHere = <span class="kw">false</span>
-    <span class="kw">return</span> children.<span class="fu">isEmpty</span>
-}</code></pre></div>
-<p>So the sequence being removed has ended. That means that whatever Trie you’re on should have its <code class="sourceCode scala">endHere</code> set to <code class="sourceCode scala"><span class="kw">false</span></code>. To the user of the Trie, that’s all that matters: from now on, if the contains method on that Trie is used with that sequence, it will return false.</p>
-<p>However, to find out if you can delete the data itself, it returns <code class="sourceCode scala">children.<span class="fu">isEmpty</span></code>. If it has no children, it does not hold any other sequences or information, so it can be deleted.</p>
-<p>Now for inside the if block:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">guard children[head]?.<span class="fu">remove</span>(g) == <span class="kw">true</span> <span class="kw">else</span> { <span class="kw">return</span> <span class="kw">false</span> }
-children.<span class="fu">removeValueForKey</span>(head)
-<span class="kw">return</span> !endHere &amp;&amp; children.<span class="fu">isEmpty</span></code></pre></div>
-<p>So it calls <code class="sourceCode scala">remove</code> on the child Trie corresponding to <code class="sourceCode scala">head</code>. That guard statement will fail for two distinct reasons: if <code class="sourceCode scala">children</code> doesn’t contain <code class="sourceCode scala">head</code>, then the sequence being removed wasn’t in the Trie in the first place. The method will then return false, so that no removal or mutation is done.</p>
-<p>If it <em>does</em> contain <code class="sourceCode scala">head</code>, but the Bool returned from the remove method is <code class="sourceCode scala"><span class="kw">false</span></code>, that means that its <em>child</em> is not removable, so it is also not removable, so it should return <code class="sourceCode scala"><span class="kw">false</span></code>.</p>
-<p>Otherwise, it will remove that member (<code class="sourceCode scala">children.<span class="fu">removeValueForKey</span>(head)</code>). Then, the Trie can decide whether or not it itself is removable: <code class="sourceCode scala"><span class="kw">return</span> !endHere &amp;amp;&amp;amp; children.<span class="fu">isEmpty</span></code>. If the <code class="sourceCode scala">endHere</code> is set to true, then it is the end of some sequence: it is not removable. Otherwise, it’s removable if it has no children. Here’s the whole thing, with its public version:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  <span class="kw">private</span> mutating func remove&lt;
-    G : GeneratorType where G.<span class="fu">Element</span> == Element
-    &gt;(<span class="kw">var</span> g: G) -&gt; Bool { <span class="co">// Return value signifies whether or not it can be removed</span>
-      <span class="kw">if</span> let head = g.<span class="fu">next</span>() {
-        guard children[head]?.<span class="fu">remove</span>(g) == <span class="kw">true</span> <span class="kw">else</span> { <span class="kw">return</span> <span class="kw">false</span> }
-        children.<span class="fu">removeValueForKey</span>(head)
-        <span class="kw">return</span> !endHere &amp;&amp; children.<span class="fu">isEmpty</span>
-      }
-      endHere = <span class="kw">false</span>
-      <span class="kw">return</span> children.<span class="fu">isEmpty</span>
-  }
-  public mutating func remove&lt;
-    S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element
-    &gt;(seq: S) {
-      <span class="fu">remove</span>(seq.<span class="fu">generate</span>())
-  }
-}</code></pre></div>
-<p>That was a little heavy. And kind of ugly. Let’s lighten things up for a second, with one of the loveliest <code class="sourceCode scala">count</code> properties I’ve seen:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  public <span class="kw">var</span> count: Int {
-    <span class="kw">return</span> children.<span class="fu">values</span>.<span class="fu">reduce</span>(endHere ? <span class="dv">1</span> : <span class="dv">0</span>) { $<span class="dv">0</span> + $<span class="fl">1.</span>count }
-  }
-}</code></pre></div>
-<p>All it’s really doing is counting the instances of a <code class="sourceCode scala"><span class="kw">true</span></code> <code class="sourceCode scala">endHere</code>. If the current Trie is an end, then it knows that it adds one to the count (<code class="sourceCode scala">endHere ? <span class="dv">1</span> : <span class="dv">0</span></code>), and it adds that to the sum of the counts of its children.</p>
-<p>Now then. <code class="sourceCode scala">SequenceType</code>. <a href="http://airspeedvelocity.net/2015/07/22/a-persistent-tree-using-indirect-enums-in-swift/">Getting tree-like structures to conform to <code class="sourceCode scala">SequenceType</code> is a bit of a pain</a>, mainly because of their recursiveness. Getting a linear representation is easy enough:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Trie {
-  public <span class="kw">var</span> contents: [[Element]] {
-    <span class="kw">return</span> children.<span class="fu">flatMap</span> {
-      (head: Element, child: Trie&lt;Element&gt;) -&gt; [[Element]] in
-      child.<span class="fu">contents</span>.<span class="fu">map</span> { [head] + $<span class="dv">0</span> } + (child.<span class="fu">endHere</span> ? [[head]] : [])
-    }
-  }
-}</code></pre></div>
-<p>And then you could just return the generate method from that for your Trie’s generate method.</p>
-<p>The problem is that it’s not very proper: you’re translating your data structure into another data structure just to iterate through it. What you really want is something that generates each element on demand.</p>
-<p>But it gets ugly quick. You’ve got to do a lot of stuff by hand which it isn’t nice to do by hand, and you’ve got to employ some dirty tricks (like using closures as a kind of homemade <code class="sourceCode scala">indirect</code>). At any rate, here it is:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public struct TrieGenerator&lt;Element : Hashable&gt; : GeneratorType {
-  <span class="kw">private</span> <span class="kw">var</span> children: DictionaryGenerator&lt;Element, Trie&lt;Element&gt;&gt;
-  <span class="kw">private</span> <span class="kw">var</span> curHead : Element?
-  <span class="kw">private</span> <span class="kw">var</span> curEnd  : Bool = <span class="kw">false</span>
-  <span class="kw">private</span> <span class="kw">var</span> innerGen: (() -&gt; [Element]?)?
-  <span class="kw">private</span> mutating func <span class="fu">update</span>() {
-    guard <span class="fu">let</span> (head, child) = children.<span class="fu">next</span>() <span class="kw">else</span> { innerGen = nil; <span class="kw">return</span> }
-    curHead = head
-    <span class="kw">var</span> g = child.<span class="fu">generate</span>()
-    innerGen = {g.<span class="fu">next</span>()}
-    curEnd = child.<span class="fu">endHere</span>
-  }
-  public mutating func <span class="fu">next</span>() -&gt; [Element]? {
-    <span class="kw">for</span> ; innerGen != nil; <span class="fu">update</span>() {
-      <span class="kw">if</span> let next = innerGen!() {
-        <span class="kw">return</span> [curHead!] + next
-      } <span class="kw">else</span> <span class="kw">if</span> curEnd {
-        curEnd = <span class="kw">false</span>
-        <span class="kw">return</span> [curHead!]
-      }
-    }
-    <span class="kw">return</span> nil
-  }
-  <span class="kw">private</span> <span class="fu">init</span>(_ from: Trie&lt;Element&gt;) {
-    children = from.<span class="fu">children</span>.<span class="fu">generate</span>()
-    <span class="fu">update</span>()
-  }
-}</code></pre></div>
-<p>It’s got a similar logic to the lazy flatMap I did from a while ago.</p>
-<p>The code is all available <a href="https://github.com/oisdk/SwiftTrie">here</a>, as a playground, or <a href="https://github.com/oisdk/SwiftSequence">here</a>, in SwiftSequence, where it’s accompanied by some tests.</p>
-]]></description>
-    <pubDate>Tue, 11 Aug 2015 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2015-08-11-swift-trie.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
