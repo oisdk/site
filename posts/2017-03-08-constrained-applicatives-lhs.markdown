@@ -87,7 +87,7 @@ I don't want to constrain `a`{.haskell}: I figure if you can get something *into
 
 There's also the [supermonad](https://hackage.haskell.org/package/supermonad-0.1/docs/Control-Supermonad-Constrained.html) library out there which is much more general than any of these examples: it supports indexed monads as well as constrained.
 
-Anyway, with the `Functor`{.haskell} class, we can make `Monad`{.haskell} similarly:
+Anyway,`Monad`{.haskell} is defined similarly to `Functor`{.haskell}:
 
 ```{.haskell}
 class Functor m => Monad m where
@@ -97,7 +97,7 @@ class Functor m => Monad m where
 
 Again, I want to minimize the use of `Suitable`{.haskell}, so for `>>=`{.haskell} there's only a constraint on `b`{.haskell}.
 
-Finally, here's the set instance:
+Finally, here's the `Set`{.haskell} instance:
 
 ```{.haskell}
 instance Functor Set where
@@ -192,13 +192,13 @@ The issue is `f (a -> b)`{.haskell}. There's no *way* you're getting some type l
 ```{.haskell}
 class Functor f => Applicative f where
   pure :: Suitable a => a -> f a
-  liftA2 :: Suitable f b => (a -> b -> c) -> f a -> f b -> f c
+  liftA2 :: Suitable f c => (a -> b -> c) -> f a -> f b -> f c
 
-(<*>) :: (Applicative f, Suitable f b) => f (a -> b) -> f a -> f c
+(<*>) :: (Applicative f, Suitable f b) => f (a -> b) -> f a -> f b
 (<*>) = liftA2 ($)
 ```
 
-Great! Now we can use it with set. However, there's no way (that I can see) to defined the other lift functions: `liftA3`{.haskell}, etc. Of course, if `>>=`{.haskell} is available, it's as simple as:
+Great! Now we can use it with set. However, there's no way (that I can see) to define the other lift functions: `liftA3`{.haskell}, etc. Of course, if `>>=`{.haskell} is available, it's as simple as:
 
 ```{.haskell}
 liftA3 f xs ys zs = do
@@ -301,7 +301,7 @@ type family FunType (xs :: [*]) (y :: *) :: * where
   FunType (x ': xs) y = x -> FunType xs y
 ```
 
-It gets really difficult to define `liftA`{.haskell} using `<*>`{.haskell} now, though. `liftAM`{.haskell} is a breeze, though:
+It gets really difficult to define `liftA`{.haskell} using `<*>`{.haskell} now, though. `liftAM`{.haskell}, on the other hand, is a breeze:
 
 ```{.haskell}
 liftAM :: Monad f => FunType xs a -> AppVect f xs -> f a
@@ -337,7 +337,7 @@ liftAP f (Nil :> xs) = Prelude.fmap f xs
 liftAP f (ys :> xs) = liftAP f ys Prelude.<*> xs
 ```
 
-But what about `liftAM`{.haskell}? It's much more difficult, fundamentally because `>>=`{.haskell} builds up arguments as a cons-list. To convert between the two efficiently, we need to use the trick for reversing lists efficiently: build up the reversed list as you go:
+But what about `liftAM`{.haskell}? It's much more difficult, fundamentally because `>>=`{.haskell} builds up arguments as a cons-list. To convert between the two efficiently, we need to use the trick for reversing lists efficiently: build up the reversed list as you go.
 
 ```{.haskell}
 liftAM :: (Monad f, Suitable f a) => FunType xs a -> AppVect f xs -> f a
