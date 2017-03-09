@@ -376,51 +376,47 @@ Again, this can conform to functor (and *only* functor), and can be interpreted 
 
 Like above, it has a continuation version, [Yoneda](https://hackage.haskell.org/package/kan-extensions-5.0.1/docs/Data-Functor-Yoneda.html).
 
-For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. It turned out to be much more difficult than I anticipated! I got close, though.
+For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. It turned out to be much more difficult than I anticipated!
 
-The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Anyway, here's the implementation:
+The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Using [Twan van Laarhoven’s free applicative](https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors), with a little Yoneda added in:
 
 ```{.haskell}
-infixl 5 :>|
-data FreeAppVect :: (* -> *) -> [*] -> * where
-        NilAppl :: FreeAppVect f '[]
-        (:>|) ::
-            Suitable f x =>
-            FreeAppVect f xs -> App f x -> FreeAppVect f (x ': xs)
+data Free f a where
+  Pure :: (a -> b) -> a -> Free f b
+  Ap :: Free f (a -> b) -> (c -> a) -> f c -> Free f b
 
-data App :: (* -> *) -> * -> * where
-        Pure :: a -> App f a
-        Appl :: FunType xs a -> FreeAppVect f xs -> App f a
-        Lift :: Suitable f a => f a -> App f a
+instance Functor (Free f) where
+  fmap f (Pure c x) = Pure (f . c) x
+  fmap f (Ap tx c ay) = Ap ((f .) <$> tx) c ay
 
-infixl 4 <*>
-(<*>) :: Suitable f a => App f (a -> b) -> App f a -> App f b
-Pure f <*> x = Appl f (NilAppl :>| x)
-Appl fs xs <*> ys = Appl fs (xs :>| ys)
-Lift f <*> x = Appl ($) (NilAppl :>| Lift f :>| x)
-
-infixl 4 <$>
-(<$>) :: Suitable f a => (a -> b) -> App f a -> App f b
-f <$> x = Pure f <*> x
-
-fmap :: Suitable f a => (a -> b) -> App f a -> App f b
-fmap = (<$>)
-
-pure :: a -> App f a
-pure = Pure
-
-lower
-    :: (Applicative f, Suitable f a)
-    => App f a -> f a
-lower (Pure x) = Constrained.pure x
-lower (Lift x) = x
-lower (Appl fs xs) = liftA fs (lowerVect xs)
-  where
-    lowerVect
-        :: Applicative f
-        => FreeAppVect f xs -> AppVect f xs
-    lowerVect NilAppl = Nil
-    lowerVect (ys :>| y) = lowerVect ys :> lower y
+instance Applicative (Free f) where
+  pure = Pure id
+  Pure c f <*> tx = fmap (c f) tx
+  Ap tx c ay <*> tz = Ap (flip <$> tx <*> tz) c ay
 ```
 
-Currently, the type inference isn't working with `-XApplicativeDo`{.haskell}, but I'm getting there.
+This type can conform to `Applicative`{.haskell} and `Functor`{.haskell} no problem. And all it needs to turn back into a constrained applicative is for the outer type to be suitable:
+
+```{.haskell}
+lift :: f a -> Free f a
+lift = Ap (Pure id id) id
+
+lower
+    :: forall f a c.
+       Free f a
+    -> (forall xs. FunType xs a -> AppVect f xs -> f c)
+    -> f c
+lower (Pure c x) f = f (c x) Nil
+lower (Ap fs c x :: Free f a) f =
+    lower
+        (fmap (. c) fs)
+        (\ft av ->
+              f ft (av :> x))
+
+lowerConstrained
+    :: (Constrained.Applicative f, Suitable f a)
+    => Free f a -> f a
+lowerConstrained x = lower x liftA
+```
+
+There's probably a more efficient way to encode it, though.
