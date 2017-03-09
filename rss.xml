@@ -249,34 +249,31 @@ liftAM <span class="fu">=</span> go pure <span class="kw">where</span>
 <p>Again, this can conform to functor (and <em>only</em> functor), and can be interpreted when the final type is <code class="sourceCode haskell"><span class="dt">Suitable</span></code>.</p>
 <p>Like above, it has a continuation version, <a href="https://hackage.haskell.org/package/kan-extensions-5.0.1/docs/Data-Functor-Yoneda.html">Yoneda</a>.</p>
 <p>For applicatives, though, the situation is different. In the paper, they weren’t able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XApplicativeDo</span></code> notation: the desugaring uses <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>, not the <code class="sourceCode haskell">liftAn</code> functions, so I wanted to construct a free applicative using <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code>, and run it using the lift functions. It turned out to be much more difficult than I anticipated!</p>
-<p>The key with a lot of this was realizing that <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> is <em>snoc</em>, not cons. Using <a href="https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors">Twan van Laarhoven’s free applicative</a>, with a little Yoneda added in:</p>
+<p>The key with a lot of this was realizing that <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> is <em>snoc</em>, not cons. Using a <a href="https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors">free applicative</a>:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Free</span> f a <span class="kw">where</span>
-  <span class="dt">Pure</span><span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Free</span> f b
-  <span class="dt">Ap</span><span class="ot"> ::</span> <span class="dt">Free</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> f c <span class="ot">-&gt;</span> <span class="dt">Free</span> f b
+  <span class="dt">Pure</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a
+  <span class="dt">Ap</span><span class="ot"> ::</span> <span class="dt">Free</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f b
 
-<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
-  fmap f (<span class="dt">Pure</span> c x) <span class="fu">=</span> <span class="dt">Pure</span> (f <span class="fu">.</span> c) x
-  fmap f (<span class="dt">Ap</span> tx c ay) <span class="fu">=</span> <span class="dt">Ap</span> ((f <span class="fu">.</span>) <span class="fu">&lt;$&gt;</span> tx) c ay
+<span class="kw">instance</span> <span class="dt">Prelude.Functor</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
+  fmap f (<span class="dt">Pure</span> a) <span class="fu">=</span> <span class="dt">Pure</span> (f a)
+  fmap f (<span class="dt">Ap</span> x y) <span class="fu">=</span> <span class="dt">Ap</span> ((f <span class="fu">.</span>) <span class="fu">Prelude.&lt;$&gt;</span> x) y
 
-<span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
-  pure <span class="fu">=</span> <span class="dt">Pure</span> id
-  <span class="dt">Pure</span> c f <span class="fu">&lt;*&gt;</span> tx <span class="fu">=</span> fmap (c f) tx
-  <span class="dt">Ap</span> tx c ay <span class="fu">&lt;*&gt;</span> tz <span class="fu">=</span> <span class="dt">Ap</span> (flip <span class="fu">&lt;$&gt;</span> tx <span class="fu">&lt;*&gt;</span> tz) c ay</code></pre></div>
+<span class="kw">instance</span> <span class="dt">Prelude.Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
+  pure <span class="fu">=</span> <span class="dt">Pure</span>
+  <span class="dt">Pure</span> f <span class="fu">&lt;*&gt;</span> y <span class="fu">=</span> Prelude.fmap f y
+  (<span class="dt">Ap</span> x y) <span class="fu">&lt;*&gt;</span> z <span class="fu">=</span> <span class="dt">Ap</span> (flip <span class="fu">Prelude.&lt;$&gt;</span> x <span class="fu">Prelude.&lt;*&gt;</span> z) y</code></pre></div>
 <p>This type can conform to <code class="sourceCode haskell"><span class="dt">Applicative</span></code> and <code class="sourceCode haskell"><span class="dt">Functor</span></code> no problem. And all it needs to turn back into a constrained applicative is for the outer type to be suitable:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">lift ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a
-lift <span class="fu">=</span> <span class="dt">Ap</span> (<span class="dt">Pure</span> id id) id
+lift <span class="fu">=</span> <span class="dt">Ap</span> (<span class="dt">Pure</span> id)
 
 lower
 <span class="ot">    ::</span> forall f a c<span class="fu">.</span>
        <span class="dt">Free</span> f a
     <span class="ot">-&gt;</span> (forall xs<span class="fu">.</span> <span class="dt">FunType</span> xs a <span class="ot">-&gt;</span> <span class="dt">AppVect</span> f xs <span class="ot">-&gt;</span> f c)
     <span class="ot">-&gt;</span> f c
-lower (<span class="dt">Pure</span> c x) f <span class="fu">=</span> f (c x) <span class="dt">Nil</span>
-lower (<span class="dt">Ap</span> fs c<span class="ot"> x ::</span> <span class="dt">Free</span> f a) f <span class="fu">=</span>
-    lower
-        (fmap (<span class="fu">.</span> c) fs)
-        (\ft av <span class="ot">-&gt;</span>
-              f ft (av <span class="fu">:&gt;</span> x))
+lower (<span class="dt">Pure</span> x) f <span class="fu">=</span> f x <span class="dt">Nil</span>
+lower (<span class="dt">Ap</span> fs<span class="ot"> x ::</span> <span class="dt">Free</span> f a) f <span class="fu">=</span>
+    lower fs (\ft av <span class="ot">-&gt;</span> f ft (av <span class="fu">:&gt;</span> x))
 
 lowerConstrained
 <span class="ot">    ::</span> (<span class="dt">Constrained.Applicative</span> f, <span class="dt">Suitable</span> f a)
