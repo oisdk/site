@@ -378,40 +378,37 @@ Like above, it has a continuation version, [Yoneda](https://hackage.haskell.org/
 
 For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. It turned out to be much more difficult than I anticipated!
 
-The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Using [Twan van Laarhoven’s free applicative](https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors), with a little Yoneda added in:
+The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Using a [free applicative](https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors):
 
 ```{.haskell}
 data Free f a where
-  Pure :: (a -> b) -> a -> Free f b
-  Ap :: Free f (a -> b) -> (c -> a) -> f c -> Free f b
+  Pure :: a -> Free f a
+  Ap :: Free f (a -> b) -> f a -> Free f b
 
-instance Functor (Free f) where
-  fmap f (Pure c x) = Pure (f . c) x
-  fmap f (Ap tx c ay) = Ap ((f .) <$> tx) c ay
+instance Prelude.Functor (Free f) where
+  fmap f (Pure a) = Pure (f a)
+  fmap f (Ap x y) = Ap ((f .) Prelude.<$> x) y
 
-instance Applicative (Free f) where
-  pure = Pure id
-  Pure c f <*> tx = fmap (c f) tx
-  Ap tx c ay <*> tz = Ap (flip <$> tx <*> tz) c ay
+instance Prelude.Applicative (Free f) where
+  pure = Pure
+  Pure f <*> y = Prelude.fmap f y
+  (Ap x y) <*> z = Ap (flip Prelude.<$> x Prelude.<*> z) y
 ```
 
 This type can conform to `Applicative`{.haskell} and `Functor`{.haskell} no problem. And all it needs to turn back into a constrained applicative is for the outer type to be suitable:
 
 ```{.haskell}
 lift :: f a -> Free f a
-lift = Ap (Pure id id) id
+lift = Ap (Pure id)
 
 lower
     :: forall f a c.
        Free f a
     -> (forall xs. FunType xs a -> AppVect f xs -> f c)
     -> f c
-lower (Pure c x) f = f (c x) Nil
-lower (Ap fs c x :: Free f a) f =
-    lower
-        (fmap (. c) fs)
-        (\ft av ->
-              f ft (av :> x))
+lower (Pure x) f = f x Nil
+lower (Ap fs x :: Free f a) f =
+    lower fs (\ft av -> f ft (av :> x))
 
 lowerConstrained
     :: (Constrained.Applicative f, Suitable f a)
