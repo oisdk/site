@@ -376,7 +376,7 @@ Again, this can conform to functor (and *only* functor), and can be interpreted 
 
 Like above, it has a continuation version, [Yoneda](https://hackage.haskell.org/package/kan-extensions-5.0.1/docs/Data-Functor-Yoneda.html).
 
-For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. It turned out to be much more difficult than I anticipated!
+For applicatives, though, the situation is different. In the paper, they weren't able to define a transformer for applicatives that could be interpreted in some restricted applicative. I needed one because I wanted to use `-XApplicativeDo`{.haskell} notation: the desugaring uses `<*>`{.haskell}, not the `liftAn`{.haskell} functions, so I wanted to construct a free applicative using `<*>`{.haskell}, and run it using the lift functions. What I managed to cobble to gether doesn't *really* solve the problem, but it works for `-XApplicativeDo`!
 
 The key with a lot of this was realizing that `<*>`{.haskell} is *snoc*, not cons. Using a [free applicative](https://ro-che.info/articles/2013-03-31-flavours-of-free-applicative-functors):
 
