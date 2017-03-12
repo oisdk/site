@@ -392,7 +392,7 @@ instance Prelude.Functor (Free f) where
 instance Prelude.Applicative (Free f) where
   pure = Pure
   Pure f <*> y = Prelude.fmap f y
-  (Ap x y) <*> z = Ap (flip Prelude.<$> x Prelude.<*> z) y
+  Ap x y <*> z = Ap (flip Prelude.<$> x Prelude.<*> z) y
 ```
 
 This type can conform to `Applicative`{.haskell} and `Functor`{.haskell} no problem. And all it needs to turn back into a constrained applicative is for the outer type to be suitable:
