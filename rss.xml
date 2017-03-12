@@ -261,7 +261,7 @@ liftAM <span class="fu">=</span> go pure <span class="kw">where</span>
 <span class="kw">instance</span> <span class="dt">Prelude.Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span>
   pure <span class="fu">=</span> <span class="dt">Pure</span>
   <span class="dt">Pure</span> f <span class="fu">&lt;*&gt;</span> y <span class="fu">=</span> Prelude.fmap f y
-  (<span class="dt">Ap</span> x y) <span class="fu">&lt;*&gt;</span> z <span class="fu">=</span> <span class="dt">Ap</span> (flip <span class="fu">Prelude.&lt;$&gt;</span> x <span class="fu">Prelude.&lt;*&gt;</span> z) y</code></pre></div>
+  <span class="dt">Ap</span> x y <span class="fu">&lt;*&gt;</span> z <span class="fu">=</span> <span class="dt">Ap</span> (flip <span class="fu">Prelude.&lt;$&gt;</span> x <span class="fu">Prelude.&lt;*&gt;</span> z) y</code></pre></div>
 <p>This type can conform to <code class="sourceCode haskell"><span class="dt">Applicative</span></code> and <code class="sourceCode haskell"><span class="dt">Functor</span></code> no problem. And all it needs to turn back into a constrained applicative is for the outer type to be suitable:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">lift ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a
 lift <span class="fu">=</span> <span class="dt">Ap</span> (<span class="dt">Pure</span> id)
