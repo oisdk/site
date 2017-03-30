@@ -109,30 +109,25 @@ data ExprAlg a r
   , (*:) :: a -> a -> r }
 ```
 
-Then, to use it, you define how to interact between the handler and the datatype, like before. There's a lot of boilerplate involved, so I'll just show you what it looks like using the template Haskell:
+Then, to use it, you define how to interact between the handler and the datatype, like before. The benefit is that record wildcard syntax allows you to piggy back on the function definition syntax, like so:
 
 ```{.haskell}
-class AsRecordCase patt handler | patt -> handler where
-  matchRecord :: patt -> handler a -> a
-
-recCase :: AsRecordCase patt handler => handler a -> patt -> a
-recCase = flip matchRecord
-
 data ExprF a
   = LitF Integer
-  | (:+) a a
-  | (:*) a a
+  | (:+:) a a
+  | (:*:) a a
 
-makeRecordCase ''ExprF
+makeHandler ''ExprF
 
 exprAlg :: ExprF Integer -> Integer
-exprAlg = recCase ExprAlg {..} where
+exprAlg = index ExprFAlg {..} where
   litF = id
   (+:) = (+)
   (*:) = (*)
 ```
 
-This approach seems a little more principled: the algebras correspond to normal algebras, they can be made functors, etc.
+This approach is much more principled: the `index`{.haskell} function, for example, comes from the [adjunctions](https://hackage.haskell.org/package/adjunctions) package, from the [`Representable`{.haskell}](https://hackage.haskell.org/package/adjunctions-4.3/docs/Data-Functor-Rep.html) class. That's because those algebras are actually representable functors, with their representation being the thing they match. They also conform to a whole bunch of things automatically, letting you combine them interesting ways. 
+
 
 ## Printing Expressions
 
@@ -215,7 +210,7 @@ data ExprF a
   | (:^:) a a
   deriving Functor
 
-makePatternFolds ''ExprF
+makeHandler ''ExprF
 
 newtype Expr = Expr { runExpr :: ExprF Expr }
 
@@ -229,32 +224,30 @@ infixr 8 ^*
 x ^* y = Expr (x :^: y)
 
 instance Show Expr where
-  show 
-    = showExpr (\x -> "(" ++ x ++ ")") 
-    $ (>>>) runExpr
-    $ foldMatch 
-    $ \case 
-      LitI -> ShowLit . show
-      (:+|) -> Binary (" + ") (6,L)
-      (:*|) -> Binary (" * ") (7,L)
-      (:^|) -> Binary (" ^ ") (8,R)
+  show =
+    showExpr
+      (\x -> "(" ++ x ++ ")")
+      (index ExprFAlg {..} . runExpr)
+    where
+      litF = ShowLit . show
+      (+:) = Binary " + " (6,L)
+      (*:) = Binary " * " (7,L)
+      (^:) = Binary " ^ " (8,R)
 ```
-
 
 Since we only specified `Semigroup`{.haskell} in the definition of `showExpr`{.haskell}, we can use the more efficient difference-list definition of `Show`{.haskell}:
 
 ```{.haskell}
 instance Show Expr where
-  showsPrec _ 
-    = (.) appEndo
-    $ showExpr (Endo . showParen True . appEndo) 
-    $ (>>>) runExpr
-    $ foldAlg 
-    $ \case
-      Lit -> ShowLit . Endo . shows
-      Add -> Binary (Endo (" + "++)) (6,L)
-      Mul -> Binary (Endo (" * "++)) (7,L)
-      Exp -> Binary (Endo (" ^ "++)) (8,R)
+    showsPrec _ =
+      appEndo . showExpr
+        (Endo . showParen True . appEndo)
+        (index ExprFAlg {..} . runExpr)
+      where
+        litF = ShowLit . Endo . shows
+        (+:) = Binary (Endo (" + " ++)) (6,L)
+        (*:) = Binary (Endo (" * " ++)) (7,L)
+        (^:) = Binary (Endo (" ^ " ++)) (8,R)
 
 1 ^* 2 ^* 3         -- 1 ^ 2 ^ 3
 (1 ^* 2) ^* 3       -- (1 ^ 2) ^ 3
