@@ -7,8 +7,182 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Wed, 08 Mar 2017 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Thu, 30 Mar 2017 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Fun with Recursion Schemes</title>
+    <link>http://doisinkidney.com/posts/2017-03-30-fun-with-recursion-schemes-lhs.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on March 30, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<h2 id="folding-algebras">Folding Algebras</h2>
+<p>I saw <a href="https://www.reddit.com/r/haskell/comments/608y0l/would_this_sugar_make_sense/">this</a> post on reddit recently, and it got me thinking about recursion schemes. One of the primary motivations behind them is the reduction of boilerplate. The classic example is evaluation of arithmetic expressions:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprF</span> a
+  <span class="fu">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span>
+  <span class="fu">|</span> (<span class="fu">:+:</span>) a a
+  <span class="fu">|</span> (<span class="fu">:*:</span>) a a
+  <span class="kw">deriving</span> <span class="dt">Functor</span>
+
+<span class="kw">type</span> <span class="dt">Expr</span> <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">ExprF</span>
+
+<span class="ot">eval ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+eval <span class="fu">=</span> unfix <span class="fu">&gt;&gt;&gt;</span> \<span class="kw">case</span>
+  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n
+  x <span class="fu">:+:</span> y <span class="ot">-&gt;</span> eval x <span class="fu">+</span> eval y
+  x <span class="fu">:*:</span> y <span class="ot">-&gt;</span> eval x <span class="fu">*</span> eval y</code></pre></div>
+<p>The calls to <code class="sourceCode haskell">eval</code> are the boilerplate: this is where the main recursion scheme, <code class="sourceCode haskell">cata</code> can help.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+evalF <span class="fu">=</span> cata <span class="fu">$</span> \<span class="kw">case</span>
+  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n
+  x <span class="fu">:+:</span> y <span class="ot">-&gt;</span> x <span class="fu">+</span> y
+  x <span class="fu">:*:</span> y <span class="ot">-&gt;</span> x <span class="fu">*</span> y</code></pre></div>
+<p>I still feel like there’s boilerplate, though. Ideally I’d like to write this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+evalF <span class="fu">=</span> cata <span class="fu">$</span> <span class="fu">???</span> <span class="fu">$</span> \<span class="kw">case</span>
+  <span class="dt">Lit</span> <span class="ot">-&gt;</span> id
+  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="fu">+</span>)
+  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
+<p>The <code class="sourceCode haskell"><span class="fu">???</span></code> needs to be filled in. It’s a little tricky, though: the type of the algebra changes depending on what expression it’s given. GADTs will allow us to attach types to cases:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprI</span> a r f <span class="kw">where</span>
+  <span class="dt">Lit</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (<span class="dt">Integer</span> <span class="ot">-&gt;</span> b)
+  <span class="dt">Add</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)
+  <span class="dt">Mul</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</code></pre></div>
+<p>The first type parameter is the same as the first type parameter to <code class="sourceCode haskell"><span class="dt">ExprF</span></code>. The second is the output type of the algebra, and the third is the type of the fold required to produce that output type. The third type parameter <em>depends</em> on the case matched in the GADT. Using this, we can write a function which converts a fold/pattern match to a standard algebra:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldAlg ::</span> (forall f<span class="fu">.</span> <span class="dt">ExprI</span> a r f <span class="ot">-&gt;</span> f) <span class="ot">-&gt;</span> (<span class="dt">ExprF</span> a <span class="ot">-&gt;</span> r)
+foldAlg f (<span class="dt">LitF</span> i)  <span class="fu">=</span> f <span class="dt">Lit</span> i
+foldAlg f (x <span class="fu">:+:</span> y) <span class="fu">=</span> f <span class="dt">Add</span> x y
+foldAlg f (x <span class="fu">:*:</span> y) <span class="fu">=</span> f <span class="dt">Mul</span> x y</code></pre></div>
+<p>And finally, we can write the nice evaluation algebra:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+evalF <span class="fu">=</span> cata <span class="fu">$</span> foldAlg <span class="fu">$</span> \<span class="kw">case</span>
+  <span class="dt">Lit</span> <span class="ot">-&gt;</span> id
+  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="fu">+</span>)
+  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
+<p>I hacked together some quick template Haskell to generate the matchers over <a href="https://github.com/oisdk/pattern-folds">here</a>. It uses a class <code class="sourceCode haskell"><span class="dt">AsPatternFold</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">AsPatternFold</span> x f <span class="fu">|</span> x <span class="ot">-&gt;</span> f <span class="kw">where</span>
+<span class="ot">  foldMatch ::</span> (forall a<span class="fu">.</span> f r a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> r)</code></pre></div>
+<p>And you generate the extra data type, with an instance, by doing this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">makePatternFolds <span class="ch">&#39;&#39;</span><span class="dt">ExprF</span></code></pre></div>
+<p>The code it generates can be used like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+evalF <span class="fu">=</span> cata <span class="fu">$</span> foldMatch <span class="fu">$</span> \<span class="kw">case</span>
+  <span class="dt">LitI</span> <span class="ot">-&gt;</span> id
+  (<span class="fu">:+|</span>) <span class="ot">-&gt;</span> (<span class="fu">+</span>)
+  (<span class="fu">:*|</span>) <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
+<p>It’s terribly hacky at the moment, I may clean it up later.</p>
+<h2 id="printing-expressions">Printing Expressions</h2>
+<p>Properly printing expressions, with minimal parentheses, is a surprisingly difficult problem. <span class="citation">Ramsey (<a href="#ref-ramsey_unparsing_1998">1998</a>)</span> provides a solution of the form:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">isParens side (<span class="dt">Assoc</span> ao po) (<span class="dt">Assoc</span> ai pi) <span class="fu">=</span>
+  pi <span class="fu">&lt;=</span> po <span class="fu">&amp;&amp;</span> (pi <span class="fu">/=</span> po <span class="fu">||</span> ai <span class="fu">/=</span> ao <span class="fu">||</span> ao <span class="fu">/=</span> side)</code></pre></div>
+<p>Using this, we can write an algebra for printing expressions. It should work in the general case, not just on the expression type defined above, so we need to make another unfixed functor to describe the printing of an expression:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Side</span> <span class="fu">=</span> <span class="dt">L</span> <span class="fu">|</span> <span class="dt">R</span> <span class="kw">deriving</span> <span class="dt">Eq</span>
+
+<span class="kw">data</span> <span class="dt">ShowExpr</span> t e
+  <span class="fu">=</span> <span class="dt">ShowLit</span> {<span class="ot"> _repr ::</span> t }
+  <span class="fu">|</span> <span class="dt">Prefix</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }
+  <span class="fu">|</span> <span class="dt">Postfix</span> {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }
+  <span class="fu">|</span> <span class="dt">Binary</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _lchild ::</span> e
+                                              ,<span class="ot"> _rchild ::</span> e }
+  <span class="kw">deriving</span> <span class="dt">Functor</span>
+  
+makeLenses <span class="ch">&#39;&#39;</span><span class="dt">ShowExpr</span></code></pre></div>
+<p>The lenses are probably overkill. For printing, we need not only the precedence of the current level, but also the precedence one level below. Seems like the perfect case for a zygomorphism:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showExprAlg ::</span> <span class="dt">Semigroup</span> t
+            <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)
+            <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t (<span class="dt">Maybe</span> (<span class="dt">Int</span>,<span class="dt">Side</span>), t)
+            <span class="ot">-&gt;</span> t
+showExprAlg prns <span class="fu">=</span> \<span class="kw">case</span> 
+    <span class="dt">ShowLit</span> t               <span class="ot">-&gt;</span>                   t
+    <span class="dt">Prefix</span>  t s       (q,y) <span class="ot">-&gt;</span>                   t <span class="fu">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y
+    <span class="dt">Postfix</span> t s (p,x)       <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="fu">&lt;&gt;</span> t
+    <span class="dt">Binary</span>  t s (p,x) (q,y) <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="fu">&lt;&gt;</span> t <span class="fu">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y
+  <span class="kw">where</span>
+    ifPrns sid (op,oa) (<span class="dt">Just</span> (ip,ia))
+      <span class="fu">|</span> ip <span class="fu">&lt;</span> op <span class="fu">||</span> ip <span class="fu">==</span> op <span class="fu">&amp;&amp;</span> (ia <span class="fu">/=</span> oa <span class="fu">||</span> sid <span class="fu">/=</span> oa) <span class="fu">=</span> prns
+    ifPrns _ _ _ <span class="fu">=</span> id</code></pre></div>
+<p>The first argument to this algebra is the parenthesizing function. This algebra works fine for when the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> type is already constructed:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showExpr&#39; ::</span> <span class="dt">Semigroup</span> t <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t) <span class="ot">-&gt;</span> <span class="dt">Fix</span> (<span class="dt">ShowExpr</span> t) <span class="ot">-&gt;</span> t
+showExpr&#39; <span class="fu">=</span> zygo (preview assoc) <span class="fu">.</span> showExprAlg</code></pre></div>
+<p>But we still need to construct the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> from something else first. <code class="sourceCode haskell">hylo</code> might be a good fit:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (f b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</code></pre></div>
+<p>But that performs a catamorphism after an anamorphism, and we want a zygomorphism after an anamorphism. Luckily, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a> library is constructed in such a way that different schemes can be stuck together relatively easily:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">hylozygo
+<span class="ot">    ::</span> <span class="dt">Functor</span> f
+    <span class="ot">=&gt;</span> (f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f (a, b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (c <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> b
+hylozygo x y z <span class="fu">=</span> ghylo (distZygo x) distAna y (fmap <span class="dt">Identity</span> <span class="fu">.</span> z)
+
+<span class="ot">showExpr ::</span> <span class="dt">Semigroup</span> t
+         <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)
+         <span class="ot">-&gt;</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t e)
+         <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> t
+showExpr <span class="fu">=</span> hylozygo (preview assoc) <span class="fu">.</span> showExprAlg</code></pre></div>
+<p>Let’s try it out, with a right-associative operator this time to make things more difficult:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprF</span> a
+  <span class="fu">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span>
+  <span class="fu">|</span> (<span class="fu">:+:</span>) a a
+  <span class="fu">|</span> (<span class="fu">:*:</span>) a a
+  <span class="fu">|</span> (<span class="fu">:^:</span>) a a
+  <span class="kw">deriving</span> <span class="dt">Functor</span>
+
+makePatternFolds <span class="ch">&#39;&#39;</span><span class="dt">ExprF</span>
+
+<span class="kw">newtype</span> <span class="dt">Expr</span> <span class="fu">=</span> <span class="dt">Expr</span> {<span class="ot"> runExpr ::</span> <span class="dt">ExprF</span> <span class="dt">Expr</span> }
+
+<span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Expr</span> <span class="kw">where</span>
+  fromInteger <span class="fu">=</span> <span class="dt">Expr</span> <span class="fu">.</span> <span class="dt">LitF</span>
+  x <span class="fu">+</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:+:</span> y)
+  x <span class="fu">*</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:*:</span> y)
+  
+<span class="kw">infixr</span> <span class="dv">8</span> <span class="fu">^*</span>
+<span class="ot">(^*) ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span>
+x <span class="fu">^*</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:^:</span> y)
+
+<span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span>
+  show 
+    <span class="fu">=</span> showExpr (\x <span class="ot">-&gt;</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> x <span class="fu">++</span> <span class="st">&quot;)&quot;</span>) 
+    <span class="fu">$</span> (<span class="fu">&gt;&gt;&gt;</span>) runExpr
+    <span class="fu">$</span> foldMatch 
+    <span class="fu">$</span> \<span class="kw">case</span> 
+      <span class="dt">LitI</span> <span class="ot">-&gt;</span> <span class="dt">ShowLit</span> <span class="fu">.</span> show
+      (<span class="fu">:+|</span>) <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="st">&quot; + &quot;</span>) (<span class="dv">6</span>,<span class="dt">L</span>)
+      (<span class="fu">:*|</span>) <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="st">&quot; * &quot;</span>) (<span class="dv">7</span>,<span class="dt">L</span>)
+      (<span class="fu">:^|</span>) <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="st">&quot; ^ &quot;</span>) (<span class="dv">8</span>,<span class="dt">R</span>)</code></pre></div>
+<p>Since we only specified <code class="sourceCode haskell"><span class="dt">Semigroup</span></code> in the definition of <code class="sourceCode haskell">showExpr</code>, we can use the more efficient difference-list definition of <code class="sourceCode haskell"><span class="dt">Show</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span>
+  showsPrec _ 
+    <span class="fu">=</span> (<span class="fu">.</span>) appEndo
+    <span class="fu">$</span> showExpr (<span class="dt">Endo</span> <span class="fu">.</span> showParen <span class="dt">True</span> <span class="fu">.</span> appEndo) 
+    <span class="fu">$</span> (<span class="fu">&gt;&gt;&gt;</span>) runExpr
+    <span class="fu">$</span> foldAlg 
+    <span class="fu">$</span> \<span class="kw">case</span>
+      <span class="dt">Lit</span> <span class="ot">-&gt;</span> <span class="dt">ShowLit</span> <span class="fu">.</span> <span class="dt">Endo</span> <span class="fu">.</span> shows
+      <span class="dt">Add</span> <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; + &quot;</span><span class="fu">++</span>)) (<span class="dv">6</span>,<span class="dt">L</span>)
+      <span class="dt">Mul</span> <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; * &quot;</span><span class="fu">++</span>)) (<span class="dv">7</span>,<span class="dt">L</span>)
+      <span class="dt">Exp</span> <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; ^ &quot;</span><span class="fu">++</span>)) (<span class="dv">8</span>,<span class="dt">R</span>)
+
+<span class="dv">1</span> <span class="fu">^*</span> <span class="dv">2</span> <span class="fu">^*</span> <span class="dv">3</span>         <span class="co">-- 1 ^ 2 ^ 3</span>
+(<span class="dv">1</span> <span class="fu">^*</span> <span class="dv">2</span>) <span class="fu">^*</span> <span class="dv">3</span>       <span class="co">-- (1 ^ 2) ^ 3</span>
+<span class="dv">1</span> <span class="fu">*</span> <span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span><span class="ot">   ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * 2 + 3</span>
+<span class="dv">1</span> <span class="fu">*</span> (<span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>)<span class="ot"> ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * (2 + 3)</span></code></pre></div>
+<div id="refs" class="references">
+<div id="ref-ramsey_unparsing_1998">
+<p>Ramsey, Norman. 1998. “Unparsing Expressions With Prefix and Postfix Operators.” <em>Software—Practice &amp; Experience</em> 28 (12): 1327–1356. <a href="http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html">http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html</a>.</p>
+</div>
+</div>
+]]></description>
+    <pubDate>Thu, 30 Mar 2017 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2017-03-30-fun-with-recursion-schemes-lhs.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Constrained Applicatives</title>
     <link>http://doisinkidney.com/posts/2017-03-08-constrained-applicatives-lhs.html</link>
     <description><![CDATA[<div class="info">
@@ -2269,215 +2443,6 @@ a.<span class="fu">isSecondLessThan</span>(b)</code></pre></div>
 ]]></description>
     <pubDate>Sun, 06 Sep 2015 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2015-09-06-dependent-types.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Using Protocols to Build a (very) Generic Deque</title>
-    <link>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on August 24, 2015
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Swift.html">Swift</a>
-    
-</div>
-
-<p>(Download the playground to use the code and see the outputs)</p>
-<p>This post is an update on a <a href="https://bigonotetaking.wordpress.com/2015/08/09/yet-another-root-of-all-evil/">previous implementation of a Deque</a>. A full implementation of this Deque is available <a href="https://github.com/oisdk/SwiftDataStructures/blob/master/SwiftDataStructures/Deque.swift">here</a>.</p>
-<p>A Deque is a data structure comprised of two stacks, facing opposite directions. In this way, operations at either end of the Deque have the same complexity as operations on one end of the underlying stack. This implementation uses two arrays, with the front reversed: appending, prepending, and removal of the first and last elements are all (amortized) O(1).</p>
-<p>The standard library has three <code class="sourceCode scala">Array</code> structs: <code class="sourceCode scala">Array</code>, <code class="sourceCode scala">ArraySlice</code>, and <code class="sourceCode scala">ContiguousArray</code>. They all have the same interface, with different underlying implementations. An <code class="sourceCode scala">Array</code> is a standard vector-like structure, which allows O(1) amortized appending, fast iteration, etc. A <code class="sourceCode scala">ContiguousArray</code> has stricter rules about contiguity, but it’s not bridged to Objective-C.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let array  = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]
-let cArray: ContiguousArray = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]</code></pre></div>
-<p>An <code class="sourceCode scala">ArraySlice</code> is a reference into an <code class="sourceCode scala">Array</code> or <code class="sourceCode scala">ContiguousArray</code>, for more efficient slicing. All the information an <code class="sourceCode scala">ArraySlice</code> contains is the beginning and end points of the slice (as well as any changes made to the slice separate from the array)</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let slice = array[<span class="dv">0</span>..&lt;<span class="dv">6</span>]</code></pre></div>
-<p>To replicate these semantics in a Deque requires three separate structs: one with an <code class="sourceCode scala">Array</code> as the stack, another with an <code class="sourceCode scala">ArraySlice</code> as the stack, and a third with a <code class="sourceCode scala">ContiguousArray</code>. The standard library seems to duplicate the structs, along with their methods and properties.</p>
-<p>It would be much nicer to just define a protocol that represented the <em>difference</em> between the deque types: then you could just write the methods and properties once, on top of it. Something like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol DequeType {
-  typealias Container : RangeReplaceableCollectionType, MutableSliceable
-  <span class="kw">var</span> front: Container { get set }
-  <span class="kw">var</span> back : Container { get set }
-  <span class="fu">init</span>()
-}</code></pre></div>
-<p>There’s one problem with this: both stacks need to be made public. It would be much nicer to hide the stacks (especially since an invariant needs to be checked and maintained on every mutation). If anyone has an idea of how to accomplish that, <a href="https://twitter.com/oisdk">tweet me</a>.</p>
-<p>The first method to implement is a subscript. Indexing is difficult, because the front stack will be reversed, so the index used to get in to the Deque will need to be translated into an equivalent index in the array.</p>
-<p>Any (valid) index will point into either the front or back queue, and the transformations applied to it in each case is different. If it’s in the front, the end result will look like <code class="sourceCode scala">front[front.<span class="fu">endIndex</span> - <span class="dv">1</span> - i]</code>, whereas if it’s in the back, it should be <code class="sourceCode scala">back[i - front.<span class="fu">endIndex</span>]</code>. There’s nothing specified about the Containers except that they’re <code class="sourceCode scala">RangeReplaceableCollectionType</code> and <code class="sourceCode scala">MutableSliceable</code>, so the index types will have to be as generic as possible. (you could specify <code class="sourceCode scala">where Index == Int</code>, but that’s more specific than needed, and not very extensible.)</p>
-<p>Both of those transformations are subtractions, an operation that’s possible on <code>RandomAccessIndexType</code>s with the <code class="sourceCode scala">advancedBy</code> method. <code class="sourceCode scala">advancedBy</code> takes the associated <code class="sourceCode scala">Distance</code> type of the <code class="sourceCode scala">RandomAccessIndexType</code>. That’s enough information to figure out that the Deque’s index type must be the same as the Distance of the Index of the Container.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType {
-  typealias Index = Container.<span class="fu">Index</span>.<span class="fu">Distance</span>
-}</code></pre></div>
-<p>The method that will translate an index into the relevant index in the stacks will return an enum:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public enum IndexLocation&lt;I&gt; {
-  <span class="kw">case</span> <span class="fu">Front</span>(I), <span class="fu">Back</span>(I)
-}</code></pre></div>
-<p>Then, the translate method itself:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
-  Container.<span class="fu">Index</span> : RandomAccessIndexType,
-  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {
-  
-  <span class="kw">private</span> func <span class="fu">translate</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>)
-    -&gt; IndexLocation&lt;Container.<span class="fu">Index</span>&gt; {
-    <span class="kw">return</span> i &lt; front.<span class="fu">count</span> ?
-      .<span class="fu">Front</span>(front.<span class="fu">endIndex</span>.<span class="fu">predecessor</span>().<span class="fu">advancedBy</span>(-i)) :
-      .<span class="fu">Back</span>(back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i - front.<span class="fu">count</span>))
-  }
-}</code></pre></div>
-<p>This performs two steps: 1. Check which stack it’s in. 2. Subtract in the appropriate order</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let d: Deque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>] <span class="co">// [1, 2, 3 | 4, 5, 6]</span>
-
-d.<span class="fu">translate</span>(<span class="dv">0</span>) <span class="co">// Front: 2</span>
-d.<span class="fu">translate</span>(<span class="dv">4</span>) <span class="co">// Back: 1</span></code></pre></div>
-<p>This means that the logic for converting distance to index is separated from the logic for actual indexing. Great! Here’s the indexing:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
-  Container.<span class="fu">Index</span> : RandomAccessIndexType,
-  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {
-  <span class="kw">var</span> startIndex: Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> <span class="dv">0</span> }
-  <span class="kw">var</span> endIndex  : Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> front.<span class="fu">count</span> + back.<span class="fu">count</span> }
-  <span class="fu">subscript</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>) -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span> {
-    get {
-      switch <span class="fu">translate</span>(i) {
-      <span class="kw">case</span> let .<span class="fu">Front</span>(i): <span class="kw">return</span> front[i]
-      <span class="kw">case</span> let .<span class="fu">Back</span>(i): <span class="kw">return</span> back[i]
-      }
-    } set {
-      switch <span class="fu">translate</span>(i) {
-      <span class="kw">case</span> let .<span class="fu">Front</span>(i): front[i] = newValue
-      <span class="kw">case</span> let .<span class="fu">Back</span>(i): back[i] = newValue
-      }
-    }
-  }
-}</code></pre></div>
-<p>This makes things much easier to test and debug.</p>
-<p>Here’s where the power of protocols becomes obvious. If you go back to the original definition of <code class="sourceCode scala">DequeType</code>, you can add <code class="sourceCode scala">Indexable</code>. It may seem like now only indexable things can conform, but what happens in practice is that when <code class="sourceCode scala">Indexable</code> looks for its requirements, <em>it can use the implementations in DequeType</em>. That means that we’ve just made anything that can conform to <code class="sourceCode scala">DequeType</code> indexable. That’s awesome.</p>
-<p>Next job is ranged indices. This is a good bit more complicated than the individual indices, so it definitely will benefit from being separated into a translate method:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension DequeType where
-  Container.<span class="fu">Index</span> : RandomAccessIndexType,
-  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : BidirectionalIndexType {
-  
-  <span class="kw">private</span> func translate
-    (i: Range&lt;Container.<span class="fu">Index</span>.<span class="fu">Distance</span>&gt;)
-    -&gt; IndexRangeLocation&lt;Container.<span class="fu">Index</span>&gt; {
-      <span class="kw">if</span> i.<span class="fu">endIndex</span> &lt;= front.<span class="fu">count</span> {
-        let s = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">endIndex</span>)
-        <span class="kw">if</span> s == front.<span class="fu">startIndex</span> &amp;&amp; i.<span class="fu">isEmpty</span> { <span class="kw">return</span> .<span class="fu">Between</span> }
-        let e = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)
-        <span class="kw">return</span> .<span class="fu">Front</span>(s..&lt;e)
-      }
-      <span class="kw">if</span> i.<span class="fu">startIndex</span> &gt;= front.<span class="fu">count</span> {
-        let s = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">startIndex</span> - front.<span class="fu">count</span>)
-        let e = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)
-        <span class="kw">return</span> .<span class="fu">Back</span>(s..&lt;e)
-      }
-      let f = front.<span class="fu">startIndex</span>..&lt;front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)
-      let b = back.<span class="fu">startIndex</span>..&lt;back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)
-      <span class="kw">return</span> .<span class="fu">Over</span>(f, b)
-  }
-}
-
-let otherDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>] <span class="co">// [0, 1, 2 | 3, 4, 5]</span>
-
-otherDeque.<span class="fu">translate</span>(<span class="dv">0</span>...<span class="dv">2</span>) <span class="co">// Front: 0..&lt;3</span>
-otherDeque.<span class="fu">translate</span>(<span class="dv">4</span>...<span class="dv">5</span>) <span class="co">// Back: 1..&lt;3</span>
-otherDeque.<span class="fu">translate</span>(<span class="dv">2</span>...<span class="dv">5</span>) <span class="co">// Over: 0..&lt;1, 0..&lt;3</span>
-otherDeque.<span class="fu">translate</span>(<span class="dv">3</span>..&lt;<span class="dv">3</span>) <span class="co">// Between</span></code></pre></div>
-<p>The invariant that must be maintained in the deque is this: if either stack has more than one element, the other cannot be empty. If the invariant is violated, the longer stack is reversed, and put in place of the shorter.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public enum Balance {
-  <span class="kw">case</span> FrontEmpty, BackEmpty, Balanced
-}
-
-extension DequeType {
-  
-  public <span class="kw">var</span> balance: Balance {
-    <span class="fu">let</span> (f, b) = (front.<span class="fu">count</span>, back.<span class="fu">count</span>)
-    <span class="kw">if</span> f == <span class="dv">0</span> {
-      <span class="kw">if</span> b &gt; <span class="dv">1</span> {
-        <span class="kw">return</span> .<span class="fu">FrontEmpty</span>
-      }
-    } <span class="kw">else</span> <span class="kw">if</span> b == <span class="dv">0</span> {
-      <span class="kw">if</span> f &gt; <span class="dv">1</span> {
-        <span class="kw">return</span> .<span class="fu">BackEmpty</span>
-      }
-    }
-    <span class="kw">return</span> .<span class="fu">Balanced</span>
-  }
-  
-  public <span class="kw">var</span> isBalanced: Bool {
-    <span class="kw">return</span> balance == .<span class="fu">Balanced</span>
-  }
-}</code></pre></div>
-<p>A deque is a good data structure for certain uses, especially those that require popping and appending from either end. <code class="sourceCode scala"><span class="fu">popFirst</span>()</code> and <code class="sourceCode scala"><span class="fu">popLast</span>()</code> aren’t included in the standard <code class="sourceCode scala">RangeReplaceableCollectionType</code>, though, so we’ll have to add our own.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension RangeReplaceableCollectionType where Index : BidirectionalIndexType {
-  <span class="kw">private</span> mutating func <span class="fu">popLast</span>() -&gt; Generator.<span class="fu">Element</span>? {
-    <span class="kw">return</span> isEmpty ? nil : <span class="fu">removeLast</span>()
-  }
-}
-
-<span class="kw">var</span> mutableDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 5</span>
-mutableDeque           <span class="co">// [0, 1, 2 | 3, 4]</span>
-
-extension DequeType where Container.<span class="fu">Index</span> : BidirectionalIndexType {
-  public mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
-    <span class="kw">return</span> back.<span class="fu">popLast</span>()
-  }
-}</code></pre></div>
-<p>The method needs to include <code class="sourceCode scala"><span class="fu">check</span>()</code>, which we can do with <code>defer</code></p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
-  defer { <span class="fu">check</span>() }
-  <span class="kw">return</span> back.<span class="fu">popLast</span>()
-}
-
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 4</span>
-mutableDeque           <span class="co">// [0, 1, 2 | 3]</span>
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 3</span>
-mutableDeque           <span class="co">// [0 | 1, 2]</span></code></pre></div>
-<p>You also can’t just pop from the back queue in <code class="sourceCode scala"><span class="fu">popLast</span>()</code>, because it may be the case that the front stack has one element left</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {
-  defer { <span class="fu">check</span>() }
-  <span class="kw">return</span> back.<span class="fu">popLast</span>() ?? front.<span class="fu">popLast</span>()
-}
-
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 2</span>
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 1</span>
-mutableDeque           <span class="co">// [0|]</span>
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// 0</span>
-mutableDeque           <span class="co">// [|]</span>
-mutableDeque.<span class="fu">popLast</span>() <span class="co">// nil</span></code></pre></div>
-<p>The rest of the Deque was easy, with little to no repetition. Using protocols in this way was really surprisingly powerful: now, you can define a <code class="sourceCode scala">DequeType</code>, with full access to all of the collection methods, all the way up to <code class="sourceCode scala">RangeReplaceableCollectionType</code>, in five lines:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">public struct Deque&lt;Element&gt; : DequeType {
-  public <span class="kw">var</span> front, back: [Element]
-  public typealias SubSequence = DequeSlice&lt;Element&gt;
-  public <span class="fu">init</span>() { (front, back) = ([], []) }
-}
-
-public struct DequeSlice&lt;Element&gt; : DequeType {
-  public <span class="kw">var</span> front, back: ArraySlice&lt;Element&gt;
-  public typealias SubSequence = DequeSlice
-  public <span class="fu">init</span>() { (front, back) = ([], []) }
-}</code></pre></div>
-<p>There’s no performance hit, there’s no safety problems. I only have one version of code to test, one version to change, one version to read. It’s completely extensible: you could use any kind of stack for the front and back. Even another Deque, if you were so inclined:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct DequeDeque&lt;Element&gt; : DequeType {
-  <span class="kw">var</span> front, back: Deque&lt;Element&gt;
-  typealias SubSequence = DequeDequeSlice&lt;Element&gt;
-  <span class="fu">init</span>() { front = <span class="fu">Deque</span>(); back = <span class="fu">Deque</span>() }
-}
-
-struct DequeDequeSlice&lt;Element&gt; : DequeType {
-  <span class="kw">var</span> front, back: DequeSlice&lt;Element&gt;
-  typealias SubSequence = DequeDequeSlice
-  <span class="fu">init</span>() { front = <span class="fu">DequeSlice</span>(); back = <span class="fu">DequeSlice</span>() }
-}
-
-let dd: DequeDeque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>]
-dd.<span class="fu">front</span> <span class="co">// [4 | 3, 2, 1]</span>
-dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></code></pre></div>
-<p>Woo protocols!</p>
-]]></description>
-    <pubDate>Mon, 24 Aug 2015 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2015-08-24-generic-deque.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
