@@ -72,7 +72,30 @@ evalF = cata $ foldAlg $ \case
   Mul -> (*)
 ```
 
-It would be nice to be able to generate the `ExprI`{.haskell} type and the `foldAlg`{.haskell} automatically, maybe with template Haskell.
+I hacked together some quick template Haskell to generate the matchers over [here](https://github.com/oisdk/pattern-folds). It uses a class `AsPatternFold`{.haskell}:
+
+```{.haskell}
+class AsPatternFold x f | x -> f where
+  foldMatch :: (forall a. f r a -> a) -> (x -> r)
+```
+
+And you generate the extra data type, with an instance, by doing this:
+
+```{.haskell}
+makePatternFolds ''ExprF
+```
+
+The code it generates can be used like this:
+
+```{.haskell}
+evalF :: Expr -> Integer
+evalF = cata $ foldMatch $ \case
+  LitI -> id
+  (:+|) -> (+)
+  (:*|) -> (*)
+```
+
+It's terribly hacky at the moment, I may clean it up later.
 
 ## Printing Expressions
 
@@ -154,18 +177,8 @@ data ExprF a
   | (:*:) a a
   | (:^:) a a
   deriving Functor
-  
-data ExprI a r f where
-  Lit :: ExprI a b (Integer -> b)
-  Add :: ExprI a b (a -> a -> b)
-  Mul :: ExprI a b (a -> a -> b)
-  Exp :: ExprI a b (a -> a -> b)
 
-foldAlg :: (forall f. ExprI a r f -> f) -> (ExprF a -> r)
-foldAlg f (LitF i)  = f Lit i
-foldAlg f (x :+: y) = f Add x y
-foldAlg f (x :*: y) = f Mul x y
-foldAlg f (x :^: y) = f Exp x y
+makePatternFolds ''ExprF
 
 newtype Expr = Expr { runExpr :: ExprF Expr }
 
@@ -182,13 +195,14 @@ instance Show Expr where
   show 
     = showExpr (\x -> "(" ++ x ++ ")") 
     $ (>>>) runExpr
-    $ foldAlg 
+    $ foldMatch 
     $ \case 
-      Lit -> ShowLit . show
-      Add -> Binary (" + ") (6,L)
-      Mul -> Binary (" * ") (7,L)
-      Exp -> Binary (" ^ ") (8,R)
+      LitI -> ShowLit . show
+      (:+|) -> Binary (" + ") (6,L)
+      (:*|) -> Binary (" * ") (7,L)
+      (:^|) -> Binary (" ^ ") (8,R)
 ```
+
 
 Since we only specified `Semigroup`{.haskell} in the definition of `showExpr`{.haskell}, we can use the more efficient difference-list definition of `Show`{.haskell}:
 
