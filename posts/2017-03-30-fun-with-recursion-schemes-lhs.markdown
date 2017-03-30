@@ -97,6 +97,43 @@ evalF = cata $ foldMatch $ \case
 
 It's terribly hacky at the moment, I may clean it up later.
 
+## Record Case
+
+There's another approach to the same idea that is slightly more sensible, using record wildcards. You define a handler for you datatype (an algebra):
+
+```{.haskell}
+data ExprAlg a r
+  = ExprAlg
+  { litF :: Integer -> r
+  , (+:) :: a -> a -> r
+  , (*:) :: a -> a -> r }
+```
+
+Then, to use it, you define how to interact between the handler and the datatype, like before. There's a lot of boilerplate involved, so I'll just show you what it looks like using the template Haskell:
+
+```{.haskell}
+class AsRecordCase patt handler | patt -> handler where
+  matchRecord :: patt -> handler a -> a
+
+recCase :: AsRecordCase patt handler => handler a -> patt -> a
+recCase = flip matchRecord
+
+data ExprF a
+  = LitF Integer
+  | (:+) a a
+  | (:*) a a
+
+makeRecordCase ''ExprF
+
+exprAlg :: ExprF Integer -> Integer
+exprAlg = recCase ExprAlg {..} where
+  litF = id
+  (+:) = (+)
+  (*:) = (*)
+```
+
+This approach seems a little more principled: the algebras correspond to normal algebras, they can be made functors, etc.
+
 ## Printing Expressions
 
 Properly printing expressions, with minimal parentheses, is a surprisingly difficult problem. @ramsey_unparsing_1998 provides a solution of the form:
