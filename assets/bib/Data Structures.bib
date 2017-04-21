@@ -293,6 +293,24 @@ parameterized types.},
 	file = {focs05.pdf:files/2480/focs05.pdf:application/pdf;IEEE Xplore Abstract Record:files/2477/1530712.html:text/html}
 }
 
+@inproceedings{eisenberg_dependently_2012,
+	address = {New York, NY, USA},
+	series = {Haskell '12},
+	title = {Dependently {Typed} {Programming} with {Singletons}},
+	isbn = {978-1-4503-1574-6},
+	url = {http://cs.brynmawr.edu/~rae/papers/2012/singletons/paper.pdf},
+	doi = {10.1145/2364506.2364522},
+	abstract = {Haskell programmers have been experimenting with dependent types for at least a decade, using clever encodings that push the limits of the Haskell type system. However, the cleverness of these encodings is also their main drawback. Although the ideas are inspired by dependently typed programs, the code looks significantly different. As a result, GHC implementors have responded with extensions to Haskell's type system, such as GADTs, type families, and datatype promotion. However, there remains a significant difference between programming in Haskell and in full-spectrum dependently typed languages. Haskell enforces a phase separation between runtime values and compile-time types. Therefore, singleton types are necessary to express the dependency between values and types. These singleton types introduce overhead and redundancy for the programmer. This paper presents the singletons library, which generates the boilerplate code necessary for dependently typed programming using GHC. To compare with full-spectrum languages, we present an extended example based on an Agda interface for safe database access. The paper concludes with a detailed discussion on the current capabilities of GHC for dependently typed programming and suggestions for future extensions to better support this style of programming.},
+	urldate = {2017-04-08},
+	booktitle = {Proceedings of the 2012 {Haskell} {Symposium}},
+	publisher = {ACM},
+	author = {Eisenberg, Richard A. and Weirich, Stephanie},
+	year = {2012},
+	keywords = {dependently typed programming, gadts, HASKELL, singletons},
+	pages = {117--130},
+	file = {paper.pdf:files/2484/paper.pdf:application/pdf}
+}
+
 @inproceedings{diatchki_improving_2015,
 	address = {New York, NY, USA},
 	series = {Haskell '15},
@@ -309,4 +327,73 @@ parameterized types.},
 	keywords = {constraint solving, SMT, Type systems},
 	pages = {1--10},
 	file = {[PDF] github.io:files/2488/Diatchki - Improving Haskell Types with SMT.pdf:application/pdf;Snapshot:files/2489/citation.html:text/html}
+}
+
+@article{okasaki_three_1997,
+	title = {Three {Algorithms} on {Braun} {Trees}},
+	volume = {7},
+	issn = {0956-7968},
+	url = {https://www.cambridge.org/core/journals/journal-of-functional-programming/article/three-algorithms-on-braun-trees/59CF6B17F75EC216EBCA8A08E8780DFF},
+	doi = {10.1017/S0956796897002876},
+	abstract = {Among the many flavours of balanced binary trees, Braun trees (Braun and Rem, 1983) are perhaps the most circumscribed. For any given node of a Braun tree, the left subtree is either exactly the same size as the right subtree, or one element larger. Braun trees always have minimum height, and the shape of each Braun tree is completely determined by its size. In return for this rigor, algorithms that manipulate Braun trees are often exceptionally simple and elegant, and need not maintain any explicit balance information.Braun trees have been used to implement both flexible arrays (Braun and Rem, 1983; Hoogerwoord, 1992; Paulson, 1996) and priority queues (Paulson, 1996; Bird, 1996). Most operations involving a single element (e.g. adding, removing, inspecting or updating an element) take O(log n) time, since the trees are balanced. We consider three algorithmically interesting operations that manipulate entire trees. First, we give an O(log2 n) algorithm for calculating the size of a tree. Second, we show how to create a tree containing n copies of some element x in O(log n) time. Finally, we describe an order-preserving algorithm for converting a list to a tree in O(n) time. This last operation is not nearly as straightforward as it sounds!},
+	number = {6},
+	urldate = {2017-04-11},
+	journal = {Journal of Functional Programming},
+	author = {Okasaki, Chris},
+	month = nov,
+	year = {1997},
+	pages = {661--666},
+	file = {Snapshot:files/2494/59CF6B17F75EC216EBCA8A08E8780DFF.html:text/html;three-algorithms-on-braun-trees.pdf:files/2496/three-algorithms-on-braun-trees.pdf:application/pdf}
+}
+
+@inproceedings{anderson_faster_1991,
+	address = {Washington, DC, USA},
+	series = {{SFCS} '91},
+	title = {Faster {Uniquely} {Represented} {Dictionaries}},
+	isbn = {978-0-8186-2445-2},
+	url = {http://user.it.uu.se/~arnea/ps/fastun.ps},
+	doi = {10.1109/SFCS.1991.185430},
+	abstract = {The authors present a solution to the dictionary problem where each subset of size n of an ordered universe is represented by a unique structure, containing a (unique) binary search tree. The structure permits the execution of search, insert, and delete operations in O(n/sup 1/3/) time in the worst case. They also give a general lower bound, stating that for any unique representation of a set in a graph of, bounded outdegree, one of the operations search or update must require a cost of Omega (n/sup 1/3/) Therefore, the result sheds new light on previously claimed lower bounds for unique binary search tree representations.},
+	urldate = {2017-04-11},
+	booktitle = {Proceedings of the 32Nd {Annual} {Symposium} on {Foundations} of {Computer} {Science}},
+	publisher = {IEEE Computer Society},
+	author = {Anderson, Arne and Ottmann, Thomas},
+	year = {1991},
+	keywords = {binary search tree, Binary search trees, bounded outdegree graph, computational complexity, Computational modeling, Computer science, Costs, Data Structures, delete, Dictionaries, dictionary problem, insert, lower bound, ordered universe, search, search problems, Tree data structures, Tree graphs, trees (mathematics), update, worst case},
+	pages = {642--649},
+	file = {fastun.ps.pdf:files/2500/fastun.ps.pdf:application/pdf;IEEE Xplore Abstract Record:files/2498/185430.html:text/html}
+}
+
+@article{wasserman_playing_2010,
+	title = {Playing with {Priority} {Queues}},
+	volume = {16},
+	url = {https://themonadreader.files.wordpress.com/2010/05/issue16.pdf},
+	abstract = {We explore Haskell implementations of priority queues, ranging from the very sim- ple, suitable for beginner Haskell programmers, to a rich implementation of bino- mial queues with interesting mathematical connections, which will be entertaining for more experienced Haskellers. Many of these approaches were explored in the process of building a priority queue implementation intended for the Haskell Plat- form.},
+	language = {en},
+	number = {16},
+	journal = {The Monad.Reader},
+	author = {Wasserman, Louis},
+	month = may,
+	year = {2010},
+	pages = {37},
+	file = {issue16.pdf:files/2503/issue16.pdf:application/pdf}
+}
+
+@article{fredman_pairing_1986,
+	title = {The pairing heap: {A} new form of self-adjusting heap},
+	volume = {1},
+	issn = {0178-4617, 1432-0541},
+	shorttitle = {The pairing heap},
+	url = {http://www.cs.princeton.edu/courses/archive/fall09/cos521/Handouts/pairingheaps.pdf},
+	doi = {10.1007/BF01840439},
+	abstract = {Recently, Fredman and Tarjan invented a new, especially efficient form of heap (priority queue) called theFibonacci heap. Although theoretically efficient, Fibonacci heaps are complicated to implement and not as fast in practice as other kinds of heaps. In this paper we describe a new form of heap, called thepairing heap, intended to be competitive with the Fibonacci heap in theory and easy to implement and fast in practice. We provide a partial complexity analysis of pairing heaps. Complete analysis remains an open problem.},
+	language = {en},
+	number = {1-4},
+	urldate = {2017-04-21},
+	journal = {Algorithmica},
+	author = {Fredman, Michael L. and Sedgewick, Robert and Sleator, Daniel D. and Tarjan, Robert E.},
+	month = jan,
+	year = {1986},
+	pages = {111--129},
+	file = {pairingheaps.pdf:files/2543/pairingheaps.pdf:application/pdf;Snapshot:files/2541/10.html:text/html}
 }
