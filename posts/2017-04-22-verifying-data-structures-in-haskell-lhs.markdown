@@ -957,9 +957,20 @@ merge h1@(Node w1 p1 l1 r1 _) h2@(Node w2 p2 l2 r2 _)
 
 What's cool about this implementation is that it has the same performance as the non-verified version (if `Integer`{.haskell} is swapped out for `Int`{.haskell}, that is), and it *looks* pretty much the same. This is very close to static verification for free.
 
----
+### Index-Erased Heaps
 
-* Generalizing Sort to Parts.
-* Other uses for size-indexed heaps? Primes? 
+Although each one of these heaps is size-indexed, you can create a GADT with an existential index, which allows them to act like normal (non-indexed) heaps, while keeping their verification.
+
+### Generalizing Sort to Parts
+
+The `Sort`{.haskell} type used in the original blog post can be generalized to *any* indexed container. Using this, you can use it to reverse the elements of a traversable, or shift them up in any way you want.
+
+### Other Uses For Size-Indexed Heaps
+
+I'd be very interested to see any other uses of these indexed heaps, if anyone has any ideas. Potentially the could be used in any place where there is a need for some heap which is known to be of a certain size (a true prime sieve, for instance).
+
+### The Library
+
+I've explored all of these ideas [here](https://github.com/oisdk/type-indexed-heaps).
 
 ---
