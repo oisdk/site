@@ -778,13 +778,187 @@ mergePairs (HCons h1 (HCons h2 hs)) =
 
 ### Leftist Heaps
 
+The typechecker plugin makes it relatively easy to implement several other heaps: skew, Braun, etc. You'll need one extra trick to implement a [leftist heap](http://lambda.jstolarek.com/2014/10/weight-biased-leftist-heaps-verified-in-haskell-using-dependent-types/), though. Let's take a look at the unverified version:
+
+```{.haskell .literate}
+data Leftist a
+    = LLeaf
+    | LNode {-# UNPACK #-} !Int
+           a
+           (Leftist a)
+           (Leftist a)
+
+rank :: Leftist s -> Int
+rank LLeaf          = 0
+rank (LNode r _ _ _) = r
+{-# INLINE rank #-}
+
+mergeL :: Ord a => Leftist a -> Leftist a -> Leftist a
+mergeL LLeaf h2 = h2
+mergeL h1 LLeaf = h1
+mergeL h1@(LNode w1 p1 l1 r1) h2@(LNode w2 p2 l2 r2)
+  | p1 < p2 =
+      if ll <= lr
+          then LNode (w1 + w2) p1 l1 (mergeL r1 h2)
+          else LNode (w1 + w2) p1 (mergeL r1 h2) l1
+  | otherwise =
+      if rl <= rr
+          then LNode (w1 + w2) p2 l2 (mergeL r2 h1)
+          else LNode (w1 + w2) p2 (mergeL r2 h1) l2
+  where
+    ll = rank r1 + w2
+    lr = rank l1
+    rl = rank r2 + w1
+    rr = rank l2
+```
+
+(I kept the strictness annotations in this example because they're going to be important in a minute)
+
+In a weight-biased leftist heap, the left branch in any tree must have at least as many elements as the right branch. Ideally, we would encode that in the representation of size-indexed leftist heap:
+
+```{.haskell}
+data Leftist n a where
+        Leaf :: Leftist 0 a
+        Node :: !(The Nat (n + m + 1))
+             -> a
+             -> Leftist n a
+             -> Leftist m a
+             -> !(m <=. n)
+             -> Leftist (n + m + 1) a
+
+rank :: Leftist n s -> The Nat n
+rank Leaf             = sing
+rank (Node r _ _ _ _) = r
+{-# INLINE rank #-}
+```
+
+Two problems, though: first of all, we need to be able to *compare* the sizes of two heaps, in the merge function. If we were using the type-level Peano numbers, this would be woefully slow. More importantly, though, we need the comparison to provide a *proof* of the ordering, so that we can use it in the resulting heap.
 
 
+### Integer-Backed Type-Level Numbers
+
+In Agda, the Peano type is actually backed by Haskell's `Integer`{.haskell} at runtime. This allows compile-time proofs to be written about values which are calculated efficiently. We can mimic the same thing in Haskell with a newtype wrapper *around* `Integer`{.haskell} with a phantom `Nat`{.haskell} parameter, if we promise to never put an integer in which has a different value to its phantom value. We can make this promise a little more trustworthy if we don't export the newtype constructor.
+
+```{.haskell}
+newtype instance The Nat n where
+        NatSing :: Integer -> The Nat n
+
+instance KnownNat n => KnownSing n where
+    sing = NatSing $ Prelude.fromInteger $ natVal (Proxy :: Proxy n)
+```
+
+The `Nat`{.haskell} we're using here is now that `Nat`{.haskell} imported from [GHC.TypeLits](https://hackage.haskell.org/package/base-4.9.1.0/docs/GHC-TypeLits.html). We can also encode all the necessary arithmetic:
+
+```{.haskell}
+infixl 6 +.
+(+.) :: The Nat n -> The Nat m -> The Nat (n + m)
+(+.) =
+    (coerce :: (Integer -> Integer -> Integer) 
+            -> The Nat n -> The Nat m -> The Nat (n + m))
+        (+)
+{-# INLINE (+.) #-}
+
+infixl 7 *.
+(*.) :: The Nat n -> The Nat m -> The Nat (n * m)
+(*.) =
+    (coerce :: (Integer -> Integer -> Integer) 
+            -> The Nat n -> The Nat m -> The Nat (n * m))
+        (*)
+{-# INLINE (*.) #-}
+
+infixr 8 ^.
+(^.) :: The Nat n -> The Nat m -> The Nat (n ^ m)
+(^.) =
+    (coerce :: (Integer -> Integer -> Integer) 
+            -> The Nat n -> The Nat m -> The Nat (n ^ m))
+        (^)
+{-# INLINE (^.) #-}
+
+infixl 6 -.
+(-.) :: (m <= n) => The Nat n -> The Nat m -> The Nat (n - m)
+(-.) =
+    (coerce :: (Integer -> Integer -> Integer) 
+            -> The Nat n -> The Nat m -> The Nat (n - m))
+        (-)
+{-# INLINE (-.) #-}
+```
+
+Finally, the compare function:
+
+```{.haskell}
+infix 4 <=.
+(<=.) :: The Nat n -> The Nat m -> The Bool (n <=? m)
+(<=.) (NatSing x :: The Nat n) (NatSing y :: The Nat m)
+  | x <= y = 
+      case (unsafeCoerce (Refl :: True :~: True) :: (n <=? m) :~: True) of
+        Refl -> Truey
+  | otherwise = 
+      case (unsafeCoerce (Refl :: True :~: True) :: (n <=? m) :~: False) of
+        Refl -> Falsy
+{-# INLINE (<=.) #-}
+
+totalOrder ::  p n -> q m -> (n <=? m) :~: False -> (m <=? n) :~: True
+totalOrder (_ :: p n) (_ :: q m) Refl = 
+    unsafeCoerce Refl :: (m <=? n) :~: True
+
+type x <=. y = (x <=? y) :~: True
+```
+
+It's worth mentioning that all of these functions are somewhat axiomatic: as in, any later proofs rely on these functions being correct.
+
+If we want our merge function to *really* look like the non-verified version, though, we'll have to mess around with the syntax a little.
+
+### A Dependent if-then-else
+
+When matching on a singleton, *within* the case-match, proof of the singleton's type is provided. For instance:
+
+```{.haskell}
+type family IfThenElse (c :: Bool) (true :: k) (false :: k) :: k
+     where
+        IfThenElse True true false = true
+        IfThenElse False true false = false
+
+intOrString :: The Bool cond -> IfThenElse cond Int String
+intOrString Truey = 1
+intOrString Falsy = "abc"
+```
+
+In Haskell, since we can overload the if-then-else construct, we can provide the same syntax, while hiding the dependent nature:
+
+```{.haskell}
+ifThenElse :: The Bool c -> (c :~: True -> a) -> (c :~: False -> a) -> a
+ifThenElse Truey t _ = t Refl
+ifThenElse Falsy _ f = f Refl
+```
+
+### Verified Merge
+
+Finally, then, we can write the implementation for merge, which looks almost *exactly* the same as the non-verified merge:
+
+```{.haskell}
+merge :: Ord a => Leftist n a -> Leftist m a -> Leftist (n + m) a
+merge Leaf h2 = h2
+merge h1 Leaf = h1
+merge h1@(Node w1 p1 l1 r1 _) h2@(Node w2 p2 l2 r2 _)
+  | p1 < p2 =
+      if ll <=. lr
+          then Node (w1 +. w2) p1 l1 (merge r1 h2)
+          else Node (w1 +. w2) p1 (merge r1 h2) l1 . totalOrder ll lr
+  | otherwise =
+      if rl <=. rr
+          then Node (w1 +. w2) p2 l2 (merge r2 h1)
+          else Node (w1 +. w2) p2 (merge r2 h1) l2 . totalOrder rl rr
+  where
+    ll = rank r1 +. w2
+    lr = rank l1
+    rl = rank r2 +. w1
+    rr = rank l2
+```
+
+What's cool about this implementation is that it has the same performance as the non-verified version (if `Integer`{.haskell} is swapped out for `Int`{.haskell}, that is), and it *looks* pretty much the same. This is very close to static verification for free.
 
 ---
 
-* dependent if-then-else
-* Machine-integer-backed singletons (leftist heap)
 * Generalizing Sort to Parts.
 * Other uses for size-indexed heaps? Primes? 
 
