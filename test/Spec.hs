@@ -3,6 +3,7 @@ module Main where
 import Test.MarkdownDocTest
 import System.Directory
 import Data.List
+import Test.QuickCheck
 
 docTestDir :: String -> IO ()
 docTestDir dir = do

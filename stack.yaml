@@ -1,13 +1,14 @@
-resolver: lts-7.7
+resolver: lts-8.11
 
 packages:
 - '.'
 - location:
     git: https://github.com/oisdk/mddoctest.git
     commit: d105da84caee5c3d1eb8ed12430dfb797b878480
+  extra-dep: true
 
 extra-deps:
-- hakyll-4.9.0.0
+- mddoctest-0.1.0.0
 - hakyll-series-0.1.0.1
 
 flags: {}
