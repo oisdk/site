@@ -134,8 +134,8 @@ extension Prob {
   public func mergeProbs
     (comp: (Element,Element) -&gt; Ordering) -&gt; Prob {
       <span class="kw">return</span> <span class="fu">Prob</span>(contents:
-        contents.<span class="fu">mergeBy</span>( {(a,b) in <span class="fu">comp</span>(a<span class="fl">.0</span>,b<span class="fl">.0</span>)}
-                        , {(a,b) <span class="fu">in</span> (a<span class="fl">.0</span>,a<span class="fl">.1</span>+b<span class="fl">.1</span>)})
+        contents.<span class="fu">mergeBy</span>( {(a,b) in <span class="fu">comp</span>(a.<span class="dv">0</span>,b.<span class="dv">0</span>)}
+                        , {(a,b) <span class="fu">in</span> (a.<span class="dv">0</span>,a.<span class="dv">1</span>+b.<span class="dv">1</span>)})
     )
   }
 }</code></pre></div>

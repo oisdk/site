@@ -147,7 +147,7 @@ func f&lt;T : SomeProtocol <span class="fu">where</span> (This bit, also)...</co
     }
 
     <span class="kw">return</span> midEl &lt; el ?
-      <span class="fu">bSearch</span>(el, list: list[midInd<span class="dv">+1</span>..&lt;list.<span class="fu">endIndex</span>]) :
+      <span class="fu">bSearch</span>(el, list: list[midInd+<span class="dv">1</span>..&lt;list.<span class="fu">endIndex</span>]) :
       <span class="fu">bSearch</span>(el, list: list[<span class="dv">0</span>..&lt;midInd])
 }</code></pre></div>
 <p>Yeah. And it’s only going to get more and more complex: with every new beta, more functions become methods. This protocol business is going to cause more and more function signatures to end up looking like that. With that in mind, two things, in particular, need to go into the meta-language:</p>

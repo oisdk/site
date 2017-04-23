@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Swift.html">Swift</a>
+        Tags: <a href="../tags/Swift.html">Swift</a>, <a href="../tags/Dependent%20Types.html">Dependent Types</a>
     
 </div>
 
@@ -136,7 +136,7 @@ extension BinaryOp where A : NonZero, B == Zero {
     <span class="kw">return</span> Comp&lt;A.<span class="fu">Pred</span>, B.<span class="fu">Pred</span>&gt;().<span class="fu">r</span>
   }
 }</code></pre></div>
-<p>This doesn’t work. I’m fairly sure this is a definitive dead end. Here’s the error: <code class="sourceCode scala">ambiguous reference to member 'r'</code>. The problem is that that error encapsulates exactly what I’m trying to achieve: I <em>want</em> the reference to be ambiguous, so it <em>depends</em> on the types of <code class="sourceCode scala">A</code> and <code class="sourceCode scala">B</code>. Most other routes I went down hit similar roadblocks:</p>
+<p>This doesn’t work. I’m fairly sure this is a definitive dead end. Here’s the error: <code class="sourceCode scala">ambiguous reference to member <span class="ch">'r'</span></code>. The problem is that that error encapsulates exactly what I’m trying to achieve: I <em>want</em> the reference to be ambiguous, so it <em>depends</em> on the types of <code class="sourceCode scala">A</code> and <code class="sourceCode scala">B</code>. Most other routes I went down hit similar roadblocks:</p>
 <div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol BinaryOp {
   typealias A: Nat
   typealias B: Nat

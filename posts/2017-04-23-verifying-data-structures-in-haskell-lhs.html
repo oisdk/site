@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Verifying Data Structures in Haskell - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Verifying Data Structures in Haskell</h2>
+
+            <div class="info">
+    Posted on April 23, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Dependent%20Types.html">Dependent Types</a>
+    
+</div>
+
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE DataKinds #-}</span>
+<span class="ot">{-# LANGUAGE TypeOperators #-}</span>
+<span class="ot">{-# LANGUAGE TypeFamilies #-}</span>
+<span class="ot">{-# LANGUAGE TypeInType #-}</span>
+<span class="ot">{-# LANGUAGE KindSignatures #-}</span>
+<span class="ot">{-# LANGUAGE GADTs #-}</span>
+<span class="ot">{-# LANGUAGE RankNTypes #-}</span>
+<span class="ot">{-# LANGUAGE MultiParamTypeClasses #-}</span>
+<span class="ot">{-# LANGUAGE BangPatterns #-}</span>
+<span class="ot">{-# LANGUAGE ScopedTypeVariables #-}</span>
+<span class="ot">{-# LANGUAGE FlexibleInstances #-}</span>
+<span class="ot">{-# LANGUAGE RebindableSyntax #-}</span>
+
+<span class="ot">{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}</span>
+
+<span class="kw">module</span> <span class="dt">VerifiedDataStructures</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Data.Kind</span> <span class="kw">hiding</span> (type (*))
+<span class="kw">import </span><span class="dt">Data.Type.Equality</span>
+<span class="kw">import </span><span class="dt">Unsafe.Coerce</span>
+<span class="kw">import </span><span class="dt">GHC.TypeLits</span> <span class="kw">hiding</span> (type (&lt;=))
+<span class="kw">import </span><span class="dt">Data.Proxy</span>
+<span class="kw">import </span><span class="dt">Data.Coerce</span>
+<span class="kw">import </span><span class="dt">Prelude</span></code></pre></div>
+<p>A while ago I read <a href="https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/">this</a> post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent <a href="https://github.com/treeowl/sort-traversable">library</a>) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a <a href="https://github.com/oisdk/type-indexed-heaps">library</a> which has a bunch of size-indexed structures, each verified for structural correctness. I also included non-indexed versions for comparisons (as well as benchmarks, tests, and all that good stuff).</p>
+<p>The purpose of this post is to go through some of the tricks I used and problems I encountered writing a lot of type-level code in modern Haskell.</p>
+<h3 id="type-level-numbers-in-haskell">Type-Level Numbers in Haskell</h3>
+<p>In order to index things by their size, we’ll need a type-level representation of size. We’ll use <a href="https://wiki.haskell.org/Peano_numbers">Peano</a> numbers for now:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Peano</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Peano</span></code></pre></div>
+<p><code class="sourceCode haskell"><span class="dt">Z</span></code> stands for zero, and <code class="sourceCode haskell"><span class="dt">S</span></code> for successor. The terseness is pretty necessary here, unfortunately: arithmetic becomes unreadable otherwise. The simplicity of this definition is useful for proofs and manipulation; however any runtime representation of these numbers is going to be woefully slow.</p>
+<p>With the <code class="sourceCode haskell"><span class="dt">DataKinds</span></code> extension, the above is automatically promoted to the type-level, so we can write type-level functions (type families) on the <code class="sourceCode haskell"><span class="dt">Peano</span></code> type:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">Plus</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) (<span class="ot">m ::</span> <span class="dt">Peano</span>)<span class="ot"> ::</span> <span class="dt">Peano</span> <span class="kw">where</span>
+        <span class="dt">Plus</span> <span class="dt">Z</span> m <span class="fu">=</span> m
+        <span class="dt">Plus</span> (<span class="dt">S</span> n) m <span class="fu">=</span> <span class="dt">S</span> (<span class="dt">Plus</span> n m)</code></pre></div>
+<p>Here the <code class="sourceCode haskell"><span class="dt">TypeFamilies</span></code> extension is needed. I’ll try and mention every extension I’m using as we go, but I might forget a few, so check the repository for all of the examples (quick aside: I <em>did</em> manage to avoid using <code class="sourceCode haskell"><span class="dt">UndecidableInstances</span></code>, but more on that later). One pragma that’s worth mentioning is:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">{-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}</span></code></pre></div>
+<p>This suppresses warnings on the definition of <code class="sourceCode haskell"><span class="dt">Plus</span></code> above. Without it, GHC would want us to write:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">Plus</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) (<span class="ot">m ::</span> <span class="dt">Peano</span>)<span class="ot"> ::</span> <span class="dt">Peano</span> <span class="kw">where</span>
+        <span class="dt">Plus</span> <span class="ch">'Z m = m</span>
+        <span class="dt">Plus</span> (<span class="ch">'S n) m = '</span><span class="dt">S</span> (<span class="dt">Plus</span> n m)</code></pre></div>
+<p>I think that looks pretty ugly, and it can get much worse with more involved arithmetic. The only thing I have found the warnings useful for is <code class="sourceCode haskell">[]</code>: the type-level empty list gives an error in its unticked form.</p>
+<h3 id="using-the-type-level-numbers-with-a-pairing-heap">Using the Type-Level Numbers with a Pairing Heap</h3>
+<p>In the original post, a pairing heap <span class="citation">(Fredman et al. <a href="#ref-fredman_pairing_1986">1986</a>)</span> was used, for its simplicity and performance. The implementation looked like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Heap</span> n a <span class="kw">where</span>
+  <span class="dt">E</span><span class="ot"> ::</span> <span class="dt">Heap</span> <span class="dt">Z</span> a
+  <span class="dt">T</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dt">S</span> n) a
+
+<span class="kw">data</span> <span class="dt">HVec</span> n a <span class="kw">where</span>
+  <span class="dt">HNil</span><span class="ot"> ::</span> <span class="dt">HVec</span> <span class="dt">Z</span> a
+  <span class="dt">HCons</span><span class="ot"> ::</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">HVec</span> (<span class="dt">Plus</span> m n) a</code></pre></div>
+<p>You immediately run into trouble when you try to define merge:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">merge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dt">Plus</span> m n) a
+merge <span class="dt">E</span> ys <span class="fu">=</span> ys
+merge xs <span class="dt">E</span> <span class="fu">=</span> xs
+merge h1<span class="fu">@</span>(<span class="dt">T</span> x xs) h2<span class="fu">@</span>(<span class="dt">T</span> y ys)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> <span class="dt">T</span> x (<span class="dt">HCons</span> h2 xs)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">T</span> y (<span class="dt">HCons</span> h1 ys)</code></pre></div>
+<p>Three errors show up here, but we’ll look at the first one:</p>
+<blockquote>
+<p><code>Could not deduce (m ~ (Plus m Z))</code></p>
+</blockquote>
+<p>GHC doesn’t know that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>=</mo><mi>x</mi><mo>+</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x = x + 0</annotation></semantics></math>. Somehow, we’ll have to <em>prove</em> that it does.</p>
+<h3 id="singletons">Singletons</h3>
+<p>In a language with true dependent types, proving the proposition above is as simple as:</p>
+<div class="sourceCode"><pre class="sourceCode idris"><code class="sourceCode idris"><span class="fu">plusZeroNeutral</span> <span class="ot">:</span> (n <span class="ot">:</span> <span class="dt">Nat</span>) <span class="ot">-&gt;</span> n <span class="fu">+</span> <span class="dv">0</span> <span class="fu">=</span> n
+plusZeroNeutral <span class="dt">Z</span> <span class="fu">=</span> <span class="dt">Refl</span>
+plusZeroNeutral (<span class="dt">S</span> k) <span class="fu">=</span> cong (plusZeroNeutral k)</code></pre></div>
+<p>(this example is in Idris)</p>
+<p>In Haskell, on the other hand, we can’t do the same: functions on the value-level <code class="sourceCode haskell"><span class="dt">Peano</span></code> have no relationship with functions on the type-level <code class="sourceCode haskell"><span class="dt">Peano</span></code>. There’s no way to automatically link or promote one to the other.</p>
+<p>This is where singletons come in <span class="citation">(Eisenberg and Weirich <a href="#ref-eisenberg_dependently_2012">2012</a>)</span>. A singleton is a value-level representation of some type, where there is only <em>one</em> value for a given type (hence the name). Usually, the singleton will be parameterized by the type-level value, and its constructors will mimic the type-level datatype. In this way, we can write functions on the value-level which are linked to the type-level. Here’s a potential singleton for <code class="sourceCode haskell"><span class="dt">Peano</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span>
+    <span class="dt">Zy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span>
+    <span class="dt">Sy</span><span class="ot"> ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)</code></pre></div>
+<p>(we need <code class="sourceCode haskell"><span class="dt">GADTs</span></code> for this example)</p>
+<p>The <code class="sourceCode haskell">plusZeroNeutral</code> proof looks reasonably similar to the Idris version:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">plusZeroNeutral ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> <span class="dt">Plus</span> n <span class="dt">Z</span> <span class="fu">:~:</span> n
+plusZeroNeutral <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">Refl</span>
+plusZeroNeutral (<span class="dt">Sy</span> n) <span class="fu">=</span> <span class="kw">case</span> plusZeroNeutral n <span class="kw">of</span>
+    <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Refl</span></code></pre></div>
+<p>To generalize the singletons a little, we could probably use the <a href="https://hackage.haskell.org/package/singletons">singletons</a> library, or we could roll our own:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> family <span class="dt">The</span><span class="ot"> k ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span>
+
+<span class="kw">data</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="kw">where</span>
+    <span class="dt">Zy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Peano</span> <span class="dt">Z</span>
+    <span class="dt">Sy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Peano</span> (<span class="dt">S</span> n)
+
+<span class="ot">plusZeroNeutral ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">Plus</span> n <span class="dt">Z</span> <span class="fu">:~:</span> n
+plusZeroNeutral <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">Refl</span>
+plusZeroNeutral (<span class="dt">Sy</span> n) <span class="fu">=</span> <span class="kw">case</span> plusZeroNeutral n <span class="kw">of</span>
+    <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Refl</span></code></pre></div>
+<p>The <code class="sourceCode haskell"><span class="dt">The</span></code> naming is kind of cute, I think. It makes the signature look <em>almost</em> like the Idris version (<code class="sourceCode idris">the</code> is a function from the Idris standard library). The <code class="sourceCode haskell"><span class="dt">The</span></code> type family requires the <code class="sourceCode haskell"><span class="dt">TypeInType</span></code> extension, which I’ll talk a little more about later.</p>
+<h3 id="proof-erasure-and-totality">Proof Erasure and Totality</h3>
+<p>There’s an issue with these kinds of proofs: the proof code runs <em>every time</em> it is needed. Since the same value is coming out the other end each time (<code class="sourceCode haskell"><span class="dt">Refl</span></code>), this seems wasteful.</p>
+<p>In a language like Idris, this problem is avoided by noticing that you’re only using the proof for its type information, and then erasing it at runtime. In Haskell, we can accomplish the same with a rule:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">{-# NOINLINE plusZeroNeutral #-}</span>
+
+<span class="co">{-# RULES</span>
+<span class="co">&quot;plusZeroNeutral&quot; forall x. plusZeroNeutral x </span>
+<span class="co">  = unsafeCoerce (Refl :: 'Z :~: 'Z)</span>
+<span class="co"> #-}</span></code></pre></div>
+<p>This basically says “if this type-checks, then the proof must exist, and therefore the proof must be valid. So don’t bother running it”. Unfortunately, that’s a <em>little bit</em> of a lie. It’s pretty easy to write a proof which type-checks that <em>isn’t</em> valid:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">falseIsTrue ::</span> <span class="dt">False</span> <span class="fu">:~:</span> <span class="dt">True</span>
+falseIsTrue <span class="fu">=</span> falseIsTrue</code></pre></div>
+<p>We won’t be able to perform computations which rely on this proof in Haskell, though: because the computation will never terminate, the proof will never provide an answer. This means that, while the proof isn’t valid, it <em>is</em> type safe. That is, of course, unless we use our manual proof-erasure technique. The <code class="sourceCode haskell"><span class="dt">RULES</span></code> pragma will happily replace it with the <code class="sourceCode haskell">unsafeCoerce</code> version, effectively introducing unsoundness into our proofs. The reason that this doesn’t cause a problem for language like Idris is that Idris has a totality checker: you <em>can’t</em> write the above definition (with the totality checker turned on) in Idris.</p>
+<p>So what’s the solution? Do we have to suffer through the slower proof code to maintain correctness? In reality, it’s usually OK to assume termination. It’s pretty easy to see that a proof like <code class="sourceCode haskell">plusZeroNeutral</code> is total. It’s worth bearing in mind, though, that until Haskell gets a totality checker (<a href="https://typesandkinds.wordpress.com/2016/07/24/dependent-types-in-haskell-progress-report/">likely never</a>, apparently) these proofs aren’t “proper”.</p>
+<h3 id="generating-singletons">Generating Singletons</h3>
+<p>One extra thing: while you’re proving things in one area of your code, you might not have the relevant singleton handy. To generate them on-demand, you’ll need a typeclass:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">KnownSing</span> (<span class="ot">x ::</span> k) <span class="kw">where</span>
+<span class="ot">    sing ::</span> <span class="dt">The</span> k x
+
+<span class="kw">instance</span> <span class="dt">KnownSing</span> <span class="dt">Z</span> <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">Zy</span>
+
+<span class="kw">instance</span> <span class="dt">KnownSing</span> n <span class="ot">=&gt;</span> <span class="dt">KnownSing</span> (<span class="dt">S</span> n) <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">Sy</span> sing</code></pre></div>
+<p>This kind of drives home the inefficiency of singleton-based proofs, and why it’s important to erase them aggressively.</p>
+<h3 id="proofs-bundled-with-the-data-structure">Proofs Bundled with the Data Structure</h3>
+<p>One other way to solve these problems is to try find a data structure which runs the proof code anyway. As an example, consider a length-indexed list:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">List</span> n a <span class="kw">where</span>
+    <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">List</span> <span class="dt">Z</span> a
+<span class="ot">    (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> n a <span class="ot">-&gt;</span> <span class="dt">List</span> (<span class="dt">S</span> n) a</code></pre></div>
+<p>You might worry that concatenation of two lists requires some expensive proof code, like <code class="sourceCode haskell">merge</code> for the pairing heap. Maybe surprisingly, the default implementation just works:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">++</span>
+<span class="ot">(++) ::</span> <span class="dt">List</span> n a <span class="ot">-&gt;</span> <span class="dt">List</span> m a <span class="ot">-&gt;</span> <span class="dt">List</span> (<span class="dt">Plus</span> n m) a
+(<span class="fu">++</span>) <span class="dt">Nil</span> ys <span class="fu">=</span> ys
+(<span class="fu">++</span>) (x <span class="fu">:-</span> xs) ys <span class="fu">=</span> x <span class="fu">:-</span> xs <span class="fu">++</span> ys</code></pre></div>
+<p>Why? Well, if you look back to the definition of <code class="sourceCode haskell"><span class="dt">Plus</span></code>, it’s almost exactly the same as the definition of <code class="sourceCode haskell">(<span class="fu">++</span>)</code>. In effect, we’re using <em>lists</em> as the singleton for <code class="sourceCode haskell"><span class="dt">Peano</span></code> here.</p>
+<p>The question is, then: is there a heap which performs these proofs automatically for functions like merge? As far as I can tell: <em>almost</em>. First though:</p>
+<h3 id="small-digression-manipulating-and-using-the-length-indexed-list">Small Digression: Manipulating and Using the Length-Indexed List</h3>
+<p>The standard definition of <code class="sourceCode haskell"><span class="fu">++</span></code> on normal lists can be cleaned up a little with <code class="sourceCode haskell">foldr</code></p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">(++) ::</span> [a] <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]
+(<span class="fu">++</span>) <span class="fu">=</span> flip (foldr (<span class="fu">:</span>))</code></pre></div>
+<p>Can we get a similar definition for our length-indexed lists? Turns out we can, but the type of <code class="sourceCode haskell">foldr</code> needs to be a little different:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldrList ::</span> (forall x<span class="fu">.</span> a <span class="ot">-&gt;</span> b x <span class="ot">-&gt;</span> b (<span class="dt">S</span> x)) 
+          <span class="ot">-&gt;</span> b m <span class="ot">-&gt;</span> <span class="dt">List</span> n a <span class="ot">-&gt;</span> b (n <span class="fu">+</span> m)
+foldrList f b <span class="dt">Nil</span> <span class="fu">=</span> b
+foldrList f b (x <span class="fu">:-</span> xs) <span class="fu">=</span> f x (foldrList f b xs)
+
+<span class="kw">newtype</span> <span class="dt">Flip</span> (<span class="ot">f ::</span> t <span class="ot">-&gt;</span> u <span class="ot">-&gt;</span> <span class="dt">Type</span>) (<span class="ot">a ::</span> u) (<span class="ot">b ::</span> t) 
+    <span class="fu">=</span> <span class="dt">Flip</span> {<span class="ot"> unFlip ::</span> f b a }
+
+<span class="ot">foldrList1 ::</span> (forall x<span class="fu">.</span> a <span class="ot">-&gt;</span> b x c <span class="ot">-&gt;</span> b (<span class="dt">S</span> x) c) 
+           <span class="ot">-&gt;</span> b m c <span class="ot">-&gt;</span> <span class="dt">List</span> n a <span class="ot">-&gt;</span> b (n <span class="fu">+</span> m) c
+foldrList1 f b 
+    <span class="fu">=</span> unFlip <span class="fu">.</span> foldrList (\e <span class="ot">-&gt;</span> <span class="dt">Flip</span> <span class="fu">.</span> f e <span class="fu">.</span> unFlip) (<span class="dt">Flip</span> b)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">++</span>
+<span class="ot">(++) ::</span> <span class="dt">List</span> n a <span class="ot">-&gt;</span> <span class="dt">List</span> m a <span class="ot">-&gt;</span> <span class="dt">List</span> (n <span class="fu">+</span> m) a
+(<span class="fu">++</span>) <span class="fu">=</span> flip (foldrList1 (<span class="fu">:-</span>))</code></pre></div>
+<p>So what’s the point of this more complicated version? Well, if this were normal Haskell, we might get some foldr-fusion or something (in reality we would probably use <a href="http://hackage.haskell.org/package/base-4.9.1.0/docs/GHC-Exts.html#v:augment"><code class="sourceCode haskell">augment</code></a> if that were the purpose).</p>
+<p>With this type-level business, though, there’s a similar application: loop unrolling. Consider the natural-number type again. We can write a typeclass which will perform induction over them:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">KnownPeano</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>)  <span class="kw">where</span>
+<span class="ot">    unrollRepeat ::</span> <span class="dt">Proxy</span> n <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+
+<span class="kw">instance</span> <span class="dt">KnownPeano</span> <span class="dt">Z</span> <span class="kw">where</span>
+    unrollRepeat _ <span class="fu">=</span> const id
+    <span class="ot">{-# INLINE unrollRepeat #-}</span>
+
+<span class="kw">instance</span> <span class="dt">KnownPeano</span> n <span class="ot">=&gt;</span>
+         <span class="dt">KnownPeano</span> (<span class="dt">S</span> n) <span class="kw">where</span>
+    unrollRepeat (<span class="ot">_ ::</span> <span class="dt">Proxy</span> (<span class="dt">S</span> n)) f x <span class="fu">=</span>
+        f (unrollRepeat (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> n) f x)
+    <span class="ot">{-# INLINE unrollRepeat #-}</span></code></pre></div>
+<p>Because the recursion here calls a different <code class="sourceCode haskell">unrollRepeat</code> function in the “recursive” call, we get around the usual hurdle of not being abble to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">HasFoldr</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) <span class="kw">where</span>
+    unrollFoldr 
+<span class="ot">        ::</span> (forall x<span class="fu">.</span> a <span class="ot">-&gt;</span> b x <span class="ot">-&gt;</span> b (<span class="dt">S</span> x)) 
+        <span class="ot">-&gt;</span> b m 
+        <span class="ot">-&gt;</span> <span class="dt">List</span> n a 
+        <span class="ot">-&gt;</span> b (n <span class="fu">+</span> m)
+  
+<span class="kw">instance</span> <span class="dt">HasFoldr</span> <span class="dt">Z</span> <span class="kw">where</span>
+    unrollFoldr _ b _ <span class="fu">=</span> b
+    <span class="ot">{-# INLINE unrollFoldr #-}</span>
+
+<span class="kw">instance</span> <span class="dt">HasFoldr</span> n <span class="ot">=&gt;</span> <span class="dt">HasFoldr</span> (<span class="dt">S</span> n) <span class="kw">where</span>
+    unrollFoldr f b (x <span class="fu">:-</span> xs) <span class="fu">=</span> f x (unrollFoldr f b xs)
+    <span class="ot">{-# INLINE unrollFoldr #-}</span></code></pre></div>
+<p>I can’t think of many uses for this technique, but one that comes to mind is an n-ary uncurry (like Lisp’s <a href="https://en.wikipedia.org/wiki/Apply#Common_Lisp_and_Scheme">apply</a>):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">List</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>]) <span class="kw">where</span>
+        <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">List</span> <span class="ch">'[]</span>
+<span class="ot">        (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> xs <span class="ot">-&gt;</span> <span class="dt">List</span> (a <span class="ch">': xs)</span>
+
+<span class="kw">class</span> <span class="dt">KnownList</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>])  <span class="kw">where</span>
+    foldrT
+<span class="ot">        ::</span> (forall y ys<span class="fu">.</span> y <span class="ot">-&gt;</span> result ys <span class="ot">-&gt;</span> result (y <span class="ch">': ys))</span>
+        <span class="ot">-&gt;</span> result <span class="ch">'[]</span>
+        <span class="ot">-&gt;</span> <span class="dt">List</span> xs
+        <span class="ot">-&gt;</span> result xs
+
+<span class="kw">instance</span> <span class="dt">KnownList</span> (<span class="ch">'[] :: [*]) where</span>
+    foldrT _ <span class="fu">=</span> const
+    <span class="ot">{-# INLINE foldrT #-}</span>
+
+<span class="kw">instance</span> <span class="dt">KnownList</span> xs <span class="ot">=&gt;</span>
+         <span class="dt">KnownList</span> (x <span class="ch">': xs) where</span>
+    foldrT f b (x <span class="fu">:-</span> xs) <span class="fu">=</span> f x (foldrT f b xs)
+    <span class="ot">{-# INLINE foldrT #-}</span>
+
+<span class="kw">type</span> family <span class="dt">Func</span> (<span class="ot">xs ::</span> [<span class="fu">*</span>]) (<span class="ot">y ::</span> <span class="fu">*</span>) <span class="kw">where</span>
+        <span class="dt">Func</span> <span class="ch">'[] y = y</span>
+        <span class="dt">Func</span> (x <span class="ch">': xs) y = x -&gt; Func xs y</span>
+
+<span class="kw">newtype</span> <span class="dt">FunType</span> y xs <span class="fu">=</span> <span class="dt">FunType</span>
+    {<span class="ot"> runFun ::</span> <span class="dt">Func</span> xs y <span class="ot">-&gt;</span> y
+    }
+
+uncurry
+<span class="ot">    ::</span> <span class="dt">KnownList</span> xs
+    <span class="ot">=&gt;</span> <span class="dt">Func</span> xs y <span class="ot">-&gt;</span> <span class="dt">List</span> xs <span class="ot">-&gt;</span> y
+uncurry f l <span class="fu">=</span>
+    runFun
+        (foldrT
+             (c (\x g h <span class="ot">-&gt;</span> g (h x)))
+             (<span class="dt">FunType</span> id)
+             l)
+        f
+  <span class="kw">where</span>
+<span class="ot">    c ::</span> (a <span class="ot">-&gt;</span> ((<span class="dt">Func</span> xs y <span class="ot">-&gt;</span> y) <span class="ot">-&gt;</span> (<span class="dt">Func</span> zs z <span class="ot">-&gt;</span> z)))
+      <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> (<span class="dt">FunType</span> y xs <span class="ot">-&gt;</span> <span class="dt">FunType</span> z zs))
+    c <span class="fu">=</span> coerce
+    <span class="ot">{-# INLINE c #-}</span>
+<span class="ot">{-# INLINE uncurry #-}</span></code></pre></div>
+<p>I <em>think</em> that you can be guaranteed the above is inlined at compile-time, making it essentially equivalent to a handwritten <code class="sourceCode haskell">uncurry</code>.</p>
+<h3 id="binomial-heaps">Binomial Heaps</h3>
+<p>Anyway, back to the size-indexed heaps. The reason that <code class="sourceCode haskell">(<span class="fu">++</span>)</code> worked so easily on lists is that a list can be thought of as the data-structure equivalent to Peano numbers. Another numeric-system-based data structure is the binomial heap, which is based on binary numbering <span class="citation">(I’m going mainly off of the description from Hinze <a href="#ref-hinze_functional_1999">1999</a>)</span>.</p>
+<p>So, to work with binary numbers, let’s get some preliminaries on the type-level out of the way:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Bool</span> x <span class="kw">where</span>
+    <span class="dt">Falsy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Bool</span> <span class="dt">False</span>
+    <span class="dt">Truey</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Bool</span> <span class="dt">True</span>
+
+<span class="kw">data</span> <span class="kw">instance</span> <span class="dt">The</span> [k] xs <span class="kw">where</span>
+    <span class="dt">Nily</span><span class="ot"> ::</span> <span class="dt">The</span> [k] <span class="ch">'[]</span>
+    <span class="dt">Cony</span><span class="ot"> ::</span> <span class="dt">The</span> k x <span class="ot">-&gt;</span> <span class="dt">The</span> [k] xs <span class="ot">-&gt;</span> <span class="dt">The</span> [k] (x <span class="fu">:</span> xs)
+
+<span class="kw">instance</span> <span class="dt">KnownSing</span> <span class="dt">True</span> <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">Truey</span>
+
+<span class="kw">instance</span> <span class="dt">KnownSing</span> <span class="dt">False</span> <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">Falsy</span>
+
+<span class="kw">instance</span> <span class="dt">KnownSing</span> <span class="ch">'[] where</span>
+    sing <span class="fu">=</span> <span class="dt">Nily</span>
+
+<span class="kw">instance</span> (<span class="dt">KnownSing</span> xs, <span class="dt">KnownSing</span> x) <span class="ot">=&gt;</span>
+         <span class="dt">KnownSing</span> (x <span class="fu">:</span> xs) <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">Cony</span> sing sing</code></pre></div>
+<p>We’ll represent a binary number as a list of Booleans:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">Sum</span> (<span class="ot">x ::</span> <span class="dt">Bool</span>) (<span class="ot">y ::</span> <span class="dt">Bool</span>) (<span class="ot">cin ::</span> <span class="dt">Bool</span>)<span class="ot"> ::</span> <span class="dt">Bool</span> <span class="kw">where</span>
+        <span class="dt">Sum</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">False</span> <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Sum</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Sum</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Sum</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Sum</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">False</span> <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Sum</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Sum</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">False</span> <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Sum</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">True</span>
+
+<span class="kw">type</span> family <span class="dt">Carry</span> (<span class="ot">x ::</span> <span class="dt">Bool</span>) (<span class="ot">y ::</span> <span class="dt">Bool</span>) (<span class="ot">cin ::</span> <span class="dt">Bool</span>)
+     (<span class="ot">xs ::</span> [<span class="dt">Bool</span>]) (<span class="ot">ys ::</span> [<span class="dt">Bool</span>])<span class="ot"> ::</span> [<span class="dt">Bool</span>] <span class="kw">where</span>
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">False</span> xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">False</span> xs ys
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">True</span>  xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">False</span> xs ys
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">False</span> xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">False</span> xs ys
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">True</span>  xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">True</span>  xs ys
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">False</span> xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">False</span> xs ys
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">True</span>  xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">True</span>  xs ys
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">False</span> xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">True</span>  xs ys
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">True</span>  xs ys <span class="fu">=</span> <span class="dt">Add</span> <span class="dt">True</span>  xs ys
+
+<span class="kw">type</span> family <span class="dt">Add</span> (<span class="ot">cin ::</span> <span class="dt">Bool</span>) (<span class="ot">xs ::</span> [<span class="dt">Bool</span>]) (<span class="ot">ys ::</span> [<span class="dt">Bool</span>]) <span class="ot">::</span>
+     [<span class="dt">Bool</span>] <span class="kw">where</span>
+        <span class="dt">Add</span> c (x <span class="fu">:</span> xs) (y <span class="fu">:</span> ys) <span class="fu">=</span> <span class="dt">Sum</span> x y c <span class="fu">:</span> <span class="dt">Carry</span> x y c xs ys
+        <span class="dt">Add</span> <span class="dt">False</span> <span class="ch">'[] ys = ys</span>
+        <span class="dt">Add</span> <span class="dt">False</span> xs <span class="ch">'[] = xs</span>
+        <span class="dt">Add</span> <span class="dt">True</span>  <span class="ch">'[] ys = CarryOne ys</span>
+        <span class="dt">Add</span> <span class="dt">True</span>  xs <span class="ch">'[] = CarryOne xs</span>
+
+<span class="kw">type</span> family <span class="dt">CarryOne</span> (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])<span class="ot"> ::</span> [<span class="dt">Bool</span>] <span class="kw">where</span>
+        <span class="dt">CarryOne</span> <span class="ch">'[] = True : '</span>[]
+        <span class="dt">CarryOne</span> (<span class="dt">False</span> <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">True</span> <span class="fu">:</span> xs
+        <span class="dt">CarryOne</span> (<span class="dt">True</span>  <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">False</span> <span class="fu">:</span> <span class="dt">CarryOne</span> xs</code></pre></div>
+<p>The odd definition of <code class="sourceCode haskell"><span class="dt">Carry</span></code> is to avoid <code class="sourceCode haskell"><span class="dt">UndecidableInstances</span></code>: if we had written, instead:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">Carry</span> (<span class="ot">x ::</span> <span class="dt">Bool</span>) (<span class="ot">y ::</span> <span class="dt">Bool</span>) (<span class="ot">cin ::</span> <span class="dt">Bool</span>)<span class="ot"> ::</span> <span class="dt">Bool</span> <span class="kw">where</span>
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">False</span> <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Carry</span> <span class="dt">False</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">False</span> <span class="fu">=</span> <span class="dt">False</span>
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">False</span> <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">False</span> <span class="fu">=</span> <span class="dt">True</span>
+        <span class="dt">Carry</span> <span class="dt">True</span>  <span class="dt">True</span>  <span class="dt">True</span>  <span class="fu">=</span> <span class="dt">True</span>
+
+<span class="kw">type</span> family <span class="dt">Add</span> (<span class="ot">cin ::</span> <span class="dt">Bool</span>) (<span class="ot">xs ::</span> [<span class="dt">Bool</span>]) (<span class="ot">ys ::</span> [<span class="dt">Bool</span>]) <span class="ot">::</span>
+     [<span class="dt">Bool</span>] <span class="kw">where</span>
+        <span class="dt">Add</span> c (x <span class="fu">:</span> xs) (y <span class="fu">:</span> ys) <span class="fu">=</span> <span class="dt">Sum</span> x y c <span class="fu">:</span> <span class="dt">Add</span> (<span class="dt">Carry</span> x y c) xs ys
+        <span class="dt">Add</span> <span class="dt">False</span> <span class="ch">'[] ys = ys</span>
+        <span class="dt">Add</span> <span class="dt">False</span> xs <span class="ch">'[] = xs</span>
+        <span class="dt">Add</span> <span class="dt">True</span>  <span class="ch">'[] ys = CarryOne ys</span>
+        <span class="dt">Add</span> <span class="dt">True</span>  xs <span class="ch">'[] = CarryOne xs</span></code></pre></div>
+<p>We would have been warned about nested type-family application.</p>
+<p>Now we can base the merge function very closely on these type families. First, though, we’ll have to implement the heap.</p>
+<h3 id="almost-verified-data-structures">Almost-Verified Data Structures</h3>
+<p>There are different potential properties you can verify in a data structure. In the sort-traversable post, the property of interest was that the number of elements in the structure would stay the same after adding and removing some number <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> of elements. For this post, we’ll also verify structural invariants. I won’t, however, verify the <a href="https://www.cs.cmu.edu/~adamchik/15-121/lectures/Binary%20Heaps/heaps.html">heap property</a>. Maybe in a later post.</p>
+<p>When indexing a data structure by its size, you encode an awful lot of information into the type signature: the type becomes very <em>specific</em> to the structure in question. It is possible, though, to encode a fair few structural invariants <em>without</em> getting so specific. Here’s a signature for “perfect leaf tree”:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">BalTree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">BalTree</span> (a,a))</code></pre></div>
+<p>With that signature, it’s <em>impossible</em> to create a tree with more elements in its left branch than its right: but the size of the tree is unspecified. You can use a similar trick to implement <a href="https://github.com/oisdk/Square">matrices which must be square</a> <span class="citation">(from Okasaki <a href="#ref-okasaki_fast_1999">1999</a>)</span>: the usual trick (<code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Matrix</span> n a <span class="fu">=</span> <span class="dt">List</span> n (<span class="dt">List</span> n a)</code>) fails the test: it’s too specific, providing size information at compile-time. If you’re interested in this approach, there are several more examples in <span class="citation">Hinze (<a href="#ref-hinze_manufacturing_2001">2001</a>)</span>.</p>
+<p>It is possible to go from the size-indexed version back to the non-indexed version, with an existential (<code class="sourceCode haskell"><span class="dt">RankNTypes</span></code> for this example):</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ErasedSize</span> f a <span class="fu">=</span> forall (<span class="ot">n ::</span> <span class="dt">Peano</span>)<span class="fu">.</span> <span class="dt">ErasedSize</span>
+    {<span class="ot"> runErasedSize ::</span> f n a
+    }</code></pre></div>
+<p>This will let you prove invariants in your implementation using an index, while keeping the user-facing type signature general and non-indexed.</p>
+<h3 id="a-fully-structurally-verified-binomial-heap">A Fully-Structurally-Verified Binomial Heap</h3>
+<p><span class="citation">Wasserman (<a href="#ref-wasserman_playing_2010">2010</a>)</span>, was able to encode all of the structural invariants of the binomial heap <em>without</em> indexing by its size. I’ll be using a similar approach, except I’ll leverage some of the newer bells and whistles in GHC: where Wasserman’s version used types like this for the numbering:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Zero</span> a <span class="fu">=</span> <span class="dt">Zero</span>
+<span class="kw">data</span> <span class="dt">Succ</span> rk a <span class="fu">=</span> <span class="dt">BinomTree</span> rk a <span class="fu">:&lt;</span> rk a
+<span class="kw">data</span> <span class="dt">BinomTree</span> rk a <span class="fu">=</span> <span class="dt">BinomTree</span> a (rk a)</code></pre></div>
+<p>We can reuse the type-level Peano numbers with a GADT.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">Binomial</span> xs rk a <span class="kw">where</span>
+       <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Binomial</span> <span class="ch">'[] n a</span>
+       <span class="dt">Skip</span><span class="ot"> ::</span> <span class="dt">Binomial</span> xs (<span class="dt">S</span> rk) a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">False</span> <span class="fu">:</span> xs) rk a
+<span class="ot">       (:-) ::</span> <span class="dt">Tree</span> rk a 
+            <span class="ot">-&gt;</span> <span class="dt">Binomial</span> xs (<span class="dt">S</span> rk) a 
+            <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">True</span> <span class="fu">:</span> xs) rk a
+
+<span class="kw">data</span> <span class="dt">Tree</span> rk a <span class="fu">=</span> <span class="dt">Root</span> a (<span class="dt">Node</span> rk a)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:&lt;</span>
+<span class="kw">data</span> <span class="dt">Node</span> n a <span class="kw">where</span>
+       <span class="dt">NilN</span><span class="ot"> ::</span> <span class="dt">Node</span> <span class="dt">Z</span> a
+<span class="ot">       (:&lt;) ::</span> <span class="dt">Tree</span> n a <span class="ot">-&gt;</span> <span class="dt">Node</span> n a <span class="ot">-&gt;</span> <span class="dt">Node</span> (<span class="dt">S</span> n) a</code></pre></div>
+<p>The definition of <code class="sourceCode haskell"><span class="dt">Tree</span></code> here ensures that any tree of rank <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> has <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mi>n</mi></msup><annotation encoding="application/x-tex">2^n</annotation></semantics></math> elements. The binomial heap, then, is a list of trees, in ascending order of size, with a <code class="sourceCode haskell"><span class="dt">True</span></code> at every point in its type-level list where a tree is present, and a <code class="sourceCode haskell"><span class="dt">False</span></code> wherever one is absent. In other words, the type-level list is a binary encoding of the number of elements it contains.</p>
+<p>And here are the merge functions:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">mergeTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> rk a <span class="ot">-&gt;</span> <span class="dt">Tree</span> rk a <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> rk) a
+mergeTree xr<span class="fu">@</span>(<span class="dt">Root</span> x xs) yr<span class="fu">@</span>(<span class="dt">Root</span> y ys)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y    <span class="fu">=</span> <span class="dt">Root</span> x (yr <span class="fu">:&lt;</span> xs)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Root</span> y (xr <span class="fu">:&lt;</span> ys)
+
+merge 
+<span class="ot">    ::</span> <span class="dt">Ord</span> a 
+    <span class="ot">=&gt;</span> <span class="dt">Binomial</span> xs z a 
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> ys z a 
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">Add</span> <span class="dt">False</span> xs ys) z a
+merge <span class="dt">Nil</span> ys              <span class="fu">=</span> ys
+merge xs <span class="dt">Nil</span>              <span class="fu">=</span> xs
+merge (<span class="dt">Skip</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (merge xs ys)
+merge (<span class="dt">Skip</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> y <span class="fu">:-</span> merge xs ys
+merge (x <span class="fu">:-</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> x <span class="fu">:-</span> merge xs ys
+merge (x <span class="fu">:-</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree x y) xs ys)
+
+mergeCarry
+<span class="ot">    ::</span> <span class="dt">Ord</span> a
+    <span class="ot">=&gt;</span> <span class="dt">Tree</span> rk a 
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> xs rk a 
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> ys rk a 
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">Add</span> <span class="dt">True</span> xs ys) rk a
+mergeCarry t <span class="dt">Nil</span> ys              <span class="fu">=</span> carryOne t ys
+mergeCarry t xs <span class="dt">Nil</span>              <span class="fu">=</span> carryOne t xs
+mergeCarry t (<span class="dt">Skip</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> t <span class="fu">:-</span> merge xs ys
+mergeCarry t (<span class="dt">Skip</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree t y) xs ys)
+mergeCarry t (x <span class="fu">:-</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree t x) xs ys)
+mergeCarry t (x <span class="fu">:-</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> t <span class="fu">:-</span> mergeCarry (mergeTree x y) xs ys
+
+carryOne 
+<span class="ot">    ::</span> <span class="dt">Ord</span> a 
+    <span class="ot">=&gt;</span> <span class="dt">Tree</span> rk a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> xs rk a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">CarryOne</span> xs) rk a
+carryOne t <span class="dt">Nil</span>       <span class="fu">=</span> t <span class="fu">:-</span> <span class="dt">Nil</span>
+carryOne t (<span class="dt">Skip</span> xs) <span class="fu">=</span> t <span class="fu">:-</span> xs
+carryOne t (x <span class="fu">:-</span> xs) <span class="fu">=</span> <span class="dt">Skip</span> (carryOne (mergeTree t x) xs)</code></pre></div>
+<p>You’ll notice that no proofs are needed: that’s because the merge function itself is the same as the type family, like the way <code class="sourceCode haskell"><span class="fu">++</span></code> for lists was the same as the <code class="sourceCode haskell"><span class="dt">Plus</span></code> type family.</p>
+<p>Of course, this structure is only verified insofar as you believe the type families. If there’s a mistake in one of them, and a mistake in the merge function which mirrors the same mistake, the that won’t be caught. However, we can write some proofs of the properties of the type families that we would expect:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">addCommutes
+<span class="ot">  ::</span> <span class="dt">The</span> [<span class="dt">Bool</span>] xs
+  <span class="ot">-&gt;</span> <span class="dt">The</span> [<span class="dt">Bool</span>] ys
+  <span class="ot">-&gt;</span> <span class="dt">Add</span> <span class="dt">False</span> xs ys <span class="fu">:~:</span> <span class="dt">Add</span> <span class="dt">False</span> ys xs
+addCommutes <span class="dt">Nily</span> _ <span class="fu">=</span> <span class="dt">Refl</span>
+addCommutes _ <span class="dt">Nily</span> <span class="fu">=</span> <span class="dt">Refl</span>
+addCommutes (<span class="dt">Cony</span> <span class="dt">Falsy</span> xs) (<span class="dt">Cony</span> <span class="dt">Falsy</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutes xs ys) <span class="dt">Refl</span>
+addCommutes (<span class="dt">Cony</span> <span class="dt">Truey</span> xs) (<span class="dt">Cony</span> <span class="dt">Falsy</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutes xs ys) <span class="dt">Refl</span>
+addCommutes (<span class="dt">Cony</span> <span class="dt">Falsy</span> xs) (<span class="dt">Cony</span> <span class="dt">Truey</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutes xs ys) <span class="dt">Refl</span>
+addCommutes (<span class="dt">Cony</span> <span class="dt">Truey</span> xs) (<span class="dt">Cony</span> <span class="dt">Truey</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutesCarry xs ys) <span class="dt">Refl</span>
+
+addCommutesCarry
+<span class="ot">  ::</span> <span class="dt">The</span> [<span class="dt">Bool</span>] xs
+  <span class="ot">-&gt;</span> <span class="dt">The</span> [<span class="dt">Bool</span>] ys
+  <span class="ot">-&gt;</span> <span class="dt">Add</span> <span class="dt">True</span> xs ys <span class="fu">:~:</span> <span class="dt">Add</span> <span class="dt">True</span> ys xs
+addCommutesCarry <span class="dt">Nily</span> _ <span class="fu">=</span> <span class="dt">Refl</span>
+addCommutesCarry _ <span class="dt">Nily</span> <span class="fu">=</span> <span class="dt">Refl</span>
+addCommutesCarry (<span class="dt">Cony</span> <span class="dt">Falsy</span> xs) (<span class="dt">Cony</span> <span class="dt">Falsy</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutes xs ys) <span class="dt">Refl</span>
+addCommutesCarry (<span class="dt">Cony</span> <span class="dt">Truey</span> xs) (<span class="dt">Cony</span> <span class="dt">Falsy</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutesCarry xs ys) <span class="dt">Refl</span>
+addCommutesCarry (<span class="dt">Cony</span> <span class="dt">Falsy</span> xs) (<span class="dt">Cony</span> <span class="dt">Truey</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutesCarry xs ys) <span class="dt">Refl</span>
+addCommutesCarry (<span class="dt">Cony</span> <span class="dt">Truey</span> xs) (<span class="dt">Cony</span> <span class="dt">Truey</span> ys) <span class="fu">=</span>
+    gcastWith (addCommutesCarry xs ys) <span class="dt">Refl</span></code></pre></div>
+<p>Unfortunately, though, this method <em>does</em> require proofs (ugly proofs) for the delete-min operation. One particularly nasty aspect is that you need to change the original signature of the heap: our version above doesn’t guarantee that the binary representation is truncated. Since it’s stored least-significant-bit first, there could be trailing zeroes without changing the numerical value. From what I’ve tried with the delete-min operation, it looks like I need to show that there <em>aren’t</em> any trailing zeroes, which would require a change to the type.</p>
+<h3 id="doubly-dependent-types">Doubly-Dependent Types</h3>
+<p>The troublemaker for the binomial heap is the <em>decrement</em> type family. As shown above, it’s reasonably easy to show commutativity on the addition of binary numbers, but it turns out to be quite a bit more difficult to prove some other properties, especially surrounding subtraction.</p>
+<p>Since some of these properties are much easier to verify on the type-level Peano numbers, one approach might be to convert back and forth between Peano numbers and binary, and use the proofs on Peano numbers instead.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">BintoPeano</span> (<span class="ot">xs ::</span> [<span class="dt">Bool</span>])<span class="ot"> ::</span> <span class="dt">Peano</span> <span class="kw">where</span>
+        <span class="dt">BintoPeano</span> <span class="ch">'[] = Z</span>
+        <span class="dt">BintoPeano</span> (<span class="dt">False</span> <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">BintoPeano</span> xs <span class="fu">+</span> <span class="dt">BintoPeano</span> xs
+        <span class="dt">BintoPeano</span> (<span class="dt">True</span> <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">S</span> (<span class="dt">BintoPeano</span> xs <span class="fu">+</span> <span class="dt">BintoPeano</span> xs)</code></pre></div>
+<p>First problem: this requires <code class="sourceCode haskell"><span class="dt">UndecidableInstances</span></code>. I’d <em>really</em> rather not have that turned on, to be honest. In Idris (and Agda), you can <em>prove</em> decidability using <a href="https://www.idris-lang.org/docs/0.12/contrib_doc/docs/Control.WellFounded.html">a number of different methods</a>, but this isn’t available in Haskell yet.</p>
+<p>Regardless, we can push on.</p>
+<p>To go in the other direction, we’ll need to calculate the parity of natural numbers. Taken from the Idris tutorial:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Parity</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) <span class="kw">where</span>
+    <span class="dt">Even</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">Parity</span> (n <span class="fu">+</span> n)
+    <span class="dt">Odd</span><span class="ot">  ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">Parity</span> (<span class="dt">S</span> (n <span class="fu">+</span> n))
+
+<span class="ot">parity ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">Parity</span> n
+parity <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">Even</span> <span class="dt">Zy</span>
+parity (<span class="dt">Sy</span> <span class="dt">Zy</span>) <span class="fu">=</span> <span class="dt">Odd</span> <span class="dt">Zy</span>
+parity (<span class="dt">Sy</span> (<span class="dt">Sy</span> n)) <span class="fu">=</span> <span class="kw">case</span> parity n <span class="kw">of</span>
+  <span class="dt">Even</span> m <span class="ot">-&gt;</span> gcastWith (plusSuccDistrib m m) (<span class="dt">Even</span> (<span class="dt">Sy</span> m))
+  <span class="dt">Odd</span>  m <span class="ot">-&gt;</span> gcastWith (plusSuccDistrib m m) (<span class="dt">Odd</span> (<span class="dt">Sy</span> m))
+
+<span class="ot">plusSuccDistrib ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> proxy m <span class="ot">-&gt;</span> n <span class="fu">+</span> <span class="dt">S</span> m <span class="fu">:~:</span> <span class="dt">S</span> (n <span class="fu">+</span> m)
+plusSuccDistrib <span class="dt">Zy</span> _ <span class="fu">=</span> <span class="dt">Refl</span>
+plusSuccDistrib (<span class="dt">Sy</span> n) p <span class="fu">=</span> gcastWith (plusSuccDistrib n p) <span class="dt">Refl</span></code></pre></div>
+<p>We need this function on the type-level, though, not the value-level: here, again, we run into trouble. What does <code class="sourceCode haskell">gcastWith</code> look like on the type-level? As far as I can tell, it doesn’t exist.</p>
+<p>This idea of doing dependently-typed stuff on the type-level <em>started</em> to be possible with <code class="sourceCode haskell"><span class="dt">TypeInType</span></code>. For instance, we could have defined our binary type as:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Binary</span><span class="ot"> ::</span> <span class="dt">Peano</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span>
+    <span class="dt">O</span><span class="ot"> ::</span> <span class="dt">Binary</span> n <span class="ot">-&gt;</span> <span class="dt">Binary</span> (n <span class="fu">+</span> n)
+    <span class="dt">I</span><span class="ot"> ::</span> <span class="dt">Binary</span> n <span class="ot">-&gt;</span> <span class="dt">Binary</span> (<span class="dt">S</span> (n <span class="fu">+</span> n))
+    <span class="dt">E</span><span class="ot"> ::</span> <span class="dt">Binary</span> <span class="dt">Z</span></code></pre></div>
+<p>And then the binomial heap as:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Binomial</span> (<span class="ot">xs ::</span> <span class="dt">Binary</span> n) (<span class="ot">rk ::</span> <span class="dt">Peano</span>) (<span class="ot">a ::</span> <span class="dt">Type</span>) <span class="kw">where</span>
+       <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Binomial</span> <span class="dt">E</span> n a
+       <span class="dt">Skip</span><span class="ot"> ::</span> <span class="dt">Binomial</span> xs (<span class="dt">S</span> rk) a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">O</span> xs) rk a
+<span class="ot">       (:-) ::</span> <span class="dt">Tree</span> rk a 
+            <span class="ot">-&gt;</span> <span class="dt">Binomial</span> xs (<span class="dt">S</span> rk) a 
+            <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dt">I</span> xs) rk a</code></pre></div>
+<p>What we’re doing here is indexing a type <em>by an indexed type</em>. <a href="http://stackoverflow.com/a/13241158/4892417">This wasn’t possible in Haskell a few years ago</a>. It still doesn’t get us a nice definition of subtraction, though.</p>
+<h3 id="using-a-typechecker-plugin">Using a Typechecker Plugin</h3>
+<p>It’s pretty clear that this approach gets tedious almost immediately. What’s more, if we want the proofs to be erased, we introduce potential for errors.</p>
+<p>The solution? Beef up GHC’s typechecker with a plugin. I first came across this approach in <a href="https://www.youtube.com/watch?v=u_OsUlwkmBQ">Kenneth Foner’s talk at Compose</a>. He used a plugin that called out to the <a href="https://github.com/Z3Prover/z3">Z3 theorem prover</a> <span class="citation">(from Diatchki <a href="#ref-diatchki_improving_2015">2015</a>)</span>; I’ll use a <a href="https://hackage.haskell.org/package/ghc-typelits-natnormalise">simpler plugin</a> which just normalizes type-literals.</p>
+<p>From what I’ve used of these plugins so far, they seem to work really well. They’re very unobtrusive, only requiring a pragma at the top of your file:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}</span></code></pre></div>
+<p>The plugin is only called when GHC can’t unify two types: this means you don’t get odd-looking error messages in unrelated code (in fact, the error messages I’ve seen so far have been excellent—a real improvement on the standard error messages for type-level arithmetic). Another benefit is that we get to use type-level literals (<code class="sourceCode haskell"><span class="dt">Nat</span></code> imported from <a href="https://hackage.haskell.org/package/base-4.9.1.0/docs/GHC-TypeLits.html">GHC.TypeLits</a>), rather then the noisy-looking type-level Peano numbers.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> n a <span class="fu">=</span> <span class="dt">Root</span> a (<span class="dt">Node</span> n a)
+
+<span class="kw">data</span> <span class="dt">Node</span><span class="ot"> ::</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span>
+        <span class="dt">NilN</span><span class="ot"> ::</span> <span class="dt">Node</span> <span class="dv">0</span> a
+<span class="ot">        (:&lt;) ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span>(<span class="dt">Tree</span> n a)
+             <span class="ot">-&gt;</span> <span class="dt">Node</span> n a
+             <span class="ot">-&gt;</span> <span class="dt">Node</span> (<span class="dv">1</span> <span class="fu">+</span> n) a
+
+<span class="ot">mergeTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> n a <span class="ot">-&gt;</span> <span class="dt">Tree</span> n a <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dv">1</span> <span class="fu">+</span> n) a
+mergeTree xr<span class="fu">@</span>(<span class="dt">Root</span> x xs) yr<span class="fu">@</span>(<span class="dt">Root</span> y ys)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y    <span class="fu">=</span> <span class="dt">Root</span> x (yr <span class="fu">:&lt;</span> xs)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Root</span> y (xr <span class="fu">:&lt;</span> ys)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">Binomial</span><span class="ot"> ::</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span>
+        <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">Binomial</span> n <span class="dv">0</span> a
+<span class="ot">        (:-) ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span>(<span class="dt">Tree</span> z a)
+             <span class="ot">-&gt;</span> <span class="dt">Binomial</span> (<span class="dv">1</span> <span class="fu">+</span> z) xs a
+             <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (<span class="dv">1</span> <span class="fu">+</span> xs <span class="fu">+</span> xs) a
+        <span class="dt">Skip</span><span class="ot"> ::</span> <span class="dt">Binomial</span> (<span class="dv">1</span> <span class="fu">+</span> z) (<span class="dv">1</span> <span class="fu">+</span> xs) a
+             <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (<span class="dv">2</span> <span class="fu">+</span> xs <span class="fu">+</span> xs) a</code></pre></div>
+<p>This definition also ensures that the binomial heap has no trailing zeroes in its binary representation: the <code class="sourceCode haskell"><span class="dt">Skip</span></code> constructor can only be applied to a heap bigger than zero.</p>
+<p>Since we’re going to be looking at several different heaps, we’ll need a class to represent all of them:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">IndexedQueue</span> h a <span class="kw">where</span>
+
+    <span class="ot">{-# MINIMAL insert, empty, minViewMay, minView #-}</span>
+
+    empty
+<span class="ot">        ::</span> h <span class="dv">0</span> a
+
+    minView
+<span class="ot">        ::</span> h (<span class="dv">1</span> <span class="fu">+</span> n) a <span class="ot">-&gt;</span> (a, h n a)
+
+    singleton
+<span class="ot">        ::</span> a <span class="ot">-&gt;</span> h <span class="dv">1</span> a
+    singleton <span class="fu">=</span> flip insert empty
+
+    insert
+<span class="ot">        ::</span> a <span class="ot">-&gt;</span> h n a <span class="ot">-&gt;</span> h (<span class="dv">1</span> <span class="fu">+</span> n) a
+
+    minViewMay
+<span class="ot">       ::</span> h n a
+       <span class="ot">-&gt;</span> (n <span class="fu">~</span> <span class="dv">0</span> <span class="ot">=&gt;</span> b)
+       <span class="ot">-&gt;</span> (forall m<span class="fu">.</span> (<span class="dv">1</span> <span class="fu">+</span> m) <span class="fu">~</span> n <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> h m a <span class="ot">-&gt;</span> b)
+       <span class="ot">-&gt;</span> b
+
+<span class="kw">class</span> <span class="dt">IndexedQueue</span> h a <span class="ot">=&gt;</span>
+      <span class="dt">MeldableIndexedQueue</span> h a <span class="kw">where</span>
+    merge
+<span class="ot">        ::</span> h n a <span class="ot">-&gt;</span> h m a <span class="ot">-&gt;</span> h (n <span class="fu">+</span> m) a</code></pre></div>
+<p>You’ll need <code class="sourceCode haskell"><span class="dt">MultiParamTypeClasses</span></code> for this one.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">mergeB
+<span class="ot">    ::</span> <span class="dt">Ord</span> a
+    <span class="ot">=&gt;</span> <span class="dt">Binomial</span> z xs a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z ys a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (xs <span class="fu">+</span> ys) a
+mergeB <span class="dt">Nil</span> ys              <span class="fu">=</span> ys
+mergeB xs <span class="dt">Nil</span>              <span class="fu">=</span> xs
+mergeB (<span class="dt">Skip</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeB xs ys)
+mergeB (<span class="dt">Skip</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> y <span class="fu">:-</span> mergeB xs ys
+mergeB (x <span class="fu">:-</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> x <span class="fu">:-</span> mergeB xs ys
+mergeB (x <span class="fu">:-</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree x y) xs ys)
+
+mergeCarry
+<span class="ot">    ::</span> <span class="dt">Ord</span> a
+    <span class="ot">=&gt;</span> <span class="dt">Tree</span> z a
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z xs a
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z ys a
+    <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (<span class="dv">1</span> <span class="fu">+</span> xs <span class="fu">+</span> ys) a
+mergeCarry <span class="fu">!</span>t <span class="dt">Nil</span> ys              <span class="fu">=</span> carryOne t ys
+mergeCarry <span class="fu">!</span>t xs <span class="dt">Nil</span>              <span class="fu">=</span> carryOne t xs
+mergeCarry <span class="fu">!</span>t (<span class="dt">Skip</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> t <span class="fu">:-</span> mergeB xs ys
+mergeCarry <span class="fu">!</span>t (<span class="dt">Skip</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree t y) xs ys)
+mergeCarry <span class="fu">!</span>t (x <span class="fu">:-</span> xs) (<span class="dt">Skip</span> ys) <span class="fu">=</span> <span class="dt">Skip</span> (mergeCarry (mergeTree t x) xs ys)
+mergeCarry <span class="fu">!</span>t (x <span class="fu">:-</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> t <span class="fu">:-</span> mergeCarry (mergeTree x y) xs ys
+
+<span class="ot">carryOne ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> z a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z xs a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (<span class="dv">1</span> <span class="fu">+</span> xs) a
+carryOne <span class="fu">!</span>t <span class="dt">Nil</span>       <span class="fu">=</span> t <span class="fu">:-</span> <span class="dt">Nil</span>
+carryOne <span class="fu">!</span>t (<span class="dt">Skip</span> xs) <span class="fu">=</span> t <span class="fu">:-</span> xs
+carryOne <span class="fu">!</span>t (x <span class="fu">:-</span> xs) <span class="fu">=</span> <span class="dt">Skip</span> (carryOne (mergeTree t x) xs)
+
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">MeldableIndexedQueue</span> (<span class="dt">Binomial</span> <span class="dv">0</span>) a <span class="kw">where</span>
+    merge <span class="fu">=</span> mergeB
+    <span class="ot">{-# INLINE merge #-}</span>
+
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">IndexedQueue</span> (<span class="dt">Binomial</span> <span class="dv">0</span>) a <span class="kw">where</span>
+    empty <span class="fu">=</span> <span class="dt">Nil</span>
+    singleton x <span class="fu">=</span> <span class="dt">Root</span> x <span class="dt">NilN</span> <span class="fu">:-</span> <span class="dt">Nil</span>
+    insert <span class="fu">=</span> merge <span class="fu">.</span> singleton</code></pre></div>
+<p>(<code class="sourceCode haskell"><span class="dt">BangPatterns</span></code> for this example)</p>
+<p>On top of that, it’s very easy to define delete-min:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">    minView xs <span class="fu">=</span> <span class="kw">case</span> minViewZip xs <span class="kw">of</span>
+      <span class="dt">Zipper</span> x _ ys <span class="ot">-&gt;</span> (x, ys)
+    minViewMay q b f <span class="fu">=</span> <span class="kw">case</span> q <span class="kw">of</span>
+      <span class="dt">Nil</span> <span class="ot">-&gt;</span> b
+      _ <span class="fu">:-</span> _ <span class="ot">-&gt;</span> uncurry f (minView q)
+      <span class="dt">Skip</span> _ <span class="ot">-&gt;</span> uncurry f (minView q)
+
+<span class="kw">data</span> <span class="dt">Zipper</span> a n rk <span class="fu">=</span> <span class="dt">Zipper</span> <span class="fu">!</span>a (<span class="dt">Node</span> rk a) (<span class="dt">Binomial</span> rk n a)
+
+<span class="ot">skip ::</span> <span class="dt">Binomial</span> (<span class="dv">1</span> <span class="fu">+</span> z) xs a <span class="ot">-&gt;</span> <span class="dt">Binomial</span> z (xs <span class="fu">+</span> xs) a
+skip x <span class="fu">=</span> <span class="kw">case</span> x <span class="kw">of</span>
+  <span class="dt">Nil</span>    <span class="ot">-&gt;</span> <span class="dt">Nil</span>
+  <span class="dt">Skip</span> _ <span class="ot">-&gt;</span> <span class="dt">Skip</span> x
+  _ <span class="fu">:-</span> _ <span class="ot">-&gt;</span> <span class="dt">Skip</span> x
+
+<span class="kw">data</span> <span class="dt">MinViewZipper</span> a n rk <span class="kw">where</span>
+    <span class="dt">Infty</span><span class="ot"> ::</span> <span class="dt">MinViewZipper</span> a <span class="dv">0</span> rk
+    <span class="dt">Min</span><span class="ot"> ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span>(<span class="dt">Zipper</span> a n rk) <span class="ot">-&gt;</span> <span class="dt">MinViewZipper</span> a (n<span class="fu">+</span><span class="dv">1</span>) rk
+
+<span class="ot">slideLeft ::</span> <span class="dt">Zipper</span> a n (<span class="dv">1</span> <span class="fu">+</span> rk) <span class="ot">-&gt;</span> <span class="dt">Zipper</span> a (<span class="dv">1</span> <span class="fu">+</span> n <span class="fu">+</span> n) rk
+slideLeft (<span class="dt">Zipper</span> m (t <span class="fu">:&lt;</span> ts) hs)
+  <span class="fu">=</span> <span class="dt">Zipper</span> m ts (t <span class="fu">:-</span> hs)
+
+pushLeft 
+<span class="ot">  ::</span> <span class="dt">Ord</span> a 
+  <span class="ot">=&gt;</span> <span class="dt">Tree</span> rk a 
+  <span class="ot">-&gt;</span> <span class="dt">Zipper</span> a n (<span class="dv">1</span> <span class="fu">+</span> rk) 
+  <span class="ot">-&gt;</span> <span class="dt">Zipper</span> a (<span class="dv">2</span> <span class="fu">+</span> n <span class="fu">+</span> n) rk
+pushLeft c (<span class="dt">Zipper</span> m (t <span class="fu">:&lt;</span> ts) hs)
+  <span class="fu">=</span> <span class="dt">Zipper</span> m ts (<span class="dt">Skip</span> (carryOne (mergeTree c t) hs))
+
+<span class="ot">minViewZip ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Binomial</span> rk (<span class="dv">1</span> <span class="fu">+</span> n) a <span class="ot">-&gt;</span> <span class="dt">Zipper</span> a n rk
+minViewZip (<span class="dt">Skip</span> xs) <span class="fu">=</span> slideLeft (minViewZip xs)
+minViewZip (t<span class="fu">@</span>(<span class="dt">Root</span> x ts) <span class="fu">:-</span> f) <span class="fu">=</span> <span class="kw">case</span> minViewZipMay f <span class="kw">of</span>
+  <span class="dt">Min</span> ex<span class="fu">@</span>(<span class="dt">Zipper</span> minKey _ _) <span class="fu">|</span> minKey <span class="fu">&lt;</span> x <span class="ot">-&gt;</span> pushLeft t ex
+  _                          <span class="ot">-&gt;</span> <span class="dt">Zipper</span> x ts (skip f)
+
+<span class="ot">minViewZipMay ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Binomial</span> rk n a <span class="ot">-&gt;</span> <span class="dt">MinViewZipper</span> a n rk
+minViewZipMay (<span class="dt">Skip</span> xs) <span class="fu">=</span> <span class="dt">Min</span> (slideLeft (minViewZip xs))
+minViewZipMay <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Infty</span>
+minViewZipMay (t<span class="fu">@</span>(<span class="dt">Root</span> x ts) <span class="fu">:-</span> f) <span class="fu">=</span> <span class="dt">Min</span> <span class="fu">$</span> <span class="kw">case</span> minViewZipMay f <span class="kw">of</span>
+  <span class="dt">Min</span> ex<span class="fu">@</span>(<span class="dt">Zipper</span> minKey _ _) <span class="fu">|</span> minKey <span class="fu">&lt;</span> x <span class="ot">-&gt;</span> pushLeft t ex
+  _                          <span class="ot">-&gt;</span> <span class="dt">Zipper</span> x ts (skip f)</code></pre></div>
+<p>Similarly, compare the version of the pairing heap with the plugin:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Heap</span> n a <span class="kw">where</span>
+  <span class="dt">E</span><span class="ot"> ::</span> <span class="dt">Heap</span> <span class="dv">0</span> a
+  <span class="dt">T</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dv">1</span> <span class="fu">+</span> n) a
+
+<span class="kw">data</span> <span class="dt">HVec</span> n a <span class="kw">where</span>
+  <span class="dt">HNil</span><span class="ot"> ::</span> <span class="dt">HVec</span> <span class="dv">0</span> a
+  <span class="dt">HCons</span><span class="ot"> ::</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">HVec</span> (m <span class="fu">+</span> n) a
+
+<span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dv">1</span> <span class="fu">+</span> n) a
+insert x xs <span class="fu">=</span> merge (<span class="dt">T</span> x <span class="dt">HNil</span>) xs
+
+<span class="ot">merge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (m <span class="fu">+</span> n) a
+merge <span class="dt">E</span> ys <span class="fu">=</span> ys
+merge xs <span class="dt">E</span> <span class="fu">=</span> xs
+merge h1<span class="fu">@</span>(<span class="dt">T</span> x xs) h2<span class="fu">@</span>(<span class="dt">T</span> y ys)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> <span class="dt">T</span> x (<span class="dt">HCons</span> h2 xs)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">T</span> y (<span class="dt">HCons</span> h1 ys)
+
+<span class="ot">minView ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Heap</span> (<span class="dv">1</span> <span class="fu">+</span> n) a <span class="ot">-&gt;</span> (a, <span class="dt">Heap</span> n a)
+minView (<span class="dt">T</span> x hs) <span class="fu">=</span> (x, mergePairs hs)
+
+<span class="ot">mergePairs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a
+mergePairs <span class="dt">HNil</span> <span class="fu">=</span> <span class="dt">E</span>
+mergePairs (<span class="dt">HCons</span> h <span class="dt">HNil</span>) <span class="fu">=</span> h
+mergePairs (<span class="dt">HCons</span> h1 (<span class="dt">HCons</span> h2 hs)) <span class="fu">=</span>
+    merge (merge h1 h2) (mergePairs hs)</code></pre></div>
+<p>To the version without the plugin:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Heap</span> n a <span class="kw">where</span>
+  <span class="dt">E</span><span class="ot"> ::</span> <span class="dt">Heap</span> <span class="dt">Z</span> a
+  <span class="dt">T</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dt">S</span> n) a
+
+<span class="kw">data</span> <span class="dt">HVec</span> n a <span class="kw">where</span>
+  <span class="dt">HNil</span><span class="ot"> ::</span> <span class="dt">HVec</span> <span class="dt">Z</span> a
+  <span class="dt">HCons</span><span class="ot"> ::</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">HVec</span> (m <span class="fu">+</span> n) a
+
+<span class="kw">class</span> <span class="dt">Sized</span> h <span class="kw">where</span>
+<span class="ot">  size ::</span> h n a <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Peano</span> n
+
+<span class="kw">instance</span> <span class="dt">Sized</span> <span class="dt">Heap</span> <span class="kw">where</span>
+  size <span class="dt">E</span> <span class="fu">=</span> <span class="dt">Zy</span>
+  size (<span class="dt">T</span> _ xs) <span class="fu">=</span> <span class="dt">Sy</span> (size xs)
+
+<span class="ot">plus ::</span> <span class="dt">The</span> <span class="dt">Peano</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Peano</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Peano</span> (n <span class="fu">+</span> m)
+plus <span class="dt">Zy</span> m <span class="fu">=</span> m
+plus (<span class="dt">Sy</span> n) m <span class="fu">=</span> <span class="dt">Sy</span> (plus n m)
+
+<span class="kw">instance</span> <span class="dt">Sized</span> <span class="dt">HVec</span> <span class="kw">where</span>
+  size <span class="dt">HNil</span> <span class="fu">=</span> <span class="dt">Zy</span>
+  size (<span class="dt">HCons</span> h hs) <span class="fu">=</span> size h <span class="ot">`plus`</span> size hs
+
+<span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (<span class="dt">S</span> n) a
+insert x xs <span class="fu">=</span> merge (<span class="dt">T</span> x <span class="dt">HNil</span>) xs
+
+<span class="ot">merge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Heap</span> m a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> (m <span class="fu">+</span> n) a
+merge <span class="dt">E</span> ys <span class="fu">=</span> ys
+merge xs <span class="dt">E</span> <span class="fu">=</span> <span class="kw">case</span> plusZero (size xs) <span class="kw">of</span> <span class="dt">Refl</span> <span class="ot">-&gt;</span> xs
+merge h1<span class="fu">@</span>(<span class="dt">T</span> x xs) h2<span class="fu">@</span>(<span class="dt">T</span> y ys)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> <span class="kw">case</span> plusCommutative (size h2) (size xs) <span class="kw">of</span>
+                    <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">T</span> x (<span class="dt">HCons</span> h2 xs)
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="kw">case</span> plusSuccDistrib (size xs) (size ys) <span class="kw">of</span>
+                    <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">T</span> y (<span class="dt">HCons</span> h1 ys)
+
+<span class="ot">minView ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Heap</span> (<span class="dt">S</span> n) a <span class="ot">-&gt;</span> (a, <span class="dt">Heap</span> n a)
+minView (<span class="dt">T</span> x hs) <span class="fu">=</span> (x, mergePairs hs)
+
+<span class="ot">mergePairs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">HVec</span> n a <span class="ot">-&gt;</span> <span class="dt">Heap</span> n a
+mergePairs <span class="dt">HNil</span> <span class="fu">=</span> <span class="dt">E</span>
+mergePairs (<span class="dt">HCons</span> h <span class="dt">HNil</span>) <span class="fu">=</span> <span class="kw">case</span> plusZero (size h) <span class="kw">of</span> <span class="dt">Refl</span> <span class="ot">-&gt;</span> h
+mergePairs (<span class="dt">HCons</span> h1 (<span class="dt">HCons</span> h2 hs)) <span class="fu">=</span>
+  <span class="kw">case</span> plusAssoc (size h1) (size h2) (size hs) <span class="kw">of</span>
+    <span class="dt">Refl</span> <span class="ot">-&gt;</span> merge (merge h1 h2) (mergePairs hs)</code></pre></div>
+<h3 id="leftist-heaps">Leftist Heaps</h3>
+<p>The typechecker plugin makes it relatively easy to implement several other heaps: skew, Braun, etc. You’ll need one extra trick to implement a <a href="http://lambda.jstolarek.com/2014/10/weight-biased-leftist-heaps-verified-in-haskell-using-dependent-types/">leftist heap</a>, though. Let’s take a look at the unverified version:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Leftist</span> a
+    <span class="fu">=</span> <span class="dt">Leaf</span>
+    <span class="fu">|</span> <span class="dt">Node</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span>
+           a
+           (<span class="dt">Leftist</span> a)
+           (<span class="dt">Leftist</span> a)
+
+<span class="ot">rank ::</span> <span class="dt">Leftist</span> s <span class="ot">-&gt;</span> <span class="dt">Int</span>
+rank <span class="dt">Leaf</span>          <span class="fu">=</span> <span class="dv">0</span>
+rank (<span class="dt">Node</span> r _ _ _) <span class="fu">=</span> r
+<span class="ot">{-# INLINE rank #-}</span>
+
+<span class="ot">mergeL ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Leftist</span> a <span class="ot">-&gt;</span> <span class="dt">Leftist</span> a <span class="ot">-&gt;</span> <span class="dt">Leftist</span> a
+mergeL <span class="dt">Leaf</span> h2 <span class="fu">=</span> h2
+mergeL h1 <span class="dt">Leaf</span> <span class="fu">=</span> h1
+mergeL h1<span class="fu">@</span>(<span class="dt">Node</span> w1 p1 l1 r1) h2<span class="fu">@</span>(<span class="dt">Node</span> w2 p2 l2 r2)
+  <span class="fu">|</span> p1 <span class="fu">&lt;</span> p2 <span class="fu">=</span>
+      <span class="kw">if</span> ll <span class="fu">&lt;=</span> lr
+          <span class="kw">then</span> <span class="dt">LNode</span> (w1 <span class="fu">+</span> w2) p1 l1 (mergeL r1 h2)
+          <span class="kw">else</span> <span class="dt">LNode</span> (w1 <span class="fu">+</span> w2) p1 (mergeL r1 h2) l1
+  <span class="fu">|</span> otherwise <span class="fu">=</span>
+      <span class="kw">if</span> rl <span class="fu">&lt;=</span> rr
+          <span class="kw">then</span> <span class="dt">LNode</span> (w1 <span class="fu">+</span> w2) p2 l2 (mergeL r2 h1)
+          <span class="kw">else</span> <span class="dt">LNode</span> (w1 <span class="fu">+</span> w2) p2 (mergeL r2 h1) l2
+  <span class="kw">where</span>
+    ll <span class="fu">=</span> rank r1 <span class="fu">+</span> w2
+    lr <span class="fu">=</span> rank l1
+    rl <span class="fu">=</span> rank r2 <span class="fu">+</span> w1
+    rr <span class="fu">=</span> rank l2</code></pre></div>
+<p>In a weight-biased leftist heap, the left branch in any tree must have at least as many elements as the right branch. Ideally, we would encode that in the representation of size-indexed leftist heap:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Leftist</span> n a <span class="kw">where</span>
+        <span class="dt">Leaf</span><span class="ot"> ::</span> <span class="dt">Leftist</span> <span class="dv">0</span> a
+        <span class="dt">Node</span><span class="ot"> ::</span> <span class="fu">!</span>(<span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m <span class="fu">+</span> <span class="dv">1</span>))
+             <span class="ot">-&gt;</span> a
+             <span class="ot">-&gt;</span> <span class="dt">Leftist</span> n a
+             <span class="ot">-&gt;</span> <span class="dt">Leftist</span> m a
+             <span class="ot">-&gt;</span> <span class="fu">!</span>(m <span class="fu">&lt;=</span> n)
+             <span class="ot">-&gt;</span> <span class="dt">Leftist</span> (n <span class="fu">+</span> m <span class="fu">+</span> <span class="dv">1</span>) a
+
+<span class="ot">rank ::</span> <span class="dt">Leftist</span> n s <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n
+rank <span class="dt">Leaf</span>             <span class="fu">=</span> sing
+rank (<span class="dt">Node</span> r _ _ _ _) <span class="fu">=</span> r
+<span class="ot">{-# INLINE rank #-}</span></code></pre></div>
+<p>Two problems, though: first of all, we need to be able to <em>compare</em> the sizes of two heaps, in the merge function. If we were using the type-level Peano numbers, this would be too slow. More importantly, though, we need the comparison to provide a <em>proof</em> of the ordering, so that we can use it in the resulting <code class="sourceCode haskell"><span class="dt">Node</span></code> constructor.</p>
+<h3 id="integer-backed-type-level-numbers">Integer-Backed Type-Level Numbers</h3>
+<p>In Agda, the Peano type is actually backed by Haskell’s <code class="sourceCode haskell"><span class="dt">Integer</span></code> at runtime. This allows compile-time proofs to be written about values which are calculated efficiently. We can mimic the same thing in Haskell with a newtype wrapper <em>around</em> <code class="sourceCode haskell"><span class="dt">Integer</span></code> with a phantom <code class="sourceCode haskell"><span class="dt">Peano</span></code> parameter, if we promise to never put an integer in which has a different value to its phantom value. We can make this promise a little more trustworthy if we don’t export the newtype constructor.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="kw">where</span>
+        <span class="dt">NatSing</span><span class="ot"> ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n
+
+<span class="kw">instance</span> <span class="dt">KnownNat</span> n <span class="ot">=&gt;</span> <span class="dt">KnownSing</span> n <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">NatSing</span> <span class="fu">$</span> Prelude.fromInteger <span class="fu">$</span> natVal (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> n)</code></pre></div>
+<p><code class="sourceCode haskell"><span class="dt">FlexibleInstances</span></code> is needed for the instance. We can also encode all the necessary arithmetic:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">infixl</span> <span class="dv">6</span> <span class="fu">+.</span>
+<span class="ot">(+.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m)
+(<span class="fu">+.</span>) <span class="fu">=</span>
+    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
+            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m))
+        (<span class="fu">+</span>)
+<span class="ot">{-# INLINE (+.) #-}</span>
+
+<span class="kw">infixl</span> <span class="dv">7</span> <span class="fu">*.</span>
+<span class="ot">(*.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">*</span> m)
+(<span class="fu">*.</span>) <span class="fu">=</span>
+    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
+            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">*</span> m))
+        (<span class="fu">*</span>)
+<span class="ot">{-# INLINE (*.) #-}</span>
+
+<span class="kw">infixr</span> <span class="dv">8</span> <span class="fu">^.</span>
+<span class="ot">(^.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">^</span> m)
+(<span class="fu">^.</span>) <span class="fu">=</span>
+    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
+            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">^</span> m))
+        (<span class="fu">^</span>)
+<span class="ot">{-# INLINE (^.) #-}</span>
+
+<span class="kw">infixl</span> <span class="dv">6</span> <span class="fu">-.</span>
+<span class="ot">(-.) ::</span> (m <span class="fu">&lt;=?</span> n) <span class="fu">~</span> <span class="dt">True</span> <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">-</span> m)
+(<span class="fu">-.</span>) <span class="fu">=</span>
+    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
+            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">-</span> m))
+        (<span class="fu">-</span>)
+<span class="ot">{-# INLINE (-.) #-}</span></code></pre></div>
+<p>Finally, the compare function (<code class="sourceCode haskell"><span class="dt">ScopedTypeVariables</span></code> for this):</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">infix <span class="dv">4</span> <span class="fu">&lt;=.</span>
+<span class="ot">(&lt;=.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Bool</span> (n <span class="fu">&lt;=?</span> m)
+(<span class="fu">&lt;=.</span>) (<span class="dt">NatSing</span><span class="ot"> x ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n) (<span class="dt">NatSing</span><span class="ot"> y ::</span> <span class="dt">The</span> <span class="dt">Nat</span> m)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> 
+      <span class="kw">case</span> (unsafeCoerce (<span class="dt">Refl</span><span class="ot"> ::</span> <span class="dt">True</span> <span class="fu">:~:</span> <span class="dt">True</span>)<span class="ot"> ::</span> (n <span class="fu">&lt;=?</span> m) <span class="fu">:~:</span> <span class="dt">True</span>) <span class="kw">of</span>
+        <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Truey</span>
+  <span class="fu">|</span> otherwise <span class="fu">=</span> 
+      <span class="kw">case</span> (unsafeCoerce (<span class="dt">Refl</span><span class="ot"> ::</span> <span class="dt">True</span> <span class="fu">:~:</span> <span class="dt">True</span>)<span class="ot"> ::</span> (n <span class="fu">&lt;=?</span> m) <span class="fu">:~:</span> <span class="dt">False</span>) <span class="kw">of</span>
+        <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Falsy</span>
+<span class="ot">{-# INLINE (&lt;=.) #-}</span>
+
+<span class="ot">totalOrder ::</span>  p n <span class="ot">-&gt;</span> q m <span class="ot">-&gt;</span> (n <span class="fu">&lt;=?</span> m) <span class="fu">:~:</span> <span class="dt">False</span> <span class="ot">-&gt;</span> (m <span class="fu">&lt;=?</span> n) <span class="fu">:~:</span> <span class="dt">True</span>
+totalOrder (<span class="ot">_ ::</span> p n) (<span class="ot">_ ::</span> q m) <span class="dt">Refl</span> <span class="fu">=</span> 
+    unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> (m <span class="fu">&lt;=?</span> n) <span class="fu">:~:</span> <span class="dt">True</span>
+
+<span class="kw">type</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> (x <span class="fu">&lt;=?</span> y) <span class="fu">:~:</span> <span class="dt">True</span></code></pre></div>
+<p>It’s worth mentioning that all of these functions are somewhat axiomatic: there’s no checking of these definitions going on, and any later proofs are only correct in terms of these functions.</p>
+<p>If we want our merge function to <em>really</em> look like the non-verified version, though, we’ll have to mess around with the syntax a little.</p>
+<h3 id="a-dependent-if-then-else">A Dependent if-then-else</h3>
+<p>When matching on a singleton, <em>within</em> the case-match, proof of the singleton’s type is provided. For instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family <span class="dt">IfThenElse</span> (<span class="ot">c ::</span> <span class="dt">Bool</span>) (<span class="ot">true ::</span> k) (<span class="ot">false ::</span> k)<span class="ot"> ::</span> k
+     <span class="kw">where</span>
+        <span class="dt">IfThenElse</span> <span class="dt">True</span> true false <span class="fu">=</span> true
+        <span class="dt">IfThenElse</span> <span class="dt">False</span> true false <span class="fu">=</span> false
+
+<span class="ot">intOrString ::</span> <span class="dt">The</span> <span class="dt">Bool</span> cond <span class="ot">-&gt;</span> <span class="dt">IfThenElse</span> cond <span class="dt">Int</span> <span class="dt">String</span>
+intOrString <span class="dt">Truey</span> <span class="fu">=</span> <span class="dv">1</span>
+intOrString <span class="dt">Falsy</span> <span class="fu">=</span> <span class="st">&quot;abc&quot;</span></code></pre></div>
+<p>In Haskell, since we can overload the if-then-else construct (with <code class="sourceCode haskell"><span class="dt">RebindableSyntax</span></code>), we can provide the same syntax, while hiding the dependent nature:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">ifThenElse ::</span> <span class="dt">The</span> <span class="dt">Bool</span> c <span class="ot">-&gt;</span> (c <span class="fu">:~:</span> <span class="dt">True</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (c <span class="fu">:~:</span> <span class="dt">False</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a
+ifThenElse <span class="dt">Truey</span> t _ <span class="fu">=</span> t <span class="dt">Refl</span>
+ifThenElse <span class="dt">Falsy</span> _ f <span class="fu">=</span> f <span class="dt">Refl</span></code></pre></div>
+<h3 id="verified-merge">Verified Merge</h3>
+<p>Finally, then, we can write the implementation for merge, which looks almost <em>exactly</em> the same as the non-verified merge:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">IndexedQueue</span> <span class="dt">Leftist</span> a <span class="kw">where</span>
+
+    minView (<span class="dt">Node</span> _ x l r _) <span class="fu">=</span> (x, merge l r)
+    <span class="ot">{-# INLINE minView #-}</span>
+
+
+    singleton x <span class="fu">=</span> <span class="dt">Node</span> sing x <span class="dt">Leaf</span> <span class="dt">Leaf</span> <span class="dt">Refl</span>
+    <span class="ot">{-# INLINE singleton #-}</span>
+
+    empty <span class="fu">=</span> <span class="dt">Leaf</span>
+    <span class="ot">{-# INLINE empty #-}</span>
+
+    insert <span class="fu">=</span> merge <span class="fu">.</span> singleton
+    <span class="ot">{-# INLINE insert #-}</span>
+
+    minViewMay <span class="dt">Leaf</span> b _             <span class="fu">=</span> b
+    minViewMay (<span class="dt">Node</span> _ x l r _) _ f <span class="fu">=</span> f x (merge l r)
+
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span>
+         <span class="dt">MeldableIndexedQueue</span> <span class="dt">Leftist</span> a <span class="kw">where</span>
+    merge <span class="dt">Leaf</span> h2 <span class="fu">=</span> h2
+    merge h1 <span class="dt">Leaf</span> <span class="fu">=</span> h1
+    merge h1<span class="fu">@</span>(<span class="dt">Node</span> w1 p1 l1 r1 _) h2<span class="fu">@</span>(<span class="dt">Node</span> w2 p2 l2 r2 _)
+      <span class="fu">|</span> p1 <span class="fu">&lt;</span> p2 <span class="fu">=</span>
+          <span class="kw">if</span> ll <span class="fu">&lt;=.</span> lr
+             <span class="kw">then</span> <span class="dt">Node</span> (w1 <span class="fu">+.</span> w2) p1 l1 (merge r1 h2)
+             <span class="kw">else</span> <span class="dt">Node</span> (w1 <span class="fu">+.</span> w2) p1 (merge r1 h2) l1 <span class="fu">.</span> totalOrder ll lr
+      <span class="fu">|</span> otherwise <span class="fu">=</span>
+          <span class="kw">if</span> rl <span class="fu">&lt;=.</span> rr
+              <span class="kw">then</span> <span class="dt">Node</span> (w1 <span class="fu">+.</span> w2) p2 l2 (merge r2 h1)
+              <span class="kw">else</span> <span class="dt">Node</span> (w1 <span class="fu">+.</span> w2) p2 (merge r2 h1) l2 <span class="fu">.</span> totalOrder rl rr
+      <span class="kw">where</span>
+        ll <span class="fu">=</span> rank r1 <span class="fu">+.</span> w2
+        lr <span class="fu">=</span> rank l1
+        rl <span class="fu">=</span> rank r2 <span class="fu">+.</span> w1
+        rr <span class="fu">=</span> rank l2
+    <span class="ot">{-# INLINE merge #-}</span></code></pre></div>
+<p>What’s cool about this implementation is that it has the same performance as the non-verified version (if <code class="sourceCode haskell"><span class="dt">Integer</span></code> is swapped out for <code class="sourceCode haskell"><span class="dt">Int</span></code>, that is), and it <em>looks</em> pretty much the same. This is very close to static verification for free.</p>
+<h3 id="generalizing-sort-to-parts">Generalizing Sort to Parts</h3>
+<p>The <code class="sourceCode haskell"><span class="dt">Sort</span></code> type used in the original blog post can be generalized to <em>any</em> indexed container.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Parts</span> f g a b r <span class="kw">where</span>
+    <span class="dt">Parts</span><span class="ot"> ::</span> (forall n<span class="fu">.</span> g (m <span class="fu">+</span> n) b <span class="ot">-&gt;</span> (g n b, r))
+         <span class="ot">-&gt;</span> <span class="fu">!</span>(f m a)
+         <span class="ot">-&gt;</span> <span class="dt">Parts</span> f g a b r
+
+<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Parts</span> f g a b) <span class="kw">where</span>
+  fmap f (<span class="dt">Parts</span> g h) <span class="fu">=</span>
+    <span class="dt">Parts</span> (\h' <span class="ot">-&gt;</span> <span class="kw">case</span> g h' <span class="kw">of</span> (remn, r) <span class="ot">-&gt;</span> (remn, f r)) h
+  <span class="ot">{-# INLINE fmap #-}</span>
+
+<span class="kw">instance</span> (<span class="dt">IndexedQueue</span> f x, <span class="dt">MeldableIndexedQueue</span> f x) <span class="ot">=&gt;</span>
+          <span class="dt">Applicative</span> (<span class="dt">Parts</span> f g x y) <span class="kw">where</span>
+    pure x <span class="fu">=</span> <span class="dt">Parts</span> (\h <span class="ot">-&gt;</span> (h, x)) empty
+    <span class="ot">{-# INLINE pure #-}</span>
+
+    (<span class="dt">Parts</span> f (<span class="ot">xs ::</span> f m x)<span class="ot"> ::</span> <span class="dt">Parts</span> f g x y (a <span class="ot">-&gt;</span> b)) <span class="fu">&lt;*&gt;</span> 
+      <span class="dt">Parts</span> g (<span class="ot">ys ::</span> f n x) <span class="fu">=</span>
+        <span class="dt">Parts</span> h (merge xs ys)
+        <span class="kw">where</span>
+<span class="ot">          h ::</span> forall o <span class="fu">.</span> g ((m <span class="fu">+</span> n) <span class="fu">+</span> o) y <span class="ot">-&gt;</span> (g o y, b)
+          h v <span class="fu">=</span> <span class="kw">case</span> f v <span class="kw">of</span> { (v', a) <span class="ot">-&gt;</span>
+                    <span class="kw">case</span> g v' <span class="kw">of</span> { (v'', b) <span class="ot">-&gt;</span>
+                      (v'', a b)}}
+    <span class="ot">{-# INLINABLE (&lt;*&gt;) #-}</span></code></pre></div>
+<p>This version doesn’t insist that you order the elements of the heap in any particular way: we could use indexed difference lists to reverse a container, or indexed lists to calculate permutations of a container, for instance.</p>
+<h3 id="other-uses-for-size-indexed-heaps">Other Uses For Size-Indexed Heaps</h3>
+<p>I’d be very interested to see any other uses of these indexed heaps, if anyone has any ideas. Potentially the could be used in any place where there is a need for some heap which is known to be of a certain size (a true prime sieve, for instance).</p>
+<h3 id="the-library">The Library</h3>
+<p>I’ve explored all of these ideas <a href="https://github.com/oisdk/type-indexed-heaps">here</a>. I’ve got five heaps implemented (pairing, Braun, skew, binomial, and leftist). Each implementation is provided in both the indexed and non-indexed version. There’s also the index-erasing type, and a size-indexed list, for reversing traversables. There are also benchmarks and tests. In the future, I might add things like a Fibonacci heap, or the optimal Brodal/Okasaki heap <span class="citation">(Brodal and Okasaki <a href="#ref-brodal_optimal_1996">1996</a>)</span>.</p>
+<hr />
+<div id="refs" class="references">
+<div id="ref-brodal_optimal_1996">
+<p>Brodal, Gerth Stølting, and Chris Okasaki. 1996. “Optimal Purely Functional Priority Queues.” <em>Journal of Functional Programming</em> 6 (6) (November): 839–857. doi:<a href="https://doi.org/10.1017/S095679680000201X">10.1017/S095679680000201X</a>. <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.973" class="uri">http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.973</a>.</p>
+</div>
+<div id="ref-diatchki_improving_2015">
+<p>Diatchki, Iavor S. 2015. “Improving Haskell Types with SMT.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 1–10. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804307">10.1145/2804302.2804307</a>. <a href="http://yav.github.io/publications/improving-smt-types.pdf" class="uri">http://yav.github.io/publications/improving-smt-types.pdf</a>.</p>
+</div>
+<div id="ref-eisenberg_dependently_2012">
+<p>Eisenberg, Richard A., and Stephanie Weirich. 2012. “Dependently Typed Programming with Singletons.” In <em>Proceedings of the 2012 Haskell Symposium</em>, 117–130. Haskell ’12. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2364506.2364522">10.1145/2364506.2364522</a>. <a href="http://cs.brynmawr.edu/~rae/papers/2012/singletons/paper.pdf" class="uri">http://cs.brynmawr.edu/~rae/papers/2012/singletons/paper.pdf</a>.</p>
+</div>
+<div id="ref-fredman_pairing_1986">
+<p>Fredman, Michael L., Robert Sedgewick, Daniel D. Sleator, and Robert E. Tarjan. 1986. “The pairing heap: A new form of self-adjusting heap.” <em>Algorithmica</em> 1 (1-4) (January): 111–129. doi:<a href="https://doi.org/10.1007/BF01840439">10.1007/BF01840439</a>. <a href="http://www.cs.princeton.edu/courses/archive/fall09/cos521/Handouts/pairingheaps.pdf" class="uri">http://www.cs.princeton.edu/courses/archive/fall09/cos521/Handouts/pairingheaps.pdf</a>.</p>
+</div>
+<div id="ref-hinze_functional_1999">
+<p>Hinze, Ralf. 1999. “Functional Pearls: Explaining Binomial Heaps.” <em>Journal of Functional Programming</em> 9 (1) (January): 93–104. doi:<a href="https://doi.org/10.1017/S0956796899003317">10.1017/S0956796899003317</a>. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/#J1" class="uri">http://www.cs.ox.ac.uk/ralf.hinze/publications/#J1</a>.</p>
+</div>
+<div id="ref-hinze_manufacturing_2001">
+<p>———. 2001. “Manufacturing datatypes.” <em>Journal of Functional Programming</em> 11 (5) (September): 493–524. doi:<a href="https://doi.org/10.1017/S095679680100404X">10.1017/S095679680100404X</a>. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/#J6" class="uri">http://www.cs.ox.ac.uk/ralf.hinze/publications/#J6</a>.</p>
+</div>
+<div id="ref-okasaki_fast_1999">
+<p>Okasaki, Chris. 1999. “From Fast Exponentiation to Square Matrices: An Adventure in Types.” In <em>Proceedings of the ACM SIGPLAN International Conference on Functional Programming (ICFP’99), Paris, France, September 27-29, 1999</em>, 34:28. ACM. <a href="http://www.usma.edu/eecs/SiteAssets/SitePages/Faculty%20Publication%20Documents/Okasaki/icfp99square.pdf">http://www.usma.edu/eecs/SiteAssets/SitePages/Faculty%20Publication%20Documents/Okasaki/icfp99square.pdf</a>.</p>
+</div>
+<div id="ref-wasserman_playing_2010">
+<p>Wasserman, Louis. 2010. “Playing with Priority Queues.” <em>The Monad.Reader</em> 16 (16) (May): 37. <a href="https://themonadreader.files.wordpress.com/2010/05/issue16.pdf" class="uri">https://themonadreader.files.wordpress.com/2010/05/issue16.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
