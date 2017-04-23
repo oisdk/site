@@ -1,6 +1,7 @@
 ---
 title: Verifying Data Structures in Haskell
 bibliography: Data Structures.bib
+tags: Haskell, Dependent Types
 ---
 
 ```{.haskell .literate .hidden_source}
@@ -10,42 +11,61 @@ bibliography: Data Structures.bib
 {-# LANGUAGE TypeInType #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleInstances #-}
 
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 
 module VerifiedDataStructures where
 
-import Data.Kind
+import Data.Kind hiding (type (*))
 import Data.Type.Equality
 import Unsafe.Coerce
+import GHC.TypeLits hiding (type (<=))
+import Data.Proxy
+import Data.Coerce
 ```
 
-A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-heaps) which has both verified and unverified versions of heaps, in order to compare the difficulty of implementations (as well as benchmarks, tests, and all that good stuff).
+A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-heaps) which has a bunch of size-indexed structures, each verified for structural correctness. I also included non-indexed versions for comparisons (as well as benchmarks, tests, and all that good stuff).
+
+The point of this post is to go through some of the tricks I used and problems I encountered writing a lot of type-level code in modern Haskell.
 
 ### Type-Level Numbers in Haskell
 
-The normal representation of type-level natural numbers is [Peano](https://wiki.haskell.org/Peano_numbers) numbers:
+In order to index things by their size, we'll need a type-level representation of size. We'll use is [Peano](https://wiki.haskell.org/Peano_numbers) numbers for now:
 
 ```{.haskell .literate}
-data Nat = Z | S Nat
+data Peano = Z | S Peano
 ```
 
-The terseness is pretty necessary here, unfortunately: arithmetic becomes unreadable otherwise. Regardless, `Z`{.haskell} stands for zero, and `S`{.haskell} for successor.
+`Z`{.haskell} stands for zero, and `S`{.haskell} for successor. The terseness is pretty necessary here, unfortunately: arithmetic becomes unreadable otherwise. The simplicity of this definition is useful for proofs and manipulation; however any runtime representation of these numbers is going to be woefully slow.
 
-With the `-XDataKinds`{.haskell} extension, the above is automatically promoted to the type-level, as well as the value-level, so we can write type-level functions (type families) on the `Nat`{.haskell} type:
+With the `-XDataKinds`{.haskell} extension, the above is automatically promoted to the type-level, as well as the value-level, so we can write type-level functions (type families) on the `Peano`{.haskell} type:
 
 ```{.haskell .literate}
-type family (+) (n :: Nat) (m :: Nat) :: Nat where
-  Z + m = m
-  S n + m = S (n + m)
+type family Plus (n :: Peano) (m :: Peano) :: Peano where
+        Plus Z m = m
+        Plus (S n) m = S (Plus n m)
 ```
 
-The number of extensions turned on here is going to quickly get out of hand, so rather than enumerate each one as they come up, I'll just direct you to a repository with these examples at the end (quick aside: `-XUndecidableInstances`{.haskell} is *not* used at any point here, but more on that later). One pragma that's worth mentioning is:
+Here the `-XTypeFamilies`{.haskell} and `-XTypeOperators`{.haskell} extensions are needed. I'll try and mention every extension I'm using as we go, but I might forget a few, so check the repository for all of the examples here (quick aside: `-XUndecidableInstances`{.haskell} is *not* used at any point here, but more on that later). One pragma that's worth mentioning is:
 
 ```{.haskell .literate}
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
 ```
 
-Type-level code with a load of ticks can look pretty ugly, and the warnings aren't very helpful if you're doing a lot of type-level stuff. Watch out for `[]`{.haskell}, though: it always needs to be ticked to work properly.
+This suppresses warnings on the definition of `+`{.haskell} above. Without it, GHC would want us to write:
+
+```{.haskell}
+type family Plus (n :: Peano) (m :: Peano) :: Peano where
+        Plus 'Z m = m
+        Plus ('S n) m = 'S (Plus n m)
+```
+
+I think that looks pretty ugly, and it can get much worse with more involved arithmetic. The only thing I have found the warnings useful for is `[]`{.haskell}: the type-level empty list gives an error in its unticked form.
 
 ### Using the Type-Level Numbers with a Pairing Heap
 
@@ -58,13 +78,13 @@ data Heap n a where
 
 data HVec n a where
   HNil :: HVec Z a
-  HCons :: Heap m a -> HVec n a -> HVec (m + n) a
+  HCons :: Heap m a -> HVec n a -> HVec (Plus m n) a
 ```
 
 You immediately run into trouble when you try to define merge:
 
 ```{.haskell}
-merge :: Ord a => Heap m a -> Heap n a -> Heap (m + n) a
+merge :: Ord a => Heap m a -> Heap n a -> Heap (Plus m n) a
 merge E ys = ys
 merge xs E = xs
 merge h1@(T x xs) h2@(T y ys)
@@ -74,13 +94,13 @@ merge h1@(T x xs) h2@(T y ys)
 
 Three errors show up here, but we'll look at the first one: 
 
-> `Could not deduce (m ~ (m + Z))`
+> `Could not deduce (m ~ (Plus m Z))`
     
-GHC doesn't know that $x = x + 0$. Somehow, we'll have to *prove* that it does. The first attempt is going to use singletons.
+GHC doesn't know that $x = x + 0$. Somehow, we'll have to *prove* that it does.
 
 ### Singletons
 
-If I were to prove the above in Idris, the proof would be as simple as this:
+In a language with true dependent types, proving the proposition above is as simple as:
 
 ```{.idris}
 plusZeroNeutral : (n : Nat) -> n + 0 = n
@@ -88,9 +108,11 @@ plusZeroNeutral Z = Refl
 plusZeroNeutral (S k) = cong (plusZeroNeutral k)
 ```
 
-We're able to use the language's normal function syntax to perform induction. In Haskell, on the other hand, it's a different story: the `+`{.haskell} function was defined in the type-level language, not the value-level one. More fundamentally, there's no way to tell GHC that a value-level computation corresponds to some type-level one.
+(this example is in Idris)
 
-This is where singletons come in [@eisenberg_dependently_2012]. A singleton is a type indexed by some type-level value, where there is only one value-level value for any given type-level value. In other words, there's only one inhabitant of every type. For the natural numbers, for instance, we could have this:
+In Haskell, on the other hand, we can't do the same: functions on the value-level `Peano`{.haskell} have no relationship with functions on the type-level `Peano`{.haskell}. There's no way to automatically link or promote one to the other.
+
+This is where singletons come in [@eisenberg_dependently_2012]. A singleton is a value-level representation of some type, where there is only *one* value for a given type (hence the name). Usually, the singleton will be parameterized by the type-level value, and its constructors will mimic the type-level datatype. In this way, we can write functions on the value-level which are linked to the type-level. Here's a potential singleton for `Peano`{.haskell}:
 
 ```{.haskell}
 data Natty n where
@@ -98,10 +120,12 @@ data Natty n where
     Sy :: Natty n -> Natty (S n)
 ```
 
-Now, when we write a function on `Natty`{.haskell}, GHC knows that the values correspond to their types. And the `plusZeroNeutral`{.haskell} proof looks reasonably similar to the Idris version:
+(we need `-XGADTs`{.haskell} for this example)
+
+The `plusZeroNeutral`{.haskell} proof looks reasonably similar to the Idris version:
 
 ```{.haskell}
-plusZeroNeutral :: Natty n -> n + Z :~: n
+plusZeroNeutral :: Natty n -> Plus n Z :~: n
 plusZeroNeutral Zy = Refl
 plusZeroNeutral (Sy n) = case plusZeroNeutral n of
     Refl -> Refl
@@ -110,23 +134,23 @@ plusZeroNeutral (Sy n) = case plusZeroNeutral n of
 To generalize the singletons a little, we could probably use the [singletons](https://hackage.haskell.org/package/singletons) library, or we could roll our own:
 
 ```{.haskell .literate}
-data family The k :: k -> *
+data family The k :: k -> Type
 
-data instance The Nat n where
-    Zy :: The Nat Z
-    Sy :: The Nat n -> The Nat (S n)
+data instance The Peano n where
+    Zy :: The Peano Z
+    Sy :: The Peano n -> The Peano (S n)
 
-plusZeroNeutral :: The Nat n -> n + Z :~: n
+plusZeroNeutral :: The Peano n -> Plus n Z :~: n
 plusZeroNeutral Zy = Refl
 plusZeroNeutral (Sy n) = case plusZeroNeutral n of
     Refl -> Refl
 ```
 
-The `The`{.haskell} naming is kind of cute, I think. It makes the signature look *almost* like the Idris version (`the`{.idris} is a function from the Idris standard library).
+The `The`{.haskell} naming is kind of cute, I think. It makes the signature look *almost* like the Idris version (`the`{.idris} is a function from the Idris standard library). The `The`{.haskell} type family requires the `-XTypeInType`{.haskell} extension, which I'll talk a little more about later.
 
 ### Proof Erasure and Totality
 
-There's an issue with the above proof: it runs *every time* it is needed. Since the same value is coming out the other end each time (`Refl`{.haskell}), this seems wasteful.
+There's an issue with these kinds of proofs: the proof code runs *every time* it is needed. Since the same value is coming out the other end each time (`Refl`{.haskell}), this seems wasteful.
 
 In a language like Idris, this problem is avoided by noticing that you're only using the proof for its type information, and then erasing it at runtime. In Haskell, we can accomplish the same with a rule:
 
@@ -146,9 +170,9 @@ falseIsTrue :: False :~: True
 falseIsTrue = falseIsTrue
 ```
 
-We won't be able to perform computations which rely on this proof in Haskell, though: because the computation will never terminate, the proof will never provide an answer. Unless we use our manual proof-elision technique. The `RULES`{.haskell} pragma will happily replace it with the `unsafeCoerce`{.haskell} version, effectively introducing unsoundness into our proofs. The reason that this doesn't cause a problem for language like Idris is that Idris has a totality checker: you *can't* write the above definition (with the totality checker turned on) in Idris.
+We won't be able to perform computations which rely on this proof in Haskell, though: because the computation will never terminate, the proof will never provide an answer. *Unless* we use our manual proof-erasure technique. The `RULES`{.haskell} pragma will happily replace it with the `unsafeCoerce`{.haskell} version, effectively introducing unsoundness into our proofs. The reason that this doesn't cause a problem for language like Idris is that Idris has a totality checker: you *can't* write the above definition (with the totality checker turned on) in Idris.
 
-So what's the solution? Do we have to suffer through the slower proof code to maintain correctness? In reality, it's usually OK to assume termination. It's pretty easy to see that a proof like the above is total. It's worth bearing in mind, though, that until Haskell gets a totality checker ([likely never](https://typesandkinds.wordpress.com/2016/07/24/dependent-types-in-haskell-progress-report/), apparently) these proofs aren't "proper".
+So what's the solution? Do we have to suffer through the slower proof code to maintain correctness? In reality, it's usually OK to assume termination. It's pretty easy to see that a proof like `plusZeroNeutral`{.haskell} is total. It's worth bearing in mind, though, that until Haskell gets a totality checker ([likely never](https://typesandkinds.wordpress.com/2016/07/24/dependent-types-in-haskell-progress-report/), apparently) these proofs aren't "proper".
 
 ### Generating Singletons
 
@@ -178,18 +202,18 @@ data List n a where
     (:-) :: a -> List n a -> List (S n) a
 ```
 
-You might worry that concatenation of two lists requires some expensive proof code: surprisingly, though, the default implementation just works:
+You might worry that concatenation of two lists requires some expensive proof code, like `merge`{.haskell} for the pairing heap. Maybe surprisingly, the default implementation just works:
 
 ```{.haskell}
 infixr 5 ++
-(++) :: List n a -> List m a -> List (n + m) a
+(++) :: List n a -> List m a -> List (Plus n m) a
 (++) Nil ys = ys
 (++) (x :- xs) ys = x :- xs ++ ys
 ```
 
-Why? Well, if you look back to the definition of `(+)`{.haskell}, it's almost exactly the same as the definition of `(++)`{.haskell}. In effect, we're using *lists* as the singleton for `Nat`{.haskell} here.
+Why? Well, if you look back to the definition of `(+)`{.haskell}, it's almost exactly the same as the definition of `(++)`{.haskell}. In effect, we're using *lists* as the singleton for `Peano`{.haskell} here.
 
-The question is, then: is there a data structure which performs these proofs automatically for functions like merge? So far, the answer looks like *kind of*. First though:
+The question is, then: is there a heap which performs these proofs automatically for functions like merge? As far as I can tell: *almost*. First though:
 
 ### Small Digression: Manipulating and Using the Length-Indexed List
 
@@ -208,7 +232,7 @@ foldrList :: (forall x. a -> b x -> b (S x))
 foldrList f b Nil = b
 foldrList f b (x :- xs) = f x (foldrList f b xs)
 
-newtype Flip (f :: t -> u -> *) (a :: u) (b :: t) 
+newtype Flip (f :: t -> u -> Type) (a :: u) (b :: t) 
     = Flip { unFlip :: f b a }
 
 foldrList1 :: (forall x. a -> b x c -> b (S x) c) 
@@ -226,24 +250,24 @@ So what's the point of this more complicated version? Well, if this were normal 
 With this type-level business, though, there's a similar application: loop unrolling. Consider the natural-number type again. We can write a typeclass which will perform induction over them:
 
 ```{.haskell}
-class KnownNat (n :: Nat)  where
+class KnownPeano (n :: Peano)  where
     unrollRepeat :: Proxy n -> (a -> a) -> a -> a
 
-instance KnownNat 'Z where
+instance KnownPeano 'Z where
     unrollRepeat _ = const id
     {-# INLINE unrollRepeat #-}
 
-instance KnownNat n =>
-         KnownNat ('S n) where
+instance KnownPeano n =>
+         KnownPeano ('S n) where
     unrollRepeat (_ :: Proxy ('S n)) f x =
         f (unrollRepeat (Proxy :: Proxy n) f x)
     {-# INLINE unrollRepeat #-}
 ```
 
-Because the recursion here isn't *really* recursion (we call a different `unrollRepeat`{.haskell} function in the "recursive" call), GHC will inline it. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:
+Because the recursion here calls a different `unrollRepeat`{.haskell} function in the "recursive" call, we get around the usual hurdle of not being abble to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:
 
 ```{.haskell}
-class HasFoldr (n :: Nat) where
+class HasFoldr (n :: Peano) where
     unrollFoldr 
         :: (forall x. a -> b x -> b (S x)) 
         -> b m 
@@ -259,7 +283,7 @@ instance HasFoldr n => HasFoldr (S n) where
     {-# INLINE unrollFoldr #-}
 ```
 
-This unrolling might be especially important if you wanted to, for instance, write a n-ary uncurry:
+I can't think of many uses for this technique, but one that comes to mind is an n-ary uncurry (like Lisp's [apply](https://en.wikipedia.org/wiki/Apply#Common_Lisp_and_Scheme)):
 
 ```{.haskell}
 infixr 5 :-
@@ -406,17 +430,30 @@ Now we can base the merge function very closely on these type families. First, t
 
 ### Almost-Verified Data Structures
 
-There are different potential properties you can verify in a data structure. In this post, I'll only be really looking at structural invariants. I won't be verifying the [heap property](https://www.cs.cmu.edu/~adamchik/15-121/lectures/Binary%20Heaps/heaps.html), for instance.
+There are different potential properties you can verify in a data structure. In the sort-traversable post, the property of interest was that the number of elements in the structure would stay the same after adding and removing some number $n$ of elements. For the structures in this post, I'll add structural invariants to the list of properties I'm interested in maintaining. I won't, however, verify the [heap property](https://www.cs.cmu.edu/~adamchik/15-121/lectures/Binary%20Heaps/heaps.html). Maybe in a later post.
 
-For size-indexed heaps, an awful lot of information about the structure is statically known. However, a lot of properties can be ensured with far less information. Here's a signature for "perfect leaf tree":
 
-```{.haskell .literate}
+When indexing a data structure by its size, you encode an awful lot of information into the type signature: the type becomes very *specific* to the structure in question. It is possible, though, to encode a fair few structural invariants *without* getting so specific. Here's a signature for "perfect leaf tree":
+
+```{.haskell}
 data BalTree a = Leaf a | Node (BalTree (a,a))
 ```
 
-With that signature, it's *impossible* to create a tree with more elements in its left branch than its right. However, the size of that tree is not statically known. You can use a similar trick to implement [matrices which must be square](https://github.com/oisdk/Square) [from @okasaki_fast_1999] (this is *not* the rather ugly `type Matrix n a = List n (List n a)`{.haskell}). These sorts of tricks are explored in general in @hinze_manufacturing_2001.
+With that signature, it's *impossible* to create a tree with more elements in its left branch than its right: but the size of the tree is unspecified. You can use a similar trick to implement [matrices which must be square](https://github.com/oisdk/Square) [from @okasaki_fast_1999]: the usual trick (`type Matrix n a = List n (List n a)`{.haskell}) fails the test: it's too specific, providing size information at compile-time. If you're interested in this approach, there are several more examples in @hinze_manufacturing_2001.
 
-For binomial heaps, the approach I'll be using is similar to @wasserman_playing_2010, except with a slightly more modern implementation: where Wasserman's version used types like this for the numbering:
+It is possible to go from the size-indexed version back to the non-indexed version, with an existential (`-XRankNTypes`{.haskell} for this example):
+
+```{.haskell .literate}
+data ErasedSize f a = forall (n :: Peano). ErasedSize
+    { runErasedSize :: f n a
+    }
+```
+
+This will let you keep any invariants you proved with the index, while hiding the index form the user.
+
+### A Fully-Structurally-Verified Binomial Heap
+
+@wasserman_playing_2010, was able to encode all of the structural invariants of the binomial heap *without* indexing by its size. I'll be using a similar approach, except I'll leverage some of the newer bells and whistles in GHC: where Wasserman's version used types like this for the numbering:
 
 ```{.haskell}
 data Zero a = Zero
@@ -426,9 +463,8 @@ data BinomTree rk a = BinomTree a (rk a)
 
 We can reuse the type-level Peano numbers with a GADT.
 
-### A Fully-Structurally-Verified Binomial Heap
 
-```{.haskell .literate}
+```{.haskell}
 infixr 5 :-
 data Binomial xs rk a where
        Nil :: Binomial '[] n a
@@ -449,7 +485,7 @@ The definition of `Tree`{.haskell} here ensures that any tree of rank $n$ has $2
 
 And here are the merge functions:
 
-```{.haskell .literate}
+```{.haskell}
 mergeTree :: Ord a => Tree rk a -> Tree rk a -> Tree (S rk) a
 mergeTree xr@(Root x xs) yr@(Root y ys)
   | x <= y    = Root x (yr :< xs)
@@ -533,41 +569,41 @@ The troublemaker for the binomial heap is the *decrement* type family. As shown 
 Since some of these properties are much easier to verify on the type-level Peano numbers, one approach might be to convert back and forth between Peano numbers and binary, and use the proofs on Peano numbers instead.
 
 ```{.haskell}
-type family BintoNat (xs :: [Bool]) :: Nat where
-        BintoNat '[] = Z
-        BintoNat (False : xs) = BintoNat xs + BintoNat xs
-        BintoNat (True : xs) = S (BintoNat xs + BintoNat xs)
+type family BintoPeano (xs :: [Bool]) :: Peano where
+        BintoPeano '[] = Z
+        BintoPeano (False : xs) = BintoPeano xs + BintoPeano xs
+        BintoPeano (True : xs) = S (BintoPeano xs + BintoPeano xs)
 ```
 
 First problem: this requires `-XUndecidableInstances`{.haskell}. I'd *really* rather not have that turned on, to be honest. In Idris (and Agda), you can *prove* decidability using [a number of different methods](https://www.idris-lang.org/docs/0.12/contrib_doc/docs/Control.WellFounded.html), but this isn't available in Haskell yet.
 
 Regardless, we can push on.
 
-To go in the other direction, we can take the example from the Idris tutorial:
+To go in the other direction, we'll need to calculate the parity of natural numbers. Taken from the Idris tutorial:
 
 ```{.haskell}
-data Parity (n :: Nat) where
-    Even :: The Nat n -> Parity (n + n)
-    Odd  :: The Nat n -> Parity (S (n + n))
+data Parity (n :: Peano) where
+    Even :: The Peano n -> Parity (n + n)
+    Odd  :: The Peano n -> Parity (S (n + n))
 
-parity :: The Nat n -> Parity n
+parity :: The Peano n -> Parity n
 parity Zy = Even Zy
 parity (Sy Zy) = Odd Zy
 parity (Sy (Sy n)) = case parity n of
   Even m -> gcastWith (plusSuccDistrib m m) (Even (Sy m))
   Odd  m -> gcastWith (plusSuccDistrib m m) (Odd (Sy m))
 
-plusSuccDistrib :: The Nat n -> proxy m -> n + S m :~: S (n + m)
+plusSuccDistrib :: The Peano n -> proxy m -> n + S m :~: S (n + m)
 plusSuccDistrib Zy _ = Refl
 plusSuccDistrib (Sy n) p = gcastWith (plusSuccDistrib n p) Refl
 ```
 
-The `parity`{.haskell} function can help us later convert to binary. There's an issue, though: it's defined on the value-level, not type-level. in fact, I don't think you *can* promote it to the type level, as there's no type-level `gcastWith`{.haskell}.
+We need this function on the type-level, though, not the value-level: here, again, we run into trouble. What does `gcastWith`{.haskell} look like on the type-level? As far as I can tell, it doesn't exist.
 
 This idea of doing dependently-typed stuff on the type-level *started* to be possible with `-XTypeInType`{.haskell}. For instance, we could have defined our binary type as:
 
 ```{.haskell}
-data Binary :: Nat -> Type where
+data Binary :: Peano -> Type where
     O :: Binary n -> Binary (n + n)
     I :: Binary n -> Binary (S (n + n))
     E :: Binary Z
@@ -576,7 +612,7 @@ data Binary :: Nat -> Type where
 And then the binomial heap as:
 
 ```{.haskell}
-data Binomial (xs :: Binary n) (rk :: Nat) (a :: Type) where
+data Binomial (xs :: Binary n) (rk :: Peano) (a :: Type) where
        Nil :: Binomial E n a
        Skip :: Binomial xs (S rk) a -> Binomial (O xs) rk a
        (:-) :: Tree rk a 
@@ -584,22 +620,28 @@ data Binomial (xs :: Binary n) (rk :: Nat) (a :: Type) where
             -> Binomial (I xs) rk a
 ```
 
-What we're doing here is indexing a type *by an indexed type*. [This wasn't possible in Haskell a few years ago](http://stackoverflow.com/a/13241158/4892417).
+What we're doing here is indexing a type *by an indexed type*. [This wasn't possible in Haskell a few years ago](http://stackoverflow.com/a/13241158/4892417). It still doesn't get us a nice definition of subtraction, though.
 
 ### Using a Typechecker Plugin
 
 It's pretty clear that this approach gets tedious almost immediately. What's more, if we want the proofs to be erased, we introduce potential for errors.
 
-The solution? Beef up GHC's typechecker with a plugin. I first came across this approach in [Kenneth Foner's talk at Compose](https://www.youtube.com/watch?v=u_OsUlwkmBQ). He used a plugin that called out to the [Z3 theorem prover](https://github.com/Z3Prover/z3) [from @diatchki_improving_2015]; I'll use a [simpler plugin](https://hackage.haskell.org/package/ghc-typelits-natnormalise) which just normalizes type-literals. Each typechecker plugin is called when GHC can't unify two types: other than that, there's no real change to the code. Another benefit is that we get to use type-level literals, rather then the noisy-looking type-level Peano numbers.
+The solution? Beef up GHC's typechecker with a plugin. I first came across this approach in [Kenneth Foner's talk at Compose](https://www.youtube.com/watch?v=u_OsUlwkmBQ). He used a plugin that called out to the [Z3 theorem prover](https://github.com/Z3Prover/z3) [from @diatchki_improving_2015]; I'll use a [simpler plugin](https://hackage.haskell.org/package/ghc-typelits-natnormalise) which just normalizes type-literals.
 
-It works surprisingly well. The code is almost unchanged from the non-indexed version:
+From what I've used of these plugins so far, they seem to work really well. They're very in unobtrusive, only requiring a pragma at the top of your file:
 
-```{.haskell}
+```{.haskell .literate}
+{-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
+```
+
+Each typechecker plugin is called when GHC can't unify two types: other than that, there's no change to the code. Another benefit is that we get to use type-level literals (`Nat`{.haskell} imported from [GHC.TypeLits](https://hackage.haskell.org/package/base-4.9.1.0/docs/GHC-TypeLits.html)), rather then the noisy-looking type-level Peano numbers. 
+
+```{.haskell .literate}
 data Tree n a = Root a (Node n a)
 
-data Node :: Nat -> * -> * where
+data Node :: Nat -> Type -> Type where
         NilN :: Node 0 a
-        (:<) :: Tree n a
+        (:<) :: {-# UNPACK #-} !(Tree n a)
              -> Node n a
              -> Node (1 + n) a
 
@@ -609,23 +651,61 @@ mergeTree xr@(Root x xs) yr@(Root y ys)
   | otherwise = Root y (xr :< ys)
 
 infixr 5 :-
-data Binomial :: Nat -> Nat -> * -> * where
+data Binomial :: Nat -> Nat -> Type -> Type where
         Nil  :: Binomial n 0 a
-        (:-) :: Tree z a
+        (:-) :: {-# UNPACK #-} !(Tree z a)
              -> Binomial (1 + z) xs a
              -> Binomial z (1 + xs + xs) a
         Skip :: Binomial (1 + z) (1 + xs) a
              -> Binomial z (2 + xs + xs) a
+```
 
-merge
+This definition also ensures that the binomial heap has no trailing zeroes in its binary representation: the `Skip`{.haskell} constructor can only be applied to a heap bigger than zero.
+
+Since we're going to be looking at several different heaps, we'll need a class to represent all of them:
+
+```{.haskell .literate}
+class IndexedQueue h a where
+
+    {-# MINIMAL insert, empty, minViewMay, minView #-}
+
+    empty
+        :: h 0 a
+
+    minView
+        :: h (1 + n) a -> (a, h n a)
+
+    singleton
+        :: a -> h 1 a
+    singleton = flip insert empty
+
+    insert
+        :: a -> h n a -> h (1 + n) a
+
+    minViewMay
+       :: h n a
+       -> (n ~ 0 => b)
+       -> (forall m. (1 + m) ~ n => a -> h m a -> b)
+       -> b
+
+class IndexedQueue h a =>
+      MeldableIndexedQueue h a where
+    merge
+        :: h n a -> h m a -> h (n + m) a
+```
+
+You'll need `-XMultiParamTypeClasses`{.haskell} for this one.
+
+```{.haskell .literate}
+mergeB
     :: Ord a
     => Binomial z xs a -> Binomial z ys a -> Binomial z (xs + ys) a
-merge Nil ys              = ys
-merge xs Nil              = xs
-merge (Skip xs) (Skip ys) = Skip (merge xs ys)
-merge (Skip xs) (y :- ys) = y :- merge xs ys
-merge (x :- xs) (Skip ys) = x :- merge xs ys
-merge (x :- xs) (y :- ys) = Skip (mergeCarry (mergeTree x y) xs ys)
+mergeB Nil ys              = ys
+mergeB xs Nil              = xs
+mergeB (Skip xs) (Skip ys) = Skip (mergeB xs ys)
+mergeB (Skip xs) (y :- ys) = y :- mergeB xs ys
+mergeB (x :- xs) (Skip ys) = x :- mergeB xs ys
+mergeB (x :- xs) (y :- ys) = Skip (mergeCarry (mergeTree x y) xs ys)
 
 mergeCarry
     :: Ord a
@@ -633,26 +713,40 @@ mergeCarry
     -> Binomial z xs a
     -> Binomial z ys a
     -> Binomial z (1 + xs + ys) a
-mergeCarry t Nil ys              = carryOne t ys
-mergeCarry t xs Nil              = carryOne t xs
-mergeCarry t (Skip xs) (Skip ys) = t :- merge xs ys
-mergeCarry t (Skip xs) (y :- ys) = Skip (mergeCarry (mergeTree t y) xs ys)
-mergeCarry t (x :- xs) (Skip ys) = Skip (mergeCarry (mergeTree t x) xs ys)
-mergeCarry t (x :- xs) (y :- ys) = t :- mergeCarry (mergeTree x y) xs ys
+mergeCarry !t Nil ys              = carryOne t ys
+mergeCarry !t xs Nil              = carryOne t xs
+mergeCarry !t (Skip xs) (Skip ys) = t :- mergeB xs ys
+mergeCarry !t (Skip xs) (y :- ys) = Skip (mergeCarry (mergeTree t y) xs ys)
+mergeCarry !t (x :- xs) (Skip ys) = Skip (mergeCarry (mergeTree t x) xs ys)
+mergeCarry !t (x :- xs) (y :- ys) = t :- mergeCarry (mergeTree x y) xs ys
 
-carryOne 
-  :: Ord a 
-  => Tree z a 
-  -> Binomial z xs a 
-  -> Binomial z (1 + xs) a
-carryOne t Nil       = t :- Nil
-carryOne t (Skip xs) = t :- xs
-carryOne t (x :- xs) = Skip (carryOne (mergeTree t x) xs)
+carryOne :: Ord a => Tree z a -> Binomial z xs a -> Binomial z (1 + xs) a
+carryOne !t Nil       = t :- Nil
+carryOne !t (Skip xs) = t :- xs
+carryOne !t (x :- xs) = Skip (carryOne (mergeTree t x) xs)
+
+instance Ord a => MeldableIndexedQueue (Binomial 0) a where
+    merge = mergeB
+    {-# INLINE merge #-}
+
+instance Ord a => IndexedQueue (Binomial 0) a where
+    empty = Nil
+    singleton x = Root x NilN :- Nil
+    insert = merge . singleton
 ```
+
+(`-XBangPatterns`{.haskell} for this example)
 
 On top of that, it's very easy to define delete-min:
 
-```{.haskell}
+```{.haskell .literate}
+    minView xs = case minViewZip xs of
+      Zipper x _ ys -> (x, ys)
+    minViewMay q b f = case q of
+      Nil -> b
+      _ :- _ -> uncurry f (minView q)
+      Skip _ -> uncurry f (minView q)
+
 data Zipper a n rk = Zipper !a (Node rk a) (Binomial rk n a)
 
 skip :: Binomial (1 + z) xs a -> Binomial z (xs + xs) a
@@ -663,7 +757,7 @@ skip x = case x of
 
 data MinViewZipper a n rk where
     Infty :: MinViewZipper a 0 rk
-    Min :: Zipper a n rk -> MinViewZipper a (n+1) rk
+    Min :: {-# UNPACK #-} !(Zipper a n rk) -> MinViewZipper a (n+1) rk
 
 slideLeft :: Zipper a n (1 + rk) -> Zipper a (1 + n + n) rk
 slideLeft (Zipper m (t :< ts) hs)
@@ -689,10 +783,6 @@ minViewZipMay Nil = Infty
 minViewZipMay (t@(Root x ts) :- f) = Min $ case minViewZipMay f of
   Min ex@(Zipper minKey _ _) | minKey < x -> pushLeft t ex
   _                          -> Zipper x ts (skip f)
-
-minView :: Ord a => Binomial Z (1 + n) a -> (a, Binomial Z n a)
-minView xs = case minViewZip xs of
-      Zipper x _ ys -> (x, ys)
 ```
 
 Similarly, compare the version of the pairing heap with the plugin:
@@ -739,13 +829,13 @@ data HVec n a where
   HCons :: Heap m a -> HVec n a -> HVec (m + n) a
 
 class Sized h where
-  size :: h n a -> The Nat n
+  size :: h n a -> The Peano n
 
 instance Sized Heap where
   size E = Zy
   size (T _ xs) = Sy (size xs)
 
-plus :: The Nat n -> The Nat m -> The Nat (n + m)
+plus :: The Peano n -> The Peano m -> The Peano (n + m)
 plus Zy m = m
 plus (Sy n) m = Sy (plus n m)
 
@@ -780,23 +870,23 @@ mergePairs (HCons h1 (HCons h2 hs)) =
 
 The typechecker plugin makes it relatively easy to implement several other heaps: skew, Braun, etc. You'll need one extra trick to implement a [leftist heap](http://lambda.jstolarek.com/2014/10/weight-biased-leftist-heaps-verified-in-haskell-using-dependent-types/), though. Let's take a look at the unverified version:
 
-```{.haskell .literate}
+```{.haskell}
 data Leftist a
-    = LLeaf
-    | LNode {-# UNPACK #-} !Int
+    = Leaf
+    | Node {-# UNPACK #-} !Int
            a
            (Leftist a)
            (Leftist a)
 
 rank :: Leftist s -> Int
-rank LLeaf          = 0
-rank (LNode r _ _ _) = r
+rank Leaf          = 0
+rank (Node r _ _ _) = r
 {-# INLINE rank #-}
 
 mergeL :: Ord a => Leftist a -> Leftist a -> Leftist a
-mergeL LLeaf h2 = h2
-mergeL h1 LLeaf = h1
-mergeL h1@(LNode w1 p1 l1 r1) h2@(LNode w2 p2 l2 r2)
+mergeL Leaf h2 = h2
+mergeL h1 Leaf = h1
+mergeL h1@(Node w1 p1 l1 r1) h2@(Node w2 p2 l2 r2)
   | p1 < p2 =
       if ll <= lr
           then LNode (w1 + w2) p1 l1 (mergeL r1 h2)
@@ -812,18 +902,16 @@ mergeL h1@(LNode w1 p1 l1 r1) h2@(LNode w2 p2 l2 r2)
     rr = rank l2
 ```
 
-(I kept the strictness annotations in this example because they're going to be important in a minute)
-
 In a weight-biased leftist heap, the left branch in any tree must have at least as many elements as the right branch. Ideally, we would encode that in the representation of size-indexed leftist heap:
 
-```{.haskell}
+```{.haskell .literate}
 data Leftist n a where
         Leaf :: Leftist 0 a
         Node :: !(The Nat (n + m + 1))
              -> a
              -> Leftist n a
              -> Leftist m a
-             -> !(m <=. n)
+             -> !(m <= n)
              -> Leftist (n + m + 1) a
 
 rank :: Leftist n s -> The Nat n
@@ -837,9 +925,9 @@ Two problems, though: first of all, we need to be able to *compare* the sizes of
 
 ### Integer-Backed Type-Level Numbers
 
-In Agda, the Peano type is actually backed by Haskell's `Integer`{.haskell} at runtime. This allows compile-time proofs to be written about values which are calculated efficiently. We can mimic the same thing in Haskell with a newtype wrapper *around* `Integer`{.haskell} with a phantom `Nat`{.haskell} parameter, if we promise to never put an integer in which has a different value to its phantom value. We can make this promise a little more trustworthy if we don't export the newtype constructor.
+In Agda, the Peano type is actually backed by Haskell's `Integer`{.haskell} at runtime. This allows compile-time proofs to be written about values which are calculated efficiently. We can mimic the same thing in Haskell with a newtype wrapper *around* `Integer`{.haskell} with a phantom `Peano`{.haskell} parameter, if we promise to never put an integer in which has a different value to its phantom value. We can make this promise a little more trustworthy if we don't export the newtype constructor.
 
-```{.haskell}
+```{.haskell .literate}
 newtype instance The Nat n where
         NatSing :: Integer -> The Nat n
 
@@ -847,9 +935,9 @@ instance KnownNat n => KnownSing n where
     sing = NatSing $ Prelude.fromInteger $ natVal (Proxy :: Proxy n)
 ```
 
-The `Nat`{.haskell} we're using here is now that `Nat`{.haskell} imported from [GHC.TypeLits](https://hackage.haskell.org/package/base-4.9.1.0/docs/GHC-TypeLits.html). We can also encode all the necessary arithmetic:
+. We can also encode all the necessary arithmetic:
 
-```{.haskell}
+```{.haskell .literate}
 infixl 6 +.
 (+.) :: The Nat n -> The Nat m -> The Nat (n + m)
 (+.) =
@@ -875,7 +963,7 @@ infixr 8 ^.
 {-# INLINE (^.) #-}
 
 infixl 6 -.
-(-.) :: (m <= n) => The Nat n -> The Nat m -> The Nat (n - m)
+(-.) :: (m <=? n) ~ True => The Nat n -> The Nat m -> The Nat (n - m)
 (-.) =
     (coerce :: (Integer -> Integer -> Integer) 
             -> The Nat n -> The Nat m -> The Nat (n - m))
@@ -883,9 +971,9 @@ infixl 6 -.
 {-# INLINE (-.) #-}
 ```
 
-Finally, the compare function:
+Finally, the compare function (`-XScopedTypeVariables`{.haskell} for this):
 
-```{.haskell}
+```{.haskell .literate}
 infix 4 <=.
 (<=.) :: The Nat n -> The Nat m -> The Bool (n <=? m)
 (<=.) (NatSing x :: The Nat n) (NatSing y :: The Nat m)
@@ -901,7 +989,7 @@ totalOrder ::  p n -> q m -> (n <=? m) :~: False -> (m <=? n) :~: True
 totalOrder (_ :: p n) (_ :: q m) Refl = 
     unsafeCoerce Refl :: (m <=? n) :~: True
 
-type x <=. y = (x <=? y) :~: True
+type x <= y = (x <=? y) :~: True
 ```
 
 It's worth mentioning that all of these functions are somewhat axiomatic: as in, any later proofs rely on these functions being correct.
