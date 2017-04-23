@@ -16,6 +16,7 @@ tags: Haskell, Dependent Types
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 
@@ -27,6 +28,7 @@ import Unsafe.Coerce
 import GHC.TypeLits hiding (type (<=))
 import Data.Proxy
 import Data.Coerce
+import Prelude
 ```
 
 A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-heaps) which has a bunch of size-indexed structures, each verified for structural correctness. I also included non-indexed versions for comparisons (as well as benchmarks, tests, and all that good stuff).
@@ -630,7 +632,7 @@ The solution? Beef up GHC's typechecker with a plugin. I first came across this 
 
 From what I've used of these plugins so far, they seem to work really well. They're very in unobtrusive, only requiring a pragma at the top of your file:
 
-```{.haskell .literate}
+```{.haskell}
 {-# OPTIONS_GHC -fplugin GHC.TypeLits.Normalise #-}
 ```
 
@@ -935,7 +937,9 @@ instance KnownNat n => KnownSing n where
     sing = NatSing $ Prelude.fromInteger $ natVal (Proxy :: Proxy n)
 ```
 
-. We can also encode all the necessary arithmetic:
+
+
+`-XFlexibleInstances`{.haskell} is needed for the instance. We can also encode all the necessary arithmetic:
 
 ```{.haskell .literate}
 infixl 6 +.
@@ -1011,9 +1015,9 @@ intOrString Truey = 1
 intOrString Falsy = "abc"
 ```
 
-In Haskell, since we can overload the if-then-else construct, we can provide the same syntax, while hiding the dependent nature:
+In Haskell, since we can overload the if-then-else construct (with `-XRebindableSyntax`{.haskell}), we can provide the same syntax, while hiding the dependent nature:
 
-```{.haskell}
+```{.haskell .literate}
 ifThenElse :: The Bool c -> (c :~: True -> a) -> (c :~: False -> a) -> a
 ifThenElse Truey t _ = t Refl
 ifThenElse Falsy _ f = f Refl
@@ -1023,35 +1027,80 @@ ifThenElse Falsy _ f = f Refl
 
 Finally, then, we can write the implementation for merge, which looks almost *exactly* the same as the non-verified merge:
 
-```{.haskell}
-merge :: Ord a => Leftist n a -> Leftist m a -> Leftist (n + m) a
-merge Leaf h2 = h2
-merge h1 Leaf = h1
-merge h1@(Node w1 p1 l1 r1 _) h2@(Node w2 p2 l2 r2 _)
-  | p1 < p2 =
-      if ll <=. lr
-          then Node (w1 +. w2) p1 l1 (merge r1 h2)
-          else Node (w1 +. w2) p1 (merge r1 h2) l1 . totalOrder ll lr
-  | otherwise =
-      if rl <=. rr
-          then Node (w1 +. w2) p2 l2 (merge r2 h1)
-          else Node (w1 +. w2) p2 (merge r2 h1) l2 . totalOrder rl rr
-  where
-    ll = rank r1 +. w2
-    lr = rank l1
-    rl = rank r2 +. w1
-    rr = rank l2
+```{.haskell .literate}
+instance Ord a => IndexedQueue Leftist a where
+
+    minView (Node _ x l r _) = (x, merge l r)
+    {-# INLINE minView #-}
+
+
+    singleton x = Node sing x Leaf Leaf Refl
+    {-# INLINE singleton #-}
+
+    empty = Leaf
+    {-# INLINE empty #-}
+
+    insert = merge . singleton
+    {-# INLINE insert #-}
+
+    minViewMay Leaf b _             = b
+    minViewMay (Node _ x l r _) _ f = f x (merge l r)
+
+instance Ord a =>
+         MeldableIndexedQueue Leftist a where
+    merge Leaf h2 = h2
+    merge h1 Leaf = h1
+    merge h1@(Node w1 p1 l1 r1 _) h2@(Node w2 p2 l2 r2 _)
+      | p1 < p2 =
+          if ll <=. lr
+             then Node (w1 +. w2) p1 l1 (merge r1 h2)
+             else Node (w1 +. w2) p1 (merge r1 h2) l1 . totalOrder ll lr
+      | otherwise =
+          if rl <=. rr
+              then Node (w1 +. w2) p2 l2 (merge r2 h1)
+              else Node (w1 +. w2) p2 (merge r2 h1) l2 . totalOrder rl rr
+      where
+        ll = rank r1 +. w2
+        lr = rank l1
+        rl = rank r2 +. w1
+        rr = rank l2
+    {-# INLINE merge #-}
 ```
 
 What's cool about this implementation is that it has the same performance as the non-verified version (if `Integer`{.haskell} is swapped out for `Int`{.haskell}, that is), and it *looks* pretty much the same. This is very close to static verification for free.
 
-### Index-Erased Heaps
-
-Although each one of these heaps is size-indexed, you can create a GADT with an existential index, which allows them to act like normal (non-indexed) heaps, while keeping their verification.
-
 ### Generalizing Sort to Parts
 
-The `Sort`{.haskell} type used in the original blog post can be generalized to *any* indexed container. Using this, you can use it to reverse the elements of a traversable, or shift them up in any way you want.
+The `Sort`{.haskell} type used in the original blog post can be generalized to *any* indexed container. Using this, you can use it to reverse the elements of a traversable, or shift them up in any way you want:
+
+```{.haskell}
+data Parts f g a b r where
+    Parts :: (forall n. g (m + n) b -> (g n b, r))
+         -> !(f m a)
+         -> Parts f g a b r
+
+instance Functor (Parts f g a b) where
+  fmap f (Parts g h) =
+    Parts (\h' -> case g h' of (remn, r) -> (remn, f r)) h
+  {-# INLINE fmap #-}
+
+instance (IndexedQueue f x, MeldableIndexedQueue f x) =>
+          Applicative (Parts f g x y) where
+    pure x = Parts (\h -> (h, x)) empty
+    {-# INLINE pure #-}
+
+    (Parts f (xs :: f m x) :: Parts f g x y (a -> b)) <*> 
+      Parts g (ys :: f n x) =
+        Parts h (merge xs ys)
+        where
+          h :: forall o . g ((m + n) + o) y -> (g o y, b)
+          h v = case f v of { (v', a) ->
+                    case g v' of { (v'', b) ->
+                      (v'', a b)}}
+    {-# INLINABLE (<*>) #-}
+
+```
+
 
 ### Other Uses For Size-Indexed Heaps
 
@@ -1059,6 +1108,6 @@ I'd be very interested to see any other uses of these indexed heaps, if anyone h
 
 ### The Library
 
-I've explored all of these ideas [here](https://github.com/oisdk/type-indexed-heaps).
+I've explored all of these ideas [here](https://github.com/oisdk/type-indexed-heaps). I've got five heaps implemented (pairing, Braun, skew, binomial, and leftist). Each implementation is provided in both the indexed and non-indexed version. There's also the index-erasing type, and a size-indexed list, for reversing traversables. There are also benchmarks and tests. In the future, I might add things like a Fibonacci heap, or the optimal Brodal/Okasaki heap [@brodal_optimal_1996].
 
 ---
