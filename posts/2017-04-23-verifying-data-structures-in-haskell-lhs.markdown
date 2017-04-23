@@ -114,7 +114,7 @@ plusZeroNeutral (S k) = cong (plusZeroNeutral k)
 
 In Haskell, on the other hand, we can't do the same: functions on the value-level `Peano`{.haskell} have no relationship with functions on the type-level `Peano`{.haskell}. There's no way to automatically link or promote one to the other.
 
-This is where singletons come in [@eisenberg_dependently_2012]. A singleton is a value-level representation of some type, where there is only *one* value for a given type (hence the name). Usually, the singleton will be parameterized by the type-level value, and its constructors will mimic the type-level datatype. In this way, we can write functions on the value-level which are linked to the type-level. Here's a potential singleton for `Peano`{.haskell}:
+This is where singletons come in [@eisenberg_dependently_2012]. A singleton is a datatype which mirrors a type-level value exactly, except that it has a type parameter which matches the equivalent value on the type-level. In this way, we can write functions on the value-level which are linked to the type-level. Here's a potential singleton for `Peano`{.haskell}:
 
 ```{.haskell}
 data Natty n where
@@ -124,7 +124,17 @@ data Natty n where
 
 (we need `GADTs`{.haskell} for this example)
 
-The `plusZeroNeutral`{.haskell} proof looks reasonably similar to the Idris version:
+Now, when we pattern-match on `Natty`{.haskell}, we get a proof of whatever its type parameter was. Here's a trivial example:
+
+```{.haskell}
+isZero :: Natty n -> Maybe (n :~: Z)
+isZero Zy = Just Refl
+isZero (Sy _) = Nothing
+```
+
+When we match on `Zy`{.haskell}, the *only value* which `n`{.haskell} could have been is `Z`{.haskell}, because the only way to construct `Zy`{.haskell} is if the type parameter is `Z`{.haskell}.
+
+Using this technique, the `plusZeroNeutral`{.haskell} proof looks reasonably similar to the Idris version:
 
 ```{.haskell}
 plusZeroNeutral :: Natty n -> Plus n Z :~: n
