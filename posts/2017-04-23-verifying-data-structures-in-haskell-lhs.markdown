@@ -538,7 +538,7 @@ carryOne t (x :- xs) = Skip (carryOne (mergeTree t x) xs)
 
 You'll notice that no proofs are needed: that's because the merge function itself is the same as the type family, like the way `++`{.haskell} for lists was the same as the `Plus`{.haskell} type family.
 
-Of course, this structure is only verified insofar as you believe the type families. If there's a mistake in one of them, and a mistake in the merge function which mirrors the same mistake, the that won't be caught. However, we can write some proofs of the properties of the type families that we would expect:
+Of course, this structure is only verified insofar as you believe the type families. It does provide a degree of double-entry, though: any mistake in the type family will have to be mirrored in the merge function to type-check. On top of that, we can write some proofs of properties we might expect:
 
 ```{.haskell .literate}
 addCommutes
