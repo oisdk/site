@@ -451,7 +451,7 @@ When indexing a data structure by its size, you encode an awful lot of informati
 data BalTree a = Leaf a | Node (BalTree (a,a))
 ```
 
-With that signature, it's *impossible* to create a tree with more elements in its left branch than its right: but the size of the tree is unspecified. You can use a similar trick to implement [matrices which must be square](https://github.com/oisdk/Square) [from @okasaki_fast_1999]: the usual trick (`type Matrix n a = List n (List n a)`{.haskell}) fails the test: it's too specific, providing size information at compile-time. If you're interested in this approach, there are several more examples in @hinze_manufacturing_2001.
+With that signature, it's *impossible* to create a tree with more elements in its left branch than its right; the size of the tree, however, remains unspecified. You can use a similar trick to implement [matrices which must be square](https://github.com/oisdk/Square) [from @okasaki_fast_1999]: the usual trick (`type Matrix n a = List n (List n a)`{.haskell}) is too specific, providing size information at compile-time. If you're interested in this approach, there are several more examples in @hinze_manufacturing_2001.
 
 It is possible to go from the size-indexed version back to the non-indexed version, with an existential (`RankNTypes`{.haskell} for this example):
 
