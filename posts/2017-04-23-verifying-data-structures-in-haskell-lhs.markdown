@@ -465,7 +465,7 @@ This will let you prove invariants in your implementation using an index, while 
 
 ### A Fully-Structurally-Verified Binomial Heap
 
-@wasserman_playing_2010, was able to encode all of the structural invariants of the binomial heap *without* indexing by its size. I'll be using a similar approach, except I'll leverage some of the newer bells and whistles in GHC. Where Wasserman's version used types like this for the numbering:
+@wasserman_playing_2010, was able to encode all of the structural invariants of the binomial heap *without* indexing by its size (well, all invariants except truncation, which turned out to be important a little later). I'll be using a similar approach, except I'll leverage some of the newer bells and whistles in GHC. Where Wasserman's version used types like this for the numbering:
 
 ```{.haskell}
 data Zero a = Zero
@@ -572,7 +572,7 @@ addCommutesCarry (Cony Truey xs) (Cony Truey ys) =
     gcastWith (addCommutesCarry xs ys) Refl
 ```
 
-Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One particularly nasty aspect is that you need to change the original signature of the heap: our version above doesn't guarantee that the binary representation is truncated. Since it's stored least-significant-bit first, there could be trailing zeroes without changing the numerical value. From what I've tried with the delete-min operation, it looks like I need to show that there *aren't* any trailing zeroes, which would require a change to the type.
+Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One particularly nasty aspect is that you probably need to change the original signature of the heap: our version above doesn't guarantee that the binary representation is truncated. Since it's stored least-significant-bit first, there could be trailing zeroes without changing the numerical value. From what I've tried with the delete-min operation, it looks like I need to show that there *aren't* any trailing zeroes in certain scenarios, which probably involves disallowing trailing zeroes in the constructors for `Binomial`{.haskell}.
 
 ### Doubly-Dependent Types
 
