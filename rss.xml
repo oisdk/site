@@ -342,11 +342,11 @@ uncurry f l <span class="fu">=</span>
     }</code></pre></div>
 <p>This will let you prove invariants in your implementation using an index, while keeping the user-facing type signature general and non-indexed.</p>
 <h3 id="a-fully-structurally-verified-binomial-heap">A Fully-Structurally-Verified Binomial Heap</h3>
-<p><span class="citation">Wasserman (<a href="#ref-wasserman_playing_2010">2010</a>)</span>, was able to encode all of the structural invariants of the binomial heap <em>without</em> indexing by its size. I’ll be using a similar approach, except I’ll leverage some of the newer bells and whistles in GHC: where Wasserman’s version used types like this for the numbering:</p>
+<p><span class="citation">Wasserman (<a href="#ref-wasserman_playing_2010">2010</a>)</span>, was able to encode all of the structural invariants of the binomial heap <em>without</em> indexing by its size. I’ll be using a similar approach, except I’ll leverage some of the newer bells and whistles in GHC. Where Wasserman’s version used types like this for the numbering:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Zero</span> a <span class="fu">=</span> <span class="dt">Zero</span>
 <span class="kw">data</span> <span class="dt">Succ</span> rk a <span class="fu">=</span> <span class="dt">BinomTree</span> rk a <span class="fu">:&lt;</span> rk a
 <span class="kw">data</span> <span class="dt">BinomTree</span> rk a <span class="fu">=</span> <span class="dt">BinomTree</span> a (rk a)</code></pre></div>
-<p>We can reuse the type-level Peano numbers with a GADT.</p>
+<p>We can reuse the type-level Peano numbers with a GADT:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
 <span class="kw">data</span> <span class="dt">Binomial</span> xs rk a <span class="kw">where</span>
        <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Binomial</span> <span class="ch">&#39;[] n a</span>
