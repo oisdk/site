@@ -572,11 +572,9 @@ addCommutesCarry (Cony Truey xs) (Cony Truey ys) =
     gcastWith (addCommutesCarry xs ys) Refl
 ```
 
-Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One particularly nasty aspect is that you probably need to change the original signature of the heap: our version above doesn't guarantee that the binary representation is truncated. Since it's stored least-significant-bit first, there could be trailing zeroes without changing the numerical value. From what I've tried with the delete-min operation, it looks like I need to show that there *aren't* any trailing zeroes in certain scenarios, which probably involves disallowing trailing zeroes in the constructors for `Binomial`{.haskell}.
+Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One of the issues is truncation: since the binary digits are stored least-significant-bit first, the same number can be represented with any number of trailing zeroes. This kept causing problems for me when it came to subtraction. Adding the requirement of no trailing zeroes (truncation) to the constructors for the heap was a pain, requiring extra proofs on merge to show that it preserves truncation.
 
 ### Doubly-Dependent Types
-
-The troublemaker for the binomial heap is the *decrement* type family. As shown above, it's reasonably easy to show commutativity on the addition of binary numbers, but it turns out to be quite a bit more difficult to prove some other properties, especially surrounding subtraction.
 
 Since some of these properties are much easier to verify on the type-level Peano numbers, one approach might be to convert back and forth between Peano numbers and binary, and use the proofs on Peano numbers instead.
 
