@@ -276,7 +276,7 @@ instance KnownPeano n =>
     {-# INLINE unrollRepeat #-}
 ```
 
-Because the recursion here calls a different `unrollRepeat`{.haskell} function in the "recursive" call, we get around the usual hurdle of not being abble to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:
+Because the recursion here calls a different `unrollRepeat`{.haskell} function in the "recursive" call, we get around the [usual hurdle](http://stackoverflow.com/questions/42179783/is-there-any-way-to-inline-a-recursive-function) of not being able to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:
 
 ```{.haskell}
 class HasFoldr (n :: Peano) where
