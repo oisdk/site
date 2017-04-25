@@ -465,7 +465,7 @@ This will let you prove invariants in your implementation using an index, while 
 
 ### A Fully-Structurally-Verified Binomial Heap
 
-@wasserman_playing_2010, was able to encode all of the structural invariants of the binomial heap *without* indexing by its size. I'll be using a similar approach, except I'll leverage some of the newer bells and whistles in GHC: where Wasserman's version used types like this for the numbering:
+@wasserman_playing_2010, was able to encode all of the structural invariants of the binomial heap *without* indexing by its size. I'll be using a similar approach, except I'll leverage some of the newer bells and whistles in GHC. Where Wasserman's version used types like this for the numbering:
 
 ```{.haskell}
 data Zero a = Zero
@@ -473,7 +473,7 @@ data Succ rk a = BinomTree rk a :< rk a
 data BinomTree rk a = BinomTree a (rk a)
 ```
 
-We can reuse the type-level Peano numbers with a GADT.
+We can reuse the type-level Peano numbers with a GADT:
 
 
 ```{.haskell}
