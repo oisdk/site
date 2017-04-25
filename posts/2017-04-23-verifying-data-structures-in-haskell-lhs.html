@@ -203,7 +203,7 @@ foldrList1 f b
     unrollRepeat (<span class="ot">_ ::</span> <span class="dt">Proxy</span> (<span class="dt">S</span> n)) f x <span class="fu">=</span>
         f (unrollRepeat (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> n) f x)
     <span class="ot">{-# INLINE unrollRepeat #-}</span></code></pre></div>
-<p>Because the recursion here calls a different <code class="sourceCode haskell">unrollRepeat</code> function in the “recursive” call, we get around the usual hurdle of not being abble to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:</p>
+<p>Because the recursion here calls a different <code class="sourceCode haskell">unrollRepeat</code> function in the “recursive” call, we get around the <a href="http://stackoverflow.com/questions/42179783/is-there-any-way-to-inline-a-recursive-function">usual hurdle</a> of not being able to inline recursive calls. That means that the whole loop will be unrolled, at compile-time. We can do the same for foldr:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">HasFoldr</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) <span class="kw">where</span>
     unrollFoldr 
 <span class="ot">        ::</span> (forall x<span class="fu">.</span> a <span class="ot">-&gt;</span> b x <span class="ot">-&gt;</span> b (<span class="dt">S</span> x)) 
