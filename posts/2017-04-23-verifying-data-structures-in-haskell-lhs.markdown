@@ -572,7 +572,7 @@ addCommutesCarry (Cony Truey xs) (Cony Truey ys) =
     gcastWith (addCommutesCarry xs ys) Refl
 ```
 
-Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One of the issues is truncation: since the binary digits are stored least-significant-bit first, the same number can be represented with any number of trailing zeroes. This kept causing problems for me when it came to subtraction. Adding the requirement of no trailing zeroes (truncation) to the constructors for the heap was a pain, requiring extra proofs on merge to show that it preserves truncation.
+Unfortunately, though, this method *does* require proofs (ugly proofs) for the delete-min operation. One of the issues is truncation: since the binary digits are stored least-significant-bit first, the same number can be represented with any number of trailing zeroes. This kept causing problems for me when it came to subtraction, and adding the requirement of no trailing zeroes (truncation) to the constructors for the heap was a pain, requiring extra proofs on merge to show that it preserves truncation.
 
 ### Doubly-Dependent Types
 
@@ -589,7 +589,7 @@ First problem: this requires `UndecidableInstances`{.haskell}. I'd *really* rath
 
 Regardless, we can push on.
 
-To go in the other direction, we'll need to calculate the parity of natural numbers. Taken from the Idris tutorial:
+To go in the other direction, we'll need to calculate the parity of natural numbers. Taken from [the Idris tutorial](http://docs.idris-lang.org/en/latest/tutorial/theorems.html#theorems-in-practice):
 
 ```{.haskell}
 data Parity (n :: Peano) where
@@ -608,7 +608,7 @@ plusSuccDistrib Zy _ = Refl
 plusSuccDistrib (Sy n) p = gcastWith (plusSuccDistrib n p) Refl
 ```
 
-We need this function on the type-level, though, not the value-level: here, again, we run into trouble. What does `gcastWith`{.haskell} look like on the type-level? As far as I can tell, it doesn't exist.
+We need this function on the type-level, though, not the value-level: here, again, we run into trouble. What does `gcastWith`{.haskell} look like on the type-level? As far as I can tell, it doesn't exist (yet. Although I haven't looked deeply into the singletons library yet).
 
 This idea of doing dependently-typed stuff on the type-level *started* to be possible with `TypeInType`{.haskell}. For instance, we could have defined our binary type as:
 
