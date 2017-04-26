@@ -31,7 +31,7 @@ import Data.Coerce
 import Prelude
 ```
 
-A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-queues) which has a bunch of size-indexed structures, each verified for structural correctness. I also included non-indexed versions for comparisons (as well as benchmarks, tests, and all that good stuff).
+A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-queues) which has five size-indexed heaps (Braun, pairing, binomial, skew, and leftist), each verified for structural correctness. I also included the non-indexed implementations of each for comparison (as well as benchmarks, tests, and all that good stuff).
 
 The purpose of this post is to go through some of the tricks I used and problems I encountered writing a lot of type-level code in modern Haskell.
 
@@ -955,30 +955,6 @@ infixl 6 +.
             -> The Nat n -> The Nat m -> The Nat (n + m))
         (+)
 {-# INLINE (+.) #-}
-
-infixl 7 *.
-(*.) :: The Nat n -> The Nat m -> The Nat (n * m)
-(*.) =
-    (coerce :: (Integer -> Integer -> Integer) 
-            -> The Nat n -> The Nat m -> The Nat (n * m))
-        (*)
-{-# INLINE (*.) #-}
-
-infixr 8 ^.
-(^.) :: The Nat n -> The Nat m -> The Nat (n ^ m)
-(^.) =
-    (coerce :: (Integer -> Integer -> Integer) 
-            -> The Nat n -> The Nat m -> The Nat (n ^ m))
-        (^)
-{-# INLINE (^.) #-}
-
-infixl 6 -.
-(-.) :: (m <=? n) ~ True => The Nat n -> The Nat m -> The Nat (n - m)
-(-.) =
-    (coerce :: (Integer -> Integer -> Integer) 
-            -> The Nat n -> The Nat m -> The Nat (n - m))
-        (-)
-{-# INLINE (-.) #-}
 ```
 
 Finally, the compare function (`ScopedTypeVariables`{.haskell} for this):
