@@ -58,7 +58,7 @@
 <span class="kw">import </span><span class="dt">Data.Proxy</span>
 <span class="kw">import </span><span class="dt">Data.Coerce</span>
 <span class="kw">import </span><span class="dt">Prelude</span></code></pre></div>
-<p>A while ago I read <a href="https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/">this</a> post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent <a href="https://github.com/treeowl/sort-traversable">library</a>) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a <a href="https://github.com/oisdk/type-indexed-queues">library</a> which has a bunch of size-indexed structures, each verified for structural correctness. I also included non-indexed versions for comparisons (as well as benchmarks, tests, and all that good stuff).</p>
+<p>A while ago I read <a href="https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/">this</a> post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent <a href="https://github.com/treeowl/sort-traversable">library</a>) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a <a href="https://github.com/oisdk/type-indexed-queues">library</a> which has five size-indexed heaps (Braun, pairing, binomial, skew, and leftist), each verified for structural correctness. I also included the non-indexed implementations of each for comparison (as well as benchmarks, tests, and all that good stuff).</p>
 <p>The purpose of this post is to go through some of the tricks I used and problems I encountered writing a lot of type-level code in modern Haskell.</p>
 <h3 id="type-level-numbers-in-haskell">Type-Level Numbers in Haskell</h3>
 <p>In order to index things by their size, we’ll need a type-level representation of size. We’ll use <a href="https://wiki.haskell.org/Peano_numbers">Peano</a> numbers for now:</p>
@@ -749,31 +749,7 @@ rank (<span class="dt">Node</span> r _ _ _ _) <span class="fu">=</span> r
     (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
             <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m))
         (<span class="fu">+</span>)
-<span class="ot">{-# INLINE (+.) #-}</span>
-
-<span class="kw">infixl</span> <span class="dv">7</span> <span class="fu">*.</span>
-<span class="ot">(*.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">*</span> m)
-(<span class="fu">*.</span>) <span class="fu">=</span>
-    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
-            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">*</span> m))
-        (<span class="fu">*</span>)
-<span class="ot">{-# INLINE (*.) #-}</span>
-
-<span class="kw">infixr</span> <span class="dv">8</span> <span class="fu">^.</span>
-<span class="ot">(^.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">^</span> m)
-(<span class="fu">^.</span>) <span class="fu">=</span>
-    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
-            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">^</span> m))
-        (<span class="fu">^</span>)
-<span class="ot">{-# INLINE (^.) #-}</span>
-
-<span class="kw">infixl</span> <span class="dv">6</span> <span class="fu">-.</span>
-<span class="ot">(-.) ::</span> (m <span class="fu">&lt;=?</span> n) <span class="fu">~</span> <span class="dt">True</span> <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">-</span> m)
-(<span class="fu">-.</span>) <span class="fu">=</span>
-    (<span class="ot">coerce ::</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) 
-            <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">-</span> m))
-        (<span class="fu">-</span>)
-<span class="ot">{-# INLINE (-.) #-}</span></code></pre></div>
+<span class="ot">{-# INLINE (+.) #-}</span></code></pre></div>
 <p>Finally, the compare function (<code class="sourceCode haskell"><span class="dt">ScopedTypeVariables</span></code> for this):</p>
 <div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">infix <span class="dv">4</span> <span class="fu">&lt;=.</span>
 <span class="ot">(&lt;=.) ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Bool</span> (n <span class="fu">&lt;=?</span> m)
