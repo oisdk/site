@@ -31,7 +31,7 @@ import Data.Coerce
 import Prelude
 ```
 
-A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables, and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-queues) which has five size-indexed heaps (Braun, pairing, binomial, skew, and leftist), each verified for structural correctness. I also included the non-indexed implementations of each for comparison (as well as benchmarks, tests, and all that good stuff).
+A while ago I read [this](https://www.reddit.com/r/haskell/comments/63a4ea/fast_total_sorting_of_arbitrary_traversable/) post on reddit (by David Feuer), about sorting traversables (which was a follow-up on [this](http://elvishjerricco.github.io/2017/03/23/applicative-sorting.html) post by Will Fancher), and I was inspired to write some pseudo-dependently-typed Haskell. The post (and subsequent [library](https://github.com/treeowl/sort-traversable)) detailed how to use size-indexed heaps to perform fast, total sorting on any traversable. I ended up with a [library](https://github.com/oisdk/type-indexed-queues) which has five size-indexed heaps (Braun, pairing, binomial, skew, and leftist), each verified for structural correctness. I also included the non-indexed implementations of each for comparison (as well as benchmarks, tests, and all that good stuff).
 
 The purpose of this post is to go through some of the tricks I used and problems I encountered writing a lot of type-level code in modern Haskell.
 
@@ -1091,6 +1091,6 @@ I'd be very interested to see any other uses of these indexed heaps, if anyone h
 
 ### The Library
 
-I've explored all of these ideas [here](https://github.com/oisdk/type-indexed-queues). I've got five heaps implemented (pairing, Braun, skew, binomial, and leftist). Each implementation is provided in both the indexed and non-indexed version. There's also the index-erasing type, and a size-indexed list, for reversing traversables. There are also benchmarks and tests. In the future, I might add things like a Fibonacci heap, or the optimal Brodal/Okasaki heap [@brodal_optimal_1996].
+I've explored all of these ideas [here](https://github.com/oisdk/type-indexed-queues). It has implementations of all the heaps I mentioned, as well as the index-erasing type, and a size-indexed list, for reversing traversables. In the future, I might add things like a Fibonacci heap, or the optimal Brodal/Okasaki heap [@brodal_optimal_1996].
 
 ---
