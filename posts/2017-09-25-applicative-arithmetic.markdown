@@ -121,14 +121,18 @@ vars = runAp_ f . runAppNum
 And write the function to sub in for us:
 
 ```{.haskell}
-variable
+variableA
     :: Applicative f
     => (String -> f Integer) -> Variable a -> f a
-variable _ (Constant x) = pure x
+variableA _ (Constant x) = pure x
+variableA f (Variable s) = f s
+
+variable :: (String -> Integer) -> Variable a -> a
+variable _ (Constant x) = x
 variable f (Variable s) = f s
 
 replace :: Map String Integer -> WithVars -> Integer
-replace m = runIdentity . runAp (variable (pure . (m Map.!))) . runAppNum
+replace m = runAp (variable (m Map.!)) . runAppNum
 
 replace (Map.fromList [("z",2), ("y",3)]) (x + y + z)
 -- 6
@@ -142,7 +146,7 @@ This will fail if a free variable isn't present in the map, unfortunately. To fi
 replace :: Map String Integer -> WithVars -> Either String Integer
 replace m =
     runAp
-        (variable $
+        (variableA $
          \s ->
               maybe (Left s) Right (Map.lookup s m)) .
     runAppNum
@@ -156,7 +160,7 @@ There's no issue with the *applicative* laws, though, which is why the [validati
 replace :: Map String Integer -> WithVars -> AccValidation [String] Integer
 replace m =
     runAp
-        (variable $
+        (variableA $
          \s ->
               maybe (AccFailure [s]) pure (Map.lookup s m)) .
     runAppNum
@@ -193,31 +197,26 @@ Finally, and this one's a bit exotic, you could examine every variable in turn, 
 
 ```{.haskell}
 zygo
-    :: Applicative g
-    => (forall x. f x -> g x)
-    -> (forall x. f x -> g (x -> a) -> b)
+    :: (forall x. f x -> x)
+    -> (forall x. f x -> (x -> a) -> b)
     -> Ap f a
     -> [b]
-zygo (l :: forall x. f x -> g x) (c :: forall x. f x -> g (x -> a) -> b) =
-    fst . go (pure id)
+zygo (l :: forall x. f x -> x) (c :: forall x. f x -> (x -> a) -> b) =
+    fst . go id
   where
-    go
-        :: forall c.
-           g (c -> a) -> Ap f c -> ([b], g c)
-    go _ (Pure x) = ([], pure x)
-    go k (Ap x f) = (c x (liftA2 (.) k ls) : xs, lx <**> ls)
+    go :: forall c. (c -> a) -> Ap f c -> ([b], c)
+    go _ (Pure x) = ([], x)
+    go k (Ap x f) = (c x (k . ls) : xs, ls lx)
       where
-        (xs,ls) = go (liftA2 (flip (.) . flip id) lx k) f
+        (xs,ls) = go (k . ($ lx)) f
         lx = l x
 
 examineEach :: WithVars -> [Integer -> Integer]
-examineEach = zygo (variable (const (pure 1))) g . runAppNum
+examineEach = zygo (variable (const 1)) g . runAppNum
   where
-    g :: Variable a -> (Integer -> (a -> b)) -> Integer -> b
-    g (Constant x) rhs = ($x) <$> rhs
-    g (Variable _) rhs =
-        \i ->
-             rhs i i
+    g :: Variable a -> (a -> b) -> Integer -> b
+    g (Constant x) rhs _ = rhs x
+    g (Variable _) rhs i = rhs i
 ```
 
 This produces a list of functions which are equivalent to subbing in for each variable with the rest set to 1.
