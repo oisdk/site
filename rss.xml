@@ -95,14 +95,18 @@ vars <span class="fu">=</span> runAp_ f <span class="fu">.</span> runAppNum
     f (<span class="dt">Constant</span> _) <span class="fu">=</span> []
     f (<span class="dt">Variable</span> s) <span class="fu">=</span> [s]</code></pre></div>
 <p>And write the function to sub in for us:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">variable
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">variableA
 <span class="ot">    ::</span> <span class="dt">Applicative</span> f
     <span class="ot">=&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> f a
-variable _ (<span class="dt">Constant</span> x) <span class="fu">=</span> pure x
+variableA _ (<span class="dt">Constant</span> x) <span class="fu">=</span> pure x
+variableA f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s
+
+<span class="ot">variable ::</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> a
+variable _ (<span class="dt">Constant</span> x) <span class="fu">=</span> x
 variable f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s
 
 <span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-replace m <span class="fu">=</span> runIdentity <span class="fu">.</span> runAp (variable (pure <span class="fu">.</span> (m <span class="fu">Map.!</span>))) <span class="fu">.</span> runAppNum
+replace m <span class="fu">=</span> runAp (variable (m <span class="fu">Map.!</span>)) <span class="fu">.</span> runAppNum
 
 replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2</span>), (<span class="st">&quot;y&quot;</span>,<span class="dv">3</span>)]) (x <span class="fu">+</span> y <span class="fu">+</span> z)
 <span class="co">-- 6</span></code></pre></div>
@@ -111,7 +115,7 @@ replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">String</span> <span class="dt">Integer</span>
 replace m <span class="fu">=</span>
     runAp
-        (variable <span class="fu">$</span>
+        (variableA <span class="fu">$</span>
          \s <span class="ot">-&gt;</span>
               maybe (<span class="dt">Left</span> s) <span class="dt">Right</span> (Map.lookup s m)) <span class="fu">.</span>
     runAppNum</code></pre></div>
@@ -120,7 +124,7 @@ replace m <span class="fu">=</span>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">AccValidation</span> [<span class="dt">String</span>] <span class="dt">Integer</span>
 replace m <span class="fu">=</span>
     runAp
-        (variable <span class="fu">$</span>
+        (variableA <span class="fu">$</span>
          \s <span class="ot">-&gt;</span>
               maybe (<span class="dt">AccFailure</span> [s]) pure (Map.lookup s m)) <span class="fu">.</span>
     runAppNum
@@ -144,31 +148,26 @@ query <span class="fu">=</span> runAp (variable f) <span class="fu">.</span> run
       fmap read getLine</code></pre></div>
 <p>Finally, and this one’s a bit exotic, you could examine every variable in turn, with defaults for the others:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zygo
-<span class="ot">    ::</span> <span class="dt">Applicative</span> g
-    <span class="ot">=&gt;</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> g x)
-    <span class="ot">-&gt;</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> g (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)
+<span class="ot">    ::</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x)
+    <span class="ot">-&gt;</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)
     <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a
     <span class="ot">-&gt;</span> [b]
-zygo (<span class="ot">l ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> g x) (<span class="ot">c ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> g (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="fu">=</span>
-    fst <span class="fu">.</span> go (pure id)
+zygo (<span class="ot">l ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x) (<span class="ot">c ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="fu">=</span>
+    fst <span class="fu">.</span> go id
   <span class="kw">where</span>
-    go
-<span class="ot">        ::</span> forall c<span class="fu">.</span>
-           g (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], g c)
-    go _ (<span class="dt">Pure</span> x) <span class="fu">=</span> ([], pure x)
-    go k (<span class="dt">Ap</span> x f) <span class="fu">=</span> (c x (liftA2 (<span class="fu">.</span>) k ls) <span class="fu">:</span> xs, lx <span class="fu">&lt;**&gt;</span> ls)
+<span class="ot">    go ::</span> forall c<span class="fu">.</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], c)
+    go _ (<span class="dt">Pure</span> x) <span class="fu">=</span> ([], x)
+    go k (<span class="dt">Ap</span> x f) <span class="fu">=</span> (c x (k <span class="fu">.</span> ls) <span class="fu">:</span> xs, ls lx)
       <span class="kw">where</span>
-        (xs,ls) <span class="fu">=</span> go (liftA2 (flip (<span class="fu">.</span>) <span class="fu">.</span> flip id) lx k) f
+        (xs,ls) <span class="fu">=</span> go (k <span class="fu">.</span> (<span class="fu">$</span> lx)) f
         lx <span class="fu">=</span> l x
 
 <span class="ot">examineEach ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>]
-examineEach <span class="fu">=</span> zygo (variable (const (pure <span class="dv">1</span>))) g <span class="fu">.</span> runAppNum
+examineEach <span class="fu">=</span> zygo (variable (const <span class="dv">1</span>)) g <span class="fu">.</span> runAppNum
   <span class="kw">where</span>
-<span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b
-    g (<span class="dt">Constant</span> x) rhs <span class="fu">=</span> (<span class="fu">$</span>x) <span class="fu">&lt;$&gt;</span> rhs
-    g (<span class="dt">Variable</span> _) rhs <span class="fu">=</span>
-        \i <span class="ot">-&gt;</span>
-             rhs i i</code></pre></div>
+<span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b
+    g (<span class="dt">Constant</span> x) rhs _ <span class="fu">=</span> rhs x
+    g (<span class="dt">Variable</span> _) rhs i <span class="fu">=</span> rhs i</code></pre></div>
 <p>This produces a list of functions which are equivalent to subbing in for each variable with the rest set to 1.</p>
 ]]></description>
     <pubDate>Mon, 25 Sep 2017 00:00:00 UT</pubDate>
