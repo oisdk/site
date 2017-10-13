@@ -1,6 +1,6 @@
 ---
 title: Semirings
-tags: Haskell
+tags: Haskell, Semirings
 bibliography: Semirings.bib
 ---
 ```{.haskell .literate .hidden_source}
