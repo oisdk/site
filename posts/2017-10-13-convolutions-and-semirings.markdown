@@ -208,9 +208,7 @@ You'll never get beyond 1 in the first list. Zipping isn't an option either, bec
 -- [(0,0),(0,1),(1,0),(0,2),(1,1),(2,0),(0,3),(1,2),(2,1),(3,0)...
 ```
 
-Then what you're looking for is a convolution (the same thing as polynomial multiplication). 
-
-For instance, it is a viable definition for ordering of pairs of two lists [discrete convolution](https://byorgey.wordpress.com/2008/04/22/list-convolutions/):
+Then what you're looking for is a convolution (the same thing as polynomial multiplication). `<.>`{.haskell} above can be adapted readily:
 
 ```{.haskell}
 convolve :: [a] -> [b] -> [[(a,b)]]
@@ -221,7 +219,7 @@ convolve xs ys = foldr f [] xs
     g x y a [] = [(x, y)] : a []
 ```
 
-This definition is a little different from the one in the blog post. By inlining the definition of `<+>`{.haskell}, we can avoid the expensive `++`{.haskell} function without using difference lists.
+Flatten out this result to get your ordering. This convolution is a little different from the one in the blog post. By inlining `<+>`{.haskell} we can avoid the expensive `++`{.haskell} function, without using difference lists.
 
 # Vectors
 
