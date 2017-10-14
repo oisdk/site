@@ -82,14 +82,22 @@ One further generalization: The two `f`{.haskell}s don't actually need to be the
 
 ```{.haskell}
 mulMatrix
-    :: (Applicative f, Traversable g, Applicative g, Semiring a)
-    => f (g a) -> g (f a) -> f (f a)
+    :: (Applicative n
+       ,Traversable m
+       ,Applicative m
+       ,Applicative p
+       ,Semiring a)
+    => n (m a) -> m (p a) -> n (p a)
 mulMatrix xs ys = fmap (\row -> fmap (add . liftA2 (<.>) row) cs) xs
   where
     cs = sequenceA ys
 ```
 
-Giving us a lovely representation of the dimensions of the two matrices. This function is present in the [linear package](https://hackage.haskell.org/package/linear-1.20.7/docs/Linear-Matrix.html#v:-33--42--33-) with some different constraints. In fairness, `Applicative`{.haskell} probably isn't the best thing to use here since it doesn't work for so many instances ([`MonadZip`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad-Zip.html) or something similar may be more suitable), but it's very handy to have, and works out-of the box for types like:
+Happily, the way that the wrappers (`n`{.haskell}, `m`{.haskell}, and `p`{.haskell}) match up coincides precisely with how matrix dimensions match up in matrix multiplication. Quoting from the [Wikipedia definition](https://en.wikipedia.org/wiki/Matrix_multiplication):
+
+> if $A$ is an $n \times m$ matrix and $B$ is an $m \times p$ matrix, their matrix product $AB$ is an $n \times p$ matrix
+
+This function is present in the [linear package](https://hackage.haskell.org/package/linear-1.20.7/docs/Linear-Matrix.html#v:-33--42--33-) with some different constraints. In fairness, `Applicative`{.haskell} probably isn't the best thing to use here since it doesn't work for so many instances ([`MonadZip`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad-Zip.html) or something similar may be more suitable), but it's very handy to have, and works out-of the box for types like:
 
 ```{.haskell}
 data Three a 
@@ -105,7 +113,7 @@ Which makes it (to my mind) useful enough to keep. Also, it hugely simplified th
 
 # Convolutions
 
-If you're putting a general class in a library that you want people to use, and there exist sensible instances for common Haskell types, you should probably provide those instances in the library to avoid orphans. The meaning of "sensible" here is vague: generally speaking, if there is only one obvious or clear instance, then it's sensible. For lists, the only minimal definition I could find is of polynomial multiplication. You know, where you multiply two polynomials like so:
+If you're putting a general class in a library that you want people to use, and there exist sensible instances for common Haskell types, you should probably provide those instances in the library to avoid orphans. The meaning of "sensible" here is vague: generally speaking, if there is only one obvious or clear instance, then it's sensible. For a list instance for the semiring class, for instance, I could figure out several law-abiding definitions for `<+>`{.haskell}, `one`{.haskell} and `zero`{.haskell}, but only one for `<.>`{.haskel}: polynomial multiplication. You know, where you multiply two polynomials like so:
 
 $$(x^3 + 2x + 3)(5x + 3x^2 + 4) = 9x^5 + 15x^4 + 18x^3 + 28x^2 + 38x + 24$$
 
@@ -223,7 +231,7 @@ Flatten out this result to get your ordering. This convolution is a little diffe
 
 # Long Multiplication
 
-Here's another cool use of lists as polynomials: they can be used as a [positional numeral system](https://en.wikipedia.org/wiki/Positional_notation). Most common numeral systems are positional, including Arabic (the system you most likely use, where twenty-four is written as 24) and binary. Non-positional systems are things like Roman numerals. Looking at the Arabic system for now, we see that the way of writing down numbers:
+Here's another cool use of lists as polynomials: they can be used as a [positional numeral system](https://en.Wikipedia.org/wiki/Positional_notation). Most common numeral systems are positional, including Arabic (the system you most likely use, where twenty-four is written as 24) and binary. Non-positional systems are things like Roman numerals. Looking at the Arabic system for now, we see that the way of writing down numbers:
 
 $$1989$$
 
