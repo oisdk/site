@@ -221,6 +221,85 @@ convolve xs ys = foldr f [] xs
 
 Flatten out this result to get your ordering. This convolution is a little different from the one in the blog post. By inlining `<+>`{.haskell} we can avoid the expensive `++`{.haskell} function, without using difference lists.
 
+# Long Multiplication
+
+Here's another cool use of lists as polynomials: they can be used as a [positional numeral system](https://en.wikipedia.org/wiki/Positional_notation). Most common numeral systems are positional, including Arabic (the system you most likely use, where twenty-four is written as 24) and binary. Non-positional systems are things like Roman numerals. Looking at the Arabic system for now, we see that the way of writing down numbers:
+
+$$1989$$
+
+Can be thought of the sum of each digit multiplied by ten to the power of its position:
+
+$$1989 = 1 \times 10^3 \plus 9 \times 10^2 \plus 8 \times 10^1 \plus 9 \times 10^0$$
+$$1989 = 1 \times 1000 \plus 9 \times 100 \plus 8 \times 10 \plus 9 \times 1$$
+$$1989 = 1000 \plus 900 \plus 80 \plus 9$$
+$$1989 = 1989$$
+
+Where the positions are numbered from the right. In other words, it's our polynomial list from above in reverse. As well as that, the convolution is long multiplication.
+
+Now, taking this straight off we can try some examples:
+
+```{.haskell}
+-- 12 + 15 = 27
+[2, 1] <+> [5, 1] == [7, 2]
+
+-- 23 * 2 = 46
+[3, 2] <.> [2] == [6, 4]
+```
+
+The issue, of course, is that we're not handling carrying properly:
+
+```{.haskell}
+[6] <+> [6] == [12]
+```
+
+No matter: we can perform all the carries after the addition, and everything works out fine:
+
+```{.haskell}
+carry
+    :: Integral a
+    => a -> [a] -> [a]
+carry base xs = foldr f (toBase base) xs 0
+  where
+    f e a cin = r : a q where
+      (q,r) = quotRem (cin + e) base
+        
+toBase :: Integral a => a -> a -> [a]
+toBase base = unfoldr f where
+  f 0 = Nothing
+  f n = Just (swap (quotRem n base))
+```
+
+Wrap the whole thing in a newtype and we can have a `Num`{.haskell} instance:
+
+```{.haskell}
+newtype Positional 
+  = Positional 
+  { withBase :: Integer -> [Integer] 
+  } 
+
+instance Num Positional where
+  Positional x + Positional y = Positional (carry <*> x <+> y)
+  Positional x * Positional y = Positional (carry <*> x <.> y)
+  fromInteger m = Positional (\base -> toBase base m)
+  abs = id
+  signum = id
+  negate = id
+  
+toDigits :: Integer -> Positional -> [Integer]
+toDigits base p = reverse (withBase p base)
+```
+
+This also lets us choose our base after the fact:
+
+```{.haskell}
+sumHundred = (sum . map fromInteger) [1..100]
+toDigits 10 sumHundred
+-- [5,0,5,0]
+toDigits 2 sumHundred
+-- [1,0,0,1,1,1,0,1,1,1,0,1,0]
+```
+
+
 # Vectors
 
 All the hand-optimizing, inlining, and fusion magic in the world won't make a list-based implementation of convolution faster than a proper one on vectors, unfortunately. In particular, for larger vectors, a fast Fourier transform can be used. Also, usually code like this will be parallelized, rather than sequential. That said, it can be helpful to implement the slower version on vectors, in the usual indexed way, for comparison's sake:
