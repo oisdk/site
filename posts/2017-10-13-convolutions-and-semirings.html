@@ -165,6 +165,55 @@ convolve xs ys <span class="fu">=</span> foldr f [] xs
     g x y a (z<span class="fu">:</span>zs) <span class="fu">=</span> ((x, y) <span class="fu">:</span> z) <span class="fu">:</span> a zs
     g x y a [] <span class="fu">=</span> [(x, y)] <span class="fu">:</span> a []</code></pre></div>
 <p>Flatten out this result to get your ordering. This convolution is a little different from the one in the blog post. By inlining <code class="sourceCode haskell"><span class="fu">&lt;+&gt;</span></code> we can avoid the expensive <code class="sourceCode haskell"><span class="fu">++</span></code> function, without using difference lists.</p>
+<h1 id="long-multiplication">Long Multiplication</h1>
+<p>Here’s another cool use of lists as polynomials: they can be used as a <a href="https://en.wikipedia.org/wiki/Positional_notation">positional numeral system</a>. Most common numeral systems are positional, including Arabic (the system you most likely use, where twenty-four is written as 24) and binary. Non-positional systems are things like Roman numerals. Looking at the Arabic system for now, we see that the way of writing down numbers:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1989</mn><annotation encoding="application/x-tex">1989</annotation></semantics></math></p>
+<p>Can be thought of the sum of each digit multiplied by ten to the power of its position:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1</mn><mo>×</mo><msup><mn>10</mn><mn>3</mn></msup><mo>+</mo><mn>9</mn><mo>×</mo><msup><mn>10</mn><mn>2</mn></msup><mo>+</mo><mn>8</mn><mo>×</mo><msup><mn>10</mn><mn>1</mn></msup><mo>+</mo><mn>9</mn><mo>×</mo><msup><mn>10</mn><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">1989 = 1 \times 10^3 \plus 9 \times 10^2 \plus 8 \times 10^1 \plus 9 \times 10^0</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1</mn><mo>×</mo><mn>1000</mn><mo>+</mo><mn>9</mn><mo>×</mo><mn>100</mn><mo>+</mo><mn>8</mn><mo>×</mo><mn>10</mn><mo>+</mo><mn>9</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1989 = 1 \times 1000 \plus 9 \times 100 \plus 8 \times 10 \plus 9 \times 1</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1000</mn><mo>+</mo><mn>900</mn><mo>+</mo><mn>80</mn><mo>+</mo><mn>9</mn></mrow><annotation encoding="application/x-tex">1989 = 1000 \plus 900 \plus 80 \plus 9</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1989</mn></mrow><annotation encoding="application/x-tex">1989 = 1989</annotation></semantics></math></p>
+<p>Where the positions are numbered from the right. In other words, it’s our polynomial list from above in reverse. As well as that, the convolution is long multiplication.</p>
+<p>Now, taking this straight off we can try some examples:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">-- 12 + 15 = 27</span>
+[<span class="dv">2</span>, <span class="dv">1</span>] <span class="fu">&lt;+&gt;</span> [<span class="dv">5</span>, <span class="dv">1</span>] <span class="fu">==</span> [<span class="dv">7</span>, <span class="dv">2</span>]
+
+<span class="co">-- 23 * 2 = 46</span>
+[<span class="dv">3</span>, <span class="dv">2</span>] <span class="fu">&lt;.&gt;</span> [<span class="dv">2</span>] <span class="fu">==</span> [<span class="dv">6</span>, <span class="dv">4</span>]</code></pre></div>
+<p>The issue, of course, is that we’re not handling carrying properly:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">[<span class="dv">6</span>] <span class="fu">&lt;+&gt;</span> [<span class="dv">6</span>] <span class="fu">==</span> [<span class="dv">12</span>]</code></pre></div>
+<p>No matter: we can perform all the carries after the addition, and everything works out fine:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">carry
+<span class="ot">    ::</span> <span class="dt">Integral</span> a
+    <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]
+carry base xs <span class="fu">=</span> foldr f (toBase base) xs <span class="dv">0</span>
+  <span class="kw">where</span>
+    f e a cin <span class="fu">=</span> r <span class="fu">:</span> a q <span class="kw">where</span>
+      (q,r) <span class="fu">=</span> quotRem (cin <span class="fu">+</span> e) base
+        
+<span class="ot">toBase ::</span> <span class="dt">Integral</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]
+toBase base <span class="fu">=</span> unfoldr f <span class="kw">where</span>
+  f <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+  f n <span class="fu">=</span> <span class="dt">Just</span> (swap (quotRem n base))</code></pre></div>
+<p>Wrap the whole thing in a newtype and we can have a <code class="sourceCode haskell"><span class="dt">Num</span></code> instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Positional</span> 
+  <span class="fu">=</span> <span class="dt">Positional</span> 
+  {<span class="ot"> withBase ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>] 
+  } 
+
+<span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Positional</span> <span class="kw">where</span>
+  <span class="dt">Positional</span> x <span class="fu">+</span> <span class="dt">Positional</span> y <span class="fu">=</span> <span class="dt">Positional</span> (carry <span class="fu">&lt;*&gt;</span> x <span class="fu">&lt;+&gt;</span> y)
+  <span class="dt">Positional</span> x <span class="fu">*</span> <span class="dt">Positional</span> y <span class="fu">=</span> <span class="dt">Positional</span> (carry <span class="fu">&lt;*&gt;</span> x <span class="fu">&lt;.&gt;</span> y)
+  fromInteger m <span class="fu">=</span> <span class="dt">Positional</span> (\base <span class="ot">-&gt;</span> toBase base m)
+  abs <span class="fu">=</span> id
+  signum <span class="fu">=</span> id
+  negate <span class="fu">=</span> id
+  
+<span class="ot">toDigits ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Positional</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]
+toDigits base p <span class="fu">=</span> reverse (withBase p base)</code></pre></div>
+<p>This also lets us choose our base after the fact:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">sumHundred <span class="fu">=</span> (sum <span class="fu">.</span> map fromInteger) [<span class="dv">1</span><span class="fu">..</span><span class="dv">100</span>]
+toDigits <span class="dv">10</span> sumHundred
+<span class="co">-- [5,0,5,0]</span>
+toDigits <span class="dv">2</span> sumHundred
+<span class="co">-- [1,0,0,1,1,1,0,1,1,1,0,1,0]</span></code></pre></div>
 <h1 id="vectors">Vectors</h1>
 <p>All the hand-optimizing, inlining, and fusion magic in the world won’t make a list-based implementation of convolution faster than a proper one on vectors, unfortunately. In particular, for larger vectors, a fast Fourier transform can be used. Also, usually code like this will be parallelized, rather than sequential. That said, it can be helpful to implement the slower version on vectors, in the usual indexed way, for comparison’s sake:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Semiring</span> a <span class="ot">=&gt;</span>
