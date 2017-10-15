@@ -147,12 +147,12 @@ We can improve the situation slightly by going back and forth, slalom-style, so 
 
 ```{.haskell}
 treeFold :: (a -> a -> a) -> NonEmpty a -> a
-treeFold f = goFor where
+treeFold f = goTo where
   
-  goFor (y :| []) = y
-  goFor (a :| b : rest) = goBack (pairMap f (f a b) rest)
-  goBack (y :| []) = y
-  goBack (a :| b : rest) = goFor (pairMap (flip f) (f b a) rest)
+  goTo (y :| []) = y
+  goTo (a :| b : rest) = goFro (pairMap f (f a b) rest)
+  goFro (y :| []) = y
+  goFro (a :| b : rest) = goTo (pairMap (flip f) (f b a) rest)
 
   pairMap f = go [] where
     go ys y (a:b:rest) = go (y:ys) (f a b) rest
@@ -174,9 +174,9 @@ It does *not* build up the tree as balanced as it possibly could, though:
 -- (1*2)*((3*4)*(5*6))
 ```
 
-There's four elements in the right branch, and two in the left in the above example. We could have a tree with three in both, which would be more balanced.
+There's four elements in the right branch, and two in the left in the above example. Three in each would be optimal.
 
-What do we mean when we say one tree is more balanced than another? We can say the "balance factor" is the largest difference in size of two sibling trees:
+Wait—optimal in what sense, exactly? What do we mean when we say one tree is more balanced than another? Let's say the "balance factor" is the largest difference in size of two sibling trees:
 
 ```{.haskell}
 balFac :: Tree a -> Integer
