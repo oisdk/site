@@ -17,7 +17,7 @@ foldl (+) 0 [1,2,3]
 ((0 + 1) + 2) + 3
 ```
 
-As you'll notice, the result of the two operations above is the same (6; although one may take much longer than the other). In fact, *whenever* the result of `foldr`{.haskell} and `foldl`{.haskell} is the same for a pair of arguments (in this case `+`{.haskell} and `0`{.haskell}), we say that that pair forms a [`Monoid`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Monoid) for some type. In this case, the [`Sum`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Sum) monoid is formed:
+As you'll notice, the result of the two operations above is the same (6; although one may take much longer than the other). In fact, *whenever* the result of `foldr`{.haskell} and `foldl`{.haskell} is the same for a pair of arguments (in this case `+`{.haskell} and `0`{.haskell}), we say that that pair forms a [`Monoid`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Monoid) for some type (well, there's some extra stuff to do with `0`{.haskell}, but I only care about associativity at the moment). In this case, the [`Sum`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Sum) monoid is formed:
 
 ```{.haskell}
 newtype Sum a = Sum { getSum :: a }
@@ -27,13 +27,20 @@ instance Num a => Monoid (Sum a) where
   mappend (Sum x) (Sum y) = Sum (x + y)
 ```
 
-When you know that you have a monoid, you can use the [`foldMap`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html#v:foldMap) function: this is the third kind of fold. It says that you don't care which of `foldl`{.haskell} or `foldr`{.haskell} is used, so the implementer of `foldMap`{.haskell} can choose which is more efficient (or some combination of the two).
+When you know that you have a monoid, you can use the [`foldMap`{.haskell}](https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html#v:foldMap) function: this is the third kind of fold. It says that you don't care which of `foldl`{.haskell} or `foldr`{.haskell} is used, so the implementer of `foldMap`{.haskell} can put the parentheses wherever they want:
 
-This is a pretty bare-bones introduction to folds and monoids: you won't need to know more than that for the rest of this post, but the topic area is fascinating and deep, so don't let me give you the impression that I've done anything more than scratched the surface.
+```{.haskell}
+foldMap Sum [1,2,3]
+(1 + 2) + (3 + 0)
+0 + ((1 + 2) + 3)
+((0 + 1) + 2) + 3
+```
+
+And we can't tell the difference from the result. This is a pretty bare-bones introduction to folds and monoids: you won't need to know more than that for the rest of this post, but the topic area is fascinating and deep, so don't let me give you the impression that I've done anything more than scratched the surface.
 
 # Other Ways to Fold
 
-Quite often, we *do* care about whether we choose `foldl`{.haskell} or `foldr`{.haskell}. Take, for instance, a binary tree type, with values at the leaves:
+Quite often, we *do* care about where the parentheses go. Take, for instance, a binary tree type, with values at the leaves:
 
 ```{.haskell}
 data Tree a
@@ -49,7 +56,16 @@ instance Show a =>
         showParen (n > 5) (showsPrec 6 l . showChar '*' . showsPrec 6 r)
 ```
 
-The results of `foldl`{.haskell} and `foldr`{.haskell} look very different indeed for this type:
+We can't (well, shouldn't) us `foldMap`{.haskell} here, because we would be able to tell the difference between different arrangements of parentheses:
+
+```{.haskell}
+foldMap something [1,2,3]
+(1*2)*(3*())
+()*((1*2)*3)
+((()*1)*2)*3
+```
+
+So we use one of the folds which lets us choose the arrangements of parentheses:
 
 ```{.haskell}
 (foldr (:*:) Empty . map Leaf) [1,2,3,4,5,6]
@@ -59,7 +75,7 @@ The results of `foldl`{.haskell} and `foldr`{.haskell} look very different indee
 -- (((((()*1)*2)*3)*4)*5)*6
 ```
 
-As you can see, we're effectively preserving the parentheses in the result. The issue is that, for a lot of applications, *neither* of these results are suitable: we want something a little more balanced.
+The issue is that neither of the trees generated are necessarily what we want: often, we want something more *balanced*.
 
 ## TreeFold
 
@@ -158,9 +174,24 @@ It does *not* build up the tree as balanced as it possibly could, though:
 -- (1*2)*((3*4)*(5*6))
 ```
 
-How balanced is the resulting tree, exactly? If we say the balance factor is the maximum difference in size of two sibling trees, from what I can tell the slalom method is always better than the typewriter. I haven't been able to verify this formally, but from some quick experiments and some help from [oeis.org](https://oeis.org/), all trees of size smaller than $2^n$ (or, to put it another way, all trees with depth less than $n$) will have a balance factor less than the $n$th [Jacobsthal number](https://oeis.org/A001045). Interestingly, that's (apparently) also the number of ways to tie a tie using $n + 2$ turns.
+There's four elements in the right branch, and two in the left in the above example. We could have a tree with three in both, which would be more balanced.
 
-The sequence is defined like this:
+What do we mean when we say one tree is more balanced than another? We can say the "balance factor" is the largest difference in size of two sibling trees:
+
+```{.haskell}
+balFac :: Tree a -> Integer
+balFac = fst . go where
+  go :: Tree a -> (Integer, Integer)
+  go (Leaf _) = (0, 1)
+  go (l :*: r) = (lb `max` rb `max` abs (rs - ls), rs + ls) where
+    (lb,ls) = go l
+    (rb,rs) = go r
+```
+
+And one tree is more balanced than another if it has a smaller balance factor. From what I can tell, according to this definition, the slalom method is always more balanced than the typewriter for lists of the same length. I haven't been able to verify this formally, but from some quick experiments and some help from [oeis.org](https://oeis.org/), all trees of size smaller than $2^n$ (or, to put it another way, all trees with depth less than $n$) will have a balance factor less than the $n$th [Jacobsthal number](https://oeis.org/A001045). Interestingly, that's (apparently) also the number of ways to tie a tie using $n + 2$ turns.
+
+
+Jacobsthal numbers are defined like this:
 
 ```{.haskell}
 j 0 = 0
@@ -210,7 +241,7 @@ treeFold f (x:|xs) = evalState (go (length (x:xs))) (x:xs) where
     return (f l r)
 ```
 
-And there you have it: three different ways to fold in a more balanced way. Perhaps surprisingly, the first is the fastest in my tests. I'd love to hear if there's a way to get the more balanced versions (lazily, ideally) just as efficiently as the first implementation.
+And there you have it: three different ways to fold in a more balanced way. Perhaps surprisingly, the first is the fastest in my tests. I'd love to hear if there's a more balanced version (which is lazy, ideally) that is just as efficient as the first implementation.
 
 # Stable Summation
 
