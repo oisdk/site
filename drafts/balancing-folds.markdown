@@ -50,36 +50,35 @@ data Tree a
 
 instance Show a =>
          Show (Tree a) where
-    showsPrec n Empty = showString "()"
-    showsPrec n (Leaf x) = showsPrec n x
-    showsPrec n (l :*: r) =
-        showParen (n > 5) (showsPrec 6 l . showChar '*' . showsPrec 6 r)
+    show Empty = "()"
+    show (Leaf x) = show x
+    show (l :*: r) = "(" ++ show l ++ "*" ++ show r ++ ")"
 ```
 
 We can't (well, shouldn't) us `foldMap`{.haskell} here, because we would be able to tell the difference between different arrangements of parentheses:
 
 ```{.haskell}
 foldMap something [1,2,3]
-(1*2)*(3*())
-()*((1*2)*3)
-((()*1)*2)*3
+((1*2)*(3*()))
+(()*((1*2)*3))
+(((()*1)*2)*3)
 ```
 
 So we use one of the folds which lets us choose the arrangements of parentheses:
 
 ```{.haskell}
 (foldr (:*:) Empty . map Leaf) [1,2,3,4,5,6]
--- 1*(2*(3*(4*(5*(6*())))))
+-- (1*(2*(3*(4*(5*(6*()))))))
 
 (foldl (:*:) Empty . map Leaf) [1,2,3,4,5,6]
--- (((((()*1)*2)*3)*4)*5)*6
+-- ((((((()*1)*2)*3)*4)*5)*6)
 ```
 
 The issue is that neither of the trees generated are necessarily what we want: often, we want something more *balanced*.
 
 ## TreeFold
 
-To try and find a better fold, let's (for now) assume we're always going to get non-empty input. This will let us simplify the `Tree`{.haskell} type a little, to:
+To try and find a more balanced fold, let's (for now) assume we're always going to get non-empty input. This will let us simplify the `Tree`{.haskell} type a little, to:
 
 ```{.haskell}
 data Tree a
@@ -89,9 +88,8 @@ data Tree a
 
 instance Show a =>
          Show (Tree a) where
-    showsPrec n (Leaf x) = showsPrec n x
-    showsPrec n (l :*: r) =
-        showParen (n > 5) (showsPrec 6 l . showChar '*' . showsPrec 6 r)
+    show (Leaf x) = show x
+    show (l :*: r) = "(" ++ show l ++ "*" ++ show r ++ ")"
 ```
 
 Then, we can use Jon Fairbairn's fold described in [this](http://www.mail-archive.com/haskell@haskell.org/msg01788.html) email, adapted a bit for our non-empty input:
@@ -124,22 +122,22 @@ The `go`{.haskell} helper applies `pairMap`{.haskell} repeatedly to the list unt
 
 ```{.haskell}
 (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
--- ((1*2)*(3*4))*(5*6)
+-- (((1*2)*(3*4))*(5*6))
 
 (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6,7,8]
--- ((1*2)*(3*4))*((5*6)*(7*8))
+-- (((1*2)*(3*4))*((5*6)*(7*8)))
 ```
 
 However, there are still cases where one branch will be much larger than its sibling. The fold fills a balanced binary tree from the left, but any leftover elements are put at the top level. In other words:
 
 ```{.haskell}
 (treeFold (:*:) . fmap Leaf) [1..9]
--- (((1*2)*(3*4))*((5*6)*(7*8)))*9
+-- ((((1*2)*(3*4))*((5*6)*(7*8)))*9)
 ```
 
 That `9`{.haskell} hanging out on its own there is a problem.
 
-## Zigzagging
+## Typewriters and Slaloms
 
 One observation we can make is that `pairMap`{.haskell} always starts from the same side on each iteration, like a typewriter moving from one line to the next. This has the consequence of building up the leftovers on one side, leaving them until the top level.
 
@@ -164,14 +162,14 @@ Notice that we have to flip the combining function to make sure the ordering is 
 
 ```{.haskell}
 (treeFold (:*:) . fmap Leaf) [1..9]
--- ((1*2)*((3*4)*(5*6)))*((7*8)*9)
+-- (((1*2)*((3*4)*(5*6)))*((7*8)*9))
 ```
 
 It does *not* build up the tree as balanced as it possibly could, though:
 
 ```{.haskell}
 (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
--- (1*2)*((3*4)*(5*6))
+-- ((1*2)*((3*4)*(5*6)))
 ```
 
 There's four elements in the right branch, and two in the left in the above example. Three in each would be optimal.
@@ -188,10 +186,13 @@ balFac = fst . go where
     (rb,rs) = go r
 ```
 
-And one tree is more balanced than another if it has a smaller balance factor. From what I can tell, according to this definition, the slalom method is always more balanced than the typewriter for lists of the same length. I haven't been able to verify this formally, but from some quick experiments and some help from [oeis.org](https://oeis.org/), all trees of size smaller than $2^n$ (or, to put it another way, all trees with depth less than $n$) will have a balance factor less than the $n$th [Jacobsthal number](https://oeis.org/A001045). Interestingly, that's (apparently) also the number of ways to tie a tie using $n + 2$ turns.
+And one tree is more balanced than another if it has a smaller balance factor.
 
+There's effectively no limit on the balance factor for the typewriter method: when the input is one larger than a power of two, it'll stick the one extra in one branch and the rest in another (as with `[1..9]`{.haskell} in the example above).
 
-Jacobsthal numbers are defined like this:
+For the slalom method, it looks like there's something more interesting going on, limit-wise. I haven't been able to verify this formally (yet), but from what I can tell, a tree of height $n$ will have at most a balance factor of the $n$th [Jacobsthal number](https://oeis.org/A001045). That's (apparently) also the number of ways to tie a tie using $n + 2$ turns.
+
+That was just gathered from some quick experiments and [oeis.org](https://oeis.org/), but it seems to make sense intuitively. Jacobsthal numbers are defined like this:
 
 ```{.haskell}
 j 0 = 0
@@ -199,7 +200,7 @@ j 1 = 1
 j n = j (n-1) + 2 * j (n-2)
 ```
 
-Which kind of makes sense: the worst case for balancedness is lists of size $2^n+1$. When this happens, there's an imbalance at every iteration of `pairFold`{.haskell}. So, at the top level, there's the imbalance caused by the second-last `pairFold`{.haskell}, plus the imbalance caused by the third-to-last. However, the second imbalance is twice what it was at that level, because it is now working with an already-paired-up list. Why isn't the second last imbalance also doubled? Because it's counteracted by the fact that we turned around: the imbalance is in an element that's a leftover element. At least that's what my intuition is at this point.
+So, at the top level, there's the imbalance caused by the second-last `pairFold`{.haskell}, plus the imbalance caused by the third-to-last. However, the third-to-last imbalance is twice what it was at that level, because it is now working with an already-paired-up list. Why isn't the second last imbalance also doubled? Because it's counteracted by the fact that we turned around: the imbalance is in an element that's a leftover element. At least that's what my intuition is at this point.
 
 The minimum balance factor is, of course, one. Unfortunately, to achieve that, I lost some of the properties of the previous folds:
 
