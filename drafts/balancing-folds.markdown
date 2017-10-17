@@ -94,7 +94,7 @@ instance Show a =>
         showParen (n > 5) (showsPrec 6 l . showChar '*' . showsPrec 6 r)
 ```
 
-Then, we can use a fold described in [this](http://www.mail-archive.com/haskell@haskell.org/msg01788.html) email, adapted a bit for our non-empty input:
+Then, we can use Jon Fairbairn's fold described in [this](http://www.mail-archive.com/haskell@haskell.org/msg01788.html) email, adapted a bit for our non-empty input:
 
 ```{.haskell}
 import Data.List.NonEmpty (NonEmpty(..))
