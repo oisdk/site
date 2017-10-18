@@ -272,12 +272,22 @@ treeFoldParallel f xs =
     treeFold const (splitPar f) xs numCapabilities
 ```
 
-The above will split the fold into `numCapabilities`{.haskell} chunks, and perform each one in parallel. `numCapabilities`{.haskell} is a constant defined in [GHC.Conc](https://hackage.haskell.org/package/base-4.10.0.0/docs/GHC-Conc.html): it's the number of threads which can be run simultaneously at any one time. Alternatively, you could the function include a parameter for how many chunks to split the computation into. As it is, I think it's pretty cool that code like this:
+The above will split the fold into `numCapabilities`{.haskell} chunks, and perform each one in parallel. `numCapabilities`{.haskell} is a constant defined in [GHC.Conc](https://hackage.haskell.org/package/base-4.10.0.0/docs/GHC-Conc.html): it's the number of threads which can be run simultaneously at any one time. Alternatively, you could the function include a parameter for how many chunks to split the computation into. You could also have the fold adapt as it went, choosing whether or not to spark based on how many sparks exist at any given time:
 
 ```{.haskell}
-treeFoldParallel (+) [1..10000]
+parseq :: a -> b -> b
+parseq a b =
+    runST
+        (bool (par a b) (seq a b) <$>
+         unsafeIOToST (liftA2 (>) numSparks getNumCapabilities))
+
+treeFoldAdaptive :: (a -> a -> a) -> a -> [a] -> a
+treeFoldAdaptive f =
+    Lazy.treeFold
+        (\l r ->
+              r `parseq` (l `parseq` f l r))
 ```
 
-Will just figure out how many cores your machine has, split the input into that many chunks, and perform a somewhat-stable summation algorithm on it.
+Adapted from [this](https://www.reddit.com/r/haskell/comments/73umrw/another_parallelism_primitive_parseq/dnurduu/?utm_content=permalink&utm_medium=front&utm_source=reddit&utm_name=haskell) comment by Edward Kmett. This is actually the fastest version of all the folds.
 
 All of this is provided in a [library](https://hackage.haskell.org/package/treefold) I've put up on Hackage.
