@@ -263,7 +263,7 @@ splitPar f = go
     go l r 0 = f (l 0) (r 0)
     go l r n = lt `par` (rt `pseq` f lt rt)
       where
-        lt = l m
+        lt = l (n-m)
         rt = r m
         m = n `div` 2
 
