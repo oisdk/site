@@ -7,8 +7,206 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Fri, 13 Oct 2017 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Mon, 30 Oct 2017 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Balancing Folds</title>
+    <link>http://doisinkidney.com/posts/2017-10-30-balancing-folds.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on October 30, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>, <a href="/tags/Folds.html">Folds</a>
+    
+</div>
+
+<p>There are three main ways to fold things in Haskell: from the right, from the left, and from either side. Let’s look at the left vs right variants first. <code class="sourceCode haskell">foldr</code> works from the right:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldr (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]
+<span class="dv">1</span> <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> (<span class="dv">3</span> <span class="fu">+</span> <span class="dv">0</span>))</code></pre></div>
+<p>And <code class="sourceCode haskell">foldl</code> from the left:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldl (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]
+((<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span></code></pre></div>
+<p>As you’ll notice, the result of the two operations above is the same (6; although one may take much longer than the other). In fact, <em>whenever</em> the result of <code class="sourceCode haskell">foldr</code> and <code class="sourceCode haskell">foldl</code> is the same for a pair of arguments (in this case <code class="sourceCode haskell"><span class="fu">+</span></code> and <code class="sourceCode haskell"><span class="dv">0</span></code>), we say that that pair forms a <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Monoid"><code class="sourceCode haskell"><span class="dt">Monoid</span></code></a> for some type (well, there’s some extra stuff to do with <code class="sourceCode haskell"><span class="dv">0</span></code>, but I only care about associativity at the moment). In this case, the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Sum"><code class="sourceCode haskell"><span class="dt">Sum</span></code></a> monoid is formed:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Sum</span> a <span class="fu">=</span> <span class="dt">Sum</span> {<span class="ot"> getSum ::</span> a }
+
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Sum</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Sum</span> <span class="dv">0</span>
+  mappend (<span class="dt">Sum</span> x) (<span class="dt">Sum</span> y) <span class="fu">=</span> <span class="dt">Sum</span> (x <span class="fu">+</span> y)</code></pre></div>
+<p>When you know that you have a monoid, you can use the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html#v:foldMap"><code class="sourceCode haskell">foldMap</code></a> function: this is the third kind of fold. It says that you don’t care which of <code class="sourceCode haskell">foldl</code> or <code class="sourceCode haskell">foldr</code> is used, so the implementer of <code class="sourceCode haskell">foldMap</code> can put the parentheses wherever they want:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldMap <span class="dt">Sum</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]
+(<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> (<span class="dv">3</span> <span class="fu">+</span> <span class="dv">0</span>)
+<span class="dv">0</span> <span class="fu">+</span> ((<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span>)
+((<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span></code></pre></div>
+<p>And we can’t tell the difference from the result. This is a pretty bare-bones introduction to folds and monoids: you won’t need to know more than that for the rest of this post, but the topic area is fascinating and deep, so don’t let me give you the impression that I’ve done anything more than scratched the surface.</p>
+<h1 id="other-ways-to-fold">Other Ways to Fold</h1>
+<p>Quite often, we <em>do</em> care about where the parentheses go. Take, for instance, a binary tree type, with values at the leaves:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+  <span class="fu">=</span> <span class="dt">Empty</span>
+  <span class="fu">|</span> <span class="dt">Leaf</span> a
+  <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a
+
+<span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span>
+         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span>
+    show <span class="dt">Empty</span> <span class="fu">=</span> <span class="st">&quot;()&quot;</span>
+    show (<span class="dt">Leaf</span> x) <span class="fu">=</span> show x
+    show (l <span class="fu">:*:</span> r) <span class="fu">=</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> show l <span class="fu">++</span> <span class="st">&quot;*&quot;</span> <span class="fu">++</span> show r <span class="fu">++</span> <span class="st">&quot;)&quot;</span></code></pre></div>
+<p>We can’t (well, shouldn’t) us <code class="sourceCode haskell">foldMap</code> here, because we would be able to tell the difference between different arrangements of parentheses:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">foldMap something [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]
+((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span>()))
+(()<span class="fu">*</span>((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span><span class="dv">3</span>))
+(((()<span class="fu">*</span><span class="dv">1</span>)<span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span><span class="dv">3</span>)</code></pre></div>
+<p>So we use one of the folds which lets us choose the arrangements of parentheses:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(foldr (<span class="fu">:*:</span>) <span class="dt">Empty</span> <span class="fu">.</span> map <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]
+<span class="co">-- (1*(2*(3*(4*(5*(6*()))))))</span>
+
+(foldl (<span class="fu">:*:</span>) <span class="dt">Empty</span> <span class="fu">.</span> map <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]
+<span class="co">-- ((((((()*1)*2)*3)*4)*5)*6)</span></code></pre></div>
+<p>The issue is that neither of the trees generated are necessarily what we want: often, we want something more <em>balanced</em>.</p>
+<h2 id="treefold">TreeFold</h2>
+<p>To try and find a more balanced fold, let’s (for now) assume we’re always going to get non-empty input. This will let us simplify the <code class="sourceCode haskell"><span class="dt">Tree</span></code> type a little, to:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+  <span class="fu">=</span> <span class="dt">Leaf</span> a
+  <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a
+  <span class="kw">deriving</span> <span class="dt">Foldable</span>
+
+<span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span>
+         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span>
+    show (<span class="dt">Leaf</span> x) <span class="fu">=</span> show x
+    show (l <span class="fu">:*:</span> r) <span class="fu">=</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> show l <span class="fu">++</span> <span class="st">&quot;*&quot;</span> <span class="fu">++</span> show r <span class="fu">++</span> <span class="st">&quot;)&quot;</span></code></pre></div>
+<p>Then, we can use Jon Fairbairn’s fold described in <a href="http://www.mail-archive.com/haskell@haskell.org/msg01788.html">this</a> email, adapted a bit for our non-empty input:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">Data.List.NonEmpty</span> (<span class="dt">NonEmpty</span>(..))
+
+<span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFold f <span class="fu">=</span> go
+  <span class="kw">where</span>
+    go (x <span class="fu">:|</span> []) <span class="fu">=</span> x
+    go (a <span class="fu">:|</span> b<span class="fu">:</span>l) <span class="fu">=</span> go (f a b <span class="fu">:|</span> pairMap l)
+    pairMap (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap rest
+    pairMap xs <span class="fu">=</span> xs</code></pre></div>
+<p>There are two parts to this function: <code class="sourceCode haskell">pairMap</code> and the <code class="sourceCode haskell">go</code> helper. <code class="sourceCode haskell">pairMap</code> combines adjacent elements in the list using the combining function. As a top-level function it might look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">pairMap f (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap f rest
+pairMap f xs <span class="fu">=</span> xs
+
+pairMap (<span class="fu">++</span>) [<span class="st">&quot;a&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;c&quot;</span>,<span class="st">&quot;d&quot;</span>,<span class="st">&quot;e&quot;</span>]
+<span class="co">-- [&quot;ab&quot;,&quot;cd&quot;,&quot;e&quot;]</span></code></pre></div>
+<p>As you can see, it leaves any leftovers untouched at the end of the list.</p>
+<p>The <code class="sourceCode haskell">go</code> helper applies <code class="sourceCode haskell">pairMap</code> repeatedly to the list until it has only one element. This gives us much more balanced results that <code class="sourceCode haskell">foldl</code> or <code class="sourceCode haskell">foldr</code> (turn on <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XOverloadedLists</span></code> to write non-empty lists using this syntax):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]
+<span class="co">-- (((1*2)*(3*4))*(5*6))</span>
+
+(treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]
+<span class="co">-- (((1*2)*(3*4))*((5*6)*(7*8)))</span></code></pre></div>
+<p>However, there are still cases where one branch will be much larger than its sibling. The fold fills a balanced binary tree from the left, but any leftover elements are put at the top level. In other words:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]
+<span class="co">-- ((((1*2)*(3*4))*((5*6)*(7*8)))*9)</span></code></pre></div>
+<p>That <code class="sourceCode haskell"><span class="dv">9</span></code> hanging out on its own there is a problem.</p>
+<h2 id="typewriters-and-slaloms">Typewriters and Slaloms</h2>
+<p>One observation we can make is that <code class="sourceCode haskell">pairMap</code> always starts from the same side on each iteration, like a typewriter moving from one line to the next. This has the consequence of building up the leftovers on one side, leaving them until the top level.</p>
+<p>We can improve the situation slightly by going back and forth, slalom-style, so we consume leftovers on each iteration:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFold f <span class="fu">=</span> goTo <span class="kw">where</span>
+  
+  goTo (y <span class="fu">:|</span> []) <span class="fu">=</span> y
+  goTo (a <span class="fu">:|</span> b <span class="fu">:</span> rest) <span class="fu">=</span> goFro (pairMap f (f a b) rest)
+  goFro (y <span class="fu">:|</span> []) <span class="fu">=</span> y
+  goFro (a <span class="fu">:|</span> b <span class="fu">:</span> rest) <span class="fu">=</span> goTo (pairMap (flip f) (f b a) rest)
+
+  pairMap f <span class="fu">=</span> go [] <span class="kw">where</span>
+    go ys y (a<span class="fu">:</span>b<span class="fu">:</span>rest) <span class="fu">=</span> go (y<span class="fu">:</span>ys) (f a b) rest
+    go ys y [z] <span class="fu">=</span> z <span class="fu">:|</span> y <span class="fu">:</span> ys
+    go ys y [] <span class="fu">=</span> y <span class="fu">:|</span> ys</code></pre></div>
+<p>Notice that we have to flip the combining function to make sure the ordering is the same on output. For the earlier example, this solves the issue:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]
+<span class="co">-- (((1*2)*((3*4)*(5*6)))*((7*8)*9))</span></code></pre></div>
+<p>It does <em>not</em> build up the tree as balanced as it possibly could, though:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]
+<span class="co">-- ((1*2)*((3*4)*(5*6)))</span></code></pre></div>
+<p>There’s four elements in the right branch, and two in the left in the above example. Three in each would be optimal.</p>
+<p>Wait—optimal in what sense, exactly? What do we mean when we say one tree is more balanced than another? Let’s say the “balance factor” is the largest difference in size of two sibling trees:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">balFac ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+balFac <span class="fu">=</span> fst <span class="fu">.</span> go <span class="kw">where</span>
+<span class="ot">  go ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> (<span class="dt">Integer</span>, <span class="dt">Integer</span>)
+  go (<span class="dt">Leaf</span> _) <span class="fu">=</span> (<span class="dv">0</span>, <span class="dv">1</span>)
+  go (l <span class="fu">:*:</span> r) <span class="fu">=</span> (lb <span class="ot">`max`</span> rb <span class="ot">`max`</span> abs (rs <span class="fu">-</span> ls), rs <span class="fu">+</span> ls) <span class="kw">where</span>
+    (lb,ls) <span class="fu">=</span> go l
+    (rb,rs) <span class="fu">=</span> go r</code></pre></div>
+<p>And one tree is more balanced than another if it has a smaller balance factor.</p>
+<p>There’s effectively no limit on the balance factor for the typewriter method: when the input is one larger than a power of two, it’ll stick the one extra in one branch and the rest in another (as with <code class="sourceCode haskell">[<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]</code> in the example above).</p>
+<p>For the slalom method, it looks like there’s something more interesting going on, limit-wise. I haven’t been able to verify this formally (yet), but from what I can tell, a tree of height <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> will have at most a balance factor of the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>th <a href="https://oeis.org/A001045">Jacobsthal number</a>. That’s (apparently) also the number of ways to tie a tie using <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n + 2</annotation></semantics></math> turns.</p>
+<p>That was just gathered from some quick experiments and <a href="https://oeis.org/">oeis.org</a>, but it seems to make sense intuitively. Jacobsthal numbers are defined like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">j <span class="dv">0</span> <span class="fu">=</span> <span class="dv">0</span>
+j <span class="dv">1</span> <span class="fu">=</span> <span class="dv">1</span>
+j n <span class="fu">=</span> j (n<span class="fu">-</span><span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span> <span class="fu">*</span> j (n<span class="fu">-</span><span class="dv">2</span>)</code></pre></div>
+<p>So, at the top level, there’s the imbalance caused by the second-last <code class="sourceCode haskell">pairFold</code>, plus the imbalance caused by the third-to-last. However, the third-to-last imbalance is twice what it was at that level, because it is now working with an already-paired-up list. Why isn’t the second last imbalance also doubled? Because it’s counteracted by the fact that we turned around: the imbalance is in an element that’s a leftover element. At least that’s what my intuition is at this point.</p>
+<p>The minimum balance factor is, of course, one. Unfortunately, to achieve that, I lost some of the properties of the previous folds:</p>
+<h2 id="lengths">Lengths</h2>
+<p>Up until now, I have been avoiding taking the length of the incoming list. It would lose a lot of laziness, cause an extra traversal, and generally seems like an ugly solution. Nonetheless, it gives the most balanced results I could find so far:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> go (length (x<span class="fu">:</span>xs)) (x<span class="fu">:</span>xs) <span class="kw">where</span>
+  go <span class="dv">1</span> [y] <span class="fu">=</span> y
+  go n ys <span class="fu">=</span> f (go m a) (go (n<span class="fu">-</span>m) b) <span class="kw">where</span>
+    (a,b) <span class="fu">=</span> splitAt m ys 
+    m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></code></pre></div>
+<p><code class="sourceCode haskell">splitAt</code> is an inefficient operation, but if we let the left-hand call return its unused input from the list, we can avoid it:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> fst (go (length (x<span class="fu">:</span>xs)) (x<span class="fu">:</span>xs)) <span class="kw">where</span>
+  go <span class="dv">1</span> (y<span class="fu">:</span>ys) <span class="fu">=</span> (y,ys)
+  go n ys <span class="fu">=</span> (f l r, rs) <span class="kw">where</span>
+    (l,ls) <span class="fu">=</span> go m ys
+    (r,rs) <span class="fu">=</span> go (n<span class="fu">-</span>m) ls
+    m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></code></pre></div>
+<p>Finally, you may have spotted the state monad in this last version. We can make the similarity explicit:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> evalState (go (length (x<span class="fu">:</span>xs))) (x<span class="fu">:</span>xs) <span class="kw">where</span>
+  go <span class="dv">1</span> <span class="fu">=</span> state (\(y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys))
+  go n <span class="fu">=</span> <span class="kw">do</span>
+    <span class="kw">let</span> m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span>
+    l <span class="ot">&lt;-</span> go m
+    r <span class="ot">&lt;-</span> go (n<span class="fu">-</span>m)
+    return (f l r)</code></pre></div>
+<p>And there you have it: three different ways to fold in a more balanced way. Perhaps surprisingly, the first is the fastest in my tests. I’d love to hear if there’s a more balanced version (which is lazy, ideally) that is just as efficient as the first implementation.</p>
+<h1 id="stable-summation">Stable Summation</h1>
+<p>I have found two other uses for these folds other than simply constructing more balanced binary trees. The first is summation of floating-point numbers. If you sum floating-point numbers in the usual way with <code class="sourceCode haskell">foldl&#39;</code> (or, indeed, with an accumulator in an imperative language), you will see an error growth of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>, where <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> is the number of floats you’re summing.</p>
+<p>A well-known solution to this problem is the <a href="https://en.wikipedia.org/wiki/Kahan_summation_algorithm">Kahan summation algorithm</a>. It carries with it a running compensation for accumulating errors, giving it <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> error growth. There are two downsides to the algorithm: it takes four times the number of numerical operations to perform, and isn’t parallel.</p>
+<p>For that reason, it’s often not used in practice: instead, floats are summed <em>pairwise</em>, in a manner often referred to as <a href="https://en.wikipedia.org/wiki/Pairwise_summation">cascade summation</a>. This is what’s used in <a href="https://github.com/numpy/numpy/pull/3685">NumPy</a>. The error growth isn’t quite as good—<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log{n})</annotation></semantics></math>—but it takes the exact same number of operations as normal summation. On top of that:</p>
+<h1 id="parallelization">Parallelization</h1>
+<p>Dividing a fold into roughly-equal chunks is exactly the kind of problem encountered when trying to parallelize certain algorithms. Adapting the folds above so that their work is performed in parallel is surprisingly easy:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">splitPar ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a
+splitPar f <span class="fu">=</span> go
+  <span class="kw">where</span>
+    go l r <span class="dv">0</span> <span class="fu">=</span> f (l <span class="dv">0</span>) (r <span class="dv">0</span>)
+    go l r n <span class="fu">=</span> lt <span class="ot">`par`</span> (rt <span class="ot">`pseq`</span> f lt rt)
+      <span class="kw">where</span>
+        lt <span class="fu">=</span> l (n<span class="fu">-</span>m)
+        rt <span class="fu">=</span> r m
+        m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span>
+
+<span class="ot">treeFoldParallel ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a
+treeFoldParallel f xs <span class="fu">=</span>
+    treeFold const (splitPar f) xs numCapabilities</code></pre></div>
+<p>The above will split the fold into <code class="sourceCode haskell">numCapabilities</code> chunks, and perform each one in parallel. <code class="sourceCode haskell">numCapabilities</code> is a constant defined in <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/GHC-Conc.html">GHC.Conc</a>: it’s the number of threads which can be run simultaneously at any one time. Alternatively, you could the function include a parameter for how many chunks to split the computation into. You could also have the fold adapt as it went, choosing whether or not to spark based on how many sparks exist at any given time:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">parseq ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b
+parseq a b <span class="fu">=</span>
+    runST
+        (bool (par a b) (seq a b) <span class="fu">&lt;$&gt;</span>
+         unsafeIOToST (liftA2 (<span class="fu">&gt;</span>) numSparks getNumCapabilities))
+
+<span class="ot">treeFoldAdaptive ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a
+treeFoldAdaptive f <span class="fu">=</span>
+    Lazy.treeFold
+        (\l r <span class="ot">-&gt;</span>
+              r <span class="ot">`parseq`</span> (l <span class="ot">`parseq`</span> f l r))</code></pre></div>
+<p>Adapted from <a href="https://www.reddit.com/r/haskell/comments/73umrw/another_parallelism_primitive_parseq/dnurduu/?utm_content=permalink&amp;utm_medium=front&amp;utm_source=reddit&amp;utm_name=haskell">this</a> comment by Edward Kmett. This is actually the fastest version of all the folds.</p>
+<p>All of this is provided in a <a href="https://hackage.haskell.org/package/treefold">library</a> I’ve put up on Hackage.</p>
+]]></description>
+    <pubDate>Mon, 30 Oct 2017 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2017-10-30-balancing-folds.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Convolutions and Semirings</title>
     <link>http://doisinkidney.com/posts/2017-10-13-convolutions-and-semirings.html</link>
     <description><![CDATA[<div class="info">
@@ -3152,135 +3350,6 @@ add xs <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
 ]]></description>
     <pubDate>Mon, 26 Sep 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-09-26-revisiting-trie-lhs.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Lenses are Static Selectors</title>
-    <link>http://doisinkidney.com/posts/2016-06-16-lenses-are-static-selectors.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on June 16, 2016
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Swift.html">Swift</a>
-    
-</div>
-
-<p>So I don’t really know what <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html">KVC</a> is, or much about <code class="sourceCode scala">performSelector</code> functions. <a href="http://inessential.com/2016/05/20/updating_local_objects_with_server_objec">This</a> blogpost, from Brent Simmons, let me know a little bit about why I would want to use them.</p>
-<p>It centred around removing code repetition of this type:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {
-  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span>
-}
-
-<span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {
-  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span> <span class="co">// There was an (intentional)</span>
-}                                    <span class="co">// bug here in the original post</span></code></pre></div>
-<p>To clean up the code, Brent used selector methods. At first, I was a little uncomfortable with the solution. As far as I could tell, the basis of a lot of this machinery used functions with types like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func <span class="fu">get</span>(fromSelector: String) -&gt; AnyObject?
-func <span class="fu">set</span>(forSelector: String) -&gt; ()</code></pre></div>
-<p>Which <em>seems</em> to be extremely dynamic. Stringly-typed and all that. Except that there are two different things going on here. One is the dynamic stuff; the ability to get rid of types when you need to. The other, though, has <em>nothing</em> to do with types. The other idea is being able to pass around something which can access the property (or method) of an object. Let’s look at the code that was being repeated:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {
-  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span>
-}
-
-<span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {
-  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span>
-}</code></pre></div>
-<p>The logical, obvious thing to do here is try refactor out the common elements. In fact, the only things that <em>differ</em> between the two actions above are the <code class="sourceCode scala">foo</code> and <code class="sourceCode scala">bar</code>. It would be great to be able to write a function like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func <span class="fu">checkThenUpdate</span>(selector) {
-  <span class="kw">if</span> localObject.<span class="fu">selector</span> != serverObject.<span class="fu">selector</span> {
-    localObject.<span class="fu">selector</span> = serverObject.<span class="fu">selector</span>
-  }
-}</code></pre></div>
-<p>And then maybe a single line like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">[foo, bar, baz].<span class="fu">forEach</span>(checkThenUpdate)</code></pre></div>
-<p>That’s pretty obviously better. It’s just good programming: when faced with repetition, find the repeated part, and abstract it out. Is it more <em>dynamic</em> than the repetition, though? I don’t think so. All you have to figure out is an appropriate type for the selector, and you can keep all of your static checking. To me, it seems a lot like a <a href="https://hackage.haskell.org/package/lens">lens</a>:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct Lens&lt;Whole, Part&gt; {
-  let get: Whole -&gt; Part
-  let set: (Whole, Part) -&gt; Whole
-}</code></pre></div>
-<p>(This is a lens similar to the ones used in the <a href="http://hackage.haskell.org/package/data-lens">data-lens</a> library, in contrast to van Laarhoven lenses, or LensFamilies. LensFamilies are used in the <a href="https://hackage.haskell.org/package/lens">lens</a> package, and they allow you to change the type of the <code class="sourceCode scala">Part</code>. They’re also just normal functions, rather than a separate type, so you can manipulate them in a pretty standard way. Swift’s type system isn’t able to model those lenses, though, unfortunately.) It has two things: a getter and a setter. The getter is pretty obvious: it takes the object, and returns the property. The setter is a little more confusing. It’s taking an object, and the new property you want to stick in to the object, and returns the object with that property updated. For instance, if we were to make a <code class="sourceCode scala">Person</code>:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct LocalPerson {
-  <span class="kw">var</span> age: Int
-  <span class="kw">var</span> name: String
-}</code></pre></div>
-<p>We could then have a lens for the <code class="sourceCode scala">name</code> field like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let localName: Lens&lt;LocalPerson,String&gt; = <span class="fu">Lens</span>(
-  get: { p in p.<span class="fu">name</span> },
-  set: { (oldPerson,newName) in
-    <span class="kw">var</span> newPerson = oldPerson
-    newPerson.<span class="fu">name</span> = newName
-    <span class="kw">return</span> newPerson
-  }
-)</code></pre></div>
-<p>And you’d use it like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let caoimhe = <span class="fu">LocalPerson</span>(age: <span class="dv">46</span>, name: <span class="st">&quot;caoimhe&quot;</span>)
-localName.<span class="fu">get</span>(caoimhe) <span class="co">// 46</span>
-localName.<span class="fu">set</span>(caoimhe, <span class="st">&quot;breifne&quot;</span>) <span class="co">// LocalPerson(age: 46, name: &quot;breifne&quot;)</span></code></pre></div>
-<p>Straight away, we’re able to do (something) like the <code class="sourceCode scala">checkThenUpdate</code> function:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func checkThenUpdate
-  &lt;A: Equatable&gt;
-  (localLens: Lens&lt;LocalPerson,A&gt;, serverLens: Lens&lt;ServerPerson,A&gt;) {
-  let serverProp = serverLens.<span class="fu">get</span>(serverObject)
-  <span class="kw">if</span> localLens.<span class="fu">get</span>(localObject) != serverProp {
-    localObject = localLens.<span class="fu">set</span>(localObject,serverProp)
-  }
-}</code></pre></div>
-<p>And it could be called pretty tersely:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="fu">checkThenUpdate</span>(localName, serverLens: serverName)</code></pre></div>
-<p>The biggest problem with this approach, obviously, is the boilerplate. In Haskell, that’s solved with Template Haskell, so the lens code is generated for you. (I’d love to see something like that in Swift) There’s a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called “classy-lenses”. That’s where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct Place {
-  <span class="kw">var</span> name: String
-}
-
-<span class="co">// Instead of just having a lens for the name field, have a whole protocol</span>
-<span class="co">// for things with a name field:</span>
-
-protocol HasName {
-  associatedtype Name
-  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; { get }
-  <span class="kw">var</span> name: Name { get set }
-}
-
-<span class="co">// Because the mutable property is included in the protocol, you can rely on</span>
-<span class="co">// it in extensions:</span>
-
-extension HasName {
-  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; {
-    <span class="kw">return</span> <span class="fu">Lens</span>(
-      get: {$<span class="fl">0.</span>name},
-      set: { (w,p) in 
-        <span class="kw">var</span> n = w
-        n.<span class="fu">name</span> = p
-        <span class="kw">return</span> n
-      }
-    )
-  }
-  <span class="kw">var</span> name: Name {
-    get { <span class="kw">return</span> Self.<span class="fu">name</span>.<span class="fu">get</span>(self) }
-    set { self = Self.<span class="fu">name</span>.<span class="fu">set</span>(self,newValue) }
-  }
-}
-
-<span class="co">// This way, you can provide either the lens or the property, and you get the</span>
-<span class="co">// other for free.</span>
-
-extension Place: HasName {}
-
-<span class="co">// Then, you can rely on that protocol, and all of the types:</span>
-
-func checkEqualOnNames
-  &lt;A,B where A: HasName, B: HasName, A.<span class="fu">Name</span>: Equatable, A.<span class="fu">Name</span> == B.<span class="fu">Name</span>&gt;
-  (x: A, _ y: B) -&gt; Bool {
-    <span class="kw">return</span> x.<span class="fu">name</span> == y.<span class="fu">name</span>
-}</code></pre></div>
-<p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the types intact. Other people have spoken about the other things you can do with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams - Lenses in Swift</a>), like composing them together, chaining operations, etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method cascading</a>) Unfortunately, in current Swift, the boilerplate makes all of this a little unpleasant. Still, they’re an interesting idea, and they show how a good type system needn’t always get in the way.</p>
-]]></description>
-    <pubDate>Thu, 16 Jun 2016 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2016-06-16-lenses-are-static-selectors.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
