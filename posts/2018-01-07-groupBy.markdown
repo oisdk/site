@@ -1,0 +1,85 @@
+---
+title: groupBy
+tags: Haskell, Folds
+---
+
+Here's a useful function from [Data.List](https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-List.html#v:groupBy):
+
+```{.haskell}
+groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
+
+groupBy (==) "aabcdda"
+-- ["aa","b","c","dd","a"]
+```
+
+However, as has been pointed out [before](https://mail.haskell.org/pipermail/libraries/2007-August/008028.html), `groupBy`{.haskell} expects an equivalence relation, and can exhibit surprising behavior when it doesn't get one. Let's say, for instance, that we wanted to group numbers that were close together:
+
+```{.haskell}
+groupClose :: [Integer] -> [[Integer]]
+groupClose = groupBy (\x y -> abs (x - y) < 3)
+```
+
+What would you expect on the list `[1, 2, 3, 4, 5]`? All in the same group? Well, what you actually get is:
+
+```{.haskell}
+[[1,2,3],[4,5]]
+```
+
+This is because the implementation of `groupBy`{.haskell} only compares to the first element in each group:
+
+```{.haskell}
+groupBy _  []           =  []
+groupBy eq (x:xs)       =  (x:ys) : groupBy eq zs
+                           where (ys,zs) = span (eq x) xs
+```
+
+Brandon Simmons gave a [definition](http://brandon.si/code/an-alternative-definition-for-datalistgroupby/) of `groupBy`{.haskell} that is perhaps more useful, but it used explicit recursion, rather than a fold.
+
+A definition with `foldr`{.haskell} turned out to be trickier than I expected. I found some of the laziness properties especially difficult:
+
+```{.haskell}
+>>> head (groupBy (==) (1:2:undefined))
+[1]
+>>> (head . head) (groupBy (==) (1:undefined))
+1
+>>> (head . head . tail) (groupBy (==) (1:2:undefined))
+2
+```
+
+Here's the definition I came up with, after some deliberation:
+
+```{.haskell}
+groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
+groupBy p xs = build (\c n ->
+  let f x a q
+        | q x = (x : ys, zs)
+        | otherwise = ([], c (x : ys) zs)
+        where (ys,zs) = a (p x)
+  in snd (foldr f (const ([], n)) xs (const False)))
+{-# INLINE groupBy #-}
+```
+
+Seemingly benign changes to the function will break one or more of the above tests. In particular, the laziness of a "where" binding needs to be taken into account. Here's an early attempt which failed:
+
+```{.haskell}
+groupBy :: (a -> a -> Bool) -> [a] -> [[a]]
+groupBy p xs = build (\c n -> 
+  let f x a q d
+        | q x = a (p x) (d . (:) x)
+        | otherwise = d [] (a (p x) (c . (:) x))
+  in foldr f (\_ d -> d [] n) xs (const False) (\ _ y -> y))
+```
+
+Once done, though, it works as expected:
+
+```{.haskell}
+>>> groupBy (==) "aaabcccdda"
+["aaa","b","ccc","dd","a"]
+>>> groupBy (==) []
+[]
+>>> groupBy (<=) [1,2,2,3,1,2,0,4,5,2]
+[[1,2,2,3],[1,2],[0,4,5],[2]]
+```
+
+It's the fastest version I could find that obeyed the above laziness properties.
+
