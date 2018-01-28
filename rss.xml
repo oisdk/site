@@ -73,7 +73,7 @@ groupBy p xs <span class="fu">=</span> build (\c n <span class="ot">-&gt;</span>
 <div class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>There are several threads on the libraries mailing list this topic:</p>
+<li id="fn1"><p>There are several threads on the libraries mailing list on this topic:</p>
 <dl>
 <dt>2006</dt>
 <dd><a href="http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html">mapAccumL - find max in-sequence subsequence</a>
