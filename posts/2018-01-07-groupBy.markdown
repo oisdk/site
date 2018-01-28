@@ -85,7 +85,7 @@ It's the fastest version I could find that obeyed the above laziness properties.
 
 The [GHC page on the issue](https://ghc.haskell.org/trac/ghc/ticket/13593) unfortunately seems to indicate the implementation won't be changed. Ah, well. Regardless, I have a [repository](https://github.com/oisdk/groupBy) with the implementation above (with extra fusion machinery added) and comparisons to other implementations.
 
-[^libraries-mailing-list]: There are several threads on the libraries mailing list this topic:
+[^libraries-mailing-list]: There are several threads on the libraries mailing list on this topic:
 
     2006
   : [mapAccumL - find max in-sequence subsequence](http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html)
