@@ -80,6 +80,7 @@ groupBy p xs <span class="fu">=</span> build (\c n <span class="ot">-&gt;</span>
 <span class="fu">&gt;&gt;&gt;</span> groupBy (<span class="fu">&lt;=</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>]
 [[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>],[<span class="dv">2</span>]]</code></pre></div>
 <p>It’s the fastest version I could find that obeyed the above laziness properties.</p>
+<p>The <a href="https://ghc.haskell.org/trac/ghc/ticket/13593">GHC page on the issue</a> unfortunately seems to indicate the implementation won’t be changed. Ah, well. Regardless, I have a <a href="https://github.com/oisdk/groupBy">repository</a> with the implementation above (with extra fusion machinery added) and comparisons to other implementations.</p>
 <div class="footnotes">
 <hr />
 <ol>
