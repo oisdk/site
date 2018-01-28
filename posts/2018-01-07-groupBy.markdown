@@ -12,7 +12,7 @@ groupBy (==) "aabcdda"
 -- ["aa","b","c","dd","a"]
 ```
 
-However, as has been pointed out [before](https://mail.haskell.org/pipermail/libraries/2007-August/008028.html), `groupBy`{.haskell} expects an equivalence relation, and can exhibit surprising behavior when it doesn't get one. Let's say, for instance, that we wanted to group numbers that were close together:
+However, as has been pointed out before[^libraries-mailing-list], `groupBy`{.haskell} expects an equivalence relation, and can exhibit surprising behavior when it doesn't get one. Let's say, for instance, that we wanted to group numbers that were close together:
 
 ```{.haskell}
 groupClose :: [Integer] -> [[Integer]]
@@ -83,3 +83,16 @@ Once done, though, it works as expected:
 
 It's the fastest version I could find that obeyed the above laziness properties.
 
+[^libraries-mailing-list]: There are several threads on the libraries mailing list this topic:
+
+    2006
+  : [mapAccumL - find max in-sequence subsequence](http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html)
+   
+    2007
+  : [Data.List.groupBy with non-transitive equality predicate](https://mail.haskell.org/pipermail/libraries/2007-August/008028.html) (this is the longest discussion on the topic)
+   
+    2008
+  : [Generalize groupBy in a useful way?](https://mail.haskell.org/pipermail/libraries/2008-September/010629.html)
+   
+    2009
+  : [nubBy seems broken in recent GHCs](https://mail.haskell.org/pipermail/libraries/2009-June/011866.html)
