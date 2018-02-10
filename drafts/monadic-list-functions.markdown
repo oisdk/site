@@ -76,7 +76,7 @@ It gives the partitions of the list!
 
 ## sort
 
-So these monadic generalisations have been discovered before, several times over. There's even a [package](https://hackage.haskell.org/package/monadlist-0.0.2) with monadic versions of the functions in Data.List. Exploring this idea with a little more formality is the paper "All Sorts of Permutations" [@christiansen_all_2016]. They show that the monadic version of sort produces permutations of the input list, and examine the output from different sorting algorithms. I won't reproduce the implementations here, but the paper is worth a read.
+So these monadic generalisations have been discovered before, several times over. There's even a [package](https://hackage.haskell.org/package/monadlist-0.0.2) with monadic versions of the functions in Data.List. Exploring this idea with a little more formality is the paper "All Sorts of Permutations" [@christiansen_all_2016], and accompanying presentation [on youtube](https://www.youtube.com/watch?v=vV3jqTxJ9Wc). They show that the monadic version of sort produces permutations of the input list, and examine the output from different sorting algorithms. I won't reproduce the implementations here, but the paper is worth a read.
 
 ## State
 
