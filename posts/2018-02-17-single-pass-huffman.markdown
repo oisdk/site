@@ -1,18 +1,20 @@
 ---
-title: One-Pass Huffman Encoding
+title: Single-Pass Huffman Encoding
 tags: Haskell, folds
 bibliography: One Pass Laziness.bib
 ---
 
-While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I'd share it here. The algorithm is one-pass: the data is frequency-counted, Huffman-coded, and spat back out in one go. I'll go through the general techniques for transforming a multi-pass algorithm into a one-pass one first, and then the Huffman algorithm itself. If you just want to skip to the code, it's provided at the end [^code].
+While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I'd share it here. I'll go through a few techniques for transforming a multi-pass algorithm into a single-pass one first, and then I'll show how to use them for Huffman. If you just want to skip to the code, it's provided at the end [^code].
 
 ## Circular Programming
 
 There are several techniques for turning multi-pass algorithms into single-pass ones in functional languages. Perhaps the most famous is circular programming: using *laziness* to eliminate a pass. @bird_using_1984 used this to great effect in solving the repmin problem:
 
-> Given a tree of integers, replace every integer with the minimum integer in the tree, in one pass
+> Given a tree of integers, replace every integer with the minimum integer in the tree, in one pass.
 
-The solution is quite magic:
+For an imperative programmer, the problem is relatively easy: first, write the code to find the minimum value in the tree in the standard way, using a loop and a "smallest so far" accumulator. Then, inside the loop, after updating the accumulator, set the value of the leaf to be a *reference* to the accumulator.
+
+At first, that solution may seem necessarily impure: we're using global, mutable state to update many things at once. However, as the paper shows, we can claw back purity using laziness:
 
 ```haskell
 data Tree a = Leaf a | Tree a :*: Tree a
@@ -27,17 +29,13 @@ repMin xs = ys where
       (y,ys') = go ys
 ```
 
-`m`{.haskell} is generated from the traversal, _and_ used during the traversal. Haskell's laziness makes this possible: and importantly, the `m`{.haskell} is only evaluated once.
-
 ## There and Back Again
 
-In an imperative language, the repmin problem might be solved with mutation: have a "largest so far" variable, and simply set every leaf to be a reference to that variable. And at first glance, especially with the imperative solution in mind, the repmin problem might seem intractable in a pure language. However, as the solution above demonstrates, it's often possible to claw back the performance characteristics of imperative languages using a little laziness and cleverness.
-
-Let's say we only have the latter at our disposal: we're working in a strict language, and we want to be pure. Are we hosed? No! The paper There and Back Again [@danvy_there_2005] explores this very issue. The question which serves as the hook for that paper is as follows:
+Let's say we don't have laziness at our disposal: are we hosed? No [^laziness]! @danvy_there_2005 explore this very issue, by posing the question:
 
 > Given two lists, xs and ys, can you zip xs with the reverse of ys in one pass?
 
-Similar to the problem above, at first it seems almost impossible. Again, though, it is doable. In fact, in the paper, several different versions are provided. This is my favorite:
+The technique used to solve the problem is named "There and Back Again"; it should be clear why from one of the solutions:
 
 ```haskell
 convolve xs ys = walk xs const where
@@ -45,31 +43,50 @@ convolve xs ys = walk xs const where
   walk (x:xs) k = walk xs (\r (y:ys) -> k ((x,y) : r) ys)
 ```
 
-As you can see, it uses a continuation-passing style, building up a function to consume one list as it traverses the other.
-
-## Changing The Interpretation
-
-One handy way to avoid doing work in programming is to change the _interpretation_ of data so it looks as if the work is already done. Say, for instance, you wanted to transpose a matrix. One way to do it is to actually perform the work of walking over the structure and swapping all of the required entries. However, if you know that your matrices are only going to be consumed by indexing into them, you could instead just go to every place you index into the "transposed" matrix and swap the x and y (I couldn't find a good paper for this technique so I'd love to see one if someone had one).
-
-For lists, the canonical way (in Haskell at least) to consume is through folds. So, instead of preprocessing our data structure we can just change the particular fold we use. For instance, "convolve" really wants to reverse `ys`{.haskell} before it looks at it: if we can rewrite its consumption of `ys`{.haskell} as a fold, though, than we can swap out `foldr`{.haskell} for `foldl`{.haskell} and it won't know the difference!
-
-Here's what we would do if we wanted to zip `xs`{.haskell} and `ys`{.haskell} in the normal order using a fold[^partial]:
-
-[^partial]: You probably wouldn't write that function, actually, because it's partial. It fails if `ys`{.haskell} is longer than `xs`{.haskell}. The convolution problem, as stated in the paper, is only defined on lists of equal length: with dependent types we might be able to put that invariant in its signature. For a lovely overview of how to do exactly that (for this exact function), check out [this](https://www.youtube.com/watch?v=u_OsUlwkmBQ) talk by Kenneth Foner.
+The traversal of one list builds up the function to consume the other. We could write repmin in the same way:
 
 ```haskell
-zip xs ys = foldr f (const []) ys xs where
-  f y ys (x:xs) = (x,y) : ys xs
+repMin = uncurry ($) . go where
+  go (Leaf x) = (Leaf, x)
+  go (xs :*: ys) = (\m -> xs' m :*: ys' m, min xm ym) where
+    (xs',xm) = go xs
+    (ys',ym) = go ys
 ```
 
-So if we just swap the call to `foldr`{.haskell} (and flip) we get the convolve function:
+[^laziness]: Well, that's a little bit of a lie. In terms of asympostics, @pippenger_pure_1997 stated a problem that could be solved in linear time in impure Lisp, but $\Omega(n \log n)$ in pure Lisp. @bird_more_1997 then produced an algorithm that could solve the problem in linear time, by using laziness. So, in some cases, laziness will give you asymptotics you can't get without it (if you want to stay pure).
+
+## Cayley Representations
+
+If you're doing a lot of appending to some list-like structure, you probably don't want to use actual lists: you'll end up traversing the left-hand-side of the append many more times than necessary. A type you can drop in to use instead is difference lists [@hughes_novel_1986]:
 
 ```haskell
-convolve xs ys = foldl f (const []) ys xs where
-  f ys y (x:xs) = (x,y) : ys xs
+type DList a = [a] -> [a]
+
+rep :: [a] -> DList a
+rep = (++)
+
+abs :: DList a -> [a]
+abs xs = xs []
+
+append :: DList a -> DList a -> DList a
+append = (.)
 ```
 
-In fact, if you inline `foldl`{.haskell} in the above function, you'll get the `convolve`{.haskell} from above.
+`append`{.haskell} is $\mathcal{O}(1)$ in this representation. In fact, for any monoid with a slow `mappend`{.haskell}, you can use the same trick: it's called the Cayley representation, and available as `Endo`{.haskell} in [Data.Monoid](https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-Monoid.html#t:Endo).
+
+```haskell
+rep :: Monoid a => a -> Endo a
+rep x = Endo (mappend x)
+
+abs :: Monoid a => Endo a -> a
+abs (Endo f) = f mempty
+
+instance Monoid (Endo a) where
+  mempty = Endo id
+  mappend (Endo f) (Endo g) = Enfo (f . g)
+```
+
+You can actually do the same transformation for "monoids" in the categorical sense: applying it to monads, for instance, will give you codensity [@rivas_notions_2014].
 
 ## Traversable
 
@@ -83,7 +100,7 @@ repMin xs = ys where
   f (Just y) x = (Just (min x y), m)
 ```
 
-The tilde before the just ensures this won't fail on empty input.
+The tilde before the `Just`{.haskell} ensures this won't fail on empty input.
 
 # Huffman Coding
 
@@ -93,18 +110,18 @@ Finally, it's time for the main event. Huffman coding is a _very_ multi-pass alg
 2. Build a priority queue from that frequency table.
 3. Iteratively pop elements and combine them (into Huffman trees) from the queue until there's only one left.
 4. That Huffman tree can be used to construct the mapping from items back to their Huffman codes.
-5. Traverse the input again, using the constructed mapping to replace elements wit their codes.
+5. Traverse the input again, using the constructed mapping to replace elements with their codes.
 
-Now, in the "one-pass" version, we can't skip these steps: I just want to only walk over every data structure once.
+We can't *skip* any of these steps: we can try perform them all at once, though.
 
-For the multi-pass version, this is what we'll need. First, a frequency table:
+Let's write the multi-pass version first. We'll need the frequency table:
 
 ```haskell
 frequencies :: Ord a => [a] -> Map a Int
 frequencies = Map.fromListWith (+) . map (flip (,) 1)
 ```
 
-Then, a heap, ordered on the frequencies of its elements (I'm using a skew heap here):
+And a heap, ordered on the frequencies of its elements (I'm using a skew heap here):
 
 ```haskell
 data Heap a
@@ -156,15 +173,17 @@ huffman xs = (tree, map (mapb Map.!) xs) where
 
 ## Removing the passes
 
-The first thing to fix is the `toMapping`{.haskell} function: it's doing 2 `fmap`s of the map at _every_ level. We can remove them by passing in a continuation, as in `convolve`{.haskell}:
+The first thing to fix is the `toMapping`{.haskell} function: at every level, it calls `union`{.haskell}, a complex and expensive operation. However, `union`{.haskell} and `empty`{.haskell} form a monoid, so we can use the Cayley representation to reduce the calls to a minimum. Next, we want to get rid of the `fmap`{.haskell}s: we can do that by assembling a function to perform the `fmap`{.haskell} as we go, as in `convolve`{.haskell}[^sharing].
 
 ```haskell
 toMapping :: Ord a => Tree a -> Map a [Bool]
-toMapping tree = go tree id where
-  go (Leaf x) k = Map.singleton x (k [])
+toMapping tree = go tree id Map.empty where
+  go (Leaf x) k = Map.insert x (k [])
   go (xs :*: ys) k =
-    Map.union (go xs (k . (:) True)) (go ys (k . (:) False))
+    go xs (k . (:) True) . go ys (k . (:) False)
 ```
+
+[^sharing]: Something to notice about this function is that it's going top-down and bottom-up at the same time. Combining the maps (with `(.)`{.haskell}) is done bottom-up, but building the codes is top-down. This means the codes are built in reverse order! That's why the accumulating parameter (`k`{.haskell}) is a difference list, rather than a normal list. As it happens, if normal lists were used, the function would be slightly more efficient through sharing, but the codes would all be reversed.
 
 Secondly, we can integrate the `toMapping`{.haskell} function with the `buildTree`{.haskell} function, removing another pass:
 
@@ -174,15 +193,15 @@ buildTree = prune . toHeap where
   toHeap = Map.foldMapWithKey (\k v -> Node v (Leaf k, leaf k) Nil Nil)
   prune Nil = Nothing
   prune (Node i x l r) = case mappend l r of
-    Nil -> Just (fmap ($id) x)
+    Nil -> Just (fmap (\k -> k id Map.empty) x)
     Node j y l' r' ->
       prune (mappend (Node (i+j) (cmb x y) Nil Nil) (mappend l' r'))
-  leaf x k = Map.singleton x (k [])
-  node xs ys k = Map.union (xs (k . (:) True)) (ys (k . (:) False))
+  leaf x k = Map.insert x (k [])
+  node xs ys k = xs (k . (:) True) . ys (k . (:) False)
   cmb (xt,xm) (yt,ym) = (xt :*: yt, node xm ym)
 ```
 
-Finally, to remove the second pass over the list, we can notice that second pass is using a result from the first computation (the mapping to huffman codes), and use the same trick as repmin. We'll construct the frequency table as we fill in the Huffman codes:
+Finally, to remove the second pass over the list, we can copy repmin, using `mapAccumL`{.haskell} to both construct the mapping and apply it to the structure in one go.
 
 ```haskell
 huffman :: (Ord a, Traversable t) => t a -> (Maybe (Tree a), t [Bool])
@@ -232,7 +251,7 @@ huffman
 huffman = runHuffman . traverse liftHuffman
 ```
 
-So what's the use of this? Well, for a start, it's lensy:
+Thanks to it being an applicative, you can do all the fun lensy things with it:
 
 ```haskell
 showBin :: [Bool] -> String
@@ -243,7 +262,7 @@ showBin = map (bool '0' '1')
 (["01","11","11"],["00","01","10"],["00"])
 ```
 
-And secondly, we can use it with repmin:
+Bringing us back to the start, it can also let us solve repmin!
 
 ```haskell
 liftRepMin :: a -> Circular (Option (Min a)) a a
@@ -263,12 +282,12 @@ So the `Circular`{.haskell} type is actually just the product of reader and writ
 
 It's also related to the [`Prescient`{.haskell}](https://www.reddit.com/r/haskell/comments/7qwzn4/an_update_about_the_store_monad_and_state_comonad/) type, which I noticed after I'd written the above.
 
-[^code]: Huffman coding one-pass implementation:
+[^code]: Huffman coding single-pass implementation:
 
     ```haskell
+    import           Data.Map.Strict  (Map)
+    import qualified Data.Map.Strict  as Map
     import           Data.Traversable (mapAccumL)
-    import           Data.Map.Strict (Map)
-    import qualified Data.Map.Strict as Map
     
     data Heap a
       = Nil
@@ -283,19 +302,19 @@ It's also related to the [`Prescient`{.haskell}](https://www.reddit.com/r/haskel
       mempty = Nil
     
     data Tree a = Leaf a | Tree a :*: Tree a
-    
+
     buildTree :: Ord a => Map a Int -> Maybe (Tree a, Map a [Bool])
     buildTree = prune . toHeap where
       toHeap = Map.foldMapWithKey (\k v -> Node v (Leaf k, leaf k) Nil Nil)
       prune Nil = Nothing
       prune (Node i x l r) = case mappend l r of
-        Nil -> Just (fmap ($id) x)
+        Nil -> Just (fmap (\k -> k id Map.empty) x)
         Node j y l' r' ->
           prune (mappend (Node (i+j) (cmb x y) Nil Nil) (mappend l' r'))
-      leaf x k = Map.singleton x (k [])
-      node xs ys k = Map.union (xs (k . (:) True)) (ys (k . (:) False))
+      leaf x k = Map.insert x (k [])
+      node xs ys k = xs (k . (:) True) . ys (k . (:) False)
       cmb (xt,xm) (yt,ym) = (xt :*: yt, node xm ym)
-    
+
     huffman :: (Ord a, Traversable t) => t a -> (Maybe (Tree a), t [Bool])
     huffman xs = (fmap fst tree, ys) where
       (freq,ys) = mapAccumL f Map.empty xs
