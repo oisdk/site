@@ -4,7 +4,7 @@ tags: Haskell, folds
 bibliography: One Pass Laziness.bib
 ---
 
-While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I'd share it here. The algorithm is one-pass: the data is frequency-counted, Huffman-coded, and spat back out in one go. I'll go through the general techniques for transforming a multi-pass algorithm into a one-pass one first, and then the Huffman algorithm itself.
+While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I'd share it here. The algorithm is one-pass: the data is frequency-counted, Huffman-coded, and spat back out in one go. I'll go through the general techniques for transforming a multi-pass algorithm into a one-pass one first, and then the Huffman algorithm itself. If you just want to skip to the code, it's provided at the end [^code].
 
 ## Circular Programming
 
@@ -262,5 +262,46 @@ repMin = runRepMin . traverse liftRepMin
 So the `Circular`{.haskell} type is actually just the product of reader and writer, and is closely related to the [sort](https://github.com/treeowl/sort-traversable) type.
 
 It's also related to the [`Prescient`{.haskell}](https://www.reddit.com/r/haskell/comments/7qwzn4/an_update_about_the_store_monad_and_state_comonad/) type, which I noticed after I'd written the above.
+
+[^code]: Huffman coding one-pass implementation:
+
+    ```haskell
+    import           Data.Traversable (mapAccumL)
+    import           Data.Map.Strict (Map)
+    import qualified Data.Map.Strict as Map
+    
+    data Heap a
+      = Nil
+      | Node {-# UNPACK #-} !Int a (Heap a) (Heap a)
+    
+    instance Monoid (Heap a) where
+      mappend Nil ys = ys
+      mappend xs Nil = xs
+      mappend h1@(Node i x lx rx) h2@(Node j y ly ry)
+        | i <= j    = Node i x (mappend h2 rx) lx
+        | otherwise = Node j y (mappend h1 ry) ly
+      mempty = Nil
+    
+    data Tree a = Leaf a | Tree a :*: Tree a
+    
+    buildTree :: Ord a => Map a Int -> Maybe (Tree a, Map a [Bool])
+    buildTree = prune . toHeap where
+      toHeap = Map.foldMapWithKey (\k v -> Node v (Leaf k, leaf k) Nil Nil)
+      prune Nil = Nothing
+      prune (Node i x l r) = case mappend l r of
+        Nil -> Just (fmap ($id) x)
+        Node j y l' r' ->
+          prune (mappend (Node (i+j) (cmb x y) Nil Nil) (mappend l' r'))
+      leaf x k = Map.singleton x (k [])
+      node xs ys k = Map.union (xs (k . (:) True)) (ys (k . (:) False))
+      cmb (xt,xm) (yt,ym) = (xt :*: yt, node xm ym)
+    
+    huffman :: (Ord a, Traversable t) => t a -> (Maybe (Tree a), t [Bool])
+    huffman xs = (fmap fst tree, ys) where
+      (freq,ys) = mapAccumL f Map.empty xs
+      f fm x = (Map.insertWith (+) x 1 fm, mapb Map.! x)
+      tree = buildTree freq
+      mapb = maybe Map.empty snd tree
+    ```
 
 # References
