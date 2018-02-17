@@ -7,8 +7,283 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sun, 11 Feb 2018 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sat, 17 Feb 2018 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Single-Pass Huffman Encoding</title>
+    <link>http://doisinkidney.com/posts/2018-02-17-single-pass-huffman.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on February 17, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>, <a href="/tags/folds.html">folds</a>
+    
+</div>
+
+<p>While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I’d share it here. I’ll go through a few techniques for transforming a multi-pass algorithm into a single-pass one first, and then I’ll show how to use them for Huffman. If you just want to skip to the code, it’s provided at the end.<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
+<h2 id="circular-programming">Circular Programming</h2>
+<p>There are several techniques for turning multi-pass algorithms into single-pass ones in functional languages. Perhaps the most famous is circular programming: using <em>laziness</em> to eliminate a pass. <span class="citation">R. S. Bird (<a href="#ref-bird_using_1984">1984</a>)</span> used this to great effect in solving the repmin problem:</p>
+<blockquote>
+<p>Given a tree of integers, replace every integer with the minimum integer in the tree, in one pass.</p>
+</blockquote>
+<p>For an imperative programmer, the problem is relatively easy: first, write the code to find the minimum value in the tree in the standard way, using a loop and a “smallest so far” accumulator. Then, inside the loop, after updating the accumulator, set the value of the leaf to be a <em>reference</em> to the accumulator.</p>
+<p>At first, that solution may seem necessarily impure: we’re using global, mutable state to update many things at once. However, as the paper shows, we can claw back purity using laziness:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a
+
+<span class="ot">repMin ::</span> <span class="dt">Tree</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Tree</span> <span class="dt">Integer</span>
+repMin xs <span class="fu">=</span> ys <span class="kw">where</span>
+  (m, ys) <span class="fu">=</span> go xs
+  go (<span class="dt">Leaf</span> x) <span class="fu">=</span> (x, <span class="dt">Leaf</span> m)
+  go (xs <span class="fu">:*:</span> ys) <span class="fu">=</span> (min x y, xs&#39; <span class="fu">:*:</span> ys&#39;)
+    <span class="kw">where</span>
+      (x,xs&#39;) <span class="fu">=</span> go xs
+      (y,ys&#39;) <span class="fu">=</span> go ys</code></pre></div>
+<h2 id="there-and-back-again">There and Back Again</h2>
+<p>Let’s say we don’t have laziness at our disposal: are we hosed? No!<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> <span class="citation">Danvy and Goldberg (<a href="#ref-danvy_there_2005">2005</a>)</span> explore this very issue, by posing the question:</p>
+<blockquote>
+<p>Given two lists, xs and ys, can you zip xs with the reverse of ys in one pass?</p>
+</blockquote>
+<p>The technique used to solve the problem is named “There and Back Again”; it should be clear why from one of the solutions:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">convolve xs ys <span class="fu">=</span> walk xs const <span class="kw">where</span>
+  walk [] k <span class="fu">=</span> k [] ys
+  walk (x<span class="fu">:</span>xs) k <span class="fu">=</span> walk xs (\r (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> k ((x,y) <span class="fu">:</span> r) ys)</code></pre></div>
+<p>The traversal of one list builds up the function to consume the other. We could write repmin in the same way:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">repMin <span class="fu">=</span> uncurry (<span class="fu">$</span>) <span class="fu">.</span> go <span class="kw">where</span>
+  go (<span class="dt">Leaf</span> x) <span class="fu">=</span> (<span class="dt">Leaf</span>, x)
+  go (xs <span class="fu">:*:</span> ys) <span class="fu">=</span> (\m <span class="ot">-&gt;</span> xs&#39; m <span class="fu">:*:</span> ys&#39; m, min xm ym) <span class="kw">where</span>
+    (xs&#39;,xm) <span class="fu">=</span> go xs
+    (ys&#39;,ym) <span class="fu">=</span> go ys</code></pre></div>
+<h2 id="cayley-representations">Cayley Representations</h2>
+<p>If you’re doing a lot of appending to some list-like structure, you probably don’t want to use actual lists: you’ll end up traversing the left-hand-side of the append many more times than necessary. A type you can drop in to use instead is difference lists <span class="citation">(Hughes <a href="#ref-hughes_novel_1986">1986</a>)</span>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">DList</span> a <span class="fu">=</span> [a] <span class="ot">-&gt;</span> [a]
+
+<span class="ot">rep ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">DList</span> a
+rep <span class="fu">=</span> (<span class="fu">++</span>)
+
+abs<span class="ot"> ::</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> [a]
+abs xs <span class="fu">=</span> xs []
+
+<span class="ot">append ::</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> <span class="dt">DList</span> a
+append <span class="fu">=</span> (<span class="fu">.</span>)</code></pre></div>
+<p><code class="sourceCode haskell">append</code> is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> in this representation. In fact, for any monoid with a slow <code class="sourceCode haskell">mappend</code>, you can use the same trick: it’s called the Cayley representation, and available as <code class="sourceCode haskell"><span class="dt">Endo</span></code> in <a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-Monoid.html#t:Endo">Data.Monoid</a>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">rep ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Endo</span> a
+rep x <span class="fu">=</span> <span class="dt">Endo</span> (mappend x)
+
+abs<span class="ot"> ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Endo</span> a <span class="ot">-&gt;</span> a
+abs (<span class="dt">Endo</span> f) <span class="fu">=</span> f mempty
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Endo</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Endo</span> id
+  mappend (<span class="dt">Endo</span> f) (<span class="dt">Endo</span> g) <span class="fu">=</span> <span class="dt">Enfo</span> (f <span class="fu">.</span> g)</code></pre></div>
+<p>You can actually do the same transformation for “monoids” in the categorical sense: applying it to monads, for instance, will give you codensity <span class="citation">(Rivas and Jaskelioff <a href="#ref-rivas_notions_2014">2014</a>)</span>.</p>
+<h2 id="traversable">Traversable</h2>
+<p>Looking back—just for a second—to the repmin example, we should be able to spot a pattern we can generalize. There’s really nothing tree-specific about it, so why can’t we apply it to lists? Or other structures, for that matter? It turns out we can: the <code class="sourceCode haskell">mapAccumL</code> function is tailor-made to this need:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">repMin ::</span> <span class="dt">Traversable</span> t <span class="ot">=&gt;</span> t <span class="dt">Integer</span> <span class="ot">-&gt;</span> t <span class="dt">Integer</span>
+repMin xs <span class="fu">=</span> ys <span class="kw">where</span>
+  (<span class="fu">~</span>(<span class="dt">Just</span> m), ys) <span class="fu">=</span> mapAccumL f <span class="dt">Nothing</span> xs
+  f <span class="dt">Nothing</span> x <span class="fu">=</span> (<span class="dt">Just</span> x, m)
+  f (<span class="dt">Just</span> y) x <span class="fu">=</span> (<span class="dt">Just</span> (min x y), m)</code></pre></div>
+<p>The tilde before the <code class="sourceCode haskell"><span class="dt">Just</span></code> ensures this won’t fail on empty input.</p>
+<h1 id="huffman-coding">Huffman Coding</h1>
+<p>Finally, it’s time for the main event. Huffman coding is a <em>very</em> multi-pass algorithm, usually. The steps look like this:</p>
+<ol style="list-style-type: decimal">
+<li>Build a frequency table for each character in the input.</li>
+<li>Build a priority queue from that frequency table.</li>
+<li>Iteratively pop elements and combine them (into Huffman trees) from the queue until there’s only one left.</li>
+<li>That Huffman tree can be used to construct the mapping from items back to their Huffman codes.</li>
+<li>Traverse the input again, using the constructed mapping to replace elements with their codes.</li>
+</ol>
+<p>We can’t <em>skip</em> any of these steps: we can try perform them all at once, though.</p>
+<p>Let’s write the multi-pass version first. We’ll need the frequency table:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">frequencies ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span>
+frequencies <span class="fu">=</span> Map.fromListWith (<span class="fu">+</span>) <span class="fu">.</span> map (flip (,) <span class="dv">1</span>)</code></pre></div>
+<p>And a heap, ordered on the frequencies of its elements (I’m using a skew heap here):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Heap</span> a
+  <span class="fu">=</span> <span class="dt">Nil</span>
+  <span class="fu">|</span> <span class="dt">Node</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span> a (<span class="dt">Heap</span> a) (<span class="dt">Heap</span> a)
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Heap</span> a) <span class="kw">where</span>
+  mappend <span class="dt">Nil</span> ys <span class="fu">=</span> ys
+  mappend xs <span class="dt">Nil</span> <span class="fu">=</span> xs
+  mappend h1<span class="fu">@</span>(<span class="dt">Node</span> i x lx rx) h2<span class="fu">@</span>(<span class="dt">Node</span> j y ly ry)
+    <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> <span class="dt">Node</span> i x (mappend h2 rx) lx
+    <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Node</span> j y (mappend h1 ry) ly
+  mempty <span class="fu">=</span> <span class="dt">Nil</span></code></pre></div>
+<p>Next, we need to build the tree<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a>. We can use the tree type from above.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">buildTree ::</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a)
+buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span>
+  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k) <span class="dt">Nil</span> <span class="dt">Nil</span>)
+  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span>
+    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> x
+    <span class="dt">Node</span> j y l&#39; r&#39; <span class="ot">-&gt;</span>
+      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (x <span class="fu">:*:</span> y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l&#39; r&#39;))</code></pre></div>
+<p>Then, a way to convert between the tree and a map:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">toMapping ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a [<span class="dt">Bool</span>]
+toMapping (<span class="dt">Leaf</span> x) <span class="fu">=</span> Map.singleton x []
+toMapping (xs <span class="fu">:*:</span> ys) <span class="fu">=</span>
+    Map.union (fmap (<span class="dt">True</span><span class="fu">:</span>) (toMapping xs)) (fmap (<span class="dt">False</span><span class="fu">:</span>) (toMapping ys))</code></pre></div>
+<p>And finally, putting the whole thing together:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">huffman ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), [[<span class="dt">Bool</span>]])
+huffman xs <span class="fu">=</span> (tree, map (mapb <span class="fu">Map.!</span>) xs) <span class="kw">where</span>
+  freq <span class="fu">=</span> frequencies xs
+  tree <span class="fu">=</span> buildTree freq
+  mapb <span class="fu">=</span> maybe Map.empty toMapping tree</code></pre></div>
+<h2 id="removing-the-passes">Removing the passes</h2>
+<p>The first thing to fix is the <code class="sourceCode haskell">toMapping</code> function: at every level, it calls <code class="sourceCode haskell">union</code>, a complex and expensive operation. However, <code class="sourceCode haskell">union</code> and <code class="sourceCode haskell">empty</code> form a monoid, so we can use the Cayley representation to reduce the calls to a minimum. Next, we want to get rid of the <code class="sourceCode haskell">fmap</code>s: we can do that by assembling a function to perform the <code class="sourceCode haskell">fmap</code> as we go, as in <code class="sourceCode haskell">convolve</code><a href="#fn4" class="footnoteRef" id="fnref4"><sup>4</sup></a>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">toMapping ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a [<span class="dt">Bool</span>]
+toMapping tree <span class="fu">=</span> go tree id Map.empty <span class="kw">where</span>
+  go (<span class="dt">Leaf</span> x) k <span class="fu">=</span> Map.insert x (k [])
+  go (xs <span class="fu">:*:</span> ys) k <span class="fu">=</span>
+    go xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> go ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)</code></pre></div>
+<p>Secondly, we can integrate the <code class="sourceCode haskell">toMapping</code> function with the <code class="sourceCode haskell">buildTree</code> function, removing another pass:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">buildTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a, <span class="dt">Map</span> a [<span class="dt">Bool</span>])
+buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span>
+  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k, leaf k) <span class="dt">Nil</span> <span class="dt">Nil</span>)
+  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span>
+    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (fmap (\k <span class="ot">-&gt;</span> k id Map.empty) x)
+    <span class="dt">Node</span> j y l&#39; r&#39; <span class="ot">-&gt;</span>
+      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (cmb x y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l&#39; r&#39;))
+  leaf x k <span class="fu">=</span> Map.insert x (k [])
+  node xs ys k <span class="fu">=</span> xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)
+  cmb (xt,xm) (yt,ym) <span class="fu">=</span> (xt <span class="fu">:*:</span> yt, node xm ym)</code></pre></div>
+<p>Finally, to remove the second pass over the list, we can copy repmin, using <code class="sourceCode haskell">mapAccumL</code> to both construct the mapping and apply it to the structure in one go.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">huffman ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])
+huffman xs <span class="fu">=</span> (fmap fst tree, ys) <span class="kw">where</span>
+  (freq,ys) <span class="fu">=</span> mapAccumL f Map.empty xs
+  f fm x <span class="fu">=</span> (Map.insertWith (<span class="fu">+</span>) x <span class="dv">1</span> fm, mapb <span class="fu">Map.!</span> x)
+  tree <span class="fu">=</span> buildTree freq
+  mapb <span class="fu">=</span> maybe Map.empty snd tree</code></pre></div>
+<p>And that’s it!</p>
+<h1 id="generalization">Generalization</h1>
+<p>The similarity between the repmin function and the solution above is suggestive: is there a way to <em>encode</em> this idea of making a multi-pass algorithm single-pass? Of course! We can use an applicative:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Circular</span> a b c <span class="fu">=</span>
+    <span class="dt">Circular</span> <span class="fu">!</span>a
+             (b <span class="ot">-&gt;</span> c)
+
+<span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Circular</span> a b) <span class="kw">where</span>
+    fmap f (<span class="dt">Circular</span> tally run) <span class="fu">=</span> <span class="dt">Circular</span> tally (f <span class="fu">.</span> run)
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span>
+         <span class="dt">Applicative</span> (<span class="dt">Circular</span> a b) <span class="kw">where</span>
+    pure x <span class="fu">=</span> <span class="dt">Circular</span> mempty (const x)
+    <span class="dt">Circular</span> fl fr <span class="fu">&lt;*&gt;</span> <span class="dt">Circular</span> xl xr <span class="fu">=</span>
+        <span class="dt">Circular</span>
+            (mappend fl xl)
+            (\r <span class="ot">-&gt;</span> fr r (xr r))
+
+liftHuffman
+<span class="ot">    ::</span> <span class="dt">Ord</span> a
+    <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Circular</span> (<span class="dt">Map</span> a <span class="dt">Int</span>) (<span class="dt">Map</span> a [<span class="dt">Bool</span>]) [<span class="dt">Bool</span>]
+liftHuffman x <span class="fu">=</span> <span class="dt">Circular</span> (Map.singleton x <span class="dv">1</span>) (<span class="fu">Map.!</span> x)
+
+runHuffman
+<span class="ot">    ::</span> <span class="dt">Ord</span> a
+    <span class="ot">=&gt;</span> <span class="dt">Circular</span> (<span class="dt">Map</span> a <span class="dt">Int</span>) (<span class="dt">Map</span> a [<span class="dt">Bool</span>]) r <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), r)
+runHuffman (<span class="dt">Circular</span> smry run) <span class="fu">=</span>
+    maybe (<span class="dt">Nothing</span>, run Map.empty) (<span class="dt">Just</span> <span class="fu">***</span> run) (buildTree smry)
+
+huffman
+<span class="ot">    ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t)
+    <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])
+huffman <span class="fu">=</span> runHuffman <span class="fu">.</span> traverse liftHuffman</code></pre></div>
+<p>Thanks to it being an applicative, you can do all the fun lensy things with it:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showBin ::</span> [<span class="dt">Bool</span>] <span class="ot">-&gt;</span> <span class="dt">String</span>
+showBin <span class="fu">=</span> map (bool <span class="ch">&#39;0&#39;</span> <span class="ch">&#39;1&#39;</span>)
+
+<span class="fu">&gt;&gt;&gt;</span> <span class="kw">let</span> liftBin <span class="fu">=</span> fmap showBin <span class="fu">.</span> liftHuffman
+<span class="fu">&gt;&gt;&gt;</span> (snd <span class="fu">.</span> runHuffman <span class="fu">.</span> (each<span class="fu">.</span>traverse) liftBin) (<span class="st">&quot;abb&quot;</span>, <span class="st">&quot;cad&quot;</span>, <span class="st">&quot;c&quot;</span>)
+([<span class="st">&quot;01&quot;</span>,<span class="st">&quot;11&quot;</span>,<span class="st">&quot;11&quot;</span>],[<span class="st">&quot;00&quot;</span>,<span class="st">&quot;01&quot;</span>,<span class="st">&quot;10&quot;</span>],[<span class="st">&quot;00&quot;</span>])</code></pre></div>
+<p>Bringing us back to the start, it can also let us solve repmin!</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">liftRepMin ::</span> a <span class="ot">-&gt;</span> <span class="dt">Circular</span> (<span class="dt">Option</span> (<span class="dt">Min</span> a)) a a
+liftRepMin x <span class="fu">=</span> <span class="dt">Circular</span> (pure (pure x)) id
+
+<span class="ot">runRepMin ::</span> <span class="dt">Circular</span> (<span class="dt">Option</span> (<span class="dt">Min</span> a)) a b <span class="ot">-&gt;</span> b
+runRepMin (<span class="dt">Circular</span> m r) <span class="fu">=</span> r (<span class="kw">case</span> m <span class="kw">of</span>
+  <span class="dt">Option</span> (<span class="dt">Just</span> (<span class="dt">Min</span> x)) <span class="ot">-&gt;</span> x)
+
+<span class="ot">repMin ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> t a
+repMin <span class="fu">=</span> runRepMin <span class="fu">.</span> traverse liftRepMin</code></pre></div>
+<h1 id="related">Related</h1>
+<p>So the <code class="sourceCode haskell"><span class="dt">Circular</span></code> type is actually just the product of reader and writer, and is closely related to the <a href="https://github.com/treeowl/sort-traversable">sort</a> type.</p>
+<p>It’s also related to the <a href="https://www.reddit.com/r/haskell/comments/7qwzn4/an_update_about_the_store_monad_and_state_comonad/"><code class="sourceCode haskell"><span class="dt">Prescient</span></code></a> type, which I noticed after I’d written the above.</p>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-bird_using_1984">
+<p>Bird, R. S. 1984. “Using Circular Programs to Eliminate Multiple Traversals of Data.” <em>Acta Inf.</em> 21 (3) (October): 239–250. doi:<a href="https://doi.org/10.1007/BF00264249">10.1007/BF00264249</a>. <a href="http://dx.doi.org/10.1007/BF00264249" class="uri">http://dx.doi.org/10.1007/BF00264249</a>.</p>
+</div>
+<div id="ref-bird_more_1997">
+<p>Bird, Richard, Geraint Jones, and Oege De Moor. 1997. “More haste‚ less speed: Lazy versus eager evaluation.” <em>Journal of Functional Programming</em> 7 (5) (September): 541–547. doi:<a href="https://doi.org/10.1017/S0956796897002827">10.1017/S0956796897002827</a>. <a href="https://ora.ox.ac.uk/objects/uuid:761a4646-60a2-4622-a1e0-ddea11507d57/datastreams/ATTACHMENT01" class="uri">https://ora.ox.ac.uk/objects/uuid:761a4646-60a2-4622-a1e0-ddea11507d57/datastreams/ATTACHMENT01</a>.</p>
+</div>
+<div id="ref-danvy_there_2005">
+<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <a href="http://brics.dk/RS/05/3/BRICS-RS-05-3.pdf" class="uri">http://brics.dk/RS/05/3/BRICS-RS-05-3.pdf</a>.</p>
+</div>
+<div id="ref-hughes_novel_1986">
+<p>Hughes, R. John Muir. 1986. “A Novel Representation of Lists and Its Application to the Function ‘Reverse’.” <em>Information Processing Letters</em> 22 (3) (March): 141–144. doi:<a href="https://doi.org/10.1016/0020-0190(86)90059-1">10.1016/0020-0190(86)90059-1</a>. <a href="http://www.sciencedirect.com/science/article/pii/0020019086900591" class="uri">http://www.sciencedirect.com/science/article/pii/0020019086900591</a>.</p>
+</div>
+<div id="ref-pippenger_pure_1997">
+<p>Pippenger, Nicholas. 1997. “Pure Versus Impure Lisp.” <em>ACM Trans. Program. Lang. Syst.</em> 19 (2) (March): 223–238. doi:<a href="https://doi.org/10.1145/244795.244798">10.1145/244795.244798</a>. <a href="http://doi.acm.org/10.1145/244795.244798" class="uri">http://doi.acm.org/10.1145/244795.244798</a>.</p>
+</div>
+<div id="ref-rivas_notions_2014">
+<p>Rivas, Exequiel, and Mauro Jaskelioff. 2014. “Notions of Computation as Monoids.” <em>arXiv:1406.4823 [cs, math]</em> (May). <a href="http://arxiv.org/abs/1406.4823" class="uri">http://arxiv.org/abs/1406.4823</a>.</p>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Huffman coding single-pass implementation:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import           </span><span class="dt">Data.Map.Strict</span>  (<span class="dt">Map</span>)
+<span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span>  <span class="kw">as</span> <span class="dt">Map</span>
+<span class="kw">import           </span><span class="dt">Data.Traversable</span> (mapAccumL)
+
+<span class="kw">data</span> <span class="dt">Heap</span> a
+  <span class="fu">=</span> <span class="dt">Nil</span>
+  <span class="fu">|</span> <span class="dt">Node</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span> a (<span class="dt">Heap</span> a) (<span class="dt">Heap</span> a)
+
+<span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Heap</span> a) <span class="kw">where</span>
+  mappend <span class="dt">Nil</span> ys <span class="fu">=</span> ys
+  mappend xs <span class="dt">Nil</span> <span class="fu">=</span> xs
+  mappend h1<span class="fu">@</span>(<span class="dt">Node</span> i x lx rx) h2<span class="fu">@</span>(<span class="dt">Node</span> j y ly ry)
+    <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> <span class="dt">Node</span> i x (mappend h2 rx) lx
+    <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Node</span> j y (mappend h1 ry) ly
+  mempty <span class="fu">=</span> <span class="dt">Nil</span>
+
+<span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a
+
+<span class="ot">buildTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a, <span class="dt">Map</span> a [<span class="dt">Bool</span>])
+buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span>
+  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k, leaf k) <span class="dt">Nil</span> <span class="dt">Nil</span>)
+  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span>
+    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (fmap (\k <span class="ot">-&gt;</span> k id Map.empty) x)
+    <span class="dt">Node</span> j y l&#39; r&#39; <span class="ot">-&gt;</span>
+      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (cmb x y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l&#39; r&#39;))
+  leaf x k <span class="fu">=</span> Map.insert x (k [])
+  node xs ys k <span class="fu">=</span> xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)
+  cmb (xt,xm) (yt,ym) <span class="fu">=</span> (xt <span class="fu">:*:</span> yt, node xm ym)
+
+<span class="ot">huffman ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])
+huffman xs <span class="fu">=</span> (fmap fst tree, ys) <span class="kw">where</span>
+  (freq,ys) <span class="fu">=</span> mapAccumL f Map.empty xs
+  f fm x <span class="fu">=</span> (Map.insertWith (<span class="fu">+</span>) x <span class="dv">1</span> fm, mapb <span class="fu">Map.!</span> x)
+  tree <span class="fu">=</span> buildTree freq
+  mapb <span class="fu">=</span> maybe Map.empty snd tree</code></pre></div>
+<a href="#fnref1">↩</a></li>
+<li id="fn2"><p>Well, that’s a little bit of a lie. In terms of asympostics, <span class="citation">Pippenger (<a href="#ref-pippenger_pure_1997">1997</a>)</span> stated a problem that could be solved in linear time in impure Lisp, but <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Ω</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\Omega(n \log n)</annotation></semantics></math> in pure Lisp. <span class="citation">R. Bird, Jones, and Moor (<a href="#ref-bird_more_1997">1997</a>)</span> then produced an algorithm that could solve the problem in linear time, by using laziness. So, in some cases, laziness will give you asymptotics you can’t get without it (if you want to stay pure).<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>There’s actually a nicer version of the <code class="sourceCode haskell">buildTree</code> function which uses <code class="sourceCode haskell"><span class="dt">StateT</span> (<span class="dt">Heap</span> a) <span class="dt">Maybe</span></code>, but it’s equivalent to this one under the hood, and I though might be a little distracting.<a href="#fnref3">↩</a></p></li>
+<li id="fn4"><p>Something to notice about this function is that it’s going top-down and bottom-up at the same time. Combining the maps (with <code class="sourceCode haskell">(<span class="fu">.</span>)</code>) is done bottom-up, but building the codes is top-down. This means the codes are built in reverse order! That’s why the accumulating parameter (<code class="sourceCode haskell">k</code>) is a difference list, rather than a normal list. As it happens, if normal lists were used, the function would be slightly more efficient through sharing, but the codes would all be reversed.<a href="#fnref4">↩</a></p></li>
+</ol>
+</div>
+]]></description>
+    <pubDate>Sat, 17 Feb 2018 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2018-02-17-single-pass-huffman.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Monadic List Functions</title>
     <link>http://doisinkidney.com/posts/2018-02-11-monadic-list.functions.html</link>
     <description><![CDATA[<div class="info">
@@ -3146,143 +3421,6 @@ merge (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class=
 ]]></description>
     <pubDate>Thu, 17 Nov 2016 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2016-11-17-semirings-lhs.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Probability Trees</title>
-    <link>http://doisinkidney.com/posts/2016-09-30-prob-trees-lhs.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on September 30, 2016
-</div>
-<div class="info">
-    
-        Part 3 of a <a href="/series/probability.html">3-part series on probability</a>
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Haskell.html">Haskell</a>
-    
-</div>
-
-<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">{-# language DeriveFunctor, DeriveFoldable #-}</span>
-<span class="ot">{-# language PatternSynonyms, ViewPatterns #-}</span>
-
-<span class="kw">module</span> <span class="dt">ProbTree</span> <span class="kw">where</span>
-
-<span class="kw">import </span><span class="dt">Data.Monoid</span>
-<span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span>
-<span class="kw">import </span><span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)
-<span class="kw">import </span><span class="dt">Control.Arrow</span>
-<span class="kw">import </span><span class="dt">Data.Ratio</span>
-<span class="kw">import </span><span class="dt">Data.Foldable</span></code></pre></div>
-<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation">(especially Erwig and Kollmansberger <a href="#ref-erwig_functional_2006">2006</a>; and Kidd <a href="#ref-kidd_build_2007">2007</a>)</span>.</p>
-<p>I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">ProperProb</span> a <span class="fu">=</span> <span class="dt">ProperProb</span>
-  {<span class="ot"> yes ::</span> <span class="dt">Map</span> a (<span class="dt">Product</span> <span class="dt">Rational</span>) }</code></pre></div>
-<p>But of course a monad instance isn’t allowed.</p>
-<p>Similar to a map, though, is a binary tree:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">BinaryTree</span> a <span class="fu">=</span> <span class="dt">Leaf</span>
-                  <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">BinaryTree</span> a) a (<span class="dt">BinaryTree</span> a)</code></pre></div>
-<p>And it feels better for probability - <em>flatter</em>, somehow. Transmuting it into a probability-thing:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Odds</span> a <span class="fu">=</span> <span class="dt">Certain</span> a
-            <span class="fu">|</span> <span class="dt">Choice</span> (<span class="dt">Odds</span> a) <span class="dt">Rational</span> (<span class="dt">Odds</span> a)
-            <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Show</span>)</code></pre></div>
-<p>That looks good to me. A choice between two different branches feels more natural than a choice between a head and a tail.</p>
-<p>The fold is similar to before, with an unfold for good measure:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">foldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> b
-foldOdds f b <span class="fu">=</span> r <span class="kw">where</span>
-  r (<span class="dt">Certain</span> x) <span class="fu">=</span> b x
-  r (<span class="dt">Choice</span> xs p ys) <span class="fu">=</span> f (r xs) p (r ys)
-  
-<span class="ot">unfoldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Either</span> a (b,<span class="dt">Rational</span>,b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
-unfoldOdds f <span class="fu">=</span> r <span class="kw">where</span>
-  r b <span class="fu">=</span> <span class="kw">case</span> f b <span class="kw">of</span>
-    <span class="dt">Left</span> a <span class="ot">-&gt;</span> <span class="dt">Certain</span> a
-    <span class="dt">Right</span> (x,p,y) <span class="ot">-&gt;</span> <span class="dt">Choice</span> (r x) p (r y)
-  
-<span class="ot">fi ::</span> <span class="dt">Bool</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
-fi <span class="dt">True</span>  t _ <span class="fu">=</span> t
-fi <span class="dt">False</span> _ f <span class="fu">=</span> f</code></pre></div>
-<p>I changed the pattern synonym a little:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">
-<span class="ot">unRatio ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> (a,a)
-unRatio <span class="fu">=</span> numerator   <span class="fu">&amp;&amp;&amp;</span> denominator 
-      <span class="fu">&gt;&gt;&gt;</span> fromInteger <span class="fu">***</span> fromInteger
-
-pattern n <span class="fu">:%</span> d <span class="ot">&lt;-</span> (unRatio <span class="ot">-&gt;</span> (n,d))</code></pre></div>
-<p>Then, the <code class="sourceCode haskell">probOf</code> function:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probOf ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
-probOf e <span class="fu">=</span> foldOdds f b <span class="kw">where</span>
-  b x <span class="fu">=</span> fi (e <span class="fu">==</span> x) <span class="dv">1</span> <span class="dv">0</span>
-  f x (n<span class="fu">:%</span>d) y <span class="fu">=</span> (x <span class="fu">*</span> n <span class="fu">+</span> y <span class="fu">*</span> d) <span class="fu">/</span> (n <span class="fu">+</span> d)</code></pre></div>
-<p>This version doesn’t have the option for short-circuiting on the first value it finds.</p>
-<p>For generating from lists, you can try to evenly divide the list among each branch.</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">fromListOdds ::</span> (([b], <span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
-fromListOdds fr e <span class="fu">=</span> r <span class="kw">where</span>
-  r [] <span class="fu">=</span> <span class="dt">Nothing</span>
-  r xs <span class="fu">=</span> <span class="dt">Just</span> (unfoldOdds f (xs, length xs))
-  f ([x],_) <span class="fu">=</span> <span class="dt">Left</span> (e x)
-  f (xs ,n) <span class="fu">=</span> <span class="dt">Right</span> ((ys,l), fr (ys,l) <span class="fu">%</span> fr (zs,r), (zs,r)) <span class="kw">where</span>
-    l <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span>
-    r <span class="fu">=</span> n <span class="fu">-</span> l
-    (ys,zs) <span class="fu">=</span> splitAt l xs
-
-<span class="ot">equalOdds ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
-equalOdds <span class="fu">=</span> fromListOdds (fromIntegral <span class="fu">.</span> snd) id
-
-<span class="ot">fromDistrib ::</span> [(a,<span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
-fromDistrib <span class="fu">=</span> fromListOdds (sum <span class="fu">.</span> map snd <span class="fu">.</span> fst) fst</code></pre></div>
-<p>What’s really nice about this version is the fact that the old <code class="sourceCode haskell">append</code> is just the <code class="sourceCode haskell"><span class="dt">Choice</span></code> constructor, leaving the instances to be really nice:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">flatten ::</span> <span class="dt">Odds</span> (<span class="dt">Odds</span> a) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
-flatten <span class="fu">=</span> foldOdds <span class="dt">Choice</span> id
-
-<span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Odds</span> <span class="kw">where</span>
-  pure <span class="fu">=</span> <span class="dt">Certain</span>
-  fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> flatten (fmap (<span class="fu">&lt;$&gt;</span> xs) fs)
-  
-<span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Odds</span> <span class="kw">where</span>
-  x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> flatten (f <span class="fu">&lt;$&gt;</span> x)</code></pre></div>
-<p>Finally, as a bonus, to remove duplicates:</p>
-<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">lcd ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-lcd <span class="fu">=</span> foldl&#39; (\a e <span class="ot">-&gt;</span> lcm a (denominator e)) <span class="dv">1</span>
-
-<span class="ot">toDistrib ::</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> [(a,<span class="dt">Integer</span>)]
-toDistrib <span class="fu">=</span> factorOut <span class="fu">.</span> foldOdds f b <span class="kw">where</span>
-  b x <span class="fu">=</span> [(x,<span class="dv">1</span>)]
-  f l p r <span class="fu">=</span> (map<span class="fu">.</span>fmap) (n<span class="fu">%</span>t<span class="fu">*</span>) l <span class="fu">++</span> (map<span class="fu">.</span>fmap) (d<span class="fu">%</span>t<span class="fu">*</span>) r <span class="kw">where</span>
-    n <span class="fu">=</span> numerator p
-    d <span class="fu">=</span> denominator p
-    t <span class="fu">=</span> n <span class="fu">+</span> d
-  factorOut xs <span class="fu">=</span> (map<span class="fu">.</span>fmap) (numerator <span class="fu">.</span> (lcd&#39;<span class="fu">*</span>)) xs <span class="kw">where</span>
-    lcd&#39; <span class="fu">=</span> fromIntegral <span class="fu">.</span> lcd <span class="fu">.</span> map snd <span class="fu">$</span> xs
-
-<span class="ot">counts ::</span> (<span class="dt">Ord</span> a, <span class="dt">Num</span> n) <span class="ot">=&gt;</span> [(a,n)] <span class="ot">-&gt;</span> [(a,n)]
-counts <span class="fu">=</span> 
-  Map.assocs <span class="fu">.</span> 
-  Map.fromListWith (<span class="fu">+</span>)
-      
-<span class="ot">compress ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
-compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="dt">Just</span> ys <span class="fu">=</span> (fromDistrib <span class="fu">.</span> counts <span class="fu">.</span> toDistrib) xs <span class="kw">in</span> ys</code></pre></div>
-<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation">Scibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
-<h3 id="references" class="unnumbered">References</h3>
-<div id="refs" class="references">
-<div id="ref-erwig_functional_2006">
-<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. <a href="http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf">http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf</a>.</p>
-</div>
-<div id="ref-kidd_build_2007">
-<p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf</a>.</p>
-</div>
-<div id="ref-larsen_memory_2011">
-<p>Larsen, Ken Friis. 2011. “Memory efficient implementation of probability monads.” <a href="http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf" class="uri">http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf</a>.</p>
-</div>
-<div id="ref-scibior_practical_2015">
-<p>Scibior, A., Z. Ghahramani, and A. D. Gordon. 2015. “Practical probabilistic programming with monads.” In <em>2015 ACM SIGPLAN symposium on haskell</em>, 50:165–176. ACM. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
-</div>
-</div>
-]]></description>
-    <pubDate>Fri, 30 Sep 2016 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2016-09-30-prob-trees-lhs.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
