@@ -6,6 +6,8 @@ bibliography: One Pass Laziness.bib
 
 While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I'd share it here. I'll go through a few techniques for transforming a multi-pass algorithm into a single-pass one first, and then I'll show how to use them for Huffman. If you just want to skip to the code, it's provided at the end [^code].
 
+The algorithm isn't single-pass in the sense of [Adaptive Huffman Coding](https://www2.cs.duke.edu/csed/curious/compression/adaptivehuff.html): it still uses the normal Huffman algorithm, but the input is transformed in the same traversal that builds the tree to transform it.
+
 ## Circular Programming
 
 There are several techniques for turning multi-pass algorithms into single-pass ones in functional languages. Perhaps the most famous is circular programming: using *laziness* to eliminate a pass. @bird_using_1984 used this to great effect in solving the repmin problem:
