@@ -1,5 +1,5 @@
 ---
-title: Single-Pass Huffman Encoding
+title: Single-Pass Huffman Coding
 tags: Haskell, folds
 bibliography: One Pass Laziness.bib
 ---
