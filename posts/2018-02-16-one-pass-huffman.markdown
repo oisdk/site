@@ -33,7 +33,7 @@ repMin xs = ys where
 
 In an imperative language, the repmin problem might be solved with mutation: have a "largest so far" variable, and simply set every leaf to be a reference to that variable. And at first glance, especially with the imperative solution in mind, the repmin problem might seem intractable in a pure language. However, as the solution above demonstrates, it's often possible to claw back the performance characteristics of imperative languages using a little laziness and cleverness.
 
-Let's say we only have the latter at our disposal: we're working in a strict language, and we want to be pure. Are we hosed? No, as it happens! The paper There and Back Again [@danvy_there_2005] explores this very issue. The question which serves as the hook for that paper is as follows:
+Let's say we only have the latter at our disposal: we're working in a strict language, and we want to be pure. Are we hosed? No! The paper There and Back Again [@danvy_there_2005] explores this very issue. The question which serves as the hook for that paper is as follows:
 
 > Given two lists, xs and ys, can you zip xs with the reverse of ys in one pass?
 
