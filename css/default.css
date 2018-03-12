@@ -88,11 +88,6 @@ ul {
     display: none
 }
 
-.example:before {
-    content: ">>> ";
-    font-family: menlo, mono
-}
-
 ol.serieslist {
     counter-reset: item;
     list-style-type: none;

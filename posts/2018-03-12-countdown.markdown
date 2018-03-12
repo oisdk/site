@@ -6,25 +6,108 @@ header-includes:
 - usepackage{tikz}
 ---
 
-There's a popular UK TV show called [Countdown](https://en.wikipedia.org/wiki/Countdown_(game_show)) with a round where contestants have to construct an arithmetic expression from six random numbers which equals a particular target. For instance, given the numbers:
+There's a popular UK TV show called [Countdown](https://en.wikipedia.org/wiki/Countdown_(game_show)) with a round where contestants have to construct an arithmetic expression from six random numbers which equals a particular target.
+
+You don't have to use all of the numbers, and you're allowed use four operations: addition, subtraction, multiplication, and division. Additionally, each stage of the calculation must result in a positive integer.
+
+Here's an example. Try get to the target 586:
 
 $$100,25,1,5,3,10$$
 
-The following is a valid solution for the target 586:
+On the show, contestants get 30 seconds to think of an answer.
 
+<details>
+<summary>
+Solution
+</summary>
 $$25 * 3 + 10 + 100 * 5 + 1$$
-
-You don't have to use all of the numbers, and you're allowed use four operations: addition, subtraction, multiplication, and division. Additionally, each stage of the calculation must result in a positive integer.
+</details>
 
 Solving it in Haskell was first explored in depth in @hutton_countdown_2002. There, a basic "generate-and-test" implementation was provided and proven correct.
 
 As an optimization problem, there are several factors which will influence the choice of algorithm:
 
-1. There's no obvious heuristic for constructing subexpressions in order to get to a final result. In other words, if we have $25 * 3 + 10$ and $25 * 3 * 10$, there's no easy way to tell which is "closer" to $583$. The latter is closer numerically, but the former is what we ended up using in the solution.
+1. There's no obvious heuristic for constructing subexpressions in order to get to a final result. In other words, if we have $25 * 3 + 10$ and $25 * 3 * 10$, there's no easy way to tell which is "closer" to $586$. The latter is closer numerically, but the former is what we ended up using in the solution.
 2. Because certain subexpressions aren't allowed, we'll be able to prune the search space as we go.
 3. Ideally, we'd only want to calculate each possible subexpression once, making it a pretty standard dynamic programming problem.
 
-I'll be focusing on the third point in this post, but we can add the second point in at the end.
+I'll be focusing on the third point in this post, but we can add the second point in at the end. First, however, let's write a naive implementation.
+
+## Generating all Expressions
+
+The simplest implementation I can think of is one which generates all possible expressions from the input, and then tests each one successively. The core function we'll use for this is usually referred to as "unmerges":
+
+```haskell
+unmerges [x,y] = [([x],[y])]
+unmerges (x:xs) =
+    ([x],xs) :
+    concat
+        [ [(x:ys,zs),(ys,x:zs)]
+        | (ys,zs) <- unmerges xs ]
+unmerges _ = []
+```
+
+It generates all possible 2-partitions of a list, ignoring order:
+
+```haskell
+>>> unmerges "abc"
+[("a","bc"),("ab","c"),("b","ac")]
+```
+
+I haven't looked much into how to optimize this function or make it nicer, as we'll be swapping it out later.
+
+Next, we need to make the recursive calls:
+
+```haskell
+allExprs :: (a -> a -> [a]) -> [a] -> [a]
+allExprs _ [x] = [x]
+allExprs c xs =
+    [ e
+    | (ys,zs) <- unmerges xs
+    , y <- allExprs c ys
+    , z <- allExprs c zs
+    , e <- c y z ]
+```
+
+Finally, using the [simple-reflect](https://hackage.haskell.org/package/simple-reflect) library, we can take a look at the output:
+
+```haskell
+>>> allExprs (\x y -> [x+y,x*y]) [1,2] :: [Expr]
+[1 + 2,1 * 2]
+>>> allExprs (\x y -> [x+y]) [1,2,3] :: [Expr]
+[1 + (2 + 3),1 + 2 + 3,2 + (1 + 3)]
+```
+
+Even at this early stage, we can actually already write a rudimentary solution:
+
+```haskell
+countdown :: [Integer] -> Integer -> [Expr]
+countdown xs targ =
+    filter
+        ((==) targ . toInteger)
+        (allExprs
+             (\x y -> [x,y,x+y,x*y])
+             (map fromInteger xs))
+
+>>> mapM_ print (countdown [100,25,1,5,3,10] 586)
+1 + (100 * 5 + (25 * 3 + 10))
+1 + (100 * 5 + 25 * 3 + 10)
+1 + (25 * 3 + (100 * 5 + 10))
+1 + 100 * 5 + (25 * 3 + 10)
+100 * 5 + (1 + (25 * 3 + 10))
+100 * 5 + (1 + 25 * 3 + 10)
+100 * 5 + (25 * 3 + (1 + 10))
+1 + (100 * 5 + 25 * 3) + 10
+1 + 100 * 5 + 25 * 3 + 10
+100 * 5 + (1 + 25 * 3) + 10
+100 * 5 + 25 * 3 + (1 + 10)
+1 + 25 * 3 + (100 * 5 + 10)
+25 * 3 + (1 + (100 * 5 + 10))
+25 * 3 + (1 + 100 * 5 + 10)
+25 * 3 + (100 * 5 + (1 + 10))
+```
+
+As you can see from the output, there's a lot of repetition. We'll need to do some memoization to speed it up.
 
 ## Pure Memoization
 
@@ -44,28 +127,25 @@ def fib(n):
 
 In other words, it's a fundamentally stateful process. We need to mutate some mapping when we haven't seen the argument before.
 
-Using laziness, though, we can emulate the same behavior purely. Instead of mutating the mapping on function calls, we fill the whole thing at the beginning, and then index into it. As long as the mapping is lazy, it'll only evaluate the function calls when they're needed. We could use lists as our mapping to the natural numbers[^fib]:
+Using laziness, though, we can emulate the same behavior purely. Instead of mutating the mapping on function calls, we fill the whole thing at the beginning, and then index into it. As long as the mapping is lazy, it'll only evaluate the function calls when they're needed. We could use lists as our mapping to the natural numbers:
 
 ```haskell
 fibs = 0 : 1 : map fib [2..]
 fib n = fibs !! (n-1) + fibs !! (n-2)
 ```
 
-[^fib]: There are of course better ways to memoize the fibonacci function. My personal favourite is:
 
-    ```haskell
-    fib n = fix ((:) 0 . scanl (+) 1) !! n
-    ```
+The benefit here is that we avoid the extra work of redundant calls. However, we pay for the speedup in three ways:
 
-In this basic form, it's worth pointing out the tradeoffs: obviously there's a memory cost, as we have to store previous results. Also, though, every memoized call has to pay the price of the lookup time in whatever mapping structure we're using. Finally, this approach will only allow us to memoize function calls with an argument that can be used as the index to some mapping: it needs to be hashable, or comparable, etc.
+(@space) Space: we need to take up memory space storing the cached solutions.
+(@indexing) Indexing: while we no longer have to pay for the expensive recursive calls, we *do* now have to pay for indexing into the data structure. In this example, we're paying linear time to index into the list.
+(@generality) Generality: the memoization is tied directly to the argument type to the function. We need to be able to use the argument to our memoized function as an index into some data structure. While a lot of argument types admit some type of indexing (whether they're `Hashable`{.haskell}, `Ord`{.haskell}, etc.), some don't, and we can't memoize those using this technique.
+
+We're going to look at a technique that allow us to somewhat mitigate @indexing and @generality above, using something called a *nexus*.
 
 ## Nexuses
 
-First, let's take a quick diversion to another interesting technique that will give us another way to memoize.
-
-To construct a binary tree full of $n$ nodes, it seems like you might have to perform (at least) $n$ operations. However, in a pure language, if we know that two branches in the tree are going to be the same, we can construct just one branch, and have the other point to it. Because no mutation will occur, the difference should be unobservable: except for performance. This is called constructing a nexus.
-
-As described in @bird_functional_2003, we can use this idea to do perform fast memoization. The idea is that we'll make a nexus in the *call graph* of our recursive function. Taking Fibonacci again:
+The standard technique of memoization is focused on the arguments to the function, creating a concrete representation of them in memory to map to the results. Using nexuses, as described in @bird_functional_2003, we'll instead focus on the function itself, creating a concrete representation of its call graph in memory. Here's the call graph of Fibonacci:
 
 ```haskell
                                             ┌fib(1)=1
@@ -95,7 +175,19 @@ fib(6)=8┤
                           └fib(0)=0
 ```
 
-Its nexus looks like this:
+Turning *that* into a concrete datatype wouldn't do us much good: it still has the massively redundant computations in it. However, we can recognize that entire subtrees are duplicates of each other: in those cases, instead of creating both subtrees, we could just create one and have each parent point to it[^fib]:
+
+[^fib]: If you think that structure looks more like a funny linked list than a tree, that's because it is. Instead of talking about "left" and "right" branches, we could talk about the first and second elements in a list: in fact, this is exactly what's happening in the famous `zipWith`{.haskell} Fibonacci implementation (in reverse).
+
+    ```haskell
+    fibs = 0 : 1 : zipWith (+) fibs (tail fibs)
+    ```
+    
+    Or, in my favourite version:
+
+    ```haskell
+    fib n = fix ((:) 0 . scanl (+) 1) !! n
+    ```
 
 ```haskell
                                    ┌────────┬fib(1)=1
@@ -107,15 +199,9 @@ fib(6)=8┤        │        │        │        │
                                             └fib(0)=0
 ```
 
-A significant advantage of this approach is that we no longer have to index using the arguments to the function: as long as the call graph stays the same, they can even be polymorphic. Also, we don't have to pay the price of indexing: chasing a pointer to the relevant node in the tree is $\mathcal{O}(1)$ (probably even cheaper than a function call).
+This is a nexus. In Haskell, it's not observably different from the other form, except that it takes up significantly less space. It's also much quicker to construct.
 
-So why don't we all use this technique? Well, firstly, it's usually easier to abstract over indexing than "call-graph shape". If I want to memoize something using hashable arguments, the memoization function might just look like:
-
-```haskell
-memo :: Hashable a => (a -> b) -> (a -> b)
-```
-
-Having programmers recognize and classify the call-graphs of their functions is a great deal more difficult: in fact, finding a good tabulation structure for a given recursive function is NP-hard in general [@steffen_table_2006]. Nonetheless, here's how you would do it for Fibonacci:
+If we use it to memoize `fib`{.haskell}, we'll no longer be indexing on the argument: we'll instead follow the relevant branch in the tree to the subcomputation, which is just chasing a pointer. It also means the argument doesn't have to be constrained to any specific type. Here's how you'd do it:
 
 ```haskell
 data Tree
@@ -134,77 +220,42 @@ fib = val . go
     node l r = Node (val l + val r) l r
 ```
 
-For countdown, though, it's a great deal more complicated. 
+So this approach sounds amazing, right? No constraints on the argument type, no need to pay for indexing: why doesn't everyone use it everywhere? The main reason is that figuring out a nexus for the call-graph is *hard*. In fact, finding an optimal one is NP-hard in general [@steffen_table_2006].
 
-## Hylomorphisms
-
-A [hylomorphism](https://en.wikipedia.org/wiki/Hylomorphism_(computer_science)) is a fancy name for the pattern of algorithm that takes some input, builds up a structure using it, and then tears down that structure to compute a result. A good example is sorting using a heap: take some input list, convert it into a heap (build up), and then collapse the heap down to get the elements in order.
-
-Put more formally, a hylomorphism is an anamorphism followed by a catamorphism. Anamorphism is the "building up" function, and catamorphism is "tearing down". For concrete examples, look no further than [`unfoldr`{.haskell}](http://hackage.haskell.org/package/base-4.10.1.0/docs/Data-List.html#v:unfoldr) and [`foldr`{.haskell}](http://hackage.haskell.org/package/base-4.10.1.0/docs/Data-List.html#v:foldr). Using these, here's a serviceable definition for a hylomorphism on lists:
+The second problem is that it's difficult to abstract out. The standard technique of memoization relies on building a mapping from keys to values: about as bread-and-butter as it gets in programming. Even more, we already know how to say "values of this type can be used efficiently as keys in some mapping": for Data.Map it's `Ord`{.haskell}, for Data.HashMap it's `Hashable`{.haskell}. All of this together means we can build a nice library for memoization which exports the two following functions:
 
 ```haskell
-hylo :: (b -> c -> c) -> c -> (a -> Maybe (b, a)) -> a -> c
-hylo f b g = foldr f b . unfoldr g
+memoHash :: Hashable a => (a -> b) -> (a -> b)
+memoOrd :: Ord a => (a -> b) -> (a -> b)
 ```
 
-For a somewhat contrived example, here's how you could calculate the sum of the digits of a number:
-
-```haskell
-sumDigits :: Integer -> Integer
-sumDigits = hylo (+) 0 qr
-  where
-    qr 0 = Nothing
-    qr n = Just (swap (quotRem n 10))
-
->>> sumDigits 123
-6
-
->>> sumDigits 333
-9
-```
-
-That's a pretty quick intro to recursion schemes and so on, if you want something a little more in-depth I've found Jared Tobin's three articles [-@tobin_practical_2015; -@tobin_sorting_2015; -@tobin_tour_2015] on the subject to be the most readable material out there.
-
-## Fusion and Memoization
-
-As it happens, the function `hylo`{.haskell} above can be rewritten to not produce any intermediate list:
-
-```haskell
-hylo :: (b -> c -> c) -> c -> (a -> Maybe (b, a)) -> a -> c
-hylo f b g = go where
-  go = maybe b (uncurry (\x -> f x . go)) . g
-```
-
-Inlined sufficiently, the `sumDigits`{.haskell} function now becomes:
-
-```haskell
-sumDigits :: Integer -> Integer
-sumDigits 0 = 0
-sumDigits n =
-  let (q,r) = quotRem n 10
-  in r + sumDigits q
-```
-
-In this case, the version which avoids the intermediate list is obviously superior. By viewing the computation as a hylomorphism, we were able to write a more efficient version which avoids the intermediate data structure.
-
-The question now becomes: can we go the other way? For some functions, the memoized `fib`{.haskell} above, for instance, constructing an intermediate data structure gives us a tremendous speedup. Can we rewrite other functions into a hylomorphism form to allow for memoization?
-
-This question is the subject of @bird_hylomorphisms_2010. Unfortunately, the code in that paper has some typos in it, and I couldn't get the similar solution from @bird_functional_2003 to work either. I did finally get a working implementation of the former, which matches (as far as I can tell) the original algorithm as stated.
+Building a nexus, however, is not bread-and-butter. On top of that, it's difficult to say something like "recursive functions of this structure can be constructed using a nexus". What's the typeclass for that? In comparison to the signatures above, the constraint will need to be on the *arrows*, not the `a`{.haskell}. Even talking about the structure of recursive functions is regarded as somewhat of an advanced subject: that said, the [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes) package allows us to do so, and even has facilities for constructing something *like* nexuses with histomorphisms [@tobin_time_2016]. I'm still looking to see if there's a library out there that *does* manage to abstract nexuses in an ergonomic way, so I'd love to hear if there was one (or if there's some more generalized form which accomplishes the same).
 
 ## The Functions
 
-So, for Countdown, we'll need to figure out the "build up" function, and the "tear down" function. From a high-level, the tear down function will need to take two subexpressions and combine them together in all possible ways. The anamorphism, however, will need to take the list of inputs, and split it up in all possible ways. This can be accomplished with `unmerges`{.haskell}:
+That's enough preamble. Looking back at our naive solution:
 
 ```haskell
 unmerges [x,y] = [([x],[y])]
-unmerges (x:xs) = [([x],xs)] ++ (unmerges xs >>= add x)
-  where
-    add x (ys,zs) = [(x:ys,zs),(ys,x:zs)]
+unmerges (x:xs) =
+    ([x],xs) :
+    concat
+        [ [(x:ys,zs),(ys,x:zs)]
+        | (ys,zs) <- unmerges xs ]
+unmerges _ = []
+
+allExprs _ [x] = [x]
+allExprs c xs =
+    [ e
+    | (ys,zs) <- unmerges xs
+    , y <- allExprs c ys
+    , z <- allExprs c zs
+    , e <- c y z ]
 ```
 
-It's important to recognize that this is doing *one* level of "building": it's not generating all possible combinations of all elements, it's generating all possible partitions of size 2.
+We can see that the two recursive calls to `allExprs`{.haskell} are going to need to share work somehow. As with `fib`{.haskell}, we need to figure out what the call graph looks like. Instead of being a binary tree, it looks something more like this:
 
-So how to construct a nexus? Well, the call graph is a boolean lattice, and the spanning tree for that lattice is a binomial tree. It's pretty complex, and more understandable through code than prose, but there are two helper functions that I found interesting.
+
 
 ### Breadth-First Traversal
 
