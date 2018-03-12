@@ -231,35 +231,15 @@ memoOrd :: Ord a => (a -> b) -> (a -> b)
 
 Building a nexus, however, is not bread-and-butter. On top of that, it's difficult to say something like "recursive functions of this structure can be constructed using a nexus". What's the typeclass for that? In comparison to the signatures above, the constraint will need to be on the *arrows*, not the `a`{.haskell}. Even talking about the structure of recursive functions is regarded as somewhat of an advanced subject: that said, the [recursion-schemes](https://hackage.haskell.org/package/recursion-schemes) package allows us to do so, and even has facilities for constructing something *like* nexuses with histomorphisms [@tobin_time_2016]. I'm still looking to see if there's a library out there that *does* manage to abstract nexuses in an ergonomic way, so I'd love to hear if there was one (or if there's some more generalized form which accomplishes the same).
 
-## The Functions
+## Memoizing Countdown
 
-That's enough preamble. Looking back at our naive solution:
+That's enough preamble. The nexus we want to construct for countdown is *not* going to memoize as much as possible: in particular, we're only going to memoize the shape of the trees, not the operators used. This will massively reduce the memory overhead, and still give a decent speedup.
 
-```haskell
-unmerges [x,y] = [([x],[y])]
-unmerges (x:xs) =
-    ([x],xs) :
-    concat
-        [ [(x:ys,zs),(ys,x:zs)]
-        | (ys,zs) <- unmerges xs ]
-unmerges _ = []
+With that in mind, the ideal nexus looks something like this:
 
-allExprs _ [x] = [x]
-allExprs c xs =
-    [ e
-    | (ys,zs) <- unmerges xs
-    , y <- allExprs c ys
-    , z <- allExprs c zs
-    , e <- c y z ]
-```
+![](/images/boolean-lattice.svg)
 
-We can see that the two recursive calls to `allExprs`{.haskell} are going to need to share work somehow. As with `fib`{.haskell}, we need to figure out what the call graph looks like. Instead of being a binary tree, it looks something more like this:
-
-
-
-### Breadth-First Traversal
-
-The first was a breadth-first traversal for a forest of rose trees:
+We can represent the tree in Haskell as a rose tree:
 
 ```haskell
 data Tree a
@@ -269,9 +249,37 @@ data Tree a
     }
 
 type Forest a = [Tree a]
-
-breadthFirst :: Forest a -> [a]
 ```
+
+Constructing the nexus itself isn't actually the most interesting part of this solution: *consuming* it is. We need to be able to go from the structure above into a list that's the equivalent of `unmerges`{.haskell}. Doing a breadth-first traversal of the diagram above (without the top element) will give us:
+
+$$abc, abd, acd, bcd, ab, ac, bc, ad, bd, cd, a, b, c, d$$
+
+If you split that list in half, and zip it with its reverse, you'll get the output of `unmerges`{.haskell}.
+
+However, the breadth-first traversal of the diagram isn't the same thing as the breadth-first traversal of the rose tree. The latter will traverse $abc, abd, acd, bcd$, and then the children of $abc$ ($ab,ac,bc$), and then the children of $abd$ ($ab,ad,bd$): and here's our problem. We traverse $ab$ twice, because we can't know that $abc$ and $abd$ are pointing to the same value. What we have to do is first prune the tree, removing duplicates, and then perform a breadth-first traversal on that.
+
+### Pruning
+
+Luckily, the duplicates follow a pattern, allowing us to remove them without having to do any equality checking. In each row, the first node has no duplicates in its children, the second's first child is a duplicate, the third's first and second children are duplicates, and so on. You should be able to see this in the diagram above. Adapting a little from the paper, we get an algorithm like this:
+
+```haskell
+para :: (a -> [a] -> b -> b) -> b -> [a] -> b
+para f b = go
+  where
+    go [] = b
+    go (x:xs) = f x xs (go xs)
+
+prune :: Forest a -> Forest a
+prune ts = pruneAt ts 0 
+  where
+    pruneAt = para f (const [])
+    f (Node x []) t _ _ = Node x [] : t
+    f (Node x us) _ a k =
+        Node x (pruneAt (drop k us) k) : a (k + 1)
+```
+
+### Breadth-First Traversal
 
 The obvious solution is as follows:
 
@@ -280,101 +288,34 @@ breadthFirst [] = []
 breadthFirst xs = map root xs ++ breadthFirst (xs >>= forest)
 ```
 
-But it's not optimal: there's a `++`{.haskell}, and it constructs several unnecessary intermediate lists. The traditional way is to use a queue of some kind:
+But it's not optimal: there's a `++`{.haskell}, and it constructs several unnecessary intermediate lists. The traditional way is to use a queue of some kind, but you can actually get away with just a list and a left fold.
 
 ```haskell
-breadthFirst = go . toQueue
-  where
-    go :: Queue (Tree a) -> [a]
-    go xs = case uncons xs of
-      Nothing -> []
-      Just (Node y ys,zs) -> y : go (zs `appendList` ys)
-```
-
-A very simple queue is just a pair of lists:
-
-```haskell
-data Queue a = Queue { front :: [a], back :: [a] }
-
-toQueue :: [a] -> Queue a
-toQueue xs = Queue xs []
-
-uncons :: Queue a -> Maybe (a, Queue a)
-uncons (Queue (x:xs) ys) = Just (x, Queue xs ys)
-uncons (Queue [] ys) = case reverse ys of
-  [] -> Nothing
-  (x:xs) -> Just (x, Queue xs [])
-
-appendList :: Queue a -> [a] -> Queue a
-appendList (Queue xs ys) zs = Queue (xs ++ reverse ys) (reverse zs)
-```
-
-It has the right asymptotics, but still performs reversals that seem unnecessary.
-
-Another possible option would be to build the queue in one form, and traverse it in another. This makes the code simpler still:
-
-```haskell
-breadthFirst = go id
-  where
-    go k [] = case k [] of
-      [] -> []
-      xs -> go id xs
-    go k (Node x xs:ys) = x : go (k . (++) xs) ys
-```
-
-We're using a difference list to build the queue. Happily, this function converts to a fold:
-
-```haskell
-breadthFirst fs = foldr go b fs id
-  where
-    b k = case k [] of
-      [] -> []
-      xs -> foldr go b xs id
-    go (Node x xs) ys k = x : ys (k . (++) xs)
-```
-
-In this form, it's clear that we only need 3 things from the queue: a way to append lists, a way to check if it's empty, and a way to fold over it. We can encode this specification in the "initial" form:
-
-```haskell
-data Queue a
-    = Nil
-    | Queue a :++ [a]
-    deriving Foldable
-
 breadthFirst :: Forest a -> [a]
-breadthFirst fs = foldr go b fs Nil
+breadthFirst ts = foldr f b ts []
   where
-    go (Node x xs) ys k = x : ys (k :++ xs)
-    b Nil = []
-    b xs  = foldr go b xs Nil
+    f (Node x xs) fw bw = x : fw (xs:bw)
+
+    b [] = []
+    b q = foldl (foldr f) b q []
 ```
 
-With a little help from special GHC functions, this is actually the fastest version I found:
+With the appropriate incantations, this is actually the fastest implementation I've found.
+
+### Fusing
+
+We can actually inline both of the above functions, fusing them together:
 
 ```haskell
-breadthFirst fs = foldr go b fs Nil
+spanNexus :: Forest a -> [a]
+spanNexus ts = foldr f (const b) ts 0 []
   where
-    go (Node x xs) fw = oneShot (\bw -> x : fw (bw :++ xs))
-    {-# INLINE go #-}
-    b Nil         = []
-    b (bw :++ st) = foldr go (foldr go b st) bw Nil
+    f (Node x us) fw k bw = x : fw (k+1) ((k, us) : bw)
+
+    b [] = []
+    b q = foldl (\a (k,st) -> foldr f (const a) (drop k st) k) b q []
 ```
 
-You can (mostly) eliminate the intermediate data structure, but you need to be able to test for an empty queue, otherwise you'll loop. Using `Maybe`{.haskell}:
-
-```haskell
-newtype Queue a = Queue
-    { runQueue :: Maybe (Queue a -> Queue a) -> [a]
-    }
-
-breadthFirst :: Forest a -> [a]
-breadthFirst fs = runQueue (foldr go b fs) Nothing
-  where
-    go (Node x xs) ys =
-        Queue (\k -> let zs = fromMaybe id k . flip (foldr go) xs
-                     in x : runQueue ys (Just zs))
-    b = Queue (maybe [] (\xs -> runQueue (xs b) Nothing))
-```
 
 ### Halving, Convolving, and Folding
 
