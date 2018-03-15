@@ -2,8 +2,6 @@
 title: Countdown
 tags: Haskell
 bibliography: Countdown.bib
-header-includes:
-- usepackage{tikz}
 ---
 
 There's a popular UK TV show called [Countdown](https://en.wikipedia.org/wiki/Countdown_(game_show)) with a round where contestants have to construct an arithmetic expression from six random numbers which equals a particular target.
@@ -35,7 +33,7 @@ I'll be focusing on the third point in this post, but we can add the second poin
 
 ## Generating all Expressions
 
-The simplest implementation I can think of is one which generates all possible expressions from the input, and then tests each one successively. The core function we'll use for this is usually referred to as "unmerges":
+The simplest implementation I can think of is one which generates all possible expressions from the input, and then tests each one successively. The core function we'll use for this is usually called "unmerges":
 
 ```haskell
 unmerges [x,y] = [([x],[y])]
@@ -310,200 +308,113 @@ We can actually inline both of the above functions, fusing them together:
 spanNexus :: Forest a -> [a]
 spanNexus ts = foldr f (const b) ts 0 []
   where
-    f (Node x us) fw k bw = x : fw (k+1) ((k, us) : bw)
+    f (Node x us) fw k bw = x : fw (k+1) ((drop k us, k) : bw)
 
     b [] = []
-    b q = foldl (\a (k,st) -> foldr f (const a) (drop k st) k) b q []
+    b qs = foldl (uncurry . foldr f . const) b qs []
 ```
-
 
 ### Halving, Convolving, and Folding
 
-One of the steps in the algorithm looks like this:
+So, now we can go from the tree to our list of splits. Next step is to convert that list into the output of unmerges, by zipping the reverse of the first half with the second. We can use an algorithm described in @danvy_there_2005 to do the zipping and reversing:
 
 ```haskell
-zipFold choose empty combine =
-    foldr choose empty .
-    uncurry (zipWith combine) .
-    first reverse .
-    halve
+fold xs n = go xs n (const [])
   where
-    halve xs = splitAt (length xs `div` 2) xs
+    go xs 0     k = k xs
+    go (x:xs) n k = go xs (n-2) (\(y:ys) -> (x,y) : k ys)
 ```
 
-There are four distinct steps here: first, the list is split in half, then the first half is reversed, then the two halves are zipped together, and finally the whole thing is folded using a choosing function. There are well-known tricks for doing each of these things in one pass, and we can combine them here to do all four steps in one (ish) pass. First of all, halving:
+And we can inline the function which collapses those results into one:
 
 ```haskell
-halve xs = go xs xs
+fold xs n = go xs n (const [])
   where
-    go (y:ys) (_:_:zs) = (y:ys',zs')
-      where
-        (ys',zs') = go ys zs
-    go ys _ = ([], ys)
+    go 0 xss k = k xss
+    go n (xs:xss) k =
+        go (n-2) xss (\(ys:yss) -> [ z
+                                      | x <- xs
+                                      , y <- ys
+                                      , z <- cmb x y
+                                      ] ++ k yss)
 ```
 
-we duplicate the list, and advance one copy twice as fast as the other. When that copy hits the end, what we have in the other copy must be the second half.
-
-We're building the second half *after* the recursive call to go, somewhat like a right fold. We can build it in reverse by using an accumulator instead:
-
-```haskell
-halveReverse xs = go [] xs xs
-  where
-    go k (y:ys) (_:_:zs) = go (y:k) ys zs
-    go k ys _ = (k, ys)
-```
-
-`zip`{.haskell} can be written as fold:
-
-```haskell
-zip xs ys = foldr f (const []) xs ys
-  where
-    f x xs (y:ys) = (x,y) : xs ys
-```
-
-And, thanks to fusion laws, that means we can sub in the cons constructors in `halveReverse`{.haskell} with the `f` above:
-
-```haskell
-halveReverseZip xs' = go (const []) xs' xs'
-  where
-    go k (x:xs) (_:_:ys) = go (\(z:zs) -> (x,z) : k zs) xs ys
-    go k ys _ = k ys
-```
-
-And finally, because *this* whole thing is being consumed by a fold, we can remove another list:
-
-```haskell
-zipFold choose empty combine xs' = go (const empty) xs' xs'
-  where
-    go k (x:xs) (_:_:ys) = go (\(z:zs) -> combine x z `choose` k zs) xs ys
-    go k ys _ = k ys
-```
+And that's all we need!
 
 <details>
 <summary>
 Full Code
 </summary>
 ```haskell
-import           Control.Applicative (liftA2)
-import qualified Data.Tree           as Rose
-import           GHC.Exts            (oneShot)
-
-para :: (a -> [a] -> b -> b) -> b -> [a] -> b
-para f b = go
-  where
-    go [] = b
-    go (x:xs) = f x xs (go xs)
+import qualified Data.Tree as Rose
 
 data Tree a
-    = Leaf a
+    = Leaf Int a
     | Node [Tree a]
     deriving (Show,Eq,Functor)
-
-type Labelled a = Rose.Tree [a]
-
-data Queue a = Nil | Queue a :++ [a]
-
-{-# ANN module "HLint: ignore Use foldr" #-}
-instance Foldable Queue where
-    foldr f = go where
-      go b (xs :++ ys) = go (gol b ys) xs
-      go b Nil         = b
-      gol b []     = b
-      gol b (x:xs) = f x (gol b xs)
-    {-# INLINE foldr #-}
-
--- | Given a nondeterministic, commutative binary operator, and a list
--- of inputs, enumerate all possible applications of the operator to
--- all inputs, without recalculating subtrees.
+    
 enumerateTrees :: (a -> a -> [a]) -> [a] -> [a]
-enumerateTrees cmb (xxs :: [a]) =
-    case xxs of
-        [] -> []
-        _  -> (extract . steps . initial) xxs
+enumerateTrees _ [] = []
+enumerateTrees cmb xs = (extract . steps . initial) xs
   where
-    step :: [Tree (Labelled a)] -> [Tree (Labelled a)]
-    step = map (fmap node) . group
-    {-# INLINE step #-}
+    step = map nodes . group
 
-    steps :: [Tree (Labelled a)] -> [Tree (Labelled a)]
-    steps xs =
-        case xs of
-            [_] -> xs
-            _   -> steps (step xs)
+    steps [x] = x
+    steps xs = steps (step xs)
 
-    initial :: [a] -> [Tree (Labelled a)]
-    initial = map (Leaf . flip Rose.Node [] . pure)
-    {-# INLINE initial #-}
+    initial = map (Leaf 1 . flip Rose.Node [] . pure)
 
-    extract :: [Tree (Labelled b)] -> [b]
-    extract (Leaf x:_) = Rose.rootLabel x
-    extract (Node ts:_) = extract ts
-    extract _ = errorWithoutStackTrace "Data.SubSequences.extract: bug!"
+    extract (Leaf _ x) = Rose.rootLabel x
+    extract (Node [x]) = extract x
 
-    group :: [Tree (Labelled a)] -> [Tree [Labelled a]]
-    group = para f (errorWithoutStackTrace "Data.SubSequences.group: bug!")
-      where
-        f _ [] _ = []
-        f (Leaf x) vs a =
-            Node
-                [ Leaf [x, y]
-                | Leaf y <- vs ] :
-            a
-        f (Node us) vs a = Node (zipWith comb (group us) vs) : a
-        {-# INLINE f #-}
+    group [_] = []
+    group (Leaf _ x:vs) = Node [Leaf 2 [x, y] | Leaf _ y <- vs] : group vs
+    group (Node   u:vs) = Node (zipWith comb (group u) vs) : group vs
 
-    comb :: Tree [Labelled b] -> Tree (Labelled b) -> Tree [Labelled b]
-    comb (Leaf xs) (Leaf x) = Leaf (xs ++ [x])
+    comb (Leaf n xs) (Leaf _ x) = Leaf (n + 1) (xs ++ [x])
     comb (Node us) (Node vs) = Node (zipWith comb us vs)
-    comb _ _ = errorWithoutStackTrace "Data.SubSequences.comb: bug!"
 
-    trav :: [Labelled a] -> [[a]]
-    trav ts = foldr go b ts Nil
+    forest ts = foldr f (const b) ts 0 []
       where
-        go (Rose.Node x xs) fw = oneShot (\bw -> x : fw (bw :++ xs))
-        {-# INLINE go #-}
-        b Nil         = []
-        b (bw :++ st) = foldr go (foldr go b st) bw Nil
-    {-# INLINE trav #-}
+        f (Rose.Node x []) fw !k bw = x : fw (k + 1) bw
+        f (Rose.Node x us) fw !k bw = x : fw (k + 1) ((drop k us, k) : bw)
 
-    forest :: Int -> [Labelled a] -> [Labelled a]
-    forest = flip (para f (const []))
-      where
-        f (Rose.Node x []) t _ !_ = Rose.Node x [] : t
-        f (Rose.Node x us) _ a !k =
-            Rose.Node x (forest k (drop k us)) : a (k + 1)
-        {-# INLINE f #-}
+        b [] = []
+        b qs = foldl (uncurry . foldr f . const) b qs []
 
-    node :: [Labelled a] -> Labelled a
-    node ts = Rose.Node (spring (trav (forest 0 ts))) ts
+    nodes (Leaf n x) = Leaf 1 (node n x)
+    nodes (Node xs) = Node (map nodes xs)
+
+    node n ts = Rose.Node (walk (2 ^ n - 2) (forest ts) (const [])) ts
       where
-        spring xs = zipCombine (const []) xs xs
-        zipCombine k (x:xs) (_:_:ys) =
-            zipCombine
-                (\case
-                     (z:zs) -> concat (liftA2 cmb x z) ++ k zs
-                     [] ->
-                         errorWithoutStackTrace "Data.SubSequences.node: bug!")
-                xs
-                ys
-        zipCombine k ys _ = k ys
-    {-# INLINE node #-}
-{-# INLINE enumerateTrees #-}
+        walk 0 xss k = k xss
+        walk n (xs:xss) k =
+            walk (n-2) xss (\(ys:yss) -> [ z
+                                         | x <- xs
+                                         , y <- ys
+                                         , z <- cmb x y
+                                         ] ++ k yss)
 ```
-
 </details>
 
-<details>
-<summary>
-Countdown Implementation
-</summary>
+
+## Using it for Countdown
+
+The first thing to do for the Countdown solution is to figure out a representation for expressions. The one from simple-reflect is perfect for displaying the result, but we should memoize its calculation.
 
 ```haskell
-import Debug.SimpleReflect
-import Data.Function
-import qualified Data.IntSet as IntSet
+data Memoed
+  = Memoed
+  { expr   :: Expr
+  , result :: Int
+  }
+```
+
+Then, some helpers for building:
+
+```haskell
 data Op = Add | Dif | Mul | Div
-data Memoed = Memoed { expr :: Expr, result :: Int }
+
 binOp f g x y = Memoed ((f `on` expr) x y) ((g `on` result) x y)
 
 apply :: Op -> Memoed -> Memoed -> Memoed
@@ -513,7 +424,11 @@ apply Dif x y
   | otherwise = binOp (-) (-) y x
 apply Mul x y = binOp (*) (*) x y
 apply Div x y = binOp div div x y
+```
 
+Finally, the full algorithm:
+
+```haskell
 enumerateExprs :: [Int] -> [Memoed]
 enumerateExprs = enumerateTrees cmb . map (\x -> Memoed (fromIntegral x) x)
   where
@@ -545,8 +460,6 @@ countdown targ = map expr . filter ((==) targ . result) . enumerateExprs
 76 + 510
 586
 ```
-
-</details>
 
 ## Testing the Implementation
 
@@ -603,27 +516,14 @@ allSubTrees xs =
     f ls rs =
         Set.unions
             [ls, rs, Set.fromList ((liftA2 (:*:) `on` Set.toList) ls rs)]
-
-unmerges :: [a] -> [([a],[a])]
-unmerges [x,y] = [([x],[y])]
-unmerges (x:xs) =
-    ([x], xs) :
-    concat
-        [ [(x : ys, zs), (ys, x : zs)]
-        | (ys,zs) <- unmerges xs ]
-unmerges _ = error "unmerges: list smaller than 2 given"
 ```
 
 Then, to test:
 
 ```haskell
-prop_exhaustiveSearch :: Property
-prop_exhaustiveSearch =
-    property $
-    sized $
-    \n ->
-         pure $
-         let src = [0 .. n]
+prop_exhaustiveSearch :: Natural -> Bool
+prop_exhaustiveSearch n =
+         let src = [0 .. fromIntegral n]
              expect = allSubTrees src
              actual =
                  Set.fromList
@@ -631,57 +531,38 @@ prop_exhaustiveSearch =
                           (\xs ys ->
                                 [xs, ys, xs :*: ys])
                           (map Leaf src))
-         in setCompare expect actual
+         in expect == actual
 
-prop_exhaustiveSearchFull :: Property
-prop_exhaustiveSearchFull =
-    property $
-    sized $
-    \n ->
-         pure $
-         let src = [0 .. n]
+prop_exhaustiveSearchFull :: Natural -> Bool
+prop_exhaustiveSearchFull n =
+         let src = [0 .. fromIntegral n]
              expect = Map.fromSet (const 1) (allTrees src)
              actual =
                  freqs
                      (enumerateTrees
-                          (\xs ys ->
-                                [xs :*: ys])
+                          (\xs ys -> [xs :*: ys])
                           (map Leaf src))
-         in counterexample (mapCompare expect actual) (expect == actual)
+         in expect == actual
 ```
 
-And then, repeated calls:
-
+Testing for repeated calls is more tricky. Remember, the memoization is supposed to be unobservable: in order to see it, we're going to have to use some unsafe operations.
 
 ```haskell
 traceSubsequences
-    :: ((Tree Int -> Tree Int -> [Tree Int]) -> [Tree Int] -> [Tree Int]) -> [Int]
+    :: ((Tree Int -> Tree Int -> [Tree Int]) -> [Tree Int] -> [Tree Int])
+    -> [Int]
     -> (Map (Tree Int) Int, [Tree Int])
 traceSubsequences enm ints =
     runST $
     do ref <- newSTRef Map.empty
        let res = enm (combine ref) (map (conv ref) ints)
-       traverse_ evaluate res
+       traverse_ (foldr seq (pure ())) res
        intm <- readSTRef ref
        pure (intm, res)
   where
-    evaluate :: Tree Int -> ST s ()
-    evaluate = foldr seq (pure ())
-    {-# NOINLINE evaluate #-}
-    combine ref xs ys =
-        unsafeRunST $
-        do evaluate xs
-           evaluate ys
-           let zs = xs :*: ys
-           modifySTRef' ref (incr zs)
-           pure [zs]
+    combine ref xs ys = unsafeRunST ([xs :*: ys] <$ modifySTRef' ref (incr (xs :*: ys)))
     {-# NOINLINE combine #-}
-    conv ref x =
-        unsafeRunST $
-        do let xs = Leaf x
-           evaluate xs
-           modifySTRef' ref (incr xs)
-           pure xs
+    conv ref x = unsafeRunST (Leaf x <$ modifySTRef' ref (incr (Leaf x)))
     {-# NOINLINE conv #-}
     unsafeRunST cmp = unsafePerformIO (unsafeSTToIO cmp)
 
