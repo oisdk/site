@@ -231,7 +231,7 @@ Building a nexus, however, is not bread-and-butter. On top of that, it's difficu
 
 ## Memoizing Countdown
 
-That's enough preamble. The nexus we want to construct for countdown is *not* going to memoize as much as possible: in particular, we're only going to memoize the shape of the trees, not the operators used. This will massively reduce the memory overhead, and still give a decent speedup.
+That's enough preamble. The nexus we want to construct for countdown is *not* going to memoize as much as possible: in particular, we're only going to memoize the shape of the trees, not the operators used. This will massively reduce the memory overhead, and still give a decent speedup [@bird_countdown:_2005, section 11 "building a skeleton tree first"].
 
 With that in mind, the ideal nexus looks something like this:
 
@@ -279,14 +279,7 @@ prune ts = pruneAt ts 0
 
 ### Breadth-First Traversal
 
-The obvious solution is as follows:
-
-```haskell
-breadthFirst [] = []
-breadthFirst xs = map root xs ++ breadthFirst (xs >>= forest)
-```
-
-But it's not optimal: there's a `++`{.haskell}, and it constructs several unnecessary intermediate lists. The traditional way is to use a queue of some kind, but you can actually get away with just a list and a left fold.
+I went through this in a [previous post](/posts/2018-03-17-rose-trees-breadth-first.html), so this is the end solution:
 
 ```haskell
 breadthFirst :: Forest a -> [a]
@@ -461,6 +454,11 @@ countdown targ = map expr . filter ((==) targ . result) . enumerateExprs
 586
 ```
 
+There are some optimizations going on here, taken mainly from @bird_countdown:_2005:
+
+1. We filter out illegal operations, as described originally.
+2. We filter out any expressions that have the same value.
+
 ## Testing the Implementation
 
 So we've followed the paper, written the code: time to test. The specification of the function is relatively simple: calculate all applications of the commutative operator to some input, *without* recalculating subtrees.
@@ -580,3 +578,5 @@ prop_noRepeatedCalls =
             counterexample (mapCompare tres fres) (tres == fres) .&&.
             (n > 2 ==> tint /= fint)
 ```
+
+Here, `dummyEnumerate`{.haskell} is some method which performs the same task, but *doesn't* construct a nexus, so we can ensure that our tests really do catch faulty implementations.
