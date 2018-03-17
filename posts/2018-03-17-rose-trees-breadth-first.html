@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Rose Trees, Breadth-First - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Rose Trees, Breadth-First</h2>
+
+            <div class="info">
+    Posted on March 17, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Trees.html">Trees</a>
+    
+</div>
+
+<p>In contrast to the more common binary trees, in a rose tree every node can have any number of children.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+    <span class="fu">=</span> <span class="dt">Node</span>
+    {<span class="ot"> root   ::</span> a
+    ,<span class="ot"> forest ::</span> <span class="dt">Forest</span> a
+    }
+
+<span class="kw">type</span> <span class="dt">Forest</span> a <span class="fu">=</span> [<span class="dt">Tree</span> a]</code></pre></div>
+<p>One of the important manipulations of this data structure, which forms the basis for several other algorithms, is a breadth-first traversal. I’d like to go through a couple of techniques for implementing it, and how more generally you can often get away with using much simpler data structures if you really pinpoint the API you need from them.</p>
+<p>As a general technique, <span class="citation">Okasaki (<a href="#ref-okasaki_breadth-first_2000">2000</a>)</span> advises that a queue be used:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">breadthFirst ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]
+breadthFirst tr <span class="fu">=</span> go (singleton tr)
+  <span class="kw">where</span>
+    go q <span class="fu">=</span> <span class="kw">case</span> pop q <span class="kw">of</span>
+      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> []
+      <span class="dt">Just</span> (<span class="dt">Node</span> x xs,qs) <span class="ot">-&gt;</span> x <span class="fu">:</span> go (qs <span class="ot">`append`</span> xs)</code></pre></div>
+<p>There are three functions left undefined there: <code class="sourceCode haskell">singleton</code>, <code class="sourceCode haskell">pop</code>, and <code class="sourceCode haskell">append</code>. They represent the API of our as-of-yet unimplemented queue, and their complexity will dictate the complexity of the overall algorithm. As a (bad) first choice, we could use simple lists, with the functions defined thus:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">singleton x <span class="fu">=</span> [x]
+pop (x<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">Just</span> (x,xs)
+pop [] <span class="fu">=</span> <span class="dt">Nothing</span>
+append <span class="fu">=</span> (<span class="fu">++</span>)</code></pre></div>
+<p>Those repeated appends are bad news. The queue needs to be able to support popping from one side and appending from the other, which is something lists absolutely <em>cannot</em> do well.</p>
+<p>We could swap in a more general queue implementation, possibly using Data.Sequence, or a pair of lists. But these are more complex and general than we need, so let’s try and pare down the requirements a little more.</p>
+<p>First, we don’t need a pop: the go function can be expressed as a fold instead. Second, we don’t need <em>every</em> append to be immediately stuck into the queue, we can batch them, first appending to a structure that’s efficient for appends, and then converting that to a structure which is efficient for folds. In code:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">breadthFirst ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]
+breadthFirst ts <span class="fu">=</span> foldr f b ts []
+  <span class="kw">where</span>
+    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)
+
+    b [] <span class="fu">=</span> []
+    b qs <span class="fu">=</span> foldl (foldr f) b qs []</code></pre></div>
+<p>We’re consing instead of appending, but the consumption is being done in the correct direction anyway, because of the <code class="sourceCode haskell">foldl</code>.</p>
+<h2 id="levels">Levels</h2>
+<p>So next step: to get the <code class="sourceCode haskell">levels</code> function from Data.Tree. Instead of doing a breadth-first traversal, it returns the nodes at each <em>level</em> of the tree. Conceptually, every time we did the reverse above (called <code class="sourceCode haskell">foldl</code>), we will do a cons as well:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">levels ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]
+levels ts <span class="fu">=</span> foldl f b ts [] []
+  <span class="kw">where</span>
+    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)
+
+    b _ [] <span class="fu">=</span> []
+    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</code></pre></div>
+<h2 id="unfolding">Unfolding</h2>
+<p>The original reason I started work on these problems was <a href="https://github.com/haskell/containers/issues/124">this</a> issue in containers. It concerns the <a href="https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF"><code>unfoldTreeM_BF</code></a> function. An early go at rewriting it, inspired by levels above, looks like this:</p>
+<div class="sourceCode"><table class="sourceCode haskell numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="sourceCode"><pre><code class="sourceCode haskell"><span class="ot">unfoldForestQ ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
+unfoldForestQ f ts <span class="fu">=</span> b [] [ts]
+  <span class="kw">where</span>
+    
+    b k [] <span class="fu">=</span> pure []
+    b k qs <span class="fu">=</span> fmap (run k) (foldl (foldl t) b qs [] [])
+    
+    run <span class="fu">=</span> foldr (uncurry re) id
+    
+    re x n a xs <span class="fu">=</span> <span class="dt">Node</span> x zs <span class="fu">:</span> a rs
+      <span class="kw">where</span>
+        (zs,rs) <span class="fu">=</span> splitAt n xs
+
+    t fw a k bw <span class="fu">=</span> <span class="kw">do</span>
+      (x,cs) <span class="ot">&lt;-</span> f a
+      <span class="kw">let</span> n <span class="fu">=</span> length cs
+      fw ((x,n)<span class="fu">:</span>k) (cs<span class="fu">:</span>bw)</code></pre></td></tr></table></div>
+<p>It basically performs the same this as the levels function, but builds the tree back up in the end using the <code class="sourceCode haskell">run</code> function. In order to do that, we store the length of each subforest on line 16, so that each node knows how much to take from each level.</p>
+<p>The first optimization is to collapse all of those <code class="sourceCode haskell">fmap</code>s into one:</p>
+<div class="sourceCode"><table class="sourceCode haskell numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+</pre></td><td class="sourceCode"><pre><code class="sourceCode haskell"><span class="ot">unfoldForestQ ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
+unfoldForestQ f ts <span class="fu">=</span> b id [] [ts]
+  <span class="kw">where</span>
+    
+    b c k [] <span class="fu">=</span> pure (c [])
+    b c k qs <span class="fu">=</span> foldl (foldl t) (b (c <span class="fu">.</span> run k)) qs [] []
+    
+    run <span class="fu">=</span> foldr (uncurry re) id
+    
+    re x n a xs <span class="fu">=</span> <span class="dt">Node</span> x zs <span class="fu">:</span> a rs
+      <span class="kw">where</span>
+        (zs,rs) <span class="fu">=</span> splitAt n xs
+
+    t fw a k bw <span class="fu">=</span> <span class="kw">do</span>
+      (x,cs) <span class="ot">&lt;-</span> f a
+      <span class="kw">let</span> n <span class="fu">=</span> length cs
+      fw ((x,n)<span class="fu">:</span>k) (cs<span class="fu">:</span>bw)</code></pre></td></tr></table></div>
+<p>For something like a list, repeatedly calling <code class="sourceCode haskell">fmap</code> is expensive (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>). Here, we instead pass in the function to mapped over, running it at the very end instead. So we use function composition (line 6), which is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>.</p>
+<p>Optimization 2: stop taking the length. Anything in list processing that takes a length screams “wrong” to me (although it’s not always true!) so I often try to find a way to avoid it. The first option would be to keep the <code class="sourceCode haskell">cs</code> on line 15 around, and use <em>it</em> as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for <code class="sourceCode haskell">breadthFirst</code> above, we had one level; for <code class="sourceCode haskell">levels</code>, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
+unfoldForestM_BF f ts <span class="fu">=</span> b concat [ts] (\ls <span class="ot">-&gt;</span> r <span class="fu">.</span> ls)
+  <span class="kw">where</span>
+    b [] k <span class="fu">=</span> pure (k id [])
+    b qs k <span class="fu">=</span> foldl g b qs [] (\ls <span class="ot">-&gt;</span> k id <span class="fu">.</span> ls)
+
+    g a xs qs k <span class="fu">=</span> foldr t (\ls ys <span class="ot">-&gt;</span> a ys (k <span class="fu">.</span> run ls)) xs [] qs
+
+    t a fw xs bw <span class="fu">=</span> f a <span class="fu">&gt;&gt;=</span> \(x,cs) <span class="ot">-&gt;</span> fw (x<span class="fu">:</span>xs) (cs<span class="fu">:</span>bw)
+
+    run x xs <span class="fu">=</span> uncurry (<span class="fu">:</span>) <span class="fu">.</span> foldl go ((,) [] <span class="fu">.</span> xs) x
+      <span class="kw">where</span>
+        go ys y (z<span class="fu">:</span>zs) <span class="fu">=</span> (<span class="dt">Node</span> y z <span class="fu">:</span> ys', zs')
+          <span class="kw">where</span>
+            (ys',zs') <span class="fu">=</span> ys zs</code></pre></div>
+<p>This last optimization unfortunately <em>slows down</em> the code.</p>
+<div id="refs" class="references">
+<div id="ref-okasaki_breadth-first_2000">
+<p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>. <a href="https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf" class="uri">https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
