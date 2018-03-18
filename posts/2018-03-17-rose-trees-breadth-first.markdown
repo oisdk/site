@@ -74,53 +74,26 @@ levels ts = foldl f b ts [] []
 
 The original reason I started work on these problems was [this](https://github.com/haskell/containers/issues/124) issue in containers. It concerns the [`unfoldTreeM_BF`](https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF) function. An early go at rewriting it, inspired by levels above, looks like this:
 
-```{.haskell .numberLines}
-unfoldForestQ :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
-unfoldForestQ f ts = b [] [ts]
+```.haskell
+unfoldForestM_BF :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
+unfoldForestM_BF f ts = b [ts] (const id)
   where
-    
-    b k [] = pure []
-    b k qs = fmap (run k) (foldl (foldl t) b qs [] [])
-    
-    run = foldr (uncurry re) id
-    
-    re x n a xs = Node x zs : a rs
-      where
-        (zs,rs) = splitAt n xs
+    b [] k = pure (k [] [])
+    b qs k = foldl (foldr t) b qs [] (\x -> k [] . foldr (uncurry run) id x)
 
-    t fw a k bw = do
-      (x,cs) <- f a
-      let n = length cs
-      fw ((x,n):k) (cs:bw)
+    t a fw bw k = do
+        (x,cs) <- f a
+        let !n = length cs
+        fw (cs : bw) (k . (:) (x, n))
+
+    run x n xs ys =
+      case splitAt n ys of
+          (cs,zs) -> Node x cs : xs zs
 ```
 
-It basically performs the same this as the levels function, but builds the tree back up in the end using the `run`{.haskell} function. In order to do that, we store the length of each subforest on line 16, so that each node knows how much to take from each level.
+It basically performs the same this as the levels function, but builds the tree back up in the end using the `run`{.haskell} function. In order to do that, we store the length of each subforest on line 9, so that each node knows how much to take from each level.
 
-The first optimization is to collapse all of those `fmap`{.haskell}s into one:
-
-```{.haskell .numberLines}
-unfoldForestQ :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
-unfoldForestQ f ts = b id [] [ts]
-  where
-    
-    b c k [] = pure (c [])
-    b c k qs = foldl (foldl t) (b (c . run k)) qs [] []
-    
-    run = foldr (uncurry re) id
-    
-    re x n a xs = Node x zs : a rs
-      where
-        (zs,rs) = splitAt n xs
-
-    t fw a k bw = do
-      (x,cs) <- f a
-      let n = length cs
-      fw ((x,n):k) (cs:bw)
-```
-
-For something like a list, repeatedly calling `fmap`{.haskell} is expensive ($\mathcal{O}(n)$). Here, we instead pass in the function to mapped over, running it at the very end instead. So we use function composition (line 6), which is $\mathcal{O}(1)$.
-
-Optimization 2: stop taking the length. Anything in list processing that takes a length screams "wrong" to me (although it's not always true!) so I often try to find a way to avoid it. The first option would be to keep the `cs`{.haskell} on line 15 around, and use *it* as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for `breadthFirst`{.haskell} above, we had one level; for `levels`{.haskell}, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:
+A possible optimization is to stop taking the length. Anything in list processing that takes a length screams "wrong" to me (although it's not always true!) so I often try to find a way to avoid it. The first option would be to keep the `cs`{.haskell} on line 15 around, and use *it* as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for `breadthFirst`{.haskell} above, we had one level; for `levels`{.haskell}, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:
 
 ```haskell
 unfoldForestM_BF :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
@@ -140,4 +113,4 @@ unfoldForestM_BF f ts = b [ts] (\ls -> concat . ls)
             (ys',zs') = ys zs
 ```
 
-This last optimization unfortunately *slows down* the code.
+This unfortunately *slows down* the code.
