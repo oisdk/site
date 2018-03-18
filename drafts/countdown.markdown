@@ -4,7 +4,7 @@ tags: Haskell
 bibliography: Countdown.bib
 ---
 
-There's a popular UK TV show called [Countdown](https://en.wikipedia.org/wiki/Countdown_(game_show)) with a round where contestants have to construct an arithmetic expression from six random numbers which equals a particular target.
+There's a popular UK TV show called [Countdown](https://en.wikipedia.org/wiki/Countdown_(game_show)) with a round where contestants have to get as close to some target number as possible by constructing an arithmetic expression from six random numbers.
 
 You don't have to use all of the numbers, and you're allowed use four operations: addition, subtraction, multiplication, and division. Additionally, each stage of the calculation must result in a positive integer.
 
