@@ -66,78 +66,22 @@ levels ts <span class="fu">=</span> foldl f b ts [] []
     b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</code></pre></div>
 <h2 id="unfolding">Unfolding</h2>
 <p>The original reason I started work on these problems was <a href="https://github.com/haskell/containers/issues/124">this</a> issue in containers. It concerns the <a href="https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF"><code>unfoldTreeM_BF</code></a> function. An early go at rewriting it, inspired by levels above, looks like this:</p>
-<div class="sourceCode"><table class="sourceCode haskell numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-</pre></td><td class="sourceCode"><pre><code class="sourceCode haskell"><span class="ot">unfoldForestQ ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
-unfoldForestQ f ts <span class="fu">=</span> b [] [ts]
-  <span class="kw">where</span>
-    
-    b k [] <span class="fu">=</span> pure []
-    b k qs <span class="fu">=</span> fmap (run k) (foldl (foldl t) b qs [] [])
-    
-    run <span class="fu">=</span> foldr (uncurry re) id
-    
-    re x n a xs <span class="fu">=</span> <span class="dt">Node</span> x zs <span class="fu">:</span> a rs
-      <span class="kw">where</span>
-        (zs,rs) <span class="fu">=</span> splitAt n xs
+<pre class=".haskell"><code>unfoldForestM_BF :: Monad m =&gt; (b -&gt; m (a, [b])) -&gt; [b] -&gt; m (Forest a)
+unfoldForestM_BF f ts = b [ts] (const id)
+  where
+    b [] k = pure (k [] [])
+    b qs k = foldl (foldr t) b qs [] (\x -&gt; k [] . foldr (uncurry run) id x)
 
-    t fw a k bw <span class="fu">=</span> <span class="kw">do</span>
-      (x,cs) <span class="ot">&lt;-</span> f a
-      <span class="kw">let</span> n <span class="fu">=</span> length cs
-      fw ((x,n)<span class="fu">:</span>k) (cs<span class="fu">:</span>bw)</code></pre></td></tr></table></div>
-<p>It basically performs the same this as the levels function, but builds the tree back up in the end using the <code class="sourceCode haskell">run</code> function. In order to do that, we store the length of each subforest on line 16, so that each node knows how much to take from each level.</p>
-<p>The first optimization is to collapse all of those <code class="sourceCode haskell">fmap</code>s into one:</p>
-<div class="sourceCode"><table class="sourceCode haskell numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
-2
-3
-4
-5
-6
-7
-8
-9
-10
-11
-12
-13
-14
-15
-16
-17
-</pre></td><td class="sourceCode"><pre><code class="sourceCode haskell"><span class="ot">unfoldForestQ ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
-unfoldForestQ f ts <span class="fu">=</span> b id [] [ts]
-  <span class="kw">where</span>
-    
-    b c k [] <span class="fu">=</span> pure (c [])
-    b c k qs <span class="fu">=</span> foldl (foldl t) (b (c <span class="fu">.</span> run k)) qs [] []
-    
-    run <span class="fu">=</span> foldr (uncurry re) id
-    
-    re x n a xs <span class="fu">=</span> <span class="dt">Node</span> x zs <span class="fu">:</span> a rs
-      <span class="kw">where</span>
-        (zs,rs) <span class="fu">=</span> splitAt n xs
+    t a fw bw k = do
+        (x,cs) &lt;- f a
+        let !n = length cs
+        fw (cs : bw) (k . (:) (x, n))
 
-    t fw a k bw <span class="fu">=</span> <span class="kw">do</span>
-      (x,cs) <span class="ot">&lt;-</span> f a
-      <span class="kw">let</span> n <span class="fu">=</span> length cs
-      fw ((x,n)<span class="fu">:</span>k) (cs<span class="fu">:</span>bw)</code></pre></td></tr></table></div>
-<p>For something like a list, repeatedly calling <code class="sourceCode haskell">fmap</code> is expensive (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>). Here, we instead pass in the function to mapped over, running it at the very end instead. So we use function composition (line 6), which is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>.</p>
-<p>Optimization 2: stop taking the length. Anything in list processing that takes a length screams “wrong” to me (although it’s not always true!) so I often try to find a way to avoid it. The first option would be to keep the <code class="sourceCode haskell">cs</code> on line 15 around, and use <em>it</em> as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for <code class="sourceCode haskell">breadthFirst</code> above, we had one level; for <code class="sourceCode haskell">levels</code>, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:</p>
+    run x n xs ys =
+      case splitAt n ys of
+          (cs,zs) -&gt; Node x cs : xs zs</code></pre>
+<p>It basically performs the same this as the levels function, but builds the tree back up in the end using the <code class="sourceCode haskell">run</code> function. In order to do that, we store the length of each subforest on line 9, so that each node knows how much to take from each level.</p>
+<p>A possible optimization is to stop taking the length. Anything in list processing that takes a length screams “wrong” to me (although it’s not always true!) so I often try to find a way to avoid it. The first option would be to keep the <code class="sourceCode haskell">cs</code> on line 15 around, and use <em>it</em> as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for <code class="sourceCode haskell">breadthFirst</code> above, we had one level; for <code class="sourceCode haskell">levels</code>, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
 unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (\ls <span class="ot">-&gt;</span> concat <span class="fu">.</span> ls)
   <span class="kw">where</span>
@@ -153,7 +97,7 @@ unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (\ls <span class="ot">-&g
         go ys y (z<span class="fu">:</span>zs) <span class="fu">=</span> (<span class="dt">Node</span> y z <span class="fu">:</span> ys&#39;, zs&#39;)
           <span class="kw">where</span>
             (ys&#39;,zs&#39;) <span class="fu">=</span> ys zs</code></pre></div>
-<p>This last optimization unfortunately <em>slows down</em> the code.</p>
+<p>This unfortunately <em>slows down</em> the code.</p>
 <div id="refs" class="references">
 <div id="ref-okasaki_breadth-first_2000">
 <p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>. <a href="https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf" class="uri">https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf</a>.</p>
