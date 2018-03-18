@@ -66,7 +66,21 @@ levels ts <span class="fu">=</span> foldl f b ts [] []
     b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</code></pre></div>
 <h2 id="unfolding">Unfolding</h2>
 <p>The original reason I started work on these problems was <a href="https://github.com/haskell/containers/issues/124">this</a> issue in containers. It concerns the <a href="https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF"><code>unfoldTreeM_BF</code></a> function. An early go at rewriting it, inspired by levels above, looks like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
+<div class="sourceCode"><table class="sourceCode haskell numberLines"><tr class="sourceCode"><td class="lineNumbers"><pre>1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td><td class="sourceCode"><pre><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
 unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (const id)
   <span class="kw">where</span>
     b [] k <span class="fu">=</span> pure (k [] [])
@@ -79,7 +93,7 @@ unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (const id)
 
     run x n xs ys <span class="fu">=</span>
       <span class="kw">case</span> splitAt n ys <span class="kw">of</span>
-          (cs,zs) <span class="ot">-&gt;</span> <span class="dt">Node</span> x cs <span class="fu">:</span> xs zs</code></pre></div>
+          (cs,zs) <span class="ot">-&gt;</span> <span class="dt">Node</span> x cs <span class="fu">:</span> xs zs</code></pre></td></tr></table></div>
 <p>It basically performs the same this as the levels function, but builds the tree back up in the end using the <code class="sourceCode haskell">run</code> function. In order to do that, we store the length of each subforest on line 9, so that each node knows how much to take from each level.</p>
 <p>A possible optimization is to stop taking the length. Anything in list processing that takes a length screams “wrong” to me (although it’s not always true!) so I often try to find a way to avoid it. The first option would be to keep the <code class="sourceCode haskell">cs</code> on line 15 around, and use <em>it</em> as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for <code class="sourceCode haskell">breadthFirst</code> above, we had one level; for <code class="sourceCode haskell">levels</code>, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
