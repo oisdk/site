@@ -124,7 +124,7 @@ Optimization 2: stop taking the length. Anything in list processing that takes a
 
 ```haskell
 unfoldForestM_BF :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
-unfoldForestM_BF f ts = b concat [ts] (\ls -> r . ls)
+unfoldForestM_BF f ts = b [ts] (\ls -> concat . ls)
   where
     b [] k = pure (k id [])
     b qs k = foldl g b qs [] (\ls -> k id . ls)
