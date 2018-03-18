@@ -74,7 +74,7 @@ levels ts = foldl f b ts [] []
 
 The original reason I started work on these problems was [this](https://github.com/haskell/containers/issues/124) issue in containers. It concerns the [`unfoldTreeM_BF`](https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF) function. An early go at rewriting it, inspired by levels above, looks like this:
 
-```haskell
+```{.haskell .numberLines}
 unfoldForestM_BF :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
 unfoldForestM_BF f ts = b [ts] (const id)
   where
