@@ -93,7 +93,7 @@ unfoldForestM_BF f ts = b [ts] (const id)
 
 It basically performs the same this as the levels function, but builds the tree back up in the end using the `run`{.haskell} function. In order to do that, we store the length of each subforest on line 9, so that each node knows how much to take from each level.
 
-A possible optimization is to stop taking the length. Anything in list processing that takes a length screams "wrong" to me (although it's not always true!) so I often try to find a way to avoid it. The first option would be to keep the `cs`{.haskell} on line 15 around, and use *it* as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for `breadthFirst`{.haskell} above, we had one level; for `levels`{.haskell}, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:
+A possible optimization is to stop taking the length. Anything in list processing that takes a length screams "wrong" to me (although it's not always true!) so I often try to find a way to avoid it. The first option would be to keep the `cs`{.haskell} on line 8 around, and use *it* as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for `breadthFirst`{.haskell} above, we had one level; for `levels`{.haskell}, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:
 
 ```haskell
 unfoldForestM_BF :: Monad m => (b -> m (a, [b])) -> [b] -> m (Forest a)
