@@ -79,10 +79,28 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
               >>= loadAndApplyTemplate "templates/default.html" ctx
               >>= relativizeUrls
 
+    match "snippets/*" $ do
+        let ctx = defaultContext
+        route $ setExtension "html"
+        compile $ postCompiler
+              >>= loadAndApplyTemplate "templates/snippet.html" ctx
+              >>= saveSnapshot "content"
+              >>= loadAndApplyTemplate "templates/default.html" ctx
+              >>= relativizeUrls
+
     match "index.html" $ do
         route idRoute
         compile $ do
             let indexCtx = postListCtx "Posts" $ recentFirst =<< loadAll "posts/*"
+            getResourceBody
+                >>= applyAsTemplate indexCtx
+                >>= loadAndApplyTemplate "templates/default.html" indexCtx
+                >>= relativizeUrls
+
+    match "snippets.html" $ do
+        route idRoute
+        compile $ do
+            let indexCtx = snippetListCtx "Code Snippets" $ loadAll "snippets/*"
             getResourceBody
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
@@ -161,6 +179,12 @@ postFullCtx tags series = mconcat
 postListCtx :: String -> Compiler [Item String] -> Context String
 postListCtx title posts = mconcat
   [ listField "posts" postCtx posts
+  , constField "title" title
+  , defaultContext ]
+
+snippetListCtx :: String -> Compiler [Item String] -> Context String
+snippetListCtx title snippets = mconcat
+  [ listField "snippets" defaultContext snippets
   , constField "title" title
   , defaultContext ]
 
