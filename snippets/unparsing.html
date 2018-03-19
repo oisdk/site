@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Unparsing - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Unparsing</h2>
+
+            <p>Pretty-printing expressions with minimal parenthesis is a little trickier than it looks. This algorithm is adapted from:</p>
+<p><a href="https://www.cs.tufts.edu/~nr/pubs/unparse-abstract.html">Ramsey, Norman. ‘Unparsing Expressions With Prefix and Postfix Operators’. Software—Practice &amp; Experience 28, no. 12 (1998): 1327–1356.</a></p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE DeriveFunctor #-}</span>
+
+<span class="kw">module</span> <span class="dt">Unparse</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Data.Semigroup</span>
+<span class="kw">import </span><span class="dt">Data.Coerce</span>
+
+<span class="kw">data</span> <span class="dt">Side</span>
+    <span class="fu">=</span> <span class="dt">L</span>
+    <span class="fu">|</span> <span class="dt">R</span>
+    <span class="kw">deriving</span> <span class="dt">Eq</span>
+
+<span class="kw">data</span> <span class="dt">ShowExpr</span> t e
+    <span class="fu">=</span> <span class="dt">Lit</span>     {<span class="ot">repr ::</span> t}
+    <span class="fu">|</span> <span class="dt">Prefix</span>  {<span class="ot">repr ::</span> t,<span class="ot"> op ::</span> <span class="dt">Op</span>,<span class="ot"> child ::</span> e}
+    <span class="fu">|</span> <span class="dt">Postfix</span> {<span class="ot">repr ::</span> t,<span class="ot"> op ::</span> <span class="dt">Op</span>,<span class="ot"> child ::</span> e}
+    <span class="fu">|</span> <span class="dt">Binary</span>  {<span class="ot">repr ::</span> t,<span class="ot"> op ::</span> <span class="dt">Op</span>,<span class="ot"> lchild ::</span> e,<span class="ot"> rchild ::</span> e}
+    <span class="kw">deriving</span> <span class="dt">Functor</span>
+
+<span class="kw">data</span> <span class="dt">Op</span> <span class="fu">=</span> <span class="dt">Op</span>
+    {<span class="ot"> prec ::</span> <span class="dt">Int</span>
+    ,<span class="ot"> assoc ::</span> <span class="dt">Side</span>
+    }
+
+showExpr
+<span class="ot">    ::</span> <span class="dt">Semigroup</span> t
+    <span class="ot">=&gt;</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t e) <span class="ot">-&gt;</span> (t <span class="ot">-&gt;</span> t) <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> t
+showExpr proj prns <span class="fu">=</span> go <span class="fu">.</span> fmap proj <span class="fu">.</span> proj
+  <span class="kw">where</span>
+    go (<span class="dt">Lit</span> t) <span class="fu">=</span> t
+    go (<span class="dt">Prefix</span> t o y) <span class="fu">=</span> t <span class="fu">&lt;&gt;</span> ifPrns <span class="dt">R</span> o (getOp y) (go (fmap proj y))
+    go (<span class="dt">Postfix</span> t o x) <span class="fu">=</span> ifPrns <span class="dt">L</span> o (getOp x) (go (fmap proj x)) <span class="fu">&lt;&gt;</span> t
+    go (<span class="dt">Binary</span> t o x y) <span class="fu">=</span>
+        ifPrns <span class="dt">L</span> o (getOp x) (go (fmap proj x)) <span class="fu">&lt;&gt;</span> t <span class="fu">&lt;&gt;</span>
+        ifPrns <span class="dt">R</span> o (getOp y) (go (fmap proj y))
+    ifPrns sid (<span class="dt">Op</span> op oa) (<span class="dt">Just</span> (<span class="dt">Op</span> ip ia))
+      <span class="fu">|</span> ip <span class="fu">&lt;</span> op <span class="fu">||</span> ip <span class="fu">==</span> op <span class="fu">&amp;&amp;</span> (ia <span class="fu">/=</span> oa <span class="fu">||</span> sid <span class="fu">/=</span> oa) <span class="fu">=</span> prns
+    ifPrns _ _ _ <span class="fu">=</span> id
+    getOp <span class="dt">Lit</span>{} <span class="fu">=</span> <span class="dt">Nothing</span>
+    getOp e <span class="fu">=</span> <span class="dt">Just</span> (op e)
+
+<span class="ot">showSExpr ::</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> <span class="dt">ShowS</span> e) <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> <span class="dt">ShowS</span>
+showSExpr proj <span class="fu">=</span>
+    appEndo <span class="fu">.</span>
+    showExpr
+        (coerce proj)
+        (coerce (showParen <span class="dt">True</span>))</code></pre></div>
+<p>And an example of its use:</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Expr</span> <span class="fu">=</span> <span class="dt">Number</span> <span class="dt">Integer</span>
+          <span class="fu">|</span> <span class="dt">Expr</span> <span class="fu">:+:</span> <span class="dt">Expr</span>
+          <span class="fu">|</span> <span class="dt">Expr</span> <span class="fu">:*:</span> <span class="dt">Expr</span>
+          <span class="fu">|</span> <span class="dt">Expr</span> <span class="fu">:^:</span> <span class="dt">Expr</span>
+
+<span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Expr</span> <span class="kw">where</span>
+  (<span class="fu">+</span>) <span class="fu">=</span> (<span class="fu">:+:</span>)
+  (<span class="fu">*</span>) <span class="fu">=</span> (<span class="fu">:*:</span>)
+  fromInteger <span class="fu">=</span> <span class="dt">Number</span>
+  abs <span class="fu">=</span> undefined
+  signum <span class="fu">=</span> undefined
+  negate <span class="fu">=</span> undefined
+
+<span class="co">-- | &gt;&gt;&gt; default (Expr)</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; 1 + 2 + 3</span>
+<span class="co">-- 1 + 2 + 3</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; 1 * 2 * 3</span>
+<span class="co">-- 1 * 2 * 3</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; (1 * 2) + 3</span>
+<span class="co">-- 1 * 2 + 3</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; 1 * (2 + 3)</span>
+<span class="co">-- 1 * (2 + 3)</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; (1 :^: 2) :^: 3</span>
+<span class="co">-- (1 ^ 2) ^ 3</span>
+<span class="co">--</span>
+<span class="co">-- &gt;&gt;&gt; 1 :^: (2 :^: 3)</span>
+<span class="co">-- 1 ^ 2 ^ 3</span>
+<span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span>
+  showsPrec _ <span class="fu">=</span> showSExpr proj <span class="kw">where</span>
+    proj (<span class="dt">Number</span> n) <span class="fu">=</span> <span class="dt">Lit</span> (shows n)
+    proj (x <span class="fu">:+:</span> y) <span class="fu">=</span> <span class="dt">Binary</span> (showString <span class="st">&quot; + &quot;</span>) (<span class="dt">Op</span> <span class="dv">3</span> <span class="dt">L</span>) x y
+    proj (x <span class="fu">:*:</span> y) <span class="fu">=</span> <span class="dt">Binary</span> (showString <span class="st">&quot; * &quot;</span>) (<span class="dt">Op</span> <span class="dv">4</span> <span class="dt">L</span>) x y
+    proj (x <span class="fu">:^:</span> y) <span class="fu">=</span> <span class="dt">Binary</span> (showString <span class="st">&quot; ^ &quot;</span>) (<span class="dt">Op</span> <span class="dv">5</span> <span class="dt">R</span>) x y</code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

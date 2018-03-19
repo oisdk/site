@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Breadth-First Rose Tree Traversals - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Breadth-First Rose Tree Traversals</h2>
+
+            <p>These use implicit queues to efficiently perform breadth-first operations on rose trees.</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="kw">module</span> <span class="dt">BreadthFirst</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Data.Tree</span></code></pre></div>
+<p>The most basic is simply converting to a list breadth-first:</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">breadthFirst ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]
+breadthFirst (<span class="dt">Node</span> x xs) <span class="fu">=</span> x <span class="fu">:</span> breadthFirstForest xs
+
+<span class="ot">breadthFirstForest ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]
+breadthFirstForest ts <span class="fu">=</span> foldr f b ts []
+  <span class="kw">where</span>
+    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)
+
+    b [] <span class="fu">=</span> []
+    b qs <span class="fu">=</span> foldl (foldr f) b qs []</code></pre></div>
+<p>Then, we can delimit between levels of the tree:</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]
+levels (<span class="dt">Node</span> x xs) <span class="fu">=</span> [x] <span class="fu">:</span> levelsForest xs
+
+<span class="ot">levelsForest ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]
+levelsForest ts <span class="fu">=</span> foldl f b ts [] []
+  <span class="kw">where</span>
+    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)
+
+    b _ [] <span class="fu">=</span> []
+    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</code></pre></div>
+<p>Finally, we can build a tree back up again, monadically.</p>
+<div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)
+unfoldForestM_BF <span class="fu">=</span> unfoldForestMWith_BF concat
+
+<span class="ot">unfoldTreeM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> m (<span class="dt">Tree</span> a)
+unfoldTreeM_BF f b <span class="fu">=</span> unfoldForestMWith_BF (head <span class="fu">.</span> head) f [b]
+
+<span class="ot">unfoldForestMWith_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> ([<span class="dt">Forest</span> a] <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m c
+unfoldForestMWith_BF r f ts <span class="fu">=</span> b [ts] (\ls <span class="ot">-&gt;</span> r <span class="fu">.</span> ls)
+  <span class="kw">where</span>
+    b [] k <span class="fu">=</span> pure (k id [])
+    b qs k <span class="fu">=</span> foldl g b qs [] (\ls <span class="ot">-&gt;</span> k id <span class="fu">.</span> ls)
+
+    g a xs qs k <span class="fu">=</span> foldr t (\ls ys <span class="ot">-&gt;</span> a ys (k <span class="fu">.</span> run ls)) xs [] qs
+
+    t a fw xs bw <span class="fu">=</span> f a <span class="fu">&gt;&gt;=</span> \(x,cs) <span class="ot">-&gt;</span> fw (x<span class="fu">:</span>xs) (cs<span class="fu">:</span>bw)
+
+    run x xs <span class="fu">=</span> uncurry (<span class="fu">:</span>) <span class="fu">.</span> foldl go ((,) [] <span class="fu">.</span> xs) x
+      <span class="kw">where</span>
+        go ys y (z<span class="fu">:</span>zs) <span class="fu">=</span> (<span class="dt">Node</span> y z <span class="fu">:</span> ys', zs')
+          <span class="kw">where</span>
+            (ys',zs') <span class="fu">=</span> ys zs</code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
