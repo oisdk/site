@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-        <title>2048 - Donnacha Oisín Kidney</title>
+        <title>2048 in Python - Donnacha Oisín Kidney</title>
         <link rel="stylesheet" type="text/css" href="../css/default.css" />
         <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
     </head>
@@ -21,9 +21,12 @@
         </div>
 
         <div id="content">
-            <h2>2048</h2>
+            <h2>2048 in Python</h2>
 
-            <div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="co">#-----------------------------functional-helpers-------------------------#</span>
+            <p>A simple implementation of the game <a href="https://gabrielecirulli.github.io/2048/">2048</a> in Python, using <a href="https://www.gnu.org/s/ncurses/">ncurses</a>.</p>
+<p>It supports different “bases” (other than 2) as well as colors, and uses a kind of Python-y functional style.</p>
+<p>Minus comments, the whole thing is 70 lines.</p>
+<div class="sourceCode"><pre class="sourceCode python"><code class="sourceCode python"><span class="co">#-----------------------------functional-helpers-------------------------#</span>
 
 <span class="im">from</span> functools <span class="im">import</span> <span class="bu">reduce</span>, partial
 
