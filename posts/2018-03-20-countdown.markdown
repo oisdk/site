@@ -33,7 +33,7 @@ I'll be focusing on the third point in this post, but we can add the second poin
 
 ## Generating all Expressions
 
-The simplest implementation I can think of is one which generates all possible expressions from the input, and then tests each one successively. The core function we'll use for this is usually called "unmerges":
+I can't think of a simpler way to solve the problem than generate-and-test, so we'll work from there. Testing is easy (`(target ==) . eval`{.haskell}), so we'll focus on generation. The core function we'll use for this is usually called "unmerges":
 
 ```haskell
 unmerges [x,y] = [([x],[y])]

@@ -1,6 +1,12 @@
 ---
-title: 2048
+title: 2048 in Python
 ---
+
+A simple implementation of the game [2048](https://gabrielecirulli.github.io/2048/) in Python, using [ncurses](https://www.gnu.org/s/ncurses/).
+
+It supports different "bases" (other than 2) as well as colors, and uses a kind of Python-y functional style.
+
+Minus comments, the whole thing is 70 lines.
 
 ```python
 #-----------------------------functional-helpers-------------------------#
