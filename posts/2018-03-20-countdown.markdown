@@ -188,13 +188,9 @@ Turning *that* into a concrete datatype wouldn't do us much good: it still has t
     ```
 
 ```haskell
-                                   ┌────────┬fib(1)=1
-                 ┌────────┬fib(3)=2┤        │
-        ┌fib(5)=5┤        │        │        │
+        ┌fib(5)=5┬────────┬fib(3)=2┬────────┬fib(1)=1
 fib(6)=8┤        │        │        │        │
-        └────────┴fib(4)=3┤        │        │
-                          └────────┴fib(2)=1┤
-                                            └fib(0)=0
+        └────────┴fib(4)=3┴────────┴fib(2)=1┴fib(0)=0
 ```
 
 This is a nexus. In Haskell, it's not observably different from the other form, except that it takes up significantly less space. It's also much quicker to construct.
