@@ -152,13 +152,9 @@ fib(<span class="dv">6</span>)<span class="fu">=</span><span class="dv">8</span>
                  └fib(<span class="dv">2</span>)<span class="fu">=</span><span class="dv">1</span>┤
                           └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></code></pre></div>
 <p>Turning <em>that</em> into a concrete datatype wouldn’t do us much good: it still has the massively redundant computations in it. However, we can recognize that entire subtrees are duplicates of each other: in those cases, instead of creating both subtrees, we could just create one and have each parent point to it<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">                                   ┌────────┬fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span>
-                 ┌────────┬fib(<span class="dv">3</span>)<span class="fu">=</span><span class="dv">2</span>┤        │
-        ┌fib(<span class="dv">5</span>)<span class="fu">=</span><span class="dv">5</span>┤        │        │        │
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">        ┌fib(<span class="dv">5</span>)<span class="fu">=</span><span class="dv">5</span>┬────────┬fib(<span class="dv">3</span>)<span class="fu">=</span><span class="dv">2</span>┬────────┬fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span>
 fib(<span class="dv">6</span>)<span class="fu">=</span><span class="dv">8</span>┤        │        │        │        │
-        └────────┴fib(<span class="dv">4</span>)<span class="fu">=</span><span class="dv">3</span>┤        │        │
-                          └────────┴fib(<span class="dv">2</span>)<span class="fu">=</span><span class="dv">1</span>┤
-                                            └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></code></pre></div>
+        └────────┴fib(<span class="dv">4</span>)<span class="fu">=</span><span class="dv">3</span>┴────────┴fib(<span class="dv">2</span>)<span class="fu">=</span><span class="dv">1</span>┴fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></code></pre></div>
 <p>This is a nexus. In Haskell, it’s not observably different from the other form, except that it takes up significantly less space. It’s also much quicker to construct.</p>
 <p>If we use it to memoize <code class="sourceCode haskell">fib</code>, we’ll no longer be indexing on the argument: we’ll instead follow the relevant branch in the tree to the subcomputation, which is just chasing a pointer. It also means the argument doesn’t have to be constrained to any specific type. Here’s how you’d do it:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span>
