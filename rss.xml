@@ -7,8 +7,245 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 20 Mar 2018 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Thu, 12 Apr 2018 00:00:00 UT</lastBuildDate>
         <item>
+    <title>5 Cool Things You Can Do With Pattern Synonyms</title>
+    <link>http://doisinkidney.com/posts/2018-04-12-pattern-synonyms.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on April 12, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p><a href="https://ghc.haskell.org/trac/ghc/wiki/PatternSynonyms">Pattern Synonyms</a> is an excellent extension for Haskell. There are some <a href="https://ocharles.org.uk/blog/posts/2014-12-03-pattern-synonyms.html">very</a> <a href="https://www.schoolofhaskell.com/user/icelandj/Pattern%20synonyms">cool</a> examples of their use out there, and I thought I’d add to the list.</p>
+<h1 id="make-things-look-like-lists">Make Things Look Like Lists</h1>
+<p>Lists are <em>the</em> fundamental data structure for functional programmers. Unfortunately, once more specialized structures are required, you often have to switch over to an uncomfortable, annoying API which isn’t as pleasant or fun to use as cons and nil. With pattern synonyms, though, that’s not so! For instance, here’s how you would do it with a run-length-encoded list:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">List</span> a
+    <span class="fu">=</span> <span class="dt">Nil</span>
+    <span class="fu">|</span> <span class="dt">ConsN</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span>
+            a
+            (<span class="dt">List</span> a)
+
+<span class="ot">cons ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a
+cons x (<span class="dt">ConsN</span> i y ys)
+  <span class="fu">|</span> x <span class="fu">==</span> y <span class="fu">=</span> <span class="dt">ConsN</span> (i<span class="fu">+</span><span class="dv">1</span>) y ys
+cons x xs <span class="fu">=</span> <span class="dt">ConsN</span> <span class="dv">1</span> x xs
+
+<span class="ot">uncons ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">List</span> a)
+uncons <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+uncons (<span class="dt">ConsN</span> <span class="dv">1</span> x xs) <span class="fu">=</span> <span class="dt">Just</span> (x, xs)
+uncons (<span class="dt">ConsN</span> n x xs) <span class="fu">=</span> <span class="dt">Just</span> (x, <span class="dt">ConsN</span> (n<span class="fu">-</span><span class="dv">1</span>) x xs)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+pattern<span class="ot"> (:-) ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a
+pattern x <span class="fu">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))
+  <span class="kw">where</span>
+    x <span class="fu">:-</span> xs <span class="fu">=</span> cons x xs
+<span class="ot">{-# COMPLETE Nil, (:-) #-}</span>
+
+zip<span class="ot"> ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> b <span class="ot">-&gt;</span> <span class="dt">List</span> (a,b)
+zip (x <span class="fu">:-</span> xs) (y <span class="fu">:-</span> ys) <span class="fu">=</span> (x,y) <span class="fu">:-</span> zip xs ys
+zip _ _ <span class="fu">=</span> <span class="dt">Nil</span></code></pre></div>
+<p>A little more useful would be to do the same with a heap:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+    <span class="fu">=</span> <span class="dt">Leaf</span>
+    <span class="fu">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)
+
+<span class="ot">smerge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a
+smerge <span class="dt">Leaf</span> ys <span class="fu">=</span> ys
+smerge xs <span class="dt">Leaf</span> <span class="fu">=</span> xs
+smerge h1<span class="fu">@</span>(<span class="dt">Node</span> x lx rx) h2<span class="fu">@</span>(<span class="dt">Node</span> y ly ry)
+  <span class="fu">|</span> x <span class="fu">&lt;=</span> y    <span class="fu">=</span> <span class="dt">Node</span> x (smerge h2 rx) lx
+  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Node</span> y (smerge h1 ry) ly
+
+<span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a
+cons x <span class="fu">=</span> smerge (<span class="dt">Node</span> x <span class="dt">Leaf</span> <span class="dt">Leaf</span>)
+
+<span class="ot">uncons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">Tree</span> a)
+uncons <span class="dt">Leaf</span> <span class="fu">=</span> <span class="dt">Nothing</span>
+uncons (<span class="dt">Node</span> x l r) <span class="fu">=</span> <span class="dt">Just</span> (x, smerge l r)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+pattern<span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a
+pattern x <span class="fu">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))
+  <span class="kw">where</span>
+    x <span class="fu">:-</span> xs <span class="fu">=</span> cons x xs
+<span class="ot">{-# COMPLETE Leaf, (:-) #-}</span>
+
+sort<span class="ot"> ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]
+sort <span class="fu">=</span> go <span class="fu">.</span> foldr (<span class="fu">:-</span>) <span class="dt">Leaf</span>
+  <span class="kw">where</span>
+    go <span class="dt">Leaf</span> <span class="fu">=</span> []
+    go (x <span class="fu">:-</span> xs) <span class="fu">=</span> x <span class="fu">:</span> go xs</code></pre></div>
+<p>In fact, this pattern can be generalized, so <em>any</em> container-like-thing with a cons-like-thing can be modified as you would with lists. You can see the generalization in <a href="https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Cons.html#v::-60-">lens</a>.</p>
+<h1 id="retroactively-make-lyah-examples-work">Retroactively Make <a href="http://learnyouahaskell.com">LYAH</a> Examples Work</h1>
+<p>One of the most confusing things I remember about learning Haskell early-on was that the vast majority of the Monads examples didn’t work, because they were written pre-transformers. In other words, the state monad was defined like so:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">State</span> s a <span class="fu">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> s <span class="ot">-&gt;</span> (a, s) }</code></pre></div>
+<p>But in transformers nowadays (which is where you get <code class="sourceCode haskell"><span class="dt">State</span></code> from if you import it in the normal way), the definition is:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="fu">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }
+
+<span class="kw">type</span> <span class="dt">State</span> s <span class="fu">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span></code></pre></div>
+<p>This results in some <em>very</em> confusing error messages when you try run example code.</p>
+<p>However, we can pretend that the change never happened, with a simple pattern synonym:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="fu">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }
+
+<span class="kw">type</span> <span class="dt">State</span> s <span class="fu">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span>
+
+<span class="ot">runState ::</span> <span class="dt">State</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> (a, s)
+runState xs <span class="fu">=</span> runIdentity <span class="fu">.</span> runStateT xs
+
+pattern <span class="dt">State</span><span class="ot"> ::</span> (s <span class="ot">-&gt;</span> (a, s)) <span class="ot">-&gt;</span> <span class="dt">State</span> s a
+pattern <span class="dt">State</span> x <span class="ot">&lt;-</span> (runState <span class="ot">-&gt;</span> x)
+  <span class="kw">where</span>
+    <span class="dt">State</span> x <span class="fu">=</span> <span class="dt">StateT</span> (<span class="dt">Identity</span> <span class="fu">.</span> x)</code></pre></div>
+<h1 id="getting-type-level-numbers-with-an-efficient-runtime-representation">Getting Type-Level Numbers With an Efficient Runtime Representation</h1>
+<p>If you want to write type-level proofs on numbers, you’ll probably end up using Peano numerals and singletons:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Nat</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Nat</span>
+
+<span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span>
+  <span class="dt">Zy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span>
+  <span class="dt">Sy</span><span class="ot"> ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)
+
+<span class="kw">type</span> family (<span class="fu">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span>
+  <span class="dt">Z</span> <span class="fu">+</span> m <span class="fu">=</span> m
+  <span class="dt">S</span> n <span class="fu">+</span> m <span class="fu">=</span> <span class="dt">S</span> (n <span class="fu">+</span> m)
+
+<span class="ot">plusZeroIsZero ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> n <span class="fu">+</span> <span class="dt">Z</span> <span class="fu">:~:</span> n
+plusZeroIsZero <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">Refl</span>
+plusZeroIsZero (<span class="dt">Sy</span> n) <span class="fu">=</span> <span class="kw">case</span> plusZeroIsZero n <span class="kw">of</span>
+  <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Refl</span></code></pre></div>
+<p>Pretty cool, right? We can even erase the proof (if we really trust it) using rewrite rules:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="co">{-# RULES </span>
+<span class="co">&quot;plusZeroIsZero&quot; forall n. plusZeroIsZero n = unsafeCoerce Refl</span>
+<span class="co">#-}</span></code></pre></div>
+<p>This isn’t <em>ideal</em>, but it’s getting there.</p>
+<p>However, if we ever want to use these things at runtime (perhaps as a type-level indication of some data structure’s size), we’re going to rely on the value-level Peano addition, which is bad news.</p>
+<p>Not so with pattern synonyms!</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> family <span class="dt">The</span><span class="ot"> k ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span>
+
+<span class="kw">class</span> <span class="dt">Sing</span> (<span class="ot">a ::</span> k) <span class="kw">where</span><span class="ot"> sing ::</span> <span class="dt">The</span> k (<span class="ot">a ::</span> k)
+
+<span class="kw">data</span> <span class="dt">Nat</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Nat</span>
+
+<span class="kw">newtype</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="fu">=</span> <span class="dt">NatSing</span> <span class="dt">Natural</span>
+
+<span class="kw">instance</span> <span class="dt">Sing</span> <span class="dt">Z</span> <span class="kw">where</span>
+    sing <span class="fu">=</span> <span class="dt">NatSing</span> <span class="dv">0</span>
+
+<span class="kw">instance</span> <span class="dt">Sing</span> n <span class="ot">=&gt;</span> <span class="dt">Sing</span> (<span class="dt">S</span> n) <span class="kw">where</span>
+    sing <span class="fu">=</span>
+        (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>) <span class="ot">-&gt;</span> (<span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (<span class="dt">S</span> n)))
+            succ sing
+
+<span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span>
+        <span class="dt">ZZy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span>
+        <span class="dt">SSy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)
+
+<span class="ot">getNatty ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> n
+getNatty (<span class="dt">NatSing</span><span class="ot"> n ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n) <span class="fu">=</span> <span class="kw">case</span> n <span class="kw">of</span>
+  <span class="dv">0</span> <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="fu">:~:</span> <span class="dt">Z</span>) <span class="dt">ZZy</span>
+  _ <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="fu">:~:</span> <span class="dt">S</span> m) (<span class="dt">SSy</span> (<span class="dt">NatSing</span> (pred n)))
+
+pattern <span class="dt">Zy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="fu">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n
+pattern <span class="dt">Zy</span> <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">ZZy</span>) <span class="kw">where</span> <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">NatSing</span> <span class="dv">0</span>
+
+pattern <span class="dt">Sy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="fu">~</span> <span class="dt">S</span> m) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n
+pattern <span class="dt">Sy</span> x <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">SSy</span> x) <span class="kw">where</span> <span class="dt">Sy</span> (<span class="dt">NatSing</span> x) <span class="fu">=</span> <span class="dt">NatSing</span> (succ x)
+<span class="ot">{-# COMPLETE Zy, Sy #-}</span>
+
+<span class="kw">type</span> family (<span class="fu">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span>
+        <span class="dt">Z</span> <span class="fu">+</span> m <span class="fu">=</span> m
+        <span class="dt">S</span> n <span class="fu">+</span> m <span class="fu">=</span> <span class="dt">S</span> (n <span class="fu">+</span> m)
+
+<span class="co">-- | Efficient addition, with type-level proof.</span>
+<span class="ot">add ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m)
+add <span class="fu">=</span> (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>)
+              <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="fu">+</span> m)) (<span class="fu">+</span>)
+
+<span class="co">-- | Proof on efficient representation.</span>
+<span class="ot">addZeroRight ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> n <span class="fu">+</span> <span class="dt">Z</span> <span class="fu">:~:</span> n
+addZeroRight <span class="dt">Zy</span> <span class="fu">=</span> <span class="dt">Refl</span>
+addZeroRight (<span class="dt">Sy</span> n) <span class="fu">=</span> gcastWith (addZeroRight n) <span class="dt">Refl</span></code></pre></div>
+<p>(unfortunately, incomplete pattern warnings don’t work here)</p>
+<h1 id="hide-your-implementations">Hide Your Implementations</h1>
+<p>So you’ve got a tree type:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+    <span class="fu">=</span> <span class="dt">Tip</span>
+    <span class="fu">|</span> <span class="dt">Bin</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</code></pre></div>
+<p>And you’ve spent some time writing a (reasonably difficult) function on the tree:</p>
+<p><details> <summary> Complicated function on the tree </summary></p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showTree ::</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">String</span>
+showTree <span class="dt">Tip</span> <span class="fu">=</span> <span class="st">&quot;&quot;</span>
+showTree (<span class="dt">Bin</span> x&#39; ls&#39; rs&#39;) <span class="fu">=</span> go <span class="dt">True</span> id xlen&#39; ls&#39;
+                          <span class="fu">$</span> showString xshw&#39;
+                          <span class="fu">$</span> endc ls&#39; rs&#39;
+                          <span class="fu">$</span> showChar <span class="ch">&#39;\n&#39;</span>
+                          <span class="fu">$</span> go <span class="dt">False</span> id xlen&#39; rs&#39; <span class="st">&quot;&quot;</span>
+  <span class="kw">where</span>
+    xshw&#39; <span class="fu">=</span> show x&#39;
+    xlen&#39; <span class="fu">=</span> length xshw&#39;
+
+    go _ _ _ <span class="dt">Tip</span> <span class="fu">=</span> id
+    go up k i (<span class="dt">Bin</span> x ls rs) <span class="fu">=</span> branch <span class="dt">True</span> ls
+                            <span class="fu">.</span> k
+                            <span class="fu">.</span> pad i
+                            <span class="fu">.</span> showChar (bool <span class="ch">&#39;└&#39;</span> <span class="ch">&#39;┌&#39;</span> up)
+                            <span class="fu">.</span> showString xshw
+                            <span class="fu">.</span> endc ls rs
+                            <span class="fu">.</span> showChar <span class="ch">&#39;\n&#39;</span>
+                            <span class="fu">.</span> branch <span class="dt">False</span> rs
+      <span class="kw">where</span>
+        xshw <span class="fu">=</span> show x
+        xlen <span class="fu">=</span> length xshw
+        branch d
+          <span class="fu">|</span> d <span class="fu">==</span> up <span class="fu">=</span> go d (k <span class="fu">.</span> pad i) (xlen <span class="fu">+</span> <span class="dv">1</span>) 
+          <span class="fu">|</span> otherwise <span class="fu">=</span> go d (k <span class="fu">.</span> pad i <span class="fu">.</span> showChar <span class="ch">&#39;│&#39;</span>) xlen 
+
+    endc <span class="dt">Tip</span>    <span class="dt">Tip</span>    <span class="fu">=</span> id
+    endc <span class="dt">Bin</span> {} <span class="dt">Tip</span>    <span class="fu">=</span> showChar <span class="ch">&#39;┘&#39;</span>
+    endc <span class="dt">Tip</span>    <span class="dt">Bin</span> {} <span class="fu">=</span> showChar <span class="ch">&#39;┐&#39;</span>
+    endc <span class="dt">Bin</span> {} <span class="dt">Bin</span> {} <span class="fu">=</span> showChar <span class="ch">&#39;┤&#39;</span>
+
+    pad <span class="fu">=</span> (<span class="fu">++</span>) <span class="fu">.</span> flip replicate <span class="ch">&#39; &#39;</span></code></pre></div>
+<p></details></p>
+<p>But, for some reason or another, you need to add a field to your <code class="sourceCode haskell"><span class="dt">Bin</span></code> constructor, to store the size of the subtree (for instance). Does this function have to change? No! Simply change the tree definition as so:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Tree</span> a
+    <span class="fu">=</span> <span class="dt">Tip</span>
+    <span class="fu">|</span> <span class="dt">Bin&#39;</span> <span class="dt">Int</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)
+
+pattern <span class="dt">Bin</span> x ls rs <span class="ot">&lt;-</span> <span class="dt">Bin&#39;</span> n x ls rs
+<span class="ot">{-# COMPLETE Tip, Bin #-}</span></code></pre></div>
+<p>And all the old code works!</p>
+<p>This gets to the core of pattern synonyms: it’s another tool which we can use to separate implementation from API.</p>
+<h1 id="better-smart-constructors">Better Smart Constructors</h1>
+<p>Say you’ve got a data type that has certain constraints on what values it can hold. You’re not writing a paper for ICFP, so expressing those constraints as a beautiful type isn’t required: you just want to only export the constructor and accessors, and write some tests to make sure that those functions always obey the constraints.</p>
+<p>But once you do this you’ve lost something: pattern-matching. Let’s get it back with pattern synonyms!</p>
+<p>As our simple example, our constraint is going to be “A list where the values are always ordered”:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">List</span> a <span class="fu">=</span> <span class="dt">List</span> {<span class="ot"> getList ::</span> [a] }
+
+<span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a
+cons x (<span class="dt">List</span> xs) <span class="fu">=</span> <span class="dt">List</span> (insert x xs)
+
+<span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+pattern<span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a
+pattern x <span class="fu">:-</span> xs <span class="ot">&lt;-</span> (<span class="dt">List</span> (x<span class="fu">:</span>xs))
+  <span class="kw">where</span>
+    x <span class="fu">:-</span> xs <span class="fu">=</span> cons x xs
+
+pattern <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">List</span> []
+<span class="ot">{-# COMPLETE Nil, (:-) #-}</span></code></pre></div>
+]]></description>
+    <pubDate>Thu, 12 Apr 2018 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2018-04-12-pattern-synonyms.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Countdown</title>
     <link>http://doisinkidney.com/posts/2018-03-20-countdown.html</link>
     <description><![CDATA[<div class="info">
@@ -2736,200 +2973,6 @@ ifThenElse <span class="dt">Falsy</span> _ f <span class="fu">=</span> f <span c
 ]]></description>
     <pubDate>Sun, 23 Apr 2017 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2017-04-23-verifying-data-structures-in-haskell-lhs.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Fun with Recursion Schemes</title>
-    <link>http://doisinkidney.com/posts/2017-03-30-fun-with-recursion-schemes.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on March 30, 2017
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Haskell.html">Haskell</a>
-    
-</div>
-
-<h2 id="folding-algebras">Folding Algebras</h2>
-<p>I saw <a href="https://www.reddit.com/r/haskell/comments/608y0l/would_this_sugar_make_sense/">this</a> post on reddit recently, and it got me thinking about recursion schemes. One of the primary motivations behind them is the reduction of boilerplate. The classic example is evaluation of arithmetic expressions:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprF</span> a
-  <span class="fu">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span>
-  <span class="fu">|</span> (<span class="fu">:+:</span>) a a
-  <span class="fu">|</span> (<span class="fu">:*:</span>) a a
-  <span class="kw">deriving</span> <span class="dt">Functor</span>
-
-<span class="kw">type</span> <span class="dt">Expr</span> <span class="fu">=</span> <span class="dt">Fix</span> <span class="dt">ExprF</span>
-
-<span class="ot">eval ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-eval <span class="fu">=</span> unfix <span class="fu">&gt;&gt;&gt;</span> \<span class="kw">case</span>
-  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n
-  x <span class="fu">:+:</span> y <span class="ot">-&gt;</span> eval x <span class="fu">+</span> eval y
-  x <span class="fu">:*:</span> y <span class="ot">-&gt;</span> eval x <span class="fu">*</span> eval y</code></pre></div>
-<p>The calls to <code class="sourceCode haskell">eval</code> are the boilerplate: this is where the main recursion scheme, <code class="sourceCode haskell">cata</code> can help.</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-evalF <span class="fu">=</span> cata <span class="fu">$</span> \<span class="kw">case</span>
-  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n
-  x <span class="fu">:+:</span> y <span class="ot">-&gt;</span> x <span class="fu">+</span> y
-  x <span class="fu">:*:</span> y <span class="ot">-&gt;</span> x <span class="fu">*</span> y</code></pre></div>
-<p>I still feel like there’s boilerplate, though. Ideally I’d like to write this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-evalF <span class="fu">=</span> cata <span class="fu">$</span> <span class="fu">???</span> <span class="fu">$</span> \<span class="kw">case</span>
-  <span class="dt">Lit</span> <span class="ot">-&gt;</span> id
-  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="fu">+</span>)
-  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
-<p>The <code class="sourceCode haskell"><span class="fu">???</span></code> needs to be filled in. It’s a little tricky, though: the type of the algebra changes depending on what expression it’s given. GADTs will allow us to attach types to cases:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprI</span> a r f <span class="kw">where</span>
-  <span class="dt">Lit</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (<span class="dt">Integer</span> <span class="ot">-&gt;</span> b)
-  <span class="dt">Add</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)
-  <span class="dt">Mul</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</code></pre></div>
-<p>The first type parameter is the same as the first type parameter to <code class="sourceCode haskell"><span class="dt">ExprF</span></code>. The second is the output type of the algebra, and the third is the type of the fold required to produce that output type. The third type parameter <em>depends</em> on the case matched in the GADT. Using this, we can write a function which converts a fold/pattern match to a standard algebra:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldAlg ::</span> (forall f<span class="fu">.</span> <span class="dt">ExprI</span> a r f <span class="ot">-&gt;</span> f) <span class="ot">-&gt;</span> (<span class="dt">ExprF</span> a <span class="ot">-&gt;</span> r)
-foldAlg f (<span class="dt">LitF</span> i)  <span class="fu">=</span> f <span class="dt">Lit</span> i
-foldAlg f (x <span class="fu">:+:</span> y) <span class="fu">=</span> f <span class="dt">Add</span> x y
-foldAlg f (x <span class="fu">:*:</span> y) <span class="fu">=</span> f <span class="dt">Mul</span> x y</code></pre></div>
-<p>And finally, we can write the nice evaluation algebra:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-evalF <span class="fu">=</span> cata <span class="fu">$</span> foldAlg <span class="fu">$</span> \<span class="kw">case</span>
-  <span class="dt">Lit</span> <span class="ot">-&gt;</span> id
-  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="fu">+</span>)
-  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
-<p>I hacked together some quick template Haskell to generate the matchers over <a href="https://github.com/oisdk/pattern-folds">here</a>. It uses a class <code class="sourceCode haskell"><span class="dt">AsPatternFold</span></code>:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">AsPatternFold</span> x f <span class="fu">|</span> x <span class="ot">-&gt;</span> f <span class="kw">where</span>
-<span class="ot">  foldMatch ::</span> (forall a<span class="fu">.</span> f r a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> r)</code></pre></div>
-<p>And you generate the extra data type, with an instance, by doing this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">makePatternFolds <span class="ch">&#39;&#39;</span><span class="dt">ExprF</span></code></pre></div>
-<p>The code it generates can be used like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-evalF <span class="fu">=</span> cata <span class="fu">$</span> foldMatch <span class="fu">$</span> \<span class="kw">case</span>
-  <span class="dt">LitI</span> <span class="ot">-&gt;</span> id
-  (<span class="fu">:+|</span>) <span class="ot">-&gt;</span> (<span class="fu">+</span>)
-  (<span class="fu">:*|</span>) <span class="ot">-&gt;</span> (<span class="fu">*</span>)</code></pre></div>
-<p>It’s terribly hacky at the moment, I may clean it up later.</p>
-<h2 id="record-case">Record Case</h2>
-<p>There’s another approach to the same idea that is slightly more sensible, using record wildcards. You define a handler for you datatype (an algebra):</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprAlg</span> a r
-  <span class="fu">=</span> <span class="dt">ExprAlg</span>
-  {<span class="ot"> litF ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> r
-  ,<span class="ot"> (+:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r
-  ,<span class="ot"> (*:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r }</code></pre></div>
-<p>Then, to use it, you define how to interact between the handler and the datatype, like before. The benefit is that record wildcard syntax allows you to piggy back on the function definition syntax, like so:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprF</span> a
-  <span class="fu">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span>
-  <span class="fu">|</span> (<span class="fu">:+:</span>) a a
-  <span class="fu">|</span> (<span class="fu">:*:</span>) a a
-
-makeHandler <span class="ch">&#39;&#39;</span><span class="dt">ExprF</span>
-
-<span class="ot">exprAlg ::</span> <span class="dt">ExprF</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-exprAlg <span class="fu">=</span> index <span class="dt">ExprFAlg</span> {<span class="fu">..</span>} <span class="kw">where</span>
-  litF <span class="fu">=</span> id
-  (<span class="fu">+:</span>) <span class="fu">=</span> (<span class="fu">+</span>)
-  (<span class="fu">*:</span>) <span class="fu">=</span> (<span class="fu">*</span>)</code></pre></div>
-<p>This approach is much more principled: the <code class="sourceCode haskell">index</code> function, for example, comes from the <a href="https://hackage.haskell.org/package/adjunctions">adjunctions</a> package, from the <a href="https://hackage.haskell.org/package/adjunctions-4.3/docs/Data-Functor-Rep.html"><code class="sourceCode haskell"><span class="dt">Representable</span></code></a> class. That’s because those algebras are actually representable functors, with their representation being the thing they match. They also conform to a whole bunch of things automatically, letting you combine them interesting ways.</p>
-<h2 id="printing-expressions">Printing Expressions</h2>
-<p>Properly printing expressions, with minimal parentheses, is a surprisingly difficult problem. <span class="citation">Ramsey (<a href="#ref-ramsey_unparsing_1998">1998</a>)</span> provides a solution of the form:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">isParens side (<span class="dt">Assoc</span> ao po) (<span class="dt">Assoc</span> ai pi) <span class="fu">=</span>
-  pi <span class="fu">&lt;=</span> po <span class="fu">&amp;&amp;</span> (pi <span class="fu">/=</span> po <span class="fu">||</span> ai <span class="fu">/=</span> ao <span class="fu">||</span> ao <span class="fu">/=</span> side)</code></pre></div>
-<p>Using this, we can write an algebra for printing expressions. It should work in the general case, not just on the expression type defined above, so we need to make another unfixed functor to describe the printing of an expression:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Side</span> <span class="fu">=</span> <span class="dt">L</span> <span class="fu">|</span> <span class="dt">R</span> <span class="kw">deriving</span> <span class="dt">Eq</span>
-
-<span class="kw">data</span> <span class="dt">ShowExpr</span> t e
-  <span class="fu">=</span> <span class="dt">ShowLit</span> {<span class="ot"> _repr ::</span> t }
-  <span class="fu">|</span> <span class="dt">Prefix</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }
-  <span class="fu">|</span> <span class="dt">Postfix</span> {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }
-  <span class="fu">|</span> <span class="dt">Binary</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _lchild ::</span> e
-                                              ,<span class="ot"> _rchild ::</span> e }
-  <span class="kw">deriving</span> <span class="dt">Functor</span>
-  
-makeLenses <span class="ch">&#39;&#39;</span><span class="dt">ShowExpr</span></code></pre></div>
-<p>The lenses are probably overkill. For printing, we need not only the precedence of the current level, but also the precedence one level below. Seems like the perfect case for a zygomorphism:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showExprAlg ::</span> <span class="dt">Semigroup</span> t
-            <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)
-            <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t (<span class="dt">Maybe</span> (<span class="dt">Int</span>,<span class="dt">Side</span>), t)
-            <span class="ot">-&gt;</span> t
-showExprAlg prns <span class="fu">=</span> \<span class="kw">case</span> 
-    <span class="dt">ShowLit</span> t               <span class="ot">-&gt;</span>                   t
-    <span class="dt">Prefix</span>  t s       (q,y) <span class="ot">-&gt;</span>                   t <span class="fu">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y
-    <span class="dt">Postfix</span> t s (p,x)       <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="fu">&lt;&gt;</span> t
-    <span class="dt">Binary</span>  t s (p,x) (q,y) <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="fu">&lt;&gt;</span> t <span class="fu">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y
-  <span class="kw">where</span>
-    ifPrns sid (op,oa) (<span class="dt">Just</span> (ip,ia))
-      <span class="fu">|</span> ip <span class="fu">&lt;</span> op <span class="fu">||</span> ip <span class="fu">==</span> op <span class="fu">&amp;&amp;</span> (ia <span class="fu">/=</span> oa <span class="fu">||</span> sid <span class="fu">/=</span> oa) <span class="fu">=</span> prns
-    ifPrns _ _ _ <span class="fu">=</span> id</code></pre></div>
-<p>The first argument to this algebra is the parenthesizing function. This algebra works fine for when the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> type is already constructed:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">showExpr&#39; ::</span> <span class="dt">Semigroup</span> t <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t) <span class="ot">-&gt;</span> <span class="dt">Fix</span> (<span class="dt">ShowExpr</span> t) <span class="ot">-&gt;</span> t
-showExpr&#39; <span class="fu">=</span> zygo (preview assoc) <span class="fu">.</span> showExprAlg</code></pre></div>
-<p>But we still need to construct the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> from something else first. <code class="sourceCode haskell">hylo</code> might be a good fit:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (f b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</code></pre></div>
-<p>But that performs a catamorphism after an anamorphism, and we want a zygomorphism after an anamorphism. Luckily, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a> library is constructed in such a way that different schemes can be stuck together relatively easily:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">hylozygo
-<span class="ot">    ::</span> <span class="dt">Functor</span> f
-    <span class="ot">=&gt;</span> (f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f (a, b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (c <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> b
-hylozygo x y z <span class="fu">=</span> ghylo (distZygo x) distAna y (fmap <span class="dt">Identity</span> <span class="fu">.</span> z)
-
-<span class="ot">showExpr ::</span> <span class="dt">Semigroup</span> t
-         <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)
-         <span class="ot">-&gt;</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t e)
-         <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> t
-showExpr <span class="fu">=</span> hylozygo (preview assoc) <span class="fu">.</span> showExprAlg</code></pre></div>
-<p>Let’s try it out, with a right-associative operator this time to make things more difficult:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">ExprF</span> a
-  <span class="fu">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span>
-  <span class="fu">|</span> (<span class="fu">:+:</span>) a a
-  <span class="fu">|</span> (<span class="fu">:*:</span>) a a
-  <span class="fu">|</span> (<span class="fu">:^:</span>) a a
-  <span class="kw">deriving</span> <span class="dt">Functor</span>
-
-makeHandler <span class="ch">&#39;&#39;</span><span class="dt">ExprF</span>
-
-<span class="kw">newtype</span> <span class="dt">Expr</span> <span class="fu">=</span> <span class="dt">Expr</span> {<span class="ot"> runExpr ::</span> <span class="dt">ExprF</span> <span class="dt">Expr</span> }
-
-<span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Expr</span> <span class="kw">where</span>
-  fromInteger <span class="fu">=</span> <span class="dt">Expr</span> <span class="fu">.</span> <span class="dt">LitF</span>
-  x <span class="fu">+</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:+:</span> y)
-  x <span class="fu">*</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:*:</span> y)
-  
-<span class="kw">infixr</span> <span class="dv">8</span> <span class="fu">^*</span>
-<span class="ot">(^*) ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span>
-x <span class="fu">^*</span> y <span class="fu">=</span> <span class="dt">Expr</span> (x <span class="fu">:^:</span> y)
-
-<span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span>
-  show <span class="fu">=</span>
-    showExpr
-      (\x <span class="ot">-&gt;</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> x <span class="fu">++</span> <span class="st">&quot;)&quot;</span>)
-      (index <span class="dt">ExprFAlg</span> {<span class="fu">..</span>} <span class="fu">.</span> runExpr)
-    <span class="kw">where</span>
-      litF <span class="fu">=</span> <span class="dt">ShowLit</span> <span class="fu">.</span> show
-      (<span class="fu">+:</span>) <span class="fu">=</span> <span class="dt">Binary</span> <span class="st">&quot; + &quot;</span> (<span class="dv">6</span>,<span class="dt">L</span>)
-      (<span class="fu">*:</span>) <span class="fu">=</span> <span class="dt">Binary</span> <span class="st">&quot; * &quot;</span> (<span class="dv">7</span>,<span class="dt">L</span>)
-      (<span class="fu">^:</span>) <span class="fu">=</span> <span class="dt">Binary</span> <span class="st">&quot; ^ &quot;</span> (<span class="dv">8</span>,<span class="dt">R</span>)</code></pre></div>
-<p>Since we only specified <code class="sourceCode haskell"><span class="dt">Semigroup</span></code> in the definition of <code class="sourceCode haskell">showExpr</code>, we can use the more efficient difference-list definition of <code class="sourceCode haskell"><span class="dt">Show</span></code>:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span>
-    showsPrec _ <span class="fu">=</span>
-      appEndo <span class="fu">.</span> showExpr
-        (<span class="dt">Endo</span> <span class="fu">.</span> showParen <span class="dt">True</span> <span class="fu">.</span> appEndo)
-        (index <span class="dt">ExprFAlg</span> {<span class="fu">..</span>} <span class="fu">.</span> runExpr)
-      <span class="kw">where</span>
-        litF <span class="fu">=</span> <span class="dt">ShowLit</span> <span class="fu">.</span> <span class="dt">Endo</span> <span class="fu">.</span> shows
-        (<span class="fu">+:</span>) <span class="fu">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; + &quot;</span> <span class="fu">++</span>)) (<span class="dv">6</span>,<span class="dt">L</span>)
-        (<span class="fu">*:</span>) <span class="fu">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; * &quot;</span> <span class="fu">++</span>)) (<span class="dv">7</span>,<span class="dt">L</span>)
-        (<span class="fu">^:</span>) <span class="fu">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; ^ &quot;</span> <span class="fu">++</span>)) (<span class="dv">8</span>,<span class="dt">R</span>)
-
-<span class="dv">1</span> <span class="fu">^*</span> <span class="dv">2</span> <span class="fu">^*</span> <span class="dv">3</span>         <span class="co">-- 1 ^ 2 ^ 3</span>
-(<span class="dv">1</span> <span class="fu">^*</span> <span class="dv">2</span>) <span class="fu">^*</span> <span class="dv">3</span>       <span class="co">-- (1 ^ 2) ^ 3</span>
-<span class="dv">1</span> <span class="fu">*</span> <span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span><span class="ot">   ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * 2 + 3</span>
-<span class="dv">1</span> <span class="fu">*</span> (<span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>)<span class="ot"> ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * (2 + 3)</span></code></pre></div>
-<div id="refs" class="references">
-<div id="ref-ramsey_unparsing_1998">
-<p>Ramsey, Norman. 1998. “Unparsing Expressions With Prefix and Postfix Operators.” <em>Software—Practice &amp; Experience</em> 28 (12): 1327–1356. <a href="http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html">http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html</a>.</p>
-</div>
-</div>
-]]></description>
-    <pubDate>Thu, 30 Mar 2017 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2017-03-30-fun-with-recursion-schemes.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
