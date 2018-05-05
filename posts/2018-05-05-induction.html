@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Type-Level Induction in Haskell - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Type-Level Induction in Haskell</h2>
+
+            <div class="info">
+    Posted on May  5, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>One of the most basic tools for use in type-level programming is the Peano definition of the natural numbers:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> ℕ
+    <span class="fu">=</span> <span class="dt">Z</span>
+    <span class="fu">|</span> <span class="dt">S</span> ℕ</code></pre></div>
+<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, we can parameterize the notion of “size”. I’m going to use the proportion symbol here:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> family (t <span class="ot">∷</span> k) ∝ (n <span class="ot">∷</span> ℕ) <span class="fu">=</span> (a <span class="ot">∷</span> <span class="dt">Type</span>) <span class="fu">|</span> a <span class="ot">→</span> t n k</code></pre></div>
+<p>Then, we can use it to provide an inductive class on the natural numbers:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Finite</span> n <span class="kw">where</span>
+    induction <span class="ot">∷</span> t ∝ <span class="dt">Z</span> <span class="ot">→</span> (<span class="ot">∀</span> k<span class="fu">.</span> t ∝ k <span class="ot">→</span> t ∝ <span class="dt">S</span> k) <span class="ot">→</span> t ∝ n
+
+<span class="kw">instance</span> <span class="dt">Finite</span> <span class="dt">Z</span> <span class="kw">where</span>
+    induction z _ <span class="fu">=</span> z
+    <span class="ot">{-# inline induction #-}</span>
+
+<span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span> <span class="dt">Finite</span> (<span class="dt">S</span> n) <span class="kw">where</span>
+    induction z s <span class="fu">=</span> s (induction z s)
+    <span class="ot">{-# inline induction #-}</span></code></pre></div>
+<p>The <code class="sourceCode haskell">induction</code> function reads as the standard mathematical definition of induction: given a proof (value) of the zero case, and a proof that any proof is true for its successor, we can give you a proof of any finite number.</p>
+<p>An added bonus here is that the size of something can usually be resolved at compile-time, so any inductive function on it should also be resolved at compile time.</p>
+<p>We can use it to provide the standard instances for basic length-indexed lists:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span>
+<span class="kw">data</span> <span class="dt">List</span> n a <span class="kw">where</span>
+        <span class="dt">Nil</span>  <span class="ot">∷</span> <span class="dt">List</span> <span class="dt">Z</span> a
+        (<span class="fu">:-</span>) <span class="ot">∷</span> a <span class="ot">→</span> <span class="dt">List</span> n a <span class="ot">→</span> <span class="dt">List</span> (<span class="dt">S</span> n) a</code></pre></div>
+<p>Some instances for those lists are easy:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">List</span> n) <span class="kw">where</span>
+    fmap _ <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nil</span>
+    fmap f (x <span class="fu">:-</span> xs) <span class="fu">=</span> f x <span class="fu">:-</span> fmap f xs</code></pre></div>
+<p>However, for <code class="sourceCode haskell"><span class="dt">Applicative</span></code>, we need some way to recurse on the size of the list. This is where induction comes in.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="kw">instance</span> <span class="ch">'(List,a) ∝ n = List n a</span></code></pre></div>
+<p>This lets us write <code class="sourceCode haskell">pure</code> in a pleasingly simple way:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span>
+         <span class="dt">Applicative</span> (<span class="dt">List</span> n) <span class="kw">where</span>
+    pure x <span class="fu">=</span> induction <span class="dt">Nil</span> (x <span class="fu">:-</span>)</code></pre></div>
+<p>But can we also write <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> using induction? Yes! Because we’ve factored out the induction itself, we just need to describe the notion of a “sized” function:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> a ↦ b
+<span class="kw">type</span> <span class="kw">instance</span> ((x <span class="ot">∷</span> a) ↦ (y <span class="ot">∷</span> b)) ∝ n <span class="fu">=</span> (x ∝ n) <span class="ot">→</span> (y ∝ n)</code></pre></div>
+<p>Then we can write <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> as so:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span>
+         <span class="dt">Applicative</span> (<span class="dt">List</span> n) <span class="kw">where</span>
+    pure x <span class="fu">=</span> induction <span class="dt">Nil</span> (x <span class="fu">:-</span>)
+    (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span>
+        induction
+            (\<span class="dt">Nil</span> <span class="dt">Nil</span> <span class="ot">→</span> <span class="dt">Nil</span>)
+            (\k (f <span class="fu">:-</span> fs) (x <span class="fu">:-</span> xs) <span class="ot">→</span> f x <span class="fu">:-</span> k fs xs)</code></pre></div>
+<p>What about the <code class="sourceCode haskell"><span class="dt">Monad</span></code> instance? For that, we need a little bit of plumbing: the type signature of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> is:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">(<span class="fu">&gt;&gt;=</span>) <span class="ot">∷</span> m a <span class="ot">→</span> (a <span class="ot">→</span> m b) <span class="ot">→</span> m b</code></pre></div>
+<p>One of the parameters (the second <code>a</code>) doesn’t have a size: we’ll need to work around that, with <code class="sourceCode haskell"><span class="dt">Const</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="kw">instance</span> (<span class="dt">Const</span> a <span class="ot">∷</span> ℕ <span class="ot">→</span> <span class="dt">Type</span>) ∝ n <span class="fu">=</span> <span class="dt">Const</span> a n</code></pre></div>
+<p>Using this, we can write our <code class="sourceCode haskell"><span class="dt">Monad</span></code> instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">head' <span class="ot">∷</span> <span class="dt">List</span> (<span class="dt">S</span> n) a <span class="ot">→</span> a
+head' (x <span class="fu">:-</span> _) <span class="fu">=</span> x
+
+tail' <span class="ot">∷</span> <span class="dt">List</span> (<span class="dt">S</span> n) a <span class="ot">→</span> <span class="dt">List</span> n a
+tail' (_ <span class="fu">:-</span> xs) <span class="fu">=</span> xs
+
+<span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span>
+         <span class="dt">Monad</span> (<span class="dt">List</span> n) <span class="kw">where</span>
+    xs <span class="fu">&gt;&gt;=</span> (f <span class="ot">∷</span> a <span class="ot">→</span> <span class="dt">List</span> n b) <span class="fu">=</span>
+        induction
+            (\<span class="dt">Nil</span> _ <span class="ot">→</span> <span class="dt">Nil</span>)
+            (\k (y <span class="fu">:-</span> ys) fn <span class="ot">→</span> head' (fn (<span class="dt">Const</span> y)) <span class="fu">:-</span>
+                               k ys (tail' <span class="fu">.</span> fn <span class="fu">.</span> <span class="dt">Const</span> <span class="fu">.</span> getConst))
+            xs
+            (f <span class="fu">.</span> getConst <span class="ot">∷</span> <span class="dt">Const</span> a n <span class="ot">→</span> <span class="dt">List</span> n b)</code></pre></div>
+<h2 id="type-family-dependencies">Type Family Dependencies</h2>
+<p>Getting the above to work actually took a surprising amount of work: the crux is that the <code class="sourceCode haskell">∝</code> type family needs to be injective, so the “successor” proof can typecheck. Unfortunately, this means that every type can only have one notion of “size”. What I’d prefer is to be able to pass in a function indicating exactly <em>how</em> to get the size out of a type, that could change depending on the situation. So we could recurse on the first argument of a function, for instance, or just its second, or just the result. This would need either type-level lambdas (which would be cool), or <a href="https://ghc.haskell.org/trac/ghc/ticket/10832">generalized type family dependencies</a>.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
