@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Probability Trees - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Probability Trees</h2>
+
+            <div class="info">
+    Posted on September 30, 2016
+</div>
+<div class="info">
+    
+        Part 3 of a <a href="../series/probability.html">3-part series on probability</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">{-# language DeriveFunctor, DeriveFoldable #-}</span>
+<span class="ot">{-# language PatternSynonyms, ViewPatterns #-}</span>
+
+<span class="kw">module</span> <span class="dt">ProbTree</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Data.Monoid</span>
+<span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span>
+<span class="kw">import </span><span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)
+<span class="kw">import </span><span class="dt">Control.Arrow</span>
+<span class="kw">import </span><span class="dt">Data.Ratio</span>
+<span class="kw">import </span><span class="dt">Data.Foldable</span></code></pre></div>
+<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation">(especially Erwig and Kollmansberger <a href="#ref-erwig_functional_2006">2006</a>; and Kidd <a href="#ref-kidd_build_2007">2007</a>)</span>.</p>
+<p>I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">ProperProb</span> a <span class="fu">=</span> <span class="dt">ProperProb</span>
+  {<span class="ot"> yes ::</span> <span class="dt">Map</span> a (<span class="dt">Product</span> <span class="dt">Rational</span>) }</code></pre></div>
+<p>But of course a monad instance isn’t allowed.</p>
+<p>Similar to a map, though, is a binary tree:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">BinaryTree</span> a <span class="fu">=</span> <span class="dt">Leaf</span>
+                  <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">BinaryTree</span> a) a (<span class="dt">BinaryTree</span> a)</code></pre></div>
+<p>And it feels better for probability - <em>flatter</em>, somehow. Transmuting it into a probability-thing:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Odds</span> a <span class="fu">=</span> <span class="dt">Certain</span> a
+            <span class="fu">|</span> <span class="dt">Choice</span> (<span class="dt">Odds</span> a) <span class="dt">Rational</span> (<span class="dt">Odds</span> a)
+            <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Show</span>)</code></pre></div>
+<p>That looks good to me. A choice between two different branches feels more natural than a choice between a head and a tail.</p>
+<p>The fold is similar to before, with an unfold for good measure:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">foldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> b
+foldOdds f b <span class="fu">=</span> r <span class="kw">where</span>
+  r (<span class="dt">Certain</span> x) <span class="fu">=</span> b x
+  r (<span class="dt">Choice</span> xs p ys) <span class="fu">=</span> f (r xs) p (r ys)
+  
+<span class="ot">unfoldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Either</span> a (b,<span class="dt">Rational</span>,b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
+unfoldOdds f <span class="fu">=</span> r <span class="kw">where</span>
+  r b <span class="fu">=</span> <span class="kw">case</span> f b <span class="kw">of</span>
+    <span class="dt">Left</span> a <span class="ot">-&gt;</span> <span class="dt">Certain</span> a
+    <span class="dt">Right</span> (x,p,y) <span class="ot">-&gt;</span> <span class="dt">Choice</span> (r x) p (r y)
+  
+<span class="ot">fi ::</span> <span class="dt">Bool</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+fi <span class="dt">True</span>  t _ <span class="fu">=</span> t
+fi <span class="dt">False</span> _ f <span class="fu">=</span> f</code></pre></div>
+<p>I changed the pattern synonym a little:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">
+<span class="ot">unRatio ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> (a,a)
+unRatio <span class="fu">=</span> numerator   <span class="fu">&amp;&amp;&amp;</span> denominator 
+      <span class="fu">&gt;&gt;&gt;</span> fromInteger <span class="fu">***</span> fromInteger
+
+pattern n <span class="fu">:%</span> d <span class="ot">&lt;-</span> (unRatio <span class="ot">-&gt;</span> (n,d))</code></pre></div>
+<p>Then, the <code class="sourceCode haskell">probOf</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probOf ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probOf e <span class="fu">=</span> foldOdds f b <span class="kw">where</span>
+  b x <span class="fu">=</span> fi (e <span class="fu">==</span> x) <span class="dv">1</span> <span class="dv">0</span>
+  f x (n<span class="fu">:%</span>d) y <span class="fu">=</span> (x <span class="fu">*</span> n <span class="fu">+</span> y <span class="fu">*</span> d) <span class="fu">/</span> (n <span class="fu">+</span> d)</code></pre></div>
+<p>This version doesn’t have the option for short-circuiting on the first value it finds.</p>
+<p>For generating from lists, you can try to evenly divide the list among each branch.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">fromListOdds ::</span> (([b], <span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
+fromListOdds fr e <span class="fu">=</span> r <span class="kw">where</span>
+  r [] <span class="fu">=</span> <span class="dt">Nothing</span>
+  r xs <span class="fu">=</span> <span class="dt">Just</span> (unfoldOdds f (xs, length xs))
+  f ([x],_) <span class="fu">=</span> <span class="dt">Left</span> (e x)
+  f (xs ,n) <span class="fu">=</span> <span class="dt">Right</span> ((ys,l), fr (ys,l) <span class="fu">%</span> fr (zs,r), (zs,r)) <span class="kw">where</span>
+    l <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span>
+    r <span class="fu">=</span> n <span class="fu">-</span> l
+    (ys,zs) <span class="fu">=</span> splitAt l xs
+
+<span class="ot">equalOdds ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
+equalOdds <span class="fu">=</span> fromListOdds (fromIntegral <span class="fu">.</span> snd) id
+
+<span class="ot">fromDistrib ::</span> [(a,<span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
+fromDistrib <span class="fu">=</span> fromListOdds (sum <span class="fu">.</span> map snd <span class="fu">.</span> fst) fst</code></pre></div>
+<p>What’s really nice about this version is the fact that the old <code class="sourceCode haskell">append</code> is just the <code class="sourceCode haskell"><span class="dt">Choice</span></code> constructor, leaving the instances to be really nice:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">flatten ::</span> <span class="dt">Odds</span> (<span class="dt">Odds</span> a) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
+flatten <span class="fu">=</span> foldOdds <span class="dt">Choice</span> id
+
+<span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Odds</span> <span class="kw">where</span>
+  pure <span class="fu">=</span> <span class="dt">Certain</span>
+  fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> flatten (fmap (<span class="fu">&lt;$&gt;</span> xs) fs)
+  
+<span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Odds</span> <span class="kw">where</span>
+  x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> flatten (f <span class="fu">&lt;$&gt;</span> x)</code></pre></div>
+<p>Finally, as a bonus, to remove duplicates:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">lcd ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
+lcd <span class="fu">=</span> foldl' (\a e <span class="ot">-&gt;</span> lcm a (denominator e)) <span class="dv">1</span>
+
+<span class="ot">toDistrib ::</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> [(a,<span class="dt">Integer</span>)]
+toDistrib <span class="fu">=</span> factorOut <span class="fu">.</span> foldOdds f b <span class="kw">where</span>
+  b x <span class="fu">=</span> [(x,<span class="dv">1</span>)]
+  f l p r <span class="fu">=</span> (map<span class="fu">.</span>fmap) (n<span class="fu">%</span>t<span class="fu">*</span>) l <span class="fu">++</span> (map<span class="fu">.</span>fmap) (d<span class="fu">%</span>t<span class="fu">*</span>) r <span class="kw">where</span>
+    n <span class="fu">=</span> numerator p
+    d <span class="fu">=</span> denominator p
+    t <span class="fu">=</span> n <span class="fu">+</span> d
+  factorOut xs <span class="fu">=</span> (map<span class="fu">.</span>fmap) (numerator <span class="fu">.</span> (lcd'<span class="fu">*</span>)) xs <span class="kw">where</span>
+    lcd' <span class="fu">=</span> fromIntegral <span class="fu">.</span> lcd <span class="fu">.</span> map snd <span class="fu">$</span> xs
+
+<span class="ot">counts ::</span> (<span class="dt">Ord</span> a, <span class="dt">Num</span> n) <span class="ot">=&gt;</span> [(a,n)] <span class="ot">-&gt;</span> [(a,n)]
+counts <span class="fu">=</span> 
+  Map.assocs <span class="fu">.</span> 
+  Map.fromListWith (<span class="fu">+</span>)
+      
+<span class="ot">compress ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
+compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="dt">Just</span> ys <span class="fu">=</span> (fromDistrib <span class="fu">.</span> counts <span class="fu">.</span> toDistrib) xs <span class="kw">in</span> ys</code></pre></div>
+<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation">Scibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
+<h3 id="references" class="unnumbered">References</h3>
+<div id="refs" class="references">
+<div id="ref-erwig_functional_2006">
+<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. <a href="http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf">http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf</a>.</p>
+</div>
+<div id="ref-kidd_build_2007">
+<p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf</a>.</p>
+</div>
+<div id="ref-larsen_memory_2011">
+<p>Larsen, Ken Friis. 2011. “Memory efficient implementation of probability monads.” <a href="http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf" class="uri">http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf</a>.</p>
+</div>
+<div id="ref-scibior_practical_2015">
+<p>Scibior, A., Z. Ghahramani, and A. D. Gordon. 2015. “Practical probabilistic programming with monads.” In <em>2015 ACM SIGPLAN symposium on haskell</em>, 50:165–176. ACM. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

@@ -23,6 +23,7 @@
     
 </div>
 
+<p>The code from this post is available as a <a href="https://gist.github.com/oisdk/23c430b807c788dd43dc4d986c5fdfdd">gist</a>.</p>
 <p>One of the most basic tools for use in type-level programming is the Peano definition of the natural numbers:</p>
 <div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> ℕ
     <span class="fu">=</span> <span class="dt">Z</span>

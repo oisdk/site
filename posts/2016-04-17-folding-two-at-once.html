@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Folding Two Things at Once - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Folding Two Things at Once</h2>
+
+            <div class="info">
+    Posted on April 17, 2016
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>There’s a whole family of Haskell brainteasers surrounding one function: <code class="sourceCode haskell">foldr</code>. The general idea is to convert some function on lists which uses recursion into one that uses <code class="sourceCode haskell">foldr</code>. <code class="sourceCode haskell">map</code>, for instance:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">map<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b]
+map f <span class="fu">=</span> foldr (\e a <span class="ot">-&gt;</span> f e <span class="fu">:</span> a) []</code></pre></div>
+<p>Some can get a little trickier. <code class="sourceCode haskell">dropWhile</code>, for instance. (See <a href="https://wiki.haskell.org/wikiupload/1/14/TMR-Issue6.pdf">here</a> and <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf">here</a> for interesting articles on that one in particular.)</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">dropWhile<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]
+dropWhile p <span class="fu">=</span> fst <span class="fu">.</span> foldr f ([],[]) <span class="kw">where</span>
+  f e <span class="fu">~</span>(xs,ys) <span class="fu">=</span> (<span class="kw">if</span> p e <span class="kw">then</span> xs <span class="kw">else</span> zs, zs) <span class="kw">where</span> zs <span class="fu">=</span> e <span class="fu">:</span> ys</code></pre></div>
+<h2 id="zip">Zip</h2>
+<p>One function which was a little harder to convert than it first seemed was <code class="sourceCode haskell">zip</code>.</p>
+<p>Here’s the first (non) solution:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip <span class="fu">=</span> foldr f (const []) <span class="kw">where</span>
+  f x xs (y<span class="fu">:</span>ys) <span class="fu">=</span> (x,y) <span class="fu">:</span> xs ys
+  f _ _  [] <span class="fu">=</span> []</code></pre></div>
+<p>The problem with the above isn’t that it doesn’t work: it does. The problem is that it’s not <em>really</em> using <code class="sourceCode haskell">foldr</code>. It’s only using it on the first list: there’s still a manual uncons being performed on the second. Ideally, I would want the function to look something like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip xs ys <span class="fu">=</span> foldr f (\_ _ <span class="ot">-&gt;</span> []) xs (foldr g (const []) ys)</code></pre></div>
+<p>The best solution I found online only dealt with <code class="sourceCode haskell"><span class="dt">Fold</span></code>s, not <code class="sourceCode haskell"><span class="dt">Foldable</span></code>s. You can read it <a href="http://okmij.org/ftp/Haskell/zip-folds.lhs">here</a>.</p>
+<h2 id="recursive-types">Recursive Types</h2>
+<p>Reworking the solution online for <code class="sourceCode haskell"><span class="dt">Foldable</span></code>s, the initial intuition is to have the <code class="sourceCode haskell">foldr</code> on the <code class="sourceCode haskell">ys</code> produce a function which takes an element of the <code class="sourceCode haskell">xs</code>, and returns a function which takes an element of the <code class="sourceCode haskell">xs</code>, and so on, finally returning the created list. The <em>problem</em> with that approach is the types involved:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip xs <span class="fu">=</span> foldr f (const []) xs <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span>
+  g e2 r2 e1 r1 <span class="fu">=</span> (e1,e2) <span class="fu">:</span> (r1 r2)
+  f e r x <span class="fu">=</span> x e r</code></pre></div>
+<p>You get the error:</p>
+<blockquote>
+<p><code class="sourceCode haskell"><span class="dt">Occurs</span> check<span class="fu">:</span> cannot construct the infinite <span class="kw">type</span><span class="fu">:</span> t0 <span class="fu">~</span> a <span class="ot">-&gt;</span> (t0 <span class="ot">-&gt;</span> [(a, b)]) <span class="ot">-&gt;</span> [(a, b)]</code>.</p>
+</blockquote>
+<p>Haskell’s typechecker doesn’t allow for infinitely recursive types.</p>
+<p>You’ll be familiar with this problem if you’ve ever tried to encode the Y-combinator, or if you’ve fiddled around with the recursion-schemes package. You might also be familiar with the solution: a <code class="sourceCode haskell"><span class="kw">newtype</span></code>, encapsulating the recursion. In this case, the <code class="sourceCode haskell"><span class="kw">newtype</span></code> looks very similar to the signature for <code class="sourceCode haskell">foldr</code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">RecFold</span> a b <span class="fu">=</span> 
+  <span class="dt">RecFold</span> {<span class="ot"> runRecFold ::</span> a <span class="ot">-&gt;</span> (<span class="dt">RecFold</span> a b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b }</code></pre></div>
+<p>Now you can insert and remove the <code class="sourceCode haskell"><span class="dt">RecFold</span></code> wrapper, helping the typechecker to understand the recursive types as it goes:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip xs <span class="fu">=</span>
+  foldr f (const []) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span>
+    g e2 r2 e1 r1 <span class="fu">=</span> (e1,e2) <span class="fu">:</span> (r1 (<span class="dt">RecFold</span> r2))
+    f e r x <span class="fu">=</span> runRecFold x e r</code></pre></div>
+<p>As an aside, the performance characteristics of the <code class="sourceCode haskell"><span class="kw">newtype</span></code> wrapper are totally opaque to me. There may be significant improvements by using <code class="sourceCode haskell">coerce</code> from <a href="https://hackage.haskell.org/package/base-4.8.2.0/docs/Data-Coerce.html">Data.Coerce</a>, but I haven’t looked into it.</p>
+<h2 id="generalised-zips">Generalised Zips</h2>
+<p>The immediate temptation from the function above is to generalise it. First to <code class="sourceCode haskell">zipWith</code>, obviously:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zipWith<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [c]
+zipWith c xs <span class="fu">=</span>
+  foldr f (const []) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span>
+    g e2 r2 e1 r1 <span class="fu">=</span> c e1 e2 <span class="fu">:</span> (r1 (<span class="dt">RecFold</span> r2))
+    f e r x <span class="fu">=</span> runRecFold x e r</code></pre></div>
+<p>What’s maybe a little more interesting, though, would be a <code class="sourceCode haskell">foldr</code> on two lists. Something which folds through both at once, using a supplied combining function:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldr2 ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g)
+       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> c)
+       <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> c
+foldr2 c i xs <span class="fu">=</span>
+  foldr f (const i) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> i) <span class="kw">where</span>
+    g e2 r2 e1 r1 <span class="fu">=</span> c e1 e2 (r1 (<span class="dt">RecFold</span> r2))
+    f e r x <span class="fu">=</span> runRecFold x e r</code></pre></div>
+<p>Of course, once you can do two, you can do three:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">foldr3 ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g, <span class="dt">Foldable</span> h)
+       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d <span class="ot">-&gt;</span> d)
+       <span class="ot">-&gt;</span> d <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> h c <span class="ot">-&gt;</span> d
+foldr3 c i xs ys <span class="fu">=</span>
+  foldr f (const i) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr2 g (\_ _ <span class="ot">-&gt;</span> i) ys <span class="kw">where</span>
+    g e2 e3 r2 e1 r1 <span class="fu">=</span> c e1 e2 e3 (r1 (<span class="dt">RecFold</span> r2))
+    f e r x <span class="fu">=</span> runRecFold x e r</code></pre></div>
+<p>And so on.</p>
+<p>There’s the added benefit that the above functions work on much more than just lists.</p>
+<h2 id="catamorphisms">Catamorphisms</h2>
+<p>Getting a little formal about the above functions, a <code class="sourceCode haskell">fold</code> can be described as a catamorphism. This is a name for a pattern of breaking down some recursive structure. There’s a bunch of them in the <a href="https://hackage.haskell.org/package/recursion-schemes-4.1.2/docs/Data-Functor-Foldable.html">recursion-schemes</a> package. The question is, then: can you express the above as a kind of catamorphism? Initially, using the same techniques as before, you can:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">RecF</span> f a <span class="fu">=</span> <span class="dt">RecF</span> {<span class="ot"> unRecF ::</span> <span class="dt">Base</span> f (<span class="dt">RecF</span> f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a }
+
+<span class="ot">zipo ::</span> (<span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> f, <span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> g)
+     <span class="ot">=&gt;</span> (<span class="dt">Base</span> f (<span class="dt">RecF</span> g c) <span class="ot">-&gt;</span> <span class="dt">Base</span> g (<span class="dt">RecF</span> g c <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> c)
+     <span class="ot">-&gt;</span> f <span class="ot">-&gt;</span> g <span class="ot">-&gt;</span> c
+zipo alg xs ys <span class="fu">=</span> cata (flip unRecF) ys (cata (<span class="dt">RecF</span> <span class="fu">.</span> alg) xs)</code></pre></div>
+<p>Then, coming full circle, you get a quite nice encoding of <code class="sourceCode haskell">zip</code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip <span class="fu">=</span> zipo alg <span class="kw">where</span>
+  alg <span class="dt">Nil</span> _ <span class="fu">=</span> []
+  alg _ <span class="dt">Nil</span> <span class="fu">=</span> []
+  alg (<span class="dt">Cons</span> x xs) (<span class="dt">Cons</span> y ys) <span class="fu">=</span> (x, y) <span class="fu">:</span> ys xs</code></pre></div>
+<p>However, the <code class="sourceCode haskell"><span class="dt">RecF</span></code> is a little ugly. In fact, it’s possible to write the above without any recursive types, using the RankNTypes extension. (It’s possible that you could do the same with <code class="sourceCode haskell">foldr2</code> as well, but I haven’t figured it out yet)</p>
+<p>You can actually use a <code class="sourceCode haskell"><span class="kw">newtype</span></code> that’s provided by the recursion-schemes library as-is. It’s <code class="sourceCode haskell"><span class="dt">Mu</span></code>. This is required for an encoding of the Y-combinator. It’s usually presented in this form:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Mu</span> a <span class="fu">=</span> <span class="dt">Roll</span> {<span class="ot"> unroll ::</span> <span class="dt">Mu</span> a <span class="ot">-&gt;</span> a }</code></pre></div>
+<p>However, in the recursion-schemes package, its definition looks like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Mu</span> f <span class="fu">=</span> <span class="dt">Mu</span> (forall a<span class="fu">.</span> (f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a)</code></pre></div>
+<p>No recursion! The <code class="sourceCode haskell">zipo</code> combinator above can be written using <code class="sourceCode haskell"><span class="dt">Mu</span></code> like so:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">zipo ::</span> (<span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> f, <span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> g)
+     <span class="ot">=&gt;</span> (<span class="dt">Base</span> f (<span class="dt">Mu</span> (<span class="dt">Base</span> g) <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> <span class="dt">Base</span> g (<span class="dt">Mu</span> (<span class="dt">Base</span> g)) <span class="ot">-&gt;</span> c)
+     <span class="ot">-&gt;</span> f <span class="ot">-&gt;</span> g <span class="ot">-&gt;</span> c
+zipo alg xs <span class="fu">=</span> cata (\x <span class="ot">-&gt;</span> alg x <span class="fu">.</span> project) xs <span class="fu">.</span> refix</code></pre></div>
+<p>And the new version of <code class="sourceCode haskell">zip</code> has a slightly more natural order of arguments:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]
+zip <span class="fu">=</span> zipo alg <span class="kw">where</span>
+  alg <span class="dt">Nil</span> _ <span class="fu">=</span> []
+  alg _ <span class="dt">Nil</span> <span class="fu">=</span> []
+  alg (<span class="dt">Cons</span> x xs) (<span class="dt">Cons</span> y ys) <span class="fu">=</span> (x,y) <span class="fu">:</span> xs ys</code></pre></div>
+<h2 id="zipping-into">Zipping Into</h2>
+<p>There’s one more issue, though, that’s slightly tangential. A lot of the time, the attraction of rewriting functions using folds and catamorphisms is that the function becomes more general: it no longer is restricted to lists. For <code class="sourceCode haskell">zip</code>, however, there’s still a pesky list left in the signature:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zip<span class="ot"> ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> [(a,b)]</code></pre></div>
+<p>It would be a little nicer to be able to zip through something <em>preserving</em> the structure of one of the things being zipped through. For no reason in particular, let’s assume we’ll preserve the structure of the first argument. The function will have to account for the second argument running out before the first, though. A <code class="sourceCode haskell"><span class="dt">Maybe</span></code> can account for that:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">zipInto ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g) 
+        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) 
+        <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> f c</code></pre></div>
+<p>If the second argument runs out, <code class="sourceCode haskell"><span class="dt">Nothing</span></code> will be passed to the combining function.</p>
+<p>It’s clear that this isn’t a <em>fold</em> over the first argument, it’s a <em>traversal</em>. A first go at the function uses the state monad, but restricts the second argument to a list:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">zipInto ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> f c
+zipInto c xs ys <span class="fu">=</span> evalState (traverse f xs) ys <span class="kw">where</span>
+  f x <span class="fu">=</span> <span class="kw">do</span>
+    h <span class="ot">&lt;-</span> gets uncons
+    <span class="kw">case</span> h <span class="kw">of</span> 
+      <span class="dt">Just</span> (y,t) <span class="ot">-&gt;</span> <span class="kw">do</span> 
+        put t
+        pure (c x (<span class="dt">Just</span> y))
+      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> pure (c x <span class="dt">Nothing</span>)</code></pre></div>
+<p>That code can be cleaned up a little:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">zipInto ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> f c 
+zipInto c <span class="fu">=</span> evalState <span class="fu">.</span> traverse (state <span class="fu">.</span> f <span class="fu">.</span> c) <span class="kw">where</span>
+  f x [] <span class="fu">=</span> (x <span class="dt">Nothing</span>, [])
+  f x (y<span class="fu">:</span>ys) <span class="fu">=</span> (x (<span class="dt">Just</span> y), ys)</code></pre></div>
+<p>But really, the uncons needs to go. Another <code class="sourceCode haskell"><span class="kw">newtype</span></code> wrapper is needed, and here’s the end result:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">RecAccu</span> a b <span class="fu">=</span>
+  <span class="dt">RecAccu</span> {<span class="ot"> runRecAccu ::</span> a <span class="ot">-&gt;</span> (<span class="dt">RecAccu</span> a b, b) }
+  
+<span class="ot">zipInto ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Foldable</span> f)
+        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> t c
+zipInto f xs <span class="fu">=</span>
+  snd <span class="fu">.</span> flip (mapAccumL runRecAccu) xs <span class="fu">.</span> <span class="dt">RecAccu</span> <span class="fu">.</span> foldr h i <span class="kw">where</span>
+    i e <span class="fu">=</span> (<span class="dt">RecAccu</span> i, f e <span class="dt">Nothing</span>)
+    h e2 a e1 <span class="fu">=</span> (<span class="dt">RecAccu</span> a, f e1 (<span class="dt">Just</span> e2))</code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Revisiting a Trie in Haskell - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Revisiting a Trie in Haskell</h2>
+
+            <div class="info">
+    Posted on September 26, 2016
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/tries.html">2-part series on tries</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<h1 id="conforming-to-foldable">Conforming to Foldable</h1>
+<p>When I ended the last post, I had a nice <code class="sourceCode haskell"><span class="dt">Trie</span></code> datatype, with plenty of functions, but I couldn’t get it to conform to the standard Haskell classes. The problem was to do with the type variables in the Trie:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">{-# language GADTs, FlexibleInstances, TypeFamilies #-}</span>
+<span class="ot">{-# language DeriveFoldable, DeriveFunctor, DeriveTraversable #-}</span>
+<span class="ot">{-# language FunctionalDependencies, FlexibleInstances #-}</span>
+
+<span class="kw">module</span> <span class="dt">Tries</span> <span class="kw">where</span>
+
+<span class="kw">import qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span>
+<span class="kw">import </span><span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)
+<span class="kw">import </span><span class="dt">Data.Foldable</span> <span class="kw">hiding</span> (toList)
+<span class="kw">import </span><span class="dt">Prelude</span> <span class="kw">hiding</span> (lookup)
+<span class="kw">import </span><span class="dt">Data.Monoid</span>
+<span class="kw">import </span><span class="dt">GHC.Exts</span> (<span class="dt">IsList</span>(..))</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">OldTrie</span> a <span class="fu">=</span> <span class="dt">OldTrie</span>
+  {<span class="ot"> otEndHere  ::</span> <span class="dt">Bool</span>
+  ,<span class="ot"> otChildren ::</span> <span class="dt">Map</span> a (<span class="dt">OldTrie</span> a) }</code></pre></div>
+<p>Although the type variable is <code class="sourceCode haskell">a</code>, the trie really contains <em>lists</em> of <code class="sourceCode haskell">a</code>s. At least, that’s what’s reflected in functions like <code class="sourceCode haskell">insert</code>, <code class="sourceCode haskell">member</code>, etc.:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">member ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">OldTrie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+member <span class="fu">=</span> foldr f otEndHere <span class="kw">where</span>
+  f e a <span class="fu">=</span> maybe <span class="dt">False</span> a <span class="fu">.</span> Map.lookup e <span class="fu">.</span> otChildren
+  
+<span class="ot">otInsert ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">OldTrie</span> a <span class="ot">-&gt;</span> <span class="dt">OldTrie</span> a
+otInsert <span class="fu">=</span> foldr f b <span class="kw">where</span>
+  b (<span class="dt">OldTrie</span> _ c) <span class="fu">=</span> <span class="dt">OldTrie</span> <span class="dt">True</span> c
+  f e a (<span class="dt">OldTrie</span> n c) <span class="fu">=</span> <span class="dt">OldTrie</span> n (Map.alter (<span class="dt">Just</span> <span class="fu">.</span> a <span class="fu">.</span> fold) e c)
+  
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">OldTrie</span> a) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">OldTrie</span> <span class="dt">False</span> mempty
+  <span class="dt">OldTrie</span> v c <span class="ot">`mappend`</span> <span class="dt">OldTrie</span> t d <span class="fu">=</span> 
+    <span class="dt">OldTrie</span> (v <span class="fu">||</span> t) (Map.unionWith (<span class="fu">&lt;&gt;</span>) c d)</code></pre></div>
+<p>Realistically, the type which the trie contains is more like:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dt">Foldable</span> f <span class="ot">=&gt;</span> <span class="dt">Trie</span> (f a)</code></pre></div>
+<p>That signature strongly hints at GADTs, as was indicated by <a href="http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set">this stackoverflow answer</a>. The particular GADT which is applicable here is this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">TrieSet</span> a <span class="kw">where</span> <span class="dt">TrieSet</span><span class="ot"> ::</span> <span class="dt">Bool</span> <span class="ot">-&gt;</span> <span class="dt">Map</span> a (<span class="dt">TrieSet</span> [a]) <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">tsEndHere ::</span> <span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span>
+tsEndHere (<span class="dt">TrieSet</span> e _) <span class="fu">=</span> e
+
+<span class="ot">tsChildren ::</span> <span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">Map</span> a (<span class="dt">TrieSet</span> [a])
+tsChildren (<span class="dt">TrieSet</span> _ c) <span class="fu">=</span> c
+
+<span class="ot">tsInsert ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a]
+tsInsert <span class="fu">=</span> foldr f b <span class="kw">where</span>
+<span class="ot">  b ::</span> <span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a]
+<span class="ot">  f ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> (<span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a]) <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a] <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> [a]
+
+  b (<span class="dt">TrieSet</span> _ c) <span class="fu">=</span> <span class="dt">TrieSet</span> <span class="dt">True</span> c
+  f e a (<span class="dt">TrieSet</span> n c) <span class="fu">=</span> <span class="dt">TrieSet</span> n (Map.alter (<span class="dt">Just</span> <span class="fu">.</span> a <span class="fu">.</span> fold) e c)
+  
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">TrieSet</span> [a]) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">TrieSet</span> <span class="dt">False</span> Map.empty
+  <span class="dt">TrieSet</span> v c <span class="ot">`mappend`</span> <span class="dt">TrieSet</span> t d <span class="fu">=</span> 
+    <span class="dt">TrieSet</span> (v <span class="fu">||</span> t) (Map.unionWith (<span class="fu">&lt;&gt;</span>) c d)</code></pre></div>
+<p>Why lists and not a general <code class="sourceCode haskell"><span class="dt">Foldable</span></code>? Well, for the particular use I had in mind (conforming to the <code class="sourceCode haskell"><span class="dt">Foldable</span></code> typeclass), I need <code class="sourceCode haskell">(<span class="fu">:</span>)</code>.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">TrieSet</span> <span class="kw">where</span>
+  foldr f b (<span class="dt">TrieSet</span> e c) <span class="fu">=</span> <span class="kw">if</span> e <span class="kw">then</span> f [] r <span class="kw">else</span> r <span class="kw">where</span>
+    r <span class="fu">=</span> Map.foldrWithKey (flip <span class="fu">.</span> g <span class="fu">.</span> (<span class="fu">:</span>)) b c
+    g k <span class="fu">=</span> foldr (f <span class="fu">.</span> k)</code></pre></div>
+<p>With some more helper functions, the interface becomes pretty nice:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span> <span class="dt">Show</span> (<span class="dt">TrieSet</span> [a]) <span class="kw">where</span>
+  showsPrec d t <span class="fu">=</span> 
+    showParen 
+      (d <span class="fu">&gt;</span> <span class="dv">10</span>)
+      (showString <span class="st">&quot;fromList &quot;</span> <span class="fu">.</span> shows (foldr (<span class="fu">:</span>) [] t))
+
+<span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">IsList</span> (<span class="dt">TrieSet</span> [a]) <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">Item</span> (<span class="dt">TrieSet</span> [a]) <span class="fu">=</span> [a]
+  fromList <span class="fu">=</span> foldr tsInsert mempty
+  toList <span class="fu">=</span> foldr (<span class="fu">:</span>) []</code></pre></div>
+<p>The trie has the side-effect of lexicographically sorting what it’s given:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate example hidden_source"><code class="sourceCode haskell"><span class="fu">:</span>set <span class="fu">-</span><span class="dt">XGADTs</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell">fromList [<span class="st">&quot;ced&quot;</span>, <span class="st">&quot;abc&quot;</span>, <span class="st">&quot;ced&quot;</span>, <span class="st">&quot;cb&quot;</span>, <span class="st">&quot;ab&quot;</span>]<span class="ot"> ::</span> <span class="dt">TrieSet</span> <span class="dt">String</span>
+fromList [<span class="st">&quot;ab&quot;</span>,<span class="st">&quot;abc&quot;</span>,<span class="st">&quot;cb&quot;</span>,<span class="st">&quot;ced&quot;</span>]</code></pre></div>
+<h1 id="further-generalizing">Further Generalizing</h1>
+<p>Most implementations of tries that I’ve seen are map-like data structures, rather than set-like. In other words, instead of holding a <code class="sourceCode haskell"><span class="dt">Bool</span></code> at the value position, it holds a <code class="sourceCode haskell"><span class="dt">Maybe</span></code> something.</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Trie</span> a b <span class="fu">=</span> <span class="dt">Trie</span>
+  {<span class="ot"> endHere  ::</span> b
+  ,<span class="ot"> children ::</span> <span class="dt">Map</span> a (<span class="dt">Trie</span> a b) 
+  } <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Ord</span>, <span class="dt">Show</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Traversable</span>)</code></pre></div>
+<p>This is a much more straightforward datatype. <code class="sourceCode haskell"><span class="dt">Foldable</span></code> can even be automatically derived.</p>
+<p>However, I haven’t made the <code class="sourceCode haskell">endHere</code> field a <code class="sourceCode haskell"><span class="dt">Maybe</span> a</code>. I want to be able to write something like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TrieSet</span> [a] <span class="fu">=</span> <span class="dt">Trie</span> a <span class="dt">Bool</span>
+<span class="kw">type</span> <span class="dt">TrieMap</span> a b <span class="fu">=</span> <span class="dt">Trie</span> a (<span class="dt">Maybe</span> b)</code></pre></div>
+<p>And have it automatically choose the implementation of the functions I need<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a>.</p>
+<p>To do that, though, I’ll need to write the base functions, agnostic of the type of <code>b</code>. I <em>can</em> rely on something like <code class="sourceCode haskell"><span class="dt">Monoid</span></code>, though:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">instance</span> (<span class="dt">Ord</span> a, <span class="dt">Monoid</span> b) <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Trie</span> a b) <span class="kw">where</span>
+  mempty <span class="fu">=</span> <span class="dt">Trie</span> mempty Map.empty
+  mappend (<span class="dt">Trie</span> v k) (<span class="dt">Trie</span> t l) <span class="fu">=</span> 
+    <span class="dt">Trie</span> (v <span class="fu">&lt;&gt;</span> t) (Map.unionWith (<span class="fu">&lt;&gt;</span>) k l)</code></pre></div>
+<p>In fact, quite a lot of functions naturally lend themselves to this fold + monoid style:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">lookup<span class="ot"> ::</span> (<span class="dt">Ord</span> a, <span class="dt">Monoid</span> b, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a b <span class="ot">-&gt;</span> b
+lookup <span class="fu">=</span> foldr f endHere <span class="kw">where</span>
+  f e a <span class="fu">=</span> foldMap a <span class="fu">.</span> Map.lookup e <span class="fu">.</span> children
+
+<span class="ot">insert' ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a, <span class="dt">Monoid</span> b) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a b
+insert' xs v <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
+  b (<span class="dt">Trie</span> p c) <span class="fu">=</span> <span class="dt">Trie</span> (v <span class="fu">&lt;&gt;</span> p) c
+  f e a (<span class="dt">Trie</span> n c) <span class="fu">=</span> 
+    <span class="dt">Trie</span> n (Map.alter (<span class="dt">Just</span> <span class="fu">.</span> a <span class="fu">.</span> fold) e c) </code></pre></div>
+<p>A monoid is needed for the values, though, and neither <code class="sourceCode haskell"><span class="dt">Bool</span></code> nor <code class="sourceCode haskell"><span class="ot">∀</span> a<span class="fu">.</span> <span class="dt">Maybe</span> a</code> conform to <code class="sourceCode haskell"><span class="dt">Monoid</span></code>. Looking back to the implementation of the trie-set, the <code class="sourceCode haskell">(<span class="fu">||</span>)</code> function has been replaced by <code class="sourceCode haskell">mappend</code>. There <em>is</em> a newtype wrapper in <code class="sourceCode haskell"><span class="dt">Data.Monoid</span></code> which has exactly this behaviour, though: <code class="sourceCode haskell"><span class="dt">Any</span></code>.</p>
+<p>Using that, the type signatures specialize to:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TrieSet</span> a <span class="fu">=</span> <span class="dt">Trie</span> a <span class="dt">Any</span>
+lookup<span class="ot"> ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> a <span class="ot">-&gt;</span> <span class="dt">Any</span>
+<span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Any</span> <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> a <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> a</code></pre></div>
+<p>Similarly, for <code class="sourceCode haskell"><span class="dt">Maybe</span></code>, there’s both <code class="sourceCode haskell"><span class="dt">First</span></code> and <code class="sourceCode haskell"><span class="dt">Last</span></code>. They have the behaviour:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell"><span class="dt">First</span> (<span class="dt">Just</span> x) <span class="fu">&lt;&gt;</span> <span class="dt">First</span> (<span class="dt">Just</span> y) <span class="fu">==</span> <span class="dt">First</span> (<span class="dt">Just</span> x)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell"><span class="dt">Last</span>  (<span class="dt">Just</span> x) <span class="fu">&lt;&gt;</span> <span class="dt">Last</span>  (<span class="dt">Just</span> y) <span class="fu">==</span> <span class="dt">Last</span>  (<span class="dt">Just</span> y)</code></pre></div>
+<p>I think it makes more sense for a value inserted into a map to overwrite whatever was there before. Since the newer value is on the left in the <code class="sourceCode haskell">mappend</code>, then, <code class="sourceCode haskell"><span class="dt">First</span></code> makes most sense.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TrieMap</span> a b <span class="fu">=</span> <span class="dt">Trie</span> a (<span class="dt">First</span> b)
+lookup<span class="ot"> ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieMap</span> a b <span class="ot">-&gt;</span> <span class="dt">First</span> b
+<span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">First</span> b <span class="ot">-&gt;</span> <span class="dt">TrieMap</span> a b <span class="ot">-&gt;</span> <span class="dt">TrieMap</span> a b</code></pre></div>
+<p>There are some other ways that you can interpret the monoid. For instance, subbing in <code class="sourceCode haskell"><span class="dt">Sum</span> <span class="dt">Int</span></code> gives you a bag-like trie:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TrieBag</span> a <span class="fu">=</span> <span class="dt">Trie</span> a (<span class="dt">Sum</span> <span class="dt">Int</span>)
+lookup<span class="ot"> ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieBag</span> a <span class="ot">-&gt;</span> <span class="dt">Sum</span> <span class="dt">Int</span>
+<span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Sum</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">TrieBag</span> a <span class="ot">-&gt;</span> <span class="dt">TrieBag</span> a</code></pre></div>
+<p>This is a set which can store multiple copies of each member. Turned the other way around, a map which stores many values for each key looks like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">TrieBin</span> a b <span class="fu">=</span> <span class="dt">Trie</span> a [b]
+lookup<span class="ot"> ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a b <span class="ot">-&gt;</span> [b]
+<span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a b <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a b</code></pre></div>
+<p>This method so far isn’t really satisfying, though. Really, the <code class="sourceCode haskell">insert</code> signatures should look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">TrieMap</span> a b <span class="ot">-&gt;</span> <span class="dt">TrieMap</span> a b
+<span class="ot">insert ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f)
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a b <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a b</code></pre></div>
+<p>Modifying insert slightly, you can get exactly that:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">insert ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a, <span class="dt">Applicative</span> c, <span class="dt">Monoid</span> (c b)) 
+       <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a (c b) <span class="ot">-&gt;</span> <span class="dt">Trie</span> a (c b)
+insert xs v <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
+  b (<span class="dt">Trie</span> p c) <span class="fu">=</span> <span class="dt">Trie</span> (pure v <span class="fu">&lt;&gt;</span> p) c
+  f e a (<span class="dt">Trie</span> n c) <span class="fu">=</span> <span class="dt">Trie</span> n (Map.alter (<span class="dt">Just</span> <span class="fu">.</span> a <span class="fu">.</span> fold) e c)</code></pre></div>
+<p><code class="sourceCode haskell">pure</code> from <code class="sourceCode haskell"><span class="dt">Applicative</span></code> is needed for the “embedding”.</p>
+<p>Similarly, the “inserting” for the set-like types isn’t really right. The value argument is out of place. This should be the signature:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">add ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f) 
+    <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> a <span class="ot">-&gt;</span> <span class="dt">TrieSet</span> a
+<span class="ot">add ::</span> (<span class="dt">Ord</span> a, <span class="dt">Foldable</span> f)
+    <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a <span class="ot">-&gt;</span> <span class="dt">TrieBin</span> a</code></pre></div>
+<p>In particular, while we have an “empty” thing (0, False) for monoids, we need a “one” thing (1, True) for this function. A semiring<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a> gives this exact method:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">class</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Semiring</span> a <span class="kw">where</span>
+<span class="ot">  one ::</span> a
+<span class="ot">  mul ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+  
+<span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Semiring</span> (<span class="dt">Sum</span> a) <span class="kw">where</span>
+  one <span class="fu">=</span> <span class="dv">1</span>
+  mul <span class="fu">=</span> (<span class="fu">*</span>)
+
+<span class="kw">instance</span> <span class="dt">Semiring</span> <span class="dt">Any</span> <span class="kw">where</span>
+  one <span class="fu">=</span> <span class="dt">Any</span> <span class="dt">True</span>
+  <span class="dt">Any</span> x <span class="ot">`mul`</span> <span class="dt">Any</span> y <span class="fu">=</span> <span class="dt">Any</span> (x <span class="fu">&amp;&amp;</span> y)</code></pre></div>
+<p>This class is kind of like a combination of both monoid wrappers for both <code class="sourceCode haskell"><span class="dt">Int</span></code> and <code class="sourceCode haskell"><span class="dt">Bool</span></code>. You could take advantage of that:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">
+<span class="kw">class</span> (<span class="dt">Monoid</span> add, <span class="dt">Monoid</span> mult)
+  <span class="ot">=&gt;</span> <span class="dt">SemiringIso</span> a add mult <span class="fu">|</span> a <span class="ot">-&gt;</span> add, a <span class="ot">-&gt;</span> mult <span class="kw">where</span>
+<span class="ot">    toAdd    ::</span> a <span class="ot">-&gt;</span> add
+<span class="ot">    fromAdd  ::</span> add <span class="ot">-&gt;</span> a
+<span class="ot">    toMult   ::</span> a <span class="ot">-&gt;</span> mult
+<span class="ot">    fromMult ::</span> mult <span class="ot">-&gt;</span> a
+  
+(<span class="fu">&lt;+&gt;</span>),<span class="ot"> (&lt;.&gt;) ::</span> <span class="dt">SemiringIso</span> a add mult <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a
+
+x <span class="fu">&lt;+&gt;</span> y <span class="fu">=</span> fromAdd  (toAdd  x <span class="fu">&lt;&gt;</span> toAdd  y)
+x <span class="fu">&lt;.&gt;</span> y <span class="fu">=</span> fromMult (toMult x <span class="fu">&lt;&gt;</span> toMult y)
+
+<span class="kw">instance</span> <span class="dt">SemiringIso</span> <span class="dt">Int</span> (<span class="dt">Sum</span> <span class="dt">Int</span>) (<span class="dt">Product</span> <span class="dt">Int</span>) <span class="kw">where</span>
+  toAdd    <span class="fu">=</span> <span class="dt">Sum</span>
+  fromAdd  <span class="fu">=</span> getSum
+  toMult   <span class="fu">=</span> <span class="dt">Product</span>
+  fromMult <span class="fu">=</span> getProduct
+
+<span class="kw">instance</span> <span class="dt">SemiringIso</span> <span class="dt">Bool</span> <span class="dt">Any</span> <span class="dt">All</span> <span class="kw">where</span>
+  toAdd    <span class="fu">=</span> <span class="dt">Any</span>
+  fromAdd  <span class="fu">=</span> getAny
+  toMult   <span class="fu">=</span> <span class="dt">All</span>
+  fromMult <span class="fu">=</span> getAll</code></pre></div>
+<p>But it seems like overkill.</p>
+<p>Anyway, assuming that we have the functions from <code class="sourceCode haskell"><span class="dt">Semiring</span></code>, here’s the <code>add</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">add ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Ord</span> a, <span class="dt">Semiring</span> b) 
+    <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a b
+add xs <span class="fu">=</span> foldr f b xs <span class="kw">where</span>
+  b (<span class="dt">Trie</span> p c) <span class="fu">=</span> <span class="dt">Trie</span> (one <span class="fu">&lt;&gt;</span> p) c
+  f e a (<span class="dt">Trie</span> n c) <span class="fu">=</span> 
+    <span class="dt">Trie</span> n (Map.alter (<span class="dt">Just</span> <span class="fu">.</span> a <span class="fu">.</span> fold) e c)</code></pre></div>
+<p>Now, expressions can be built up without specifying the specific monoid implementation, and the whole behaviour can be changed with a type signature:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="kw">instance</span> (<span class="dt">Ord</span> a, <span class="dt">Semiring</span> b) <span class="ot">=&gt;</span> <span class="dt">IsList</span> (<span class="dt">Trie</span> a b) <span class="kw">where</span>
+  <span class="kw">type</span> <span class="dt">Item</span> (<span class="dt">Trie</span> a b) <span class="fu">=</span> [a]
+  fromList <span class="fu">=</span> foldr add mempty
+  toList <span class="fu">=</span> undefined
+<span class="ot">ans ::</span> <span class="dt">Semiring</span> b <span class="ot">=&gt;</span> b</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">ans <span class="fu">=</span> lookup <span class="st">&quot;abc&quot;</span> (fromList [<span class="st">&quot;abc&quot;</span>, <span class="st">&quot;def&quot;</span>, <span class="st">&quot;abc&quot;</span>, <span class="st">&quot;ghi&quot;</span>])</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell"><span class="ot">ans ::</span> <span class="dt">Sum</span> <span class="dt">Int</span>
+<span class="dt">Sum</span> {getSum <span class="fu">=</span> <span class="dv">2</span>}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell"><span class="ot">ans ::</span> <span class="dt">Any</span>
+<span class="dt">Any</span> {getAny <span class="fu">=</span> <span class="dt">True</span>}</code></pre></div>
+<p>Slightly fuller implementations of all of these are available <a href="https://github.com/oisdk/hstrie">here</a>.</p>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Kind of like <a href="https://www.youtube.com/watch?v=3U3lV5VPmOU">program inference in lieu of type inference</a><a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>This isn’t really a very good definition of semiring. While Haskell doesn’t have this class in base, <a href="https://github.com/purescript/purescript-prelude/blob/master/src/Data/Semiring.purs">Purescript has it in their prelude.</a><a href="#fnref2">↩</a></p></li>
+</ol>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

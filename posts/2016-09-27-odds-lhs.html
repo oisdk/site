@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>A Different Probability Monad - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>A Different Probability Monad</h2>
+
+            <div class="info">
+    Posted on September 27, 2016
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/probability.html">3-part series on probability</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>One of the more unusual monads is the “probability monad”:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span class="ot">{-# language PatternSynonyms, ViewPatterns #-}</span>
+<span class="ot">{-# language DeriveFunctor, DeriveFoldable #-}</span>
+<span class="ot">{-# language BangPatterns #-}</span>
+
+<span class="kw">module</span> <span class="dt">Prob</span> <span class="kw">where</span>
+
+<span class="kw">import </span><span class="dt">Control.Arrow</span>
+<span class="kw">import </span><span class="dt">Data.Ratio</span>
+<span class="kw">import </span><span class="dt">Data.Foldable</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Probability</span> a <span class="fu">=</span> <span class="dt">Probability</span>
+  {<span class="ot"> runProb ::</span> [(a,<span class="dt">Rational</span>)] }
+  
+<span class="kw">data</span> <span class="dt">Coin</span> <span class="fu">=</span> <span class="dt">Heads</span> <span class="fu">|</span> <span class="dt">Tails</span>
+
+<span class="ot">toss ::</span> <span class="dt">Probability</span> <span class="dt">Coin</span>
+toss <span class="fu">=</span> <span class="dt">Probability</span> [(<span class="dt">Heads</span>, <span class="dv">1</span> <span class="fu">%</span> <span class="dv">2</span>), (<span class="dt">Tails</span>, <span class="dv">1</span> <span class="fu">%</span> <span class="dv">2</span>)]</code></pre></div>
+<p>Although it’s a little inefficient, it’s an elegant representation. I’ve written about it before <a href="2015-08-03-monty-hall.html">here</a>.</p>
+<p>It has some notable deficiencies, though. For instance: the user has to constantly check that all the probabilities add up to one. Its list can be empty, which doesn’t make sense. Also, individual outcomes can appear more than once in the same list.</p>
+<p>A first go a fixing the problem might look something like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">Distrib</span> a <span class="fu">=</span> <span class="dt">Distrib</span>
+  {<span class="ot"> runDist ::</span> [(a,<span class="dt">Rational</span>)] }
+
+<span class="ot">tossProb ::</span> <span class="dt">Distrib</span> <span class="dt">Coin</span>
+tossProb <span class="fu">=</span> <span class="dt">Distrib</span> [(<span class="dt">Heads</span>, <span class="dv">1</span>), (<span class="dt">Tails</span>, <span class="dv">1</span>)]</code></pre></div>
+<p>The type is the same as before: it’s the semantics which have changed. The second field of the tuples no longer have to add up to one. The list can still be empty, though, and now finding the probability of, say, the head, looks like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probHead ::</span> <span class="dt">Distrib</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probHead (<span class="dt">Distrib</span> xs<span class="fu">@</span>((_,p)<span class="fu">:</span>_)) <span class="fu">=</span> p <span class="fu">/</span> sum [ q <span class="fu">|</span> (_,q) <span class="ot">&lt;-</span> xs ]</code></pre></div>
+<p>Infinite lists aren’t possible, either.</p>
+<p>One other way to look at the problem is to mimic the structure of cons-lists. Something like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Odds</span> a <span class="fu">=</span> <span class="dt">Certainly</span> a
+            <span class="fu">|</span> <span class="dt">Odds</span> a <span class="dt">Rational</span> (<span class="dt">Odds</span> a)
+            <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Show</span>)</code></pre></div>
+<p>Here, the <code class="sourceCode haskell"><span class="dt">Odds</span></code> constructor (analogous to <code class="sourceCode haskell">(<span class="fu">:</span>)</code>) contains the betting-style odds of the head element vs. <em>the rest of the list</em>. The coin from before is represented by:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">tossOdds ::</span> <span class="dt">Odds</span> <span class="dt">Coin</span>
+tossOdds <span class="fu">=</span> <span class="dt">Odds</span> <span class="dt">Heads</span> (<span class="dv">1</span> <span class="fu">%</span> <span class="dv">1</span>) (<span class="dt">Certainly</span> <span class="dt">Tails</span>)</code></pre></div>
+<p>This representation has tons of nice properties. First, let’s use some pattern-synonym magic for rationals:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell">pattern<span class="ot"> (:%) ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+pattern n <span class="fu">:%</span> d <span class="ot">&lt;-</span> (numerator <span class="fu">&amp;&amp;&amp;</span> denominator <span class="ot">-&gt;</span> (n,d)) <span class="kw">where</span>
+  n <span class="fu">:%</span> d <span class="fu">=</span> n <span class="fu">%</span> d</code></pre></div>
+<p>Then, finding the probability of the head element is this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probHeadOdds ::</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probHeadOdds (<span class="dt">Certainly</span> _) <span class="fu">=</span> <span class="dv">1</span>
+probHeadOdds (<span class="dt">Odds</span> _ (n <span class="fu">:%</span> d) _) <span class="fu">=</span> n <span class="fu">:%</span> (n <span class="fu">+</span> d)</code></pre></div>
+<p>The representation can handle infinite lists no problem:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell">probHeadOdds (<span class="dt">Odds</span> <span class="ch">'a'</span> (<span class="dv">1</span> <span class="fu">:%</span> <span class="dv">1</span>) undefined)
+<span class="dv">1</span> <span class="fu">%</span> <span class="dv">2</span></code></pre></div>
+<p>Taking the tail preserves semantics, also. To do some more involved manipulation, a fold helper is handy:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">foldOdds ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> b
+foldOdds f b <span class="fu">=</span> r <span class="kw">where</span>
+  r (<span class="dt">Certainly</span> x) <span class="fu">=</span> b x
+  r (<span class="dt">Odds</span> x p xs) <span class="fu">=</span> f x p (r xs)</code></pre></div>
+<p>You can use this function to find the probability of a given item:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probOfEvent ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probOfEvent e <span class="fu">=</span> foldOdds f b <span class="kw">where</span>
+  b x <span class="fu">=</span> <span class="kw">if</span> e <span class="fu">==</span> x <span class="kw">then</span> <span class="dv">1</span> <span class="kw">else</span> <span class="dv">0</span>
+  f x n r <span class="fu">=</span> (<span class="kw">if</span> e <span class="fu">==</span> x <span class="kw">then</span> n <span class="kw">else</span> r) <span class="fu">/</span> (n <span class="fu">+</span> <span class="dv">1</span>)</code></pre></div>
+<p>This assumes that each item only occurs once. A function which combines multiple events might look like this:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">probOf ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probOf p <span class="fu">=</span> foldOdds f b <span class="kw">where</span>
+  b x <span class="fu">=</span> <span class="kw">if</span> p x <span class="kw">then</span> <span class="dv">1</span> <span class="kw">else</span> <span class="dv">0</span>
+  f x n r <span class="fu">=</span> (<span class="kw">if</span> p x <span class="kw">then</span> r <span class="fu">+</span> n <span class="kw">else</span> r) <span class="fu">/</span> (n <span class="fu">+</span> <span class="dv">1</span>)</code></pre></div>
+<p>Some utility functions to create <code class="sourceCode haskell"><span class="dt">Odds</span></code>:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">equalOdds ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
+equalOdds xs <span class="fu">=</span> <span class="kw">case</span> length xs <span class="kw">of</span>
+  <span class="dv">0</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span>
+  n <span class="ot">-&gt;</span> <span class="dt">Just</span> (foldr f undefined xs (n <span class="fu">-</span> <span class="dv">1</span>)) <span class="kw">where</span>
+    f y a <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Certainly</span> y
+    f y a n <span class="fu">=</span> <span class="dt">Odds</span> y (<span class="dv">1</span> <span class="fu">%</span> fromIntegral n) (a (n <span class="fu">-</span> <span class="dv">1</span>))
+
+<span class="ot">fromDistrib ::</span> [(a,<span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)
+fromDistrib [] <span class="fu">=</span> <span class="dt">Nothing</span>
+fromDistrib xs <span class="fu">=</span> <span class="dt">Just</span> <span class="fu">$</span> f (tot<span class="fu">*</span>lst) xs <span class="kw">where</span>
+  (tot,lst) <span class="fu">=</span> foldl' (\(<span class="fu">!</span>t,_) e <span class="ot">-&gt;</span> (t<span class="fu">+</span>e,e)) (<span class="dv">0</span>,undefined) (map snd xs)
+  f _ [(x,_)] <span class="fu">=</span> <span class="dt">Certainly</span> x
+  f n ((x,p)<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">Odds</span> x (mp <span class="fu">%</span> np) (f np xs) <span class="kw">where</span>
+    mp <span class="fu">=</span> p <span class="fu">*</span> lst
+    np <span class="fu">=</span> n <span class="fu">-</span> mp
+                  
+<span class="ot">probOfEach ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span>
+probOfEach x xs <span class="fu">=</span> probOf (x<span class="fu">==</span>) xs
+
+<span class="ot">propOf ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> <span class="dt">Rational</span>
+propOf _ [] <span class="fu">=</span> <span class="dt">Nothing</span>
+propOf x xs <span class="fu">=</span> <span class="dt">Just</span> <span class="fu">.</span> uncurry (<span class="fu">%</span>) <span class="fu">$</span>
+  foldl' (\(<span class="fu">!</span>n,<span class="fu">!</span>m) e <span class="ot">-&gt;</span> (<span class="kw">if</span> x <span class="fu">==</span> e <span class="kw">then</span> n<span class="fu">+</span><span class="dv">1</span> <span class="kw">else</span> n, m<span class="fu">+</span><span class="dv">1</span>)) (<span class="dv">0</span>,<span class="dv">0</span>) xs</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode haskell literate prop"><code class="sourceCode haskell">propOf x xs <span class="fu">==</span> fmap (probOfEach x) (equalOdds xs)</code></pre></div>
+<p>And finally, the instances:</p>
+<div class="sourceCode"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span class="ot">append ::</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
+append <span class="fu">=</span> foldOdds f <span class="dt">Odds</span> <span class="kw">where</span>
+  f e r a p ys <span class="fu">=</span> <span class="dt">Odds</span> e ip (a op ys) <span class="kw">where</span>
+    ip <span class="fu">=</span> p <span class="fu">*</span> r <span class="fu">/</span> (p <span class="fu">+</span> r <span class="fu">+</span> <span class="dv">1</span>)
+    op <span class="fu">=</span> p <span class="fu">/</span> (r <span class="fu">+</span> <span class="dv">1</span>)
+
+<span class="ot">flatten ::</span> <span class="dt">Odds</span> (<span class="dt">Odds</span> a) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a
+flatten <span class="fu">=</span> foldOdds append id
+
+<span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Odds</span> <span class="kw">where</span>
+  pure <span class="fu">=</span> <span class="dt">Certainly</span>
+  fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> flatten (fmap (<span class="fu">&lt;$&gt;</span> xs) fs)
+  
+<span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Odds</span> <span class="kw">where</span>
+  x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> flatten (f <span class="fu">&lt;$&gt;</span> x)</code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Lenses are Static Selectors - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Lenses are Static Selectors</h2>
+
+            <div class="info">
+    Posted on June 16, 2016
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Swift.html">Swift</a>
+    
+</div>
+
+<p>So I don’t really know what <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html">KVC</a> is, or much about <code class="sourceCode scala">performSelector</code> functions. <a href="http://inessential.com/2016/05/20/updating_local_objects_with_server_objec">This</a> blogpost, from Brent Simmons, let me know a little bit about why I would want to use them.</p>
+<p>It centred around removing code repetition of this type:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {
+  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span>
+}
+
+<span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {
+  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span> <span class="co">// There was an (intentional)</span>
+}                                    <span class="co">// bug here in the original post</span></code></pre></div>
+<p>To clean up the code, Brent used selector methods. At first, I was a little uncomfortable with the solution. As far as I could tell, the basis of a lot of this machinery used functions with types like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func <span class="fu">get</span>(fromSelector: String) -&gt; AnyObject?
+func <span class="fu">set</span>(forSelector: String) -&gt; ()</code></pre></div>
+<p>Which <em>seems</em> to be extremely dynamic. Stringly-typed and all that. Except that there are two different things going on here. One is the dynamic stuff; the ability to get rid of types when you need to. The other, though, has <em>nothing</em> to do with types. The other idea is being able to pass around something which can access the property (or method) of an object. Let’s look at the code that was being repeated:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {
+  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span>
+}
+
+<span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {
+  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span>
+}</code></pre></div>
+<p>The logical, obvious thing to do here is try refactor out the common elements. In fact, the only things that <em>differ</em> between the two actions above are the <code class="sourceCode scala">foo</code> and <code class="sourceCode scala">bar</code>. It would be great to be able to write a function like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func <span class="fu">checkThenUpdate</span>(selector) {
+  <span class="kw">if</span> localObject.<span class="fu">selector</span> != serverObject.<span class="fu">selector</span> {
+    localObject.<span class="fu">selector</span> = serverObject.<span class="fu">selector</span>
+  }
+}</code></pre></div>
+<p>And then maybe a single line like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">[foo, bar, baz].<span class="fu">forEach</span>(checkThenUpdate)</code></pre></div>
+<p>That’s pretty obviously better. It’s just good programming: when faced with repetition, find the repeated part, and abstract it out. Is it more <em>dynamic</em> than the repetition, though? I don’t think so. All you have to figure out is an appropriate type for the selector, and you can keep all of your static checking. To me, it seems a lot like a <a href="https://hackage.haskell.org/package/lens">lens</a>:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct Lens&lt;Whole, Part&gt; {
+  let get: Whole -&gt; Part
+  let set: (Whole, Part) -&gt; Whole
+}</code></pre></div>
+<p>(This is a lens similar to the ones used in the <a href="http://hackage.haskell.org/package/data-lens">data-lens</a> library, in contrast to van Laarhoven lenses, or LensFamilies. LensFamilies are used in the <a href="https://hackage.haskell.org/package/lens">lens</a> package, and they allow you to change the type of the <code class="sourceCode scala">Part</code>. They’re also just normal functions, rather than a separate type, so you can manipulate them in a pretty standard way. Swift’s type system isn’t able to model those lenses, though, unfortunately.) It has two things: a getter and a setter. The getter is pretty obvious: it takes the object, and returns the property. The setter is a little more confusing. It’s taking an object, and the new property you want to stick in to the object, and returns the object with that property updated. For instance, if we were to make a <code class="sourceCode scala">Person</code>:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct LocalPerson {
+  <span class="kw">var</span> age: Int
+  <span class="kw">var</span> name: String
+}</code></pre></div>
+<p>We could then have a lens for the <code class="sourceCode scala">name</code> field like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let localName: Lens&lt;LocalPerson,String&gt; = <span class="fu">Lens</span>(
+  get: { p in p.<span class="fu">name</span> },
+  set: { (oldPerson,newName) in
+    <span class="kw">var</span> newPerson = oldPerson
+    newPerson.<span class="fu">name</span> = newName
+    <span class="kw">return</span> newPerson
+  }
+)</code></pre></div>
+<p>And you’d use it like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let caoimhe = <span class="fu">LocalPerson</span>(age: <span class="dv">46</span>, name: <span class="st">&quot;caoimhe&quot;</span>)
+localName.<span class="fu">get</span>(caoimhe) <span class="co">// 46</span>
+localName.<span class="fu">set</span>(caoimhe, <span class="st">&quot;breifne&quot;</span>) <span class="co">// LocalPerson(age: 46, name: &quot;breifne&quot;)</span></code></pre></div>
+<p>Straight away, we’re able to do (something) like the <code class="sourceCode scala">checkThenUpdate</code> function:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">func checkThenUpdate
+  &lt;A: Equatable&gt;
+  (localLens: Lens&lt;LocalPerson,A&gt;, serverLens: Lens&lt;ServerPerson,A&gt;) {
+  let serverProp = serverLens.<span class="fu">get</span>(serverObject)
+  <span class="kw">if</span> localLens.<span class="fu">get</span>(localObject) != serverProp {
+    localObject = localLens.<span class="fu">set</span>(localObject,serverProp)
+  }
+}</code></pre></div>
+<p>And it could be called pretty tersely:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="fu">checkThenUpdate</span>(localName, serverLens: serverName)</code></pre></div>
+<p>The biggest problem with this approach, obviously, is the boilerplate. In Haskell, that’s solved with Template Haskell, so the lens code is generated for you. (I’d love to see something like that in Swift) There’s a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called “classy-lenses”. That’s where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct Place {
+  <span class="kw">var</span> name: String
+}
+
+<span class="co">// Instead of just having a lens for the name field, have a whole protocol</span>
+<span class="co">// for things with a name field:</span>
+
+protocol HasName {
+  associatedtype Name
+  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; { get }
+  <span class="kw">var</span> name: Name { get set }
+}
+
+<span class="co">// Because the mutable property is included in the protocol, you can rely on</span>
+<span class="co">// it in extensions:</span>
+
+extension HasName {
+  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; {
+    <span class="kw">return</span> <span class="fu">Lens</span>(
+      get: {$<span class="fl">0.</span>name},
+      set: { (w,p) in 
+        <span class="kw">var</span> n = w
+        n.<span class="fu">name</span> = p
+        <span class="kw">return</span> n
+      }
+    )
+  }
+  <span class="kw">var</span> name: Name {
+    get { <span class="kw">return</span> Self.<span class="fu">name</span>.<span class="fu">get</span>(self) }
+    set { self = Self.<span class="fu">name</span>.<span class="fu">set</span>(self,newValue) }
+  }
+}
+
+<span class="co">// This way, you can provide either the lens or the property, and you get the</span>
+<span class="co">// other for free.</span>
+
+extension Place: HasName {}
+
+<span class="co">// Then, you can rely on that protocol, and all of the types:</span>
+
+func checkEqualOnNames
+  &lt;A,B where A: HasName, B: HasName, A.<span class="fu">Name</span>: Equatable, A.<span class="fu">Name</span> == B.<span class="fu">Name</span>&gt;
+  (x: A, _ y: B) -&gt; Bool {
+    <span class="kw">return</span> x.<span class="fu">name</span> == y.<span class="fu">name</span>
+}</code></pre></div>
+<p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the types intact. Other people have spoken about the other things you can do with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams - Lenses in Swift</a>), like composing them together, chaining operations, etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method cascading</a>) Unfortunately, in current Swift, the boilerplate makes all of this a little unpleasant. Still, they’re an interesting idea, and they show how a good type system needn’t always get in the way.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
