@@ -3,6 +3,9 @@ title: Type-Level Induction in Haskell
 tags: Haskell
 ---
 
+The code from this post is available as a
+[gist](https://gist.github.com/oisdk/23c430b807c788dd43dc4d986c5fdfdd).
+
 One of the most basic tools for use in type-level programming is the Peano definition of the natural numbers:
 
 ```haskell
