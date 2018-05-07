@@ -7,8 +7,159 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sat, 05 May 2018 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sun, 06 May 2018 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Sorting Small Things in Haskell</title>
+    <link>http://doisinkidney.com/posts/2018-05-06-sorting-small.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on May  6, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>I was working on some performance-intensive stuff recently, and I ran into the issue of sorting very small amounts of values (think 3, 4, 5).</p>
+<p>The standard way to do this is with <a href="https://en.wikipedia.org/wiki/Sorting_network">sorting networks</a>. The way I’ll be using doesn’t actually perform any parallelism (unfortunately), but it is a clean way to write the networks in Haskell without too much repetition.</p>
+<p><a href="http://pages.ripco.net/~jgamble/nw.html">This</a> website will generate an optimal sorting network for your given size, and the output (for 3) looks like this:</p>
+<pre><code>[[1,2]]
+[[0,2]]
+[[0,1]]</code></pre>
+<p>Each pair of indices represents a “compare-and-swap” operation: so the first line means “compare the value at 1 to the value at 2: if it’s bigger, swap them”. For 5, the network looks like this:</p>
+<pre><code>[[0,1],[2,3]]
+[[0,2],[1,3]]
+[[1,2],[0,4]]
+[[1,4]]
+[[2,4]]
+[[3,4]]</code></pre>
+<p>Pairs on the same line can be performed in parallel.</p>
+<p>For our case, I’m going to be looking at sorting tuples, but the technique can easily be generalized to vectors, etc.</p>
+<p>The first trick is to figure out how to do “swapping”: we don’t want mutation, so what we can do instead is swap the <em>reference</em> to some value, by shadowing its name. In other words:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a, a)
+swap2 lte x y <span class="fu">|</span> lte x y <span class="fu">=</span> (x, y)
+              <span class="fu">|</span> otherwise <span class="fu">=</span> (y, x)
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> <span class="kw">case</span> swap2 lte _1 _2 <span class="kw">of</span>
+      (_1, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _2 <span class="kw">of</span>
+        (_0, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _1 <span class="kw">of</span>
+          (_0, _1) <span class="ot">-&gt;</span> (_0, _1, _2)</code></pre></div>
+<p>The indentation is hard to read, though, and wrapping-and-unwrapping tuples makes me nervous about the performance (although it may be inlined). The next step is to <em>church-encode</em> the pairs returned:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b
+swap2 lte x y k
+    <span class="fu">|</span> lte x y <span class="fu">=</span> k x y
+    <span class="fu">|</span> otherwise <span class="fu">=</span> k y x
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      (_0,_1,_2)</code></pre></div>
+<p>Then, to get this to compile down to efficient code, we can make judicious use of <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/GHC-Exts.html#v:inline"><code class="sourceCode haskell">inline</code></a> from GHC.Exts:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">GHC.Exts</span> (inline)
+
+<span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b
+swap2 lte x y k
+    <span class="fu">|</span> inline lte x y <span class="fu">=</span> inline k x y
+    <span class="fu">|</span> otherwise <span class="fu">=</span> inline k y x
+<span class="ot">{-# INLINE swap2 #-}</span>
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a, a, a) <span class="ot">-&gt;</span> (a, a, a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      (_0,_1,_2)
+<span class="ot">{-# INLINE sort3 #-}</span></code></pre></div>
+<p>And to see if this really does make efficient code, let’s look at the core (cleaned up):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">sort3
+  <span class="fu">=</span> \ (<span class="ot">lte ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)
+      (<span class="ot">ds ::</span> (a, a, a)) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> ds <span class="kw">of</span> wild_X8 (_0, _1, _2) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> lte _1 _2 <span class="kw">of</span>
+        <span class="dt">False</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> lte _0 _1 <span class="kw">of</span>
+            <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _1, _0)
+            <span class="dt">True</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _0 _2 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _0, _1)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> (_0, _2, _1)
+        <span class="dt">True</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> lte _0 _2 <span class="kw">of</span>
+            <span class="dt">False</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _2 _1 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _2, _0)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> (_2, _1, _0)
+            <span class="dt">True</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _0 _1 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _0, _2)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> wild_X8</code></pre></div>
+<p>Fantastic! When we specialize to <code class="sourceCode haskell"><span class="dt">Int</span></code>, we get all of the proper unpacking:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">sort3Int ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>) <span class="ot">-&gt;</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)
+sort3Int <span class="fu">=</span> inline sort3 (<span class="fu">&lt;=</span>)</code></pre></div>
+<p>Core (with just the variable names cleaned up this time):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">sort3Int
+  <span class="fu">=</span> \ (<span class="ot">w ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> w <span class="kw">of</span> w_X { (_0, _1, _2) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _0 <span class="kw">of</span> w_0 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _0U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _1 <span class="kw">of</span> w_1 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _1U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _2 <span class="kw">of</span> w_2 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _2U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _1U _2U <span class="kw">of</span> {
+        __DEFAULT <span class="ot">-&gt;</span>
+          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {
+            __DEFAULT <span class="ot">-&gt;</span> (w_2, w_1, w_0);
+            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_2, w_0, w_1);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_0, w_2, w_1)
+              }
+          };
+        <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {
+            __DEFAULT <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _2U _1U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_2, w_0);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_2, w_1, w_0)
+              };
+            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_0, w_2);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> w_X
+              }
+          }
+      }
+      }
+      }
+      }
+      }</code></pre></div>
+<p>Now, for the real test: sorting 5-tuples, using the network above.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">sort5 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a,a,a) <span class="ot">-&gt;</span> (a,a,a,a,a)
+sort5 lte (_0,_1,_2,_3,_4)
+    <span class="fu">=</span> swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      swap2 lte _2 _3 <span class="fu">$</span> \ _2 _3 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _1 _3 <span class="fu">$</span> \ _1 _3 <span class="ot">-&gt;</span>
+      swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _4 <span class="fu">$</span> \ _0 _4 <span class="ot">-&gt;</span>
+      swap2 lte _1 _4 <span class="fu">$</span> \ _1 _4 <span class="ot">-&gt;</span>
+      swap2 lte _2 _4 <span class="fu">$</span> \ _2 _4 <span class="ot">-&gt;</span>
+      swap2 lte _3 _4 <span class="fu">$</span> \ _3 _4 <span class="ot">-&gt;</span>
+      (_0,_1,_2,_3,_4)
+<span class="ot">{-# INLINE sort5 #-}</span></code></pre></div>
+<p>The core output from this is over 1000 lines long: you can see it (with the variable names cleaned up) <a href="https://gist.github.com/oisdk/ec25d76d918135c4c28777e1b84ead5f">here</a>.</p>
+<p>In my benchmarks, these functions are indeed quicker than their counterparts in vector, but I’m not confident in my knowledge of Haskell performance to make much of a strong statement about them.</p>
+]]></description>
+    <pubDate>Sun, 06 May 2018 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2018-05-06-sorting-small.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Type-Level Induction in Haskell</title>
     <link>http://doisinkidney.com/posts/2018-05-05-induction.html</link>
     <description><![CDATA[<div class="info">
@@ -2028,172 +2179,6 @@ wrap (<span class="dt">Search</span> xs) <span class="fu">=</span> <span class="
 ]]></description>
     <pubDate>Fri, 13 Oct 2017 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2017-10-13-convolutions-and-semirings.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Applicative Arithmetic</title>
-    <link>http://doisinkidney.com/posts/2017-09-25-applicative-arithmetic.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on September 25, 2017
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Haskell.html">Haskell</a>
-    
-</div>
-
-<h1 id="safer-arithmetic">Safer Arithmetic</h1>
-<p>There are a couple partial functions in the Haskell Prelude which people seem to agree shouldn’t be there. <code class="sourceCode haskell">head</code>, for example, will throw an error on an empty list. Most seem to agree that it should work something more like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">head<span class="ot"> ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a
-head <span class="fu">=</span> foldr (const <span class="fu">.</span> <span class="dt">Just</span>) <span class="dt">Nothing</span></code></pre></div>
-<p>There are other examples, like <code class="sourceCode haskell">last</code>, <code class="sourceCode haskell"><span class="fu">!!</span></code>, etc.</p>
-<p>One which people <em>don’t</em> agree on, however, is division by zero. In the current Prelude, the following will throw an error:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="dv">1</span> <span class="fu">/</span> <span class="dv">0</span></code></pre></div>
-<p>The “safe” version might have a signature like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">(/) ::</span> <span class="dt">Fractional</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</code></pre></div>
-<p>However, this turns out to be quite a headache for writing code generally. So the default is the (somewhat) unsafe version.</p>
-<p>Is there a way to introduce a safer version without much overhead, so the programmer is given the option? Of course! With some newtype magic, it’s pretty simple to write a wrapper which catches division by zero in some arbitrary monad:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">newtype</span> <span class="dt">AppNum</span> f a <span class="fu">=</span> <span class="dt">AppNum</span>
-    {<span class="ot"> runAppNum ::</span> f a
-    } <span class="kw">deriving</span> (<span class="dt">Functor</span>,<span class="dt">Applicative</span>,<span class="dt">Monad</span>,<span class="dt">Alternative</span>,<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">MonadFail</span>)
-
-<span class="kw">instance</span> (<span class="dt">Num</span> a, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span>
-         <span class="dt">Num</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span>
-    abs <span class="fu">=</span> fmap abs
-    signum <span class="fu">=</span> fmap signum
-    (<span class="fu">+</span>) <span class="fu">=</span> liftA2 (<span class="fu">+</span>)
-    (<span class="fu">*</span>) <span class="fu">=</span> liftA2 (<span class="fu">*</span>)
-    (<span class="fu">-</span>) <span class="fu">=</span> liftA2 (<span class="fu">-</span>)
-    negate <span class="fu">=</span> fmap negate
-    fromInteger <span class="fu">=</span> pure <span class="fu">.</span> fromInteger
-
-<span class="kw">instance</span> (<span class="dt">Fractional</span> a, <span class="dt">MonadFail</span> f, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span>
-         <span class="dt">Fractional</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span>
-    fromRational <span class="fu">=</span> pure <span class="fu">.</span> fromRational
-    xs <span class="fu">/</span> ys <span class="fu">=</span>
-        ys <span class="fu">&gt;&gt;=</span>
-        \<span class="kw">case</span>
-            <span class="dv">0</span> <span class="ot">-&gt;</span> fail <span class="st">&quot;divide by zero&quot;</span>
-            y <span class="ot">-&gt;</span> fmap (<span class="fu">/</span> y) xs</code></pre></div>
-<p>I’m using the <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XLambdaCase</span></code> extension and <code class="sourceCode haskell"><span class="dt">MonadFail</span></code> here.</p>
-<h1 id="free-applicatives">Free Applicatives</h1>
-<p>You’ll notice that you only need <code class="sourceCode haskell"><span class="dt">Applicative</span></code> for most of the arithmetic operations above. In fact, you only need <code class="sourceCode haskell"><span class="dt">Monad</span></code> when you want to examine the contents of <code class="sourceCode haskell">f</code>. Using that fact, we can manipulate expression trees using the free applicative from the <a href="https://hackage.haskell.org/package/free">free</a> package. Say, for instance, we want to have free variables in our expressions. Using <code class="sourceCode haskell"><span class="dt">Either</span></code>, it’s pretty easy:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">WithVars</span> <span class="fu">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) <span class="dt">Integer</span>
-
-<span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span>
-var <span class="fu">=</span> <span class="dt">AppNum</span> <span class="fu">.</span> liftAp <span class="fu">.</span> <span class="dt">Left</span></code></pre></div>
-<p>We can collect the free variables from an expression:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]
-vars <span class="fu">=</span> runAp_ (either pure (const [])) <span class="fu">.</span> runAppNum
-
-x <span class="fu">=</span> <span class="dv">1</span><span class="ot"> ::</span> <span class="dt">WithVars</span>
-y <span class="fu">=</span> var <span class="st">&quot;y&quot;</span>
-z <span class="fu">=</span> var <span class="st">&quot;z&quot;</span>
-
-vars (x <span class="fu">+</span> y <span class="fu">+</span> z) <span class="co">-- [&quot;y&quot;,&quot;z&quot;]</span></code></pre></div>
-<p>If we want to sub in, though, we’re going to run into a problem: we can’t just pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span></code> because you’re able to construct values like this:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">bad ::</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)
-bad <span class="fu">=</span> <span class="dt">AppNum</span> (liftAp (<span class="dt">Left</span> <span class="st">&quot;oh noes&quot;</span>))</code></pre></div>
-<p>We’d need to pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</code> as well; in fact you’d need a map for every possible type. Which isn’t feasible.</p>
-<h1 id="gadts">GADTs</h1>
-<p>Luckily, we <em>can</em> constrain the types of variables in our expression so that they’re always <code class="sourceCode haskell"><span class="dt">Integer</span></code>, using a GADT:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Variable</span> a <span class="kw">where</span>
-        <span class="dt">Constant</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Variable</span> a
-        <span class="dt">Variable</span><span class="ot"> ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Variable</span> <span class="dt">Integer</span></code></pre></div>
-<p>The type above seems useless on its own: it doesn’t have a <code class="sourceCode haskell"><span class="dt">Functor</span></code> instance, never mind an <code class="sourceCode haskell"><span class="dt">Applicative</span></code>, so how can it fit into <code class="sourceCode haskell"><span class="dt">AppNum</span></code>?</p>
-<p>The magic comes from the free applicative, which converts any type of kind <code class="sourceCode haskell"><span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></code> into an applicative. With that in mind, we can change around the previous code:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">WithVars</span> <span class="fu">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> <span class="dt">Variable</span>) <span class="dt">Integer</span>
-
-<span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span>
-var <span class="fu">=</span> <span class="dt">AppNum</span> <span class="fu">.</span> liftAp <span class="fu">.</span> <span class="dt">Variable</span>
-
-<span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]
-vars <span class="fu">=</span> runAp_ f <span class="fu">.</span> runAppNum
-  <span class="kw">where</span>
-<span class="ot">    f ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> [<span class="dt">String</span>]
-    f (<span class="dt">Constant</span> _) <span class="fu">=</span> []
-    f (<span class="dt">Variable</span> s) <span class="fu">=</span> [s]</code></pre></div>
-<p>And write the function to sub in for us:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">variableA
-<span class="ot">    ::</span> <span class="dt">Applicative</span> f
-    <span class="ot">=&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> f a
-variableA _ (<span class="dt">Constant</span> x) <span class="fu">=</span> pure x
-variableA f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s
-
-<span class="ot">variable ::</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> a
-variable _ (<span class="dt">Constant</span> x) <span class="fu">=</span> x
-variable f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s
-
-<span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>
-replace m <span class="fu">=</span> runAp (variable (m <span class="fu">Map.!</span>)) <span class="fu">.</span> runAppNum
-
-replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2</span>), (<span class="st">&quot;y&quot;</span>,<span class="dv">3</span>)]) (x <span class="fu">+</span> y <span class="fu">+</span> z)
-<span class="co">-- 6</span></code></pre></div>
-<h1 id="accumulation">Accumulation</h1>
-<p>This will fail if a free variable isn’t present in the map, unfortunately. To fix it, we <em>could</em> use <code class="sourceCode haskell"><span class="dt">Either</span></code> instead of <code class="sourceCode haskell"><span class="dt">Identity</span></code>:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">String</span> <span class="dt">Integer</span>
-replace m <span class="fu">=</span>
-    runAp
-        (variableA <span class="fu">$</span>
-         \s <span class="ot">-&gt;</span>
-              maybe (<span class="dt">Left</span> s) <span class="dt">Right</span> (Map.lookup s m)) <span class="fu">.</span>
-    runAppNum</code></pre></div>
-<p>But this only gives us the first missing variable encountered. We’d like to get back <em>all</em> of the missing variables, ideally: accumulating the <code class="sourceCode haskell"><span class="dt">Left</span></code>s. <code class="sourceCode haskell"><span class="dt">Either</span></code> doesn’t accumulate values, as if it did it would <a href="https://stackoverflow.com/a/23611068/4892417">break the monad laws</a>.</p>
-<p>There’s no issue with the <em>applicative</em> laws, though, which is why the <a href="https://hackage.haskell.org/package/validation-0.5.4">validation</a> package provides a <em>non-monadic</em> either-like type, which we can use here.</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">AccValidation</span> [<span class="dt">String</span>] <span class="dt">Integer</span>
-replace m <span class="fu">=</span>
-    runAp
-        (variableA <span class="fu">$</span>
-         \s <span class="ot">-&gt;</span>
-              maybe (<span class="dt">AccFailure</span> [s]) pure (Map.lookup s m)) <span class="fu">.</span>
-    runAppNum
-
-replace (Map.fromList []) (x <span class="fu">+</span> y <span class="fu">+</span> z)
-<span class="co">-- AccFailure [&quot;y&quot;,&quot;z&quot;]</span></code></pre></div>
-<h1 id="other-uses">Other uses</h1>
-<p>There are a bunch more applicatives you could use instead of <code class="sourceCode haskell"><span class="dt">Either</span></code>. Using lists, for instance, you could calculate the possible outcomes from a range of inputs:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">range<span class="ot"> ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]
-range <span class="fu">=</span> runAp (variable (const [<span class="dv">1</span><span class="fu">..</span><span class="dv">3</span>])) <span class="fu">.</span> runAppNum
-
-range (x <span class="fu">+</span> y <span class="fu">+</span> z)
-<span class="co">-- [3,4,5,4,5,6,5,6,7]</span></code></pre></div>
-<p>Or you could ask the user for input:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">query ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Integer</span>
-query <span class="fu">=</span> runAp (variable f) <span class="fu">.</span> runAppNum
-  <span class="kw">where</span>
-    f s <span class="fu">=</span> <span class="kw">do</span>
-      putStr <span class="st">&quot;Input a value for &quot;</span>
-      putStrLn s
-      fmap read getLine</code></pre></div>
-<p>Finally, and this one’s a bit exotic, you could examine every variable in turn, with defaults for the others:</p>
-<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">zygo
-<span class="ot">    ::</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x)
-    <span class="ot">-&gt;</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)
-    <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a
-    <span class="ot">-&gt;</span> [b]
-zygo (<span class="ot">l ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x) (<span class="ot">c ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="fu">=</span>
-    fst <span class="fu">.</span> go id
-  <span class="kw">where</span>
-<span class="ot">    go ::</span> forall c<span class="fu">.</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], c)
-    go _ (<span class="dt">Pure</span> x) <span class="fu">=</span> ([], x)
-    go k (<span class="dt">Ap</span> x f) <span class="fu">=</span> (c x (k <span class="fu">.</span> ls) <span class="fu">:</span> xs, ls lx)
-      <span class="kw">where</span>
-        (xs,ls) <span class="fu">=</span> go (k <span class="fu">.</span> (<span class="fu">$</span> lx)) f
-        lx <span class="fu">=</span> l x
-
-<span class="ot">examineEach ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>]
-examineEach <span class="fu">=</span> zygo (variable (const <span class="dv">1</span>)) g <span class="fu">.</span> runAppNum
-  <span class="kw">where</span>
-<span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b
-    g (<span class="dt">Constant</span> x) rhs _ <span class="fu">=</span> rhs x
-    g (<span class="dt">Variable</span> _) rhs i <span class="fu">=</span> rhs i</code></pre></div>
-<p>This produces a list of functions which are equivalent to subbing in for each variable with the rest set to 1.</p>
-]]></description>
-    <pubDate>Mon, 25 Sep 2017 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2017-09-25-applicative-arithmetic.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 

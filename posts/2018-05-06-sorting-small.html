@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Sorting Small Things in Haskell - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Sorting Small Things in Haskell</h2>
+
+            <div class="info">
+    Posted on May  6, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>I was working on some performance-intensive stuff recently, and I ran into the issue of sorting very small amounts of values (think 3, 4, 5).</p>
+<p>The standard way to do this is with <a href="https://en.wikipedia.org/wiki/Sorting_network">sorting networks</a>. The way I’ll be using doesn’t actually perform any parallelism (unfortunately), but it is a clean way to write the networks in Haskell without too much repetition.</p>
+<p><a href="http://pages.ripco.net/~jgamble/nw.html">This</a> website will generate an optimal sorting network for your given size, and the output (for 3) looks like this:</p>
+<pre><code>[[1,2]]
+[[0,2]]
+[[0,1]]</code></pre>
+<p>Each pair of indices represents a “compare-and-swap” operation: so the first line means “compare the value at 1 to the value at 2: if it’s bigger, swap them”. For 5, the network looks like this:</p>
+<pre><code>[[0,1],[2,3]]
+[[0,2],[1,3]]
+[[1,2],[0,4]]
+[[1,4]]
+[[2,4]]
+[[3,4]]</code></pre>
+<p>Pairs on the same line can be performed in parallel.</p>
+<p>For our case, I’m going to be looking at sorting tuples, but the technique can easily be generalized to vectors, etc.</p>
+<p>The first trick is to figure out how to do “swapping”: we don’t want mutation, so what we can do instead is swap the <em>reference</em> to some value, by shadowing its name. In other words:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a, a)
+swap2 lte x y <span class="fu">|</span> lte x y <span class="fu">=</span> (x, y)
+              <span class="fu">|</span> otherwise <span class="fu">=</span> (y, x)
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> <span class="kw">case</span> swap2 lte _1 _2 <span class="kw">of</span>
+      (_1, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _2 <span class="kw">of</span>
+        (_0, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _1 <span class="kw">of</span>
+          (_0, _1) <span class="ot">-&gt;</span> (_0, _1, _2)</code></pre></div>
+<p>The indentation is hard to read, though, and wrapping-and-unwrapping tuples makes me nervous about the performance (although it may be inlined). The next step is to <em>church-encode</em> the pairs returned:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b
+swap2 lte x y k
+    <span class="fu">|</span> lte x y <span class="fu">=</span> k x y
+    <span class="fu">|</span> otherwise <span class="fu">=</span> k y x
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      (_0,_1,_2)</code></pre></div>
+<p>Then, to get this to compile down to efficient code, we can make judicious use of <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/GHC-Exts.html#v:inline"><code class="sourceCode haskell">inline</code></a> from GHC.Exts:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="kw">import </span><span class="dt">GHC.Exts</span> (inline)
+
+<span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b
+swap2 lte x y k
+    <span class="fu">|</span> inline lte x y <span class="fu">=</span> inline k x y
+    <span class="fu">|</span> otherwise <span class="fu">=</span> inline k y x
+<span class="ot">{-# INLINE swap2 #-}</span>
+
+<span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a, a, a) <span class="ot">-&gt;</span> (a, a, a)
+sort3 lte (_0,_1,_2)
+    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      (_0,_1,_2)
+<span class="ot">{-# INLINE sort3 #-}</span></code></pre></div>
+<p>And to see if this really does make efficient code, let’s look at the core (cleaned up):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">sort3
+  <span class="fu">=</span> \ (<span class="ot">lte ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)
+      (<span class="ot">ds ::</span> (a, a, a)) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> ds <span class="kw">of</span> wild_X8 (_0, _1, _2) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> lte _1 _2 <span class="kw">of</span>
+        <span class="dt">False</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> lte _0 _1 <span class="kw">of</span>
+            <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _1, _0)
+            <span class="dt">True</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _0 _2 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _0, _1)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> (_0, _2, _1)
+        <span class="dt">True</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> lte _0 _2 <span class="kw">of</span>
+            <span class="dt">False</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _2 _1 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _2, _0)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> (_2, _1, _0)
+            <span class="dt">True</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> lte _0 _1 <span class="kw">of</span>
+                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _0, _2)
+                <span class="dt">True</span> <span class="ot">-&gt;</span> wild_X8</code></pre></div>
+<p>Fantastic! When we specialize to <code class="sourceCode haskell"><span class="dt">Int</span></code>, we get all of the proper unpacking:</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">sort3Int ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>) <span class="ot">-&gt;</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)
+sort3Int <span class="fu">=</span> inline sort3 (<span class="fu">&lt;=</span>)</code></pre></div>
+<p>Core (with just the variable names cleaned up this time):</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell">sort3Int
+  <span class="fu">=</span> \ (<span class="ot">w ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> w <span class="kw">of</span> w_X { (_0, _1, _2) <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _0 <span class="kw">of</span> w_0 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _0U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _1 <span class="kw">of</span> w_1 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _1U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> _2 <span class="kw">of</span> w_2 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _2U <span class="ot">-&gt;</span>
+      <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _1U _2U <span class="kw">of</span> {
+        __DEFAULT <span class="ot">-&gt;</span>
+          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {
+            __DEFAULT <span class="ot">-&gt;</span> (w_2, w_1, w_0);
+            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_2, w_0, w_1);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_0, w_2, w_1)
+              }
+          };
+        <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {
+            __DEFAULT <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _2U _1U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_2, w_0);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_2, w_1, w_0)
+              };
+            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span>
+              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {
+                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_0, w_2);
+                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> w_X
+              }
+          }
+      }
+      }
+      }
+      }
+      }</code></pre></div>
+<p>Now, for the real test: sorting 5-tuples, using the network above.</p>
+<div class="sourceCode"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span class="ot">sort5 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a,a,a) <span class="ot">-&gt;</span> (a,a,a,a,a)
+sort5 lte (_0,_1,_2,_3,_4)
+    <span class="fu">=</span> swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span>
+      swap2 lte _2 _3 <span class="fu">$</span> \ _2 _3 <span class="ot">-&gt;</span>
+      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span>
+      swap2 lte _1 _3 <span class="fu">$</span> \ _1 _3 <span class="ot">-&gt;</span>
+      swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span>
+      swap2 lte _0 _4 <span class="fu">$</span> \ _0 _4 <span class="ot">-&gt;</span>
+      swap2 lte _1 _4 <span class="fu">$</span> \ _1 _4 <span class="ot">-&gt;</span>
+      swap2 lte _2 _4 <span class="fu">$</span> \ _2 _4 <span class="ot">-&gt;</span>
+      swap2 lte _3 _4 <span class="fu">$</span> \ _3 _4 <span class="ot">-&gt;</span>
+      (_0,_1,_2,_3,_4)
+<span class="ot">{-# INLINE sort5 #-}</span></code></pre></div>
+<p>The core output from this is over 1000 lines long: you can see it (with the variable names cleaned up) <a href="https://gist.github.com/oisdk/ec25d76d918135c4c28777e1b84ead5f">here</a>.</p>
+<p>In my benchmarks, these functions are indeed quicker than their counterparts in vector, but I’m not confident in my knowledge of Haskell performance to make much of a strong statement about them.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
