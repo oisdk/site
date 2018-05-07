@@ -1,4 +1,4 @@
-This is the source code which generates [this site](http://doisinkidney.com/).
+This is the source code which generates [this site](https://doisinkidney.com/).
 
 Feel free to submit pull requests on typos, mistakes, etc.
 
