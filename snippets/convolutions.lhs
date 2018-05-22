@@ -10,9 +10,10 @@ module Convolve where
 -- | >>> [1,2,3] <.> [4,5,6]
 -- [[(1,4)],[(1,5),(2,4)],[(1,6),(2,5),(3,4)],[(2,6),(3,5)],[(3,6)]]
 (<.>) :: [a] -> [b] -> [[(a,b)]]
-xs <.> ys = foldr f [] xs
+_ <.> [] = []
+xs <.> (yh:ys) = foldr f [] xs
   where
-    f x zs = foldr (g x) id ys ([] : zs)
+    f x zs = [(x,yh)] : foldr (g x) id ys zs
     g x y a (z:zs) = ((x, y) : z) : a zs
     g x y a [] = [(x, y)] : a []
 \end{code}
