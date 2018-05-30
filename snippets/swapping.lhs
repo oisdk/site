@@ -92,7 +92,7 @@ swapIx i j xs = zs
     replace x = First . Just &&& (`fromMaybe` x)
 \end{code}
 
-Because `ix`{.haskell} is a traversal, it won't do anything when there's a missing key, which is what we want. Also, it's adds extra laziness, as the caller of a traversal gets certain extra controls over the strictness of the traversal.
+Because `ix`{.haskell} is a traversal, it won't do anything when there's a missing key, which is what we want. Also, it adds extra laziness, as the caller of a traversal gets certain extra controls over the strictness of the traversal.
 
 You may notice the stateful pattern above. However, translating it over as-is presents a problem: the circular bindings won't work in vanilla do notation. For that, we need [`MonadFix`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html) and [Recursive Do](https://ocharles.org.uk/blog/posts/2014-12-09-recursive-do.html):
 
