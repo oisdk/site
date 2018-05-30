@@ -17,7 +17,6 @@ import qualified Data.IntMap.Lazy   as LazyIntMap
 import           Control.Lens
 
 import           Control.Arrow           ((&&&))
-import           Data.Profunctor.Unsafe  ((#.))
 import           Control.Monad           ((>=>))
 import           Control.Monad.Fix       (mfix)
 
@@ -55,7 +54,7 @@ swapAt3 i j xs = case Map.lookup i xs of
     (Just y,ys) -> Map.insert i y ys
 \end{code}
 
-Then, using laziness, we can write the above program circularly, reducing the number of lookups to 2:
+Then, using laziness, we can write the above program [circularly](https://doi.org/10.1007/BF00264249), reducing the number of lookups to 2:
 
 \begin{code}
 swapAt2 :: Ord a => a -> a -> Map a b -> Map a b
@@ -63,10 +62,10 @@ swapAt2 i j xs = zs
   where
      (ival,ys) = Map.updateLookupWithKey (replace jval) i xs
      (jval,zs) = Map.updateLookupWithKey (replace ival) j ys
-     replace x = const (Just . flip fromMaybe x)
+     replace x = const (Just . (`fromMaybe` x))
 \end{code}
 
-But unfortunately, Data.Map doesn't have the laziness necessary to perform this. We can use, instead, Data.IntMap:
+Unfortunately, Data.Map isn't lazy enough for this: the above won't terminate. Interestingly, Data.IntMap *is* lazy enough:
 
 \begin{code}
 swapAt2Int :: Int -> Int -> IntMap a -> IntMap a
@@ -74,38 +73,48 @@ swapAt2Int i j xs = zs
   where
     (ival,ys) = LazyIntMap.updateLookupWithKey (replace jval) i xs
     (jval,zs) =     IntMap.updateLookupWithKey (replace ival) j ys
-    replace x = const (Just . flip fromMaybe x)
+    replace x = const (Just . (`fromMaybe` x))
 \end{code}
 
-Noticing the state-like pattern, we can make it explicit:
+Notice how we have to use the lazy version of `updateLookupWithKey`{.haskell}. Again, though, this version has a problem: it won't terminate when one of the keys is missing.
+
+Thankfully, both of our problems can be solved by abstracting a little and using [Ixed](http://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-At.html#t:Ixed) from lens:
 
 \begin{code}
-swapAt2State :: Int -> Int -> IntMap a -> IntMap a
-swapAt2State i j = execState $ mdo
-    ival <- state $ LazyIntMap.updateLookupWithKey (replace jval) i
-    jval <- state $     IntMap.updateLookupWithKey (replace ival) j
-    return ()
-  where replace x = const (Just . flip fromMaybe x)
+-- |
+-- >>> swapIx 1 2 "abc"
+-- "acb"
+swapIx :: Ixed a => Index a -> Index a -> a -> a
+swapIx i j xs = zs
+  where
+    (First ival, ys) = ix i (replace jval) xs
+    (First jval, zs) = ix j (replace ival) ys
+    replace x = First . Just &&& (`fromMaybe` x)
 \end{code}
 
-We can generalize even further, to use Ixed:
+Because `ix`{.haskell} is a traversal, it won't do anything when there's a missing key, which is what we want. Also, it's adds extra laziness, as the caller of a traversal gets certain extra controls over the strictness of the traversal.
+
+You may notice the stateful pattern above. However, translating it over as-is presents a problem: the circular bindings won't work in vanilla do notation. For that, we need [`MonadFix`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html) and [Recursive Do](https://ocharles.org.uk/blog/posts/2014-12-09-recursive-do.html):
 
 \begin{code}
-swapAt2Ixed :: Ixed a => Index a -> Index a -> a -> a
-swapAt2Ixed i j = execState $ mdo
-  First ival <- state $ ix i (First . Just &&& flip fromMaybe jval)
-  First jval <- state $ ix j (First . Just &&& flip fromMaybe ival)
-  return ()
+swapSt :: Ixed a => Index a -> Index a -> a -> a
+swapSt i j = execState $ mdo
+    ival <- replace i jval
+    jval <- replace j ival
+    pure ()
+  where
+    replace i (First x) =
+        state (ix i (First . Just &&& (`fromMaybe` x)))
 \end{code}
 
-Finally, we can remove the do notation, for the full operator-soup glory:
+Finally, we can use [`mfix`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html#v:mfix) directly, and we'll get the following clean-looking solution:
 
 \begin{code}
 swap :: Ixed a => Index a -> Index a -> a -> a
 swap i j = execState (mfix (replace i >=> replace j))
   where
-    replace i = (fmap getFirst . state)
-             #. ix i
-              . (&&&) (First #. Just)
-              . flip fromMaybe
+    replace i (First x) =
+        state (ix i (First . Just &&& (`fromMaybe` x)))
 \end{code}
+
+This works for most containers, even strict ones like Data.Map.Strict. It also works for Data.Vector. It does *not* work for Data.Vector.Unboxed, though.
