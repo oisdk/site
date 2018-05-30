@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Swapping - Donnacha Oisín Kidney</title>
+        <link rel="stylesheet" type="text/css" href="../css/default.css" />
+        <link rel="stylesheet" type="text/css" href="../css/syntax.css" />
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Swapping</h2>
+
+            <div class="sourceCode" id="cb1"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{-# LANGUAGE RecursiveDo #-}</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">module</span> <span class="dt">Swap</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="kw">import</span>           <span class="dt">Data.Map.Strict</span>   (<span class="dt">Map</span>)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="kw">import</span>           <span class="dt">Data.IntMap</span>          (<span class="dt">IntMap</span>)</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Strict</span> <span class="kw">as</span> <span class="dt">IntMap</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Lazy</span>   <span class="kw">as</span> <span class="dt">LazyIntMap</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="kw">import</span>           <span class="dt">Control.Lens</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="kw">import</span>           <span class="dt">Control.Arrow</span>           ((&amp;&amp;&amp;))</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="kw">import</span>           <span class="dt">Data.Profunctor.Unsafe</span>  ((#.))</a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="kw">import</span>           <span class="dt">Control.Monad</span>           ((&gt;=&gt;))</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="kw">import</span>           <span class="dt">Control.Monad.Fix</span>       (mfix)</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="kw">import</span>           <span class="dt">Control.Monad.State</span>     (<span class="dt">StateT</span>(..),execState,state)</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="kw">import</span>           <span class="dt">Data.Maybe</span>  (fromMaybe)</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="kw">import</span>           <span class="dt">Data.Monoid</span> (<span class="dt">First</span>(..))</a></code></pre></div>
+<p>Say you want to swap two items in a mapping structure—<a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html">Data.Map.Strict</a>, <a href="https://hackage.haskell.org/package/unordered-containers-0.2.9.0/docs/Data-HashMap-Strict.html">Data.HashMap</a>, etc. The normal way uses far too many operations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="co">-- |</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="co">-- &gt;&gt;&gt; swapAt4 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="ot">swapAt4 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">swapAt4 i j xs <span class="fu">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.lookup j xs <span class="kw">of</span></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">    <span class="dt">Just</span> y <span class="ot">-&gt;</span> Map.insert i y (Map.insert j x xs)</a></code></pre></div>
+<p>Two lookups, and two insertions. We can cut it down to three operations with <a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html#v:insertLookupWithKey"><code>insertLookupWithKey</code></a>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="co">-- |</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="co">-- &gt;&gt;&gt; swapAt3 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="ot">swapAt3 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">swapAt3 i j xs <span class="fu">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.insertLookupWithKey (const const) j x xs <span class="kw">of</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">    (<span class="dt">Nothing</span>,_) <span class="ot">-&gt;</span> xs</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">    (<span class="dt">Just</span> y,ys) <span class="ot">-&gt;</span> Map.insert i y ys</a></code></pre></div>
+<p>Then, using laziness, we can write the above program circularly, reducing the number of lookups to 2:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">swapAt2 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">swapAt2 i j xs <span class="fu">=</span> zs</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">     (ival,ys) <span class="fu">=</span> Map.updateLookupWithKey (replace jval) i xs</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">     (jval,zs) <span class="fu">=</span> Map.updateLookupWithKey (replace ival) j ys</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">     replace x <span class="fu">=</span> const (<span class="dt">Just</span> <span class="fu">.</span> flip fromMaybe x)</a></code></pre></div>
+<p>But unfortunately, Data.Map doesn’t have the laziness necessary to perform this. We can use, instead, Data.IntMap:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">swapAt2Int ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">swapAt2Int i j xs <span class="fu">=</span> zs</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">    (ival,ys) <span class="fu">=</span> LazyIntMap.updateLookupWithKey (replace jval) i xs</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    (jval,zs) <span class="fu">=</span>     IntMap.updateLookupWithKey (replace ival) j ys</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    replace x <span class="fu">=</span> const (<span class="dt">Just</span> <span class="fu">.</span> flip fromMaybe x)</a></code></pre></div>
+<p>Noticing the state-like pattern, we can make it explicit:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">swapAt2State ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">swapAt2State i j <span class="fu">=</span> execState <span class="fu">$</span> mdo</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">    ival <span class="ot">&lt;-</span> state <span class="fu">$</span> LazyIntMap.updateLookupWithKey (replace jval) i</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">    jval <span class="ot">&lt;-</span> state <span class="fu">$</span>     IntMap.updateLookupWithKey (replace ival) j</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">    return ()</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">  <span class="kw">where</span> replace x <span class="fu">=</span> const (<span class="dt">Just</span> <span class="fu">.</span> flip fromMaybe x)</a></code></pre></div>
+<p>We can generalize even further, to use Ixed:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">swapAt2Ixed ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">swapAt2Ixed i j <span class="fu">=</span> execState <span class="fu">$</span> mdo</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="dt">First</span> ival <span class="ot">&lt;-</span> state <span class="fu">$</span> ix i (<span class="dt">First</span> <span class="fu">.</span> <span class="dt">Just</span> <span class="fu">&amp;&amp;&amp;</span> flip fromMaybe jval)</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  <span class="dt">First</span> jval <span class="ot">&lt;-</span> state <span class="fu">$</span> ix j (<span class="dt">First</span> <span class="fu">.</span> <span class="dt">Just</span> <span class="fu">&amp;&amp;&amp;</span> flip fromMaybe ival)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  return ()</a></code></pre></div>
+<p>Finally, we can remove the do notation, for the full operator-soup glory:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">swap ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">swap i j <span class="fu">=</span> execState (mfix (replace i <span class="fu">&gt;=&gt;</span> replace j))</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    replace i <span class="fu">=</span> (fmap getFirst <span class="fu">.</span> state)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">             <span class="fu">#.</span> ix i</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">              <span class="fu">.</span> (<span class="fu">&amp;&amp;&amp;</span>) (<span class="dt">First</span> <span class="fu">#.</span> <span class="dt">Just</span>)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">              <span class="fu">.</span> flip fromMaybe</a></code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

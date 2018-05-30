@@ -38,130 +38,130 @@
 <p><a href="https://en.wikipedia.org/wiki/Dependent_type">Dependent types</a> are types “that depend on values”. Say you had a function <code class="sourceCode scala">f</code> that took an integer. If you can write that function whereby it returns a value of type <code class="sourceCode scala">A</code> when that integer is even, or a type <code class="sourceCode scala">B</code> if the integer is odd, then you’re working with dependent types. (I think. I’m not sure: if I’ve got it wrong <a href="https://twitter.com/oisdk">tweet me</a>.)</p>
 <h2 id="dependent-pretendance">Dependent Pretendance</h2>
 <p>As far as I can tell, this is not possible in Swift. All variables are statically typed, and those types must be found at compile-time. As long as you’re not messing around with casting:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct A {}
-struct B {}
-
-func <span class="fu">f</span>(i: Int) -&gt; AnyObject {
-  <span class="kw">return</span> i % <span class="dv">2</span> == <span class="dv">0</span> ? <span class="fu">A</span>() as! AnyObject : <span class="fu">B</span>() as! AnyObject
-}</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb1-1" data-line-number="1">struct A {}</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">struct B {}</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">func <span class="fu">f</span>(i: Int) -&gt; AnyObject {</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">  <span class="kw">return</span> i % <span class="dv">2</span> == <span class="dv">0</span> ? <span class="fu">A</span>() as! AnyObject : <span class="fu">B</span>() as! AnyObject</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">}</a></code></pre></div>
 <p>You won’t be able to manage it.</p>
 <p>Now, sum types can give you something that <em>looks</em> like dependent types:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct A {}
-struct B {}
-
-enum SumType {
-  <span class="kw">case</span> <span class="fu">Even</span>(A), <span class="fu">Odd</span>(B)
-}
-
-func <span class="fu">f</span>(i: Int) -&gt; SumType {
-  <span class="kw">return</span> i % <span class="dv">2</span> == <span class="dv">0</span> ? .<span class="fu">Even</span>(<span class="fu">A</span>()) : .<span class="fu">Odd</span>(<span class="fu">B</span>())
-}</code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb2-1" data-line-number="1">struct A {}</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">struct B {}</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">enum SumType {</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">  <span class="kw">case</span> <span class="fu">Even</span>(A), <span class="fu">Odd</span>(B)</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">}</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">func <span class="fu">f</span>(i: Int) -&gt; SumType {</a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">  <span class="kw">return</span> i % <span class="dv">2</span> == <span class="dv">0</span> ? .<span class="fu">Even</span>(<span class="fu">A</span>()) : .<span class="fu">Odd</span>(<span class="fu">B</span>())</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10">}</a></code></pre></div>
 <p>But that doesn’t fit the description: the thing returned is of type <code class="sourceCode scala">SumType</code>, <em>not</em> <code class="sourceCode scala">A</code> or <code class="sourceCode scala">B</code>.</p>
 <p>That’s fine, though. As with all of these highfalutin mathematical concepts in programming, you can steal some of the cool and fun <em>patterns</em> from your Haskells and Lisps and Idrises and implement them in whatever language you want.</p>
 <p>As it happens, implementing this stuff in Swift gets you even <em>further</em> away from the formal definition of dependent types. Instead of allowing types to be decided at runtime, you end up forcing even <em>more</em> resolution and computation to happen at compile-time. Take “numbers-as-types”, for instance:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol Nat { <span class="fu">init</span>() }
-struct Zero : Nat {}
-protocol NonZero: Nat { typealias Pred: Nat }
-struct Succ&lt;N : Nat&gt; : NonZero { typealias Pred = N }</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb3-1" data-line-number="1">protocol Nat { <span class="fu">init</span>() }</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">struct Zero : Nat {}</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">protocol NonZero: Nat { typealias Pred: Nat }</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">struct Succ&lt;N : Nat&gt; : NonZero { typealias Pred = N }</a></code></pre></div>
 <p>Once you encode some numbers by hand:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">typealias One   = Succ&lt;Zero&gt;
-typealias Two   = Succ&lt;One&gt;
-typealias Three = Succ&lt;Two&gt;
-typealias Four  = Succ&lt;Three&gt;
-typealias Five  = Succ&lt;Four&gt;
-typealias Six   = Succ&lt;Five&gt;
-typealias Seven = Succ&lt;Six&gt;
-typealias Eight = Succ&lt;Seven&gt;
-typealias Nine  = Succ&lt;Eight&gt;</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb4-1" data-line-number="1">typealias One   = Succ&lt;Zero&gt;</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">typealias Two   = Succ&lt;One&gt;</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">typealias Three = Succ&lt;Two&gt;</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">typealias Four  = Succ&lt;Three&gt;</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">typealias Five  = Succ&lt;Four&gt;</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">typealias Six   = Succ&lt;Five&gt;</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">typealias Seven = Succ&lt;Six&gt;</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">typealias Eight = Succ&lt;Seven&gt;</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">typealias Nine  = Succ&lt;Eight&gt;</a></code></pre></div>
 <p>You get thinking about exactly <em>how much</em> computation you can achieve at compile time:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">Sum&lt;One, Two&gt;.<span class="fu">Result</span>    <span class="co">// Three</span>
-Comp&lt;Five, Nine&gt;.<span class="fu">Result</span> <span class="co">// LT</span>
-Comp&lt;Four, Four&gt;.<span class="fu">Result</span> <span class="co">// EQ</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb5-1" data-line-number="1">Sum&lt;One, Two&gt;.<span class="fu">Result</span>    <span class="co">// Three</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">Comp&lt;Five, Nine&gt;.<span class="fu">Result</span> <span class="co">// LT</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">Comp&lt;Four, Four&gt;.<span class="fu">Result</span> <span class="co">// EQ</span></a></code></pre></div>
 <h2 id="sum-types-divide-types-multiply-types">Sum types, divide types, multiply types</h2>
 <p>What I wanted, ideally, was some basic “Algebraic data types”. (Today. Today was the day I made the worst pun.) I wanted to be able to add the type <code class="sourceCode scala">One</code> to the type <code class="sourceCode scala">Two</code> and get the type <code class="sourceCode scala">Three</code>. Once you can manage those, multiplication, division and all kinds of silliness are possible. I set myself some rules: all calculations must be performed at compile-time, and all calculations must work with arbitrary values.</p>
 <p>I’ve not been able to manage, unfortunately. If someone could figure out how to do it, I would <a href="https://twitter.com/oisdk">love to hear it</a>. I’ve been stealing ideas from <a href="http://strictlypositive.org/faking.ps.gz">Faking It: Simulating Dependent Types in Haskell</a> mainly.</p>
 <p>Here’s the kind of code that made me think it was possible:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">let ar = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>].<span class="fu">reverse</span>()
-let se = <span class="fu">AnySequence</span>([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]).<span class="fu">reverse</span>()</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb6-1" data-line-number="1">let ar = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>].<span class="fu">reverse</span>()</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">let se = <span class="fu">AnySequence</span>([<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]).<span class="fu">reverse</span>()</a></code></pre></div>
 <p>The types returned by those two methods are different. This is all to do with that protocol-oriented-programming business: the compiler will try to select the most specialised version of a method to use. So in the example above, since an array can just be indexed backwards, the compiler uses a method that returns a lazy <code class="sourceCode scala">ReverseRandomAccessCollection</code>. However, for the <code class="sourceCode scala">AnySequence</code>, the <code class="sourceCode scala">reverse</code> method has to create a whole new array.</p>
 <p>With that in mind, we can make a protocol:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol BinaryOp {
-  typealias A: Nat
-  typealias B: Nat
-}</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb7-1" data-line-number="1">protocol BinaryOp {</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">  typealias A: Nat</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  typealias B: Nat</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">}</a></code></pre></div>
 <p>Then, we can extend it, like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct EQ {}
-extension BinaryOp where A == B {
-  typealias Result = EQ
-}</code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb8-1" data-line-number="1">struct EQ {}</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">extension BinaryOp where A == B {</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  typealias Result = EQ</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">}</a></code></pre></div>
 <p>So far, so good! The compiler will add that method to all types that conform to the <code class="sourceCode scala">where</code> clause. So if there is a concrete type that conforms to <code>BinaryOp</code>:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct Comp&lt;E0: Nat, E1: Nat&gt; : BinaryOp {
-  typealias A = E0
-  typealias B = E1
-}</code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb9-1" data-line-number="1">struct Comp&lt;E0: Nat, E1: Nat&gt; : BinaryOp {</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">  typealias A = E0</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  typealias B = E1</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">}</a></code></pre></div>
 <p>Only instances where <code class="sourceCode scala">A</code> and <code class="sourceCode scala">B</code> are equal will get the type alias:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">Comp&lt;One, One&gt;.<span class="fu">Result</span>
-Comp&lt;One, Two&gt;.<span class="fu">Result</span> <span class="co">// Error</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb10-1" data-line-number="1">Comp&lt;One, One&gt;.<span class="fu">Result</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">Comp&lt;One, Two&gt;.<span class="fu">Result</span> <span class="co">// Error</span></a></code></pre></div>
 <p>But that’s not ideal. We want something that returns <code class="sourceCode scala">NEQ</code> when the types are not the same. Easy enough, right?</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct NEQ {}
-extension BinaryOp {
-  typealias Result = NEQ
-}</code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb11-1" data-line-number="1">struct NEQ {}</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">extension BinaryOp {</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  typealias Result = NEQ</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">}</a></code></pre></div>
 <p>But there’s an error: <code class="sourceCode scala">invalid redeclaration of 'Result'</code>. The compiler won’t allow polymorphism with typealiases. It <em>does</em> allow polymorphism with properties, though:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension BinaryOp {
-  <span class="kw">var</span> r: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }
-}
-extension BinaryOp where A == B {
-  <span class="kw">var</span> r: NEQ { <span class="kw">return</span> <span class="fu">NEQ</span>() }
-}</code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb12-1" data-line-number="1">extension BinaryOp {</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">  <span class="kw">var</span> r: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">extension BinaryOp where A == B {</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">  <span class="kw">var</span> r: NEQ { <span class="kw">return</span> <span class="fu">NEQ</span>() }</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">}</a></code></pre></div>
 <p>This is already a less elegant solution than the typealiases, since we’re going to have to initialise things. All of the type information is available at compile-time, though, so I’ve not broken any of my rules.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">Comp&lt;One, One&gt;().<span class="fu">r</span> <span class="co">// EQ</span>
-Comp&lt;One, Two&gt;().<span class="fu">r</span> <span class="co">// NEQ</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb13-1" data-line-number="1">Comp&lt;One, One&gt;().<span class="fu">r</span> <span class="co">// EQ</span></a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">Comp&lt;One, Two&gt;().<span class="fu">r</span> <span class="co">// NEQ</span></a></code></pre></div>
 <p>How about something more complex? Instead of <code class="sourceCode scala">EQ</code> and <code class="sourceCode scala">NEQ</code>, maybe <code class="sourceCode scala">LT</code>, <code class="sourceCode scala">GT</code>, and <code>EQ</code>?</p>
 <p>It’s hard to see how it would work. Well, here’s the base case:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension BinaryOp where A == B {
-  <span class="kw">var</span> r: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }
-}</code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb14-1" data-line-number="1">extension BinaryOp where A == B {</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">  <span class="kw">var</span> r: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">}</a></code></pre></div>
 <p>Then, any non-zero is bigger than zero:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct LT {}
-extension BinaryOp where A == Zero, B : NonZero {
-  <span class="kw">var</span> r: LT { <span class="kw">return</span> <span class="fu">LT</span>() }
-}
-struct GT {}
-extension BinaryOp where A : NonZero, B == Zero {
-  <span class="kw">var</span> r: GT { <span class="kw">return</span> <span class="fu">GT</span>() }
-}</code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb15-1" data-line-number="1">struct LT {}</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">extension BinaryOp where A == Zero, B : NonZero {</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="kw">var</span> r: LT { <span class="kw">return</span> <span class="fu">LT</span>() }</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">}</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">struct GT {}</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">extension BinaryOp where A : NonZero, B == Zero {</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">  <span class="kw">var</span> r: GT { <span class="kw">return</span> <span class="fu">GT</span>() }</a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">}</a></code></pre></div>
 <p>If both <code class="sourceCode scala">A</code> and <code class="sourceCode scala">B</code> are nonzero, they should have a <code class="sourceCode scala">Pred</code> typealias, which we can use, recursively:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension BinaryOp where A : NonZero, B : NonZero {
-  <span class="kw">var</span> r: ?? {
-    <span class="kw">return</span> Comp&lt;A.<span class="fu">Pred</span>, B.<span class="fu">Pred</span>&gt;().<span class="fu">r</span>
-  }
-}</code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb16-1" data-line-number="1">extension BinaryOp where A : NonZero, B : NonZero {</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">  <span class="kw">var</span> r: ?? {</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">    <span class="kw">return</span> Comp&lt;A.<span class="fu">Pred</span>, B.<span class="fu">Pred</span>&gt;().<span class="fu">r</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4">  }</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5">}</a></code></pre></div>
 <p>This doesn’t work. I’m fairly sure this is a definitive dead end. Here’s the error: <code class="sourceCode scala">ambiguous reference to member <span class="ch">'r'</span></code>. The problem is that that error encapsulates exactly what I’m trying to achieve: I <em>want</em> the reference to be ambiguous, so it <em>depends</em> on the types of <code class="sourceCode scala">A</code> and <code class="sourceCode scala">B</code>. Most other routes I went down hit similar roadblocks:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol BinaryOp {
-  typealias A: Nat
-  typealias B: Nat
-  typealias Result
-  <span class="kw">var</span> r: Result { get }
-}</code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb17-1" data-line-number="1">protocol BinaryOp {</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">  typealias A: Nat</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">  typealias B: Nat</a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">  typealias Result</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5">  <span class="kw">var</span> r: Result { get }</a>
+<a class="sourceLine" id="cb17-6" data-line-number="6">}</a></code></pre></div>
 <p>The idea here was that you could have various implementations of <code class="sourceCode scala">r</code>, so that the <code class="sourceCode scala">Result</code> typealias would be inferred. The problem is the compiler wants to figure out what <code class="sourceCode scala">Result</code> is when you make a type that conforms to the protocol, so every type will get the default implementation.</p>
 <p>Yet more versions I tried all hit the <code class="sourceCode scala">ambiguous</code> error, which makes me think this kind of thing is fundamentally impossible in Swift’s current form.</p>
 <p>So I’ve got to break one of the rules: no more arbitrary numbers.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct AddOne&lt;N : Nat&gt; {
-  typealias Result = Succ&lt;N&gt;
-}
-struct AddTwo&lt;N : Nat&gt; {
-  typealias Result = Succ&lt;AddOne&lt;N&gt;.<span class="fu">Result</span>&gt;
-}</code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb18-1" data-line-number="1">struct AddOne&lt;N : Nat&gt; {</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">  typealias Result = Succ&lt;N&gt;</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">struct AddTwo&lt;N : Nat&gt; {</a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">  typealias Result = Succ&lt;AddOne&lt;N&gt;.<span class="fu">Result</span>&gt;</a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">}</a></code></pre></div>
 <p>And so on. Or:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Binary where A == B {
-  <span class="kw">var</span> sub: Zero { <span class="kw">return</span> <span class="fu">Zero</span>() }
-  <span class="kw">var</span> com: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }
-}
-extension Binary where A == Succ&lt;B&gt; {
-  <span class="kw">var</span> sub: One { <span class="kw">return</span> <span class="fu">One</span>() }
-  <span class="kw">var</span> com: GT { <span class="kw">return</span> <span class="fu">GT</span>() }
-}</code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb19-1" data-line-number="1">extension Binary where A == B {</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">  <span class="kw">var</span> sub: Zero { <span class="kw">return</span> <span class="fu">Zero</span>() }</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">  <span class="kw">var</span> com: EQ { <span class="kw">return</span> <span class="fu">EQ</span>() }</a>
+<a class="sourceLine" id="cb19-4" data-line-number="4">}</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">extension Binary where A == Succ&lt;B&gt; {</a>
+<a class="sourceLine" id="cb19-6" data-line-number="6">  <span class="kw">var</span> sub: One { <span class="kw">return</span> <span class="fu">One</span>() }</a>
+<a class="sourceLine" id="cb19-7" data-line-number="7">  <span class="kw">var</span> com: GT { <span class="kw">return</span> <span class="fu">GT</span>() }</a>
+<a class="sourceLine" id="cb19-8" data-line-number="8">}</a></code></pre></div>
 <p>Which can give you subtraction.</p>
 <h2 id="lets-pretend-to-be-useful">Let’s Pretend to be Useful</h2>
 <p>All of that stuff is interesting, but very <em>very</em> far from being useful.</p>
@@ -169,95 +169,95 @@ extension Binary where A == Succ&lt;B&gt; {
 <p>The other dependent type staple is the heterogenous list.</p>
 <p>Now, this isn’t just any heterogenous list: we’re not writing Python here. This is a <em>statically typed</em> heterogenous list. Swift has a construct very similar to this already: a tuple!</p>
 <p>But tuples aren’t very extensible:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Tuple where First : Comparable {...
-extension Tuple where Count == Two {...</code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb20-1" data-line-number="1">extension Tuple where First : Comparable {...</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">extension Tuple where Count == Two {...</a></code></pre></div>
 <p>And you can’t work with them in terms that most lists can:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">(<span class="dv">1</span>, <span class="st">&quot;a&quot;</span>, <span class="fl">2.0</span>) + (<span class="st">&quot;b&quot;</span>, -<span class="dv">3</span>)</code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb21-1" data-line-number="1">(<span class="dv">1</span>, <span class="st">&quot;a&quot;</span>, <span class="fl">2.0</span>) + (<span class="st">&quot;b&quot;</span>, <span class="dv">-3</span>)</a></code></pre></div>
 <p>So that’s where another tuple type can come in. A la <a href="https://twitter.com/rob_rix/status/633262294336729088">Rob Rix</a>, we could make a right-recursive tuple, terminated by <code class="sourceCode scala">()</code>. There’ll be one overarching protocol:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol _AnyTuple : CustomStringConvertible {
-  <span class="kw">var</span> tDesc: String { get }
-  <span class="kw">var</span> count: Int { get }
-  typealias Arity : Nat
-}</code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb22-1" data-line-number="1">protocol _AnyTuple : CustomStringConvertible {</a>
+<a class="sourceLine" id="cb22-2" data-line-number="2">  <span class="kw">var</span> tDesc: String { get }</a>
+<a class="sourceLine" id="cb22-3" data-line-number="3">  <span class="kw">var</span> count: Int { get }</a>
+<a class="sourceLine" id="cb22-4" data-line-number="4">  typealias Arity : Nat</a>
+<a class="sourceLine" id="cb22-5" data-line-number="5">}</a></code></pre></div>
 <p>And the empty tuple:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct EmptyTuple {}
-
-extension EmptyTuple : _AnyTuple {
-  <span class="kw">var</span> description: String { <span class="kw">return</span> <span class="st">&quot;()&quot;</span> }
-  <span class="kw">var</span> tDesc: String { <span class="kw">return</span>  <span class="st">&quot;)&quot;</span> }
-  <span class="kw">var</span> count: Int { <span class="kw">return</span> <span class="dv">0</span> }
-  typealias Arity = Zero
-}</code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb23-1" data-line-number="1">struct EmptyTuple {}</a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb23-3" data-line-number="3">extension EmptyTuple : _AnyTuple {</a>
+<a class="sourceLine" id="cb23-4" data-line-number="4">  <span class="kw">var</span> description: String { <span class="kw">return</span> <span class="st">&quot;()&quot;</span> }</a>
+<a class="sourceLine" id="cb23-5" data-line-number="5">  <span class="kw">var</span> tDesc: String { <span class="kw">return</span>  <span class="st">&quot;)&quot;</span> }</a>
+<a class="sourceLine" id="cb23-6" data-line-number="6">  <span class="kw">var</span> count: Int { <span class="kw">return</span> <span class="dv">0</span> }</a>
+<a class="sourceLine" id="cb23-7" data-line-number="7">  typealias Arity = Zero</a>
+<a class="sourceLine" id="cb23-8" data-line-number="8">}</a></code></pre></div>
 <p>The descriptions are just there to give us a pretty printout. Here’s the tuple struct:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">struct NonEmptyTuple&lt;Element, Tail : _AnyTuple&gt; { <span class="kw">var</span> (head, tail): (Element, Tail) }
-
-extension NonEmptyTuple : _AnyTuple {
-  <span class="kw">var</span> count: Int { <span class="kw">return</span> tail.<span class="fu">count</span> + <span class="dv">1</span> }
-  <span class="kw">var</span> description: String {
-    <span class="kw">return</span> <span class="st">&quot;(&quot;</span> + String(reflecting: head) + tail.<span class="fu">tDesc</span>
-  }
-  <span class="kw">var</span> tDesc: String {
-    <span class="kw">return</span> <span class="st">&quot;, &quot;</span> + String(reflecting: head) + tail.<span class="fu">tDesc</span>
-  }
-  typealias Arity = Succ&lt;Tail.<span class="fu">Arity</span>&gt;
-}</code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb24-1" data-line-number="1">struct NonEmptyTuple&lt;Element, Tail : _AnyTuple&gt; { <span class="kw">var</span> (head, tail): (Element, Tail) }</a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb24-3" data-line-number="3">extension NonEmptyTuple : _AnyTuple {</a>
+<a class="sourceLine" id="cb24-4" data-line-number="4">  <span class="kw">var</span> count: Int { <span class="kw">return</span> tail.<span class="fu">count</span> + <span class="dv">1</span> }</a>
+<a class="sourceLine" id="cb24-5" data-line-number="5">  <span class="kw">var</span> description: String {</a>
+<a class="sourceLine" id="cb24-6" data-line-number="6">    <span class="kw">return</span> <span class="st">&quot;(&quot;</span> + String(reflecting: head) + tail.<span class="fu">tDesc</span></a>
+<a class="sourceLine" id="cb24-7" data-line-number="7">  }</a>
+<a class="sourceLine" id="cb24-8" data-line-number="8">  <span class="kw">var</span> tDesc: String {</a>
+<a class="sourceLine" id="cb24-9" data-line-number="9">    <span class="kw">return</span> <span class="st">&quot;, &quot;</span> + String(reflecting: head) + tail.<span class="fu">tDesc</span></a>
+<a class="sourceLine" id="cb24-10" data-line-number="10">  }</a>
+<a class="sourceLine" id="cb24-11" data-line-number="11">  typealias Arity = Succ&lt;Tail.<span class="fu">Arity</span>&gt;</a>
+<a class="sourceLine" id="cb24-12" data-line-number="12">}</a></code></pre></div>
 <p>Now, to build a tuple. Since it’s right-recursive, it might look like this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="dv">1</span> , <span class="st">&quot;a&quot;</span> , <span class="fl">4.0</span> , ()</code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="dv">1</span> , <span class="st">&quot;a&quot;</span> , <span class="fl">4.0</span> , ()</a></code></pre></div>
 <p>But there are two problems with that: first, the comma is not overloadable. That’s probably a good thing. Second, it doesn’t really look like a tuple.</p>
 <p><a href="https://twitter.com/jckarter/status/639953308401057793">Joe Groff</a> solved the first problem (albeit by committing a mortal sin). Just use a unicode comma! The only one I could find that works has the delightful name of Hypodiastole.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">infix operator ⸒ { associativity right precedence <span class="dv">90</span> }</code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb26-1" data-line-number="1">infix operator ⸒ { associativity right precedence <span class="dv">90</span> }</a></code></pre></div>
 <p>Trying to find it in the character viewer each time was a pain, though. So I went with the boring vertical bar.</p>
 <p>The second problem can be solved with some sneaky overloading. Here’s what these functions look like:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">infix operator | { associativity right precedence <span class="dv">90</span> }
-
-func |&lt;E, T:_AnyTuple&gt;(lhs: E, rhs: T) -&gt; NonEmptyTuple&lt;E, T&gt; {
-  <span class="kw">return</span> <span class="fu">NonEmptyTuple</span>(head: lhs, tail: rhs)
-}
-
-func |&lt;E, T&gt;(lhs: E, rhs: T) -&gt; NonEmptyTuple&lt;E, NonEmptyTuple&lt;T, EmptyTuple&gt;&gt; {
-  <span class="kw">return</span> <span class="fu">NonEmptyTuple</span>(head: lhs, tail: <span class="fu">NonEmptyTuple</span>(head: rhs, tail: <span class="fu">EmptyTuple</span>()))
-}</code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb27-1" data-line-number="1">infix operator | { associativity right precedence <span class="dv">90</span> }</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb27-3" data-line-number="3">func |&lt;E, T:_AnyTuple&gt;(lhs: E, rhs: T) -&gt; NonEmptyTuple&lt;E, T&gt; {</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">  <span class="kw">return</span> <span class="fu">NonEmptyTuple</span>(head: lhs, tail: rhs)</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">}</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb27-7" data-line-number="7">func |&lt;E, T&gt;(lhs: E, rhs: T) -&gt; NonEmptyTuple&lt;E, NonEmptyTuple&lt;T, EmptyTuple&gt;&gt; {</a>
+<a class="sourceLine" id="cb27-8" data-line-number="8">  <span class="kw">return</span> <span class="fu">NonEmptyTuple</span>(head: lhs, tail: <span class="fu">NonEmptyTuple</span>(head: rhs, tail: <span class="fu">EmptyTuple</span>()))</a>
+<a class="sourceLine" id="cb27-9" data-line-number="9">}</a></code></pre></div>
 <p>We can now, finally, build a Tuple:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">(<span class="dv">1</span> | <span class="fl">2.0</span> | <span class="st">&quot;a&quot;</span> ) <span class="co">// (1, 2.0, &quot;a&quot;)</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb28-1" data-line-number="1">(<span class="dv">1</span> | <span class="fl">2.0</span> | <span class="st">&quot;a&quot;</span> ) <span class="co">// (1, 2.0, &quot;a&quot;)</span></a></code></pre></div>
 <p>One little wrinkle with protocols, though. If you try this:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension NonEmptyTuple where Arity == Two {...</code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb29-1" data-line-number="1">extension NonEmptyTuple where Arity == Two {...</a></code></pre></div>
 <p>There’s an error: <code class="sourceCode scala">neither <span class="kw">type</span> in same-<span class="kw">type</span> refers to a generic parameter or associated <span class="kw">type</span></code>. Generally speaking, <code class="sourceCode scala">==</code> requirements in struct extensions don’t work. However, they do work on protocols. So a wrapper protocol is needed:</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">protocol Tuple : _AnyTuple {
-  typealias Head
-  typealias Tail : _AnyTuple
-  typealias Arity : NonZero
-  <span class="kw">var</span> head : Head { get }
-  <span class="kw">var</span> tail : Tail { get }
-}
-
-extension NonEmptyTuple : Tuple {}</code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb30-1" data-line-number="1">protocol Tuple : _AnyTuple {</a>
+<a class="sourceLine" id="cb30-2" data-line-number="2">  typealias Head</a>
+<a class="sourceLine" id="cb30-3" data-line-number="3">  typealias Tail : _AnyTuple</a>
+<a class="sourceLine" id="cb30-4" data-line-number="4">  typealias Arity : NonZero</a>
+<a class="sourceLine" id="cb30-5" data-line-number="5">  <span class="kw">var</span> head : Head { get }</a>
+<a class="sourceLine" id="cb30-6" data-line-number="6">  <span class="kw">var</span> tail : Tail { get }</a>
+<a class="sourceLine" id="cb30-7" data-line-number="7">}</a>
+<a class="sourceLine" id="cb30-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb30-9" data-line-number="9">extension NonEmptyTuple : Tuple {}</a></code></pre></div>
 <p>Alright. Time to work with it.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Tuple where
-  Head : IntegerArithmeticType,
-  Tail : Tuple,
-  Tail.<span class="fu">Head</span> : IntegerArithmeticType,
-  Arity == Two {
-  func <span class="fu">matSum</span>(<span class="kw">with</span>: Self) -&gt; NonEmptyTuple&lt;Head, NonEmptyTuple&lt;Tail.<span class="fu">Head</span>, EmptyTuple&gt;&gt; {
-    let a = head + <span class="kw">with</span>.<span class="fu">head</span>
-    let b = tail.<span class="fu">head</span> + <span class="kw">with</span>.<span class="fu">tail</span>.<span class="fu">head</span>
-    <span class="kw">return</span> (a | b)
-  }
-}
-
-(<span class="dv">1</span> | <span class="dv">4</span>).<span class="fu">matSum</span>(<span class="dv">3</span> | <span class="dv">2</span>) <span class="co">// (4, 6)</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb31-1" data-line-number="1">extension Tuple where</a>
+<a class="sourceLine" id="cb31-2" data-line-number="2">  Head : IntegerArithmeticType,</a>
+<a class="sourceLine" id="cb31-3" data-line-number="3">  Tail : Tuple,</a>
+<a class="sourceLine" id="cb31-4" data-line-number="4">  Tail.<span class="fu">Head</span> : IntegerArithmeticType,</a>
+<a class="sourceLine" id="cb31-5" data-line-number="5">  Arity == Two {</a>
+<a class="sourceLine" id="cb31-6" data-line-number="6">  func <span class="fu">matSum</span>(<span class="kw">with</span>: Self) -&gt; NonEmptyTuple&lt;Head, NonEmptyTuple&lt;Tail.<span class="fu">Head</span>, EmptyTuple&gt;&gt; {</a>
+<a class="sourceLine" id="cb31-7" data-line-number="7">    let a = head + <span class="kw">with</span>.<span class="fu">head</span></a>
+<a class="sourceLine" id="cb31-8" data-line-number="8">    let b = tail.<span class="fu">head</span> + <span class="kw">with</span>.<span class="fu">tail</span>.<span class="fu">head</span></a>
+<a class="sourceLine" id="cb31-9" data-line-number="9">    <span class="kw">return</span> (a | b)</a>
+<a class="sourceLine" id="cb31-10" data-line-number="10">  }</a>
+<a class="sourceLine" id="cb31-11" data-line-number="11">}</a>
+<a class="sourceLine" id="cb31-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb31-13" data-line-number="13">(<span class="dv">1</span> | <span class="dv">4</span>).<span class="fu">matSum</span>(<span class="dv">3</span> | <span class="dv">2</span>) <span class="co">// (4, 6)</span></a></code></pre></div>
 <p>The basic advantage of this heterogenous list in Swift is its extensibility: you can treat tuples of length 2 as a type, or tuples where the third element is comparable as a type, and so on.</p>
-<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">extension Tuple where Tail : Tuple, Tail.<span class="fu">Head</span> : Comparable {
-  func isSecondLessThan
-    &lt;T : Tuple where T.<span class="fu">Tail</span> : Tuple, T.<span class="fu">Tail</span>.<span class="fu">Head</span> == Tail.<span class="fu">Head</span>&gt;
-    (<span class="kw">with</span>: T) -&gt; Bool {
-    <span class="kw">return</span> tail.<span class="fu">head</span> &lt; <span class="kw">with</span>.<span class="fu">tail</span>.<span class="fu">head</span>
-  }
-}
-
-let a = (<span class="dv">1</span> | <span class="fl">3.0</span> | <span class="st">&quot;a&quot;</span> | <span class="dv">43</span>)
-let b = (<span class="st">&quot;c&quot;</span> | <span class="fl">4.0</span> | <span class="dv">1</span>)
-
-a.<span class="fu">isSecondLessThan</span>(b)</code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb32-1" data-line-number="1">extension Tuple where Tail : Tuple, Tail.<span class="fu">Head</span> : Comparable {</a>
+<a class="sourceLine" id="cb32-2" data-line-number="2">  func isSecondLessThan</a>
+<a class="sourceLine" id="cb32-3" data-line-number="3">    &lt;T : Tuple where T.<span class="fu">Tail</span> : Tuple, T.<span class="fu">Tail</span>.<span class="fu">Head</span> == Tail.<span class="fu">Head</span>&gt;</a>
+<a class="sourceLine" id="cb32-4" data-line-number="4">    (<span class="kw">with</span>: T) -&gt; Bool {</a>
+<a class="sourceLine" id="cb32-5" data-line-number="5">    <span class="kw">return</span> tail.<span class="fu">head</span> &lt; <span class="kw">with</span>.<span class="fu">tail</span>.<span class="fu">head</span></a>
+<a class="sourceLine" id="cb32-6" data-line-number="6">  }</a>
+<a class="sourceLine" id="cb32-7" data-line-number="7">}</a>
+<a class="sourceLine" id="cb32-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb32-9" data-line-number="9">let a = (<span class="dv">1</span> | <span class="fl">3.0</span> | <span class="st">&quot;a&quot;</span> | <span class="dv">43</span>)</a>
+<a class="sourceLine" id="cb32-10" data-line-number="10">let b = (<span class="st">&quot;c&quot;</span> | <span class="fl">4.0</span> | <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb32-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb32-12" data-line-number="12">a.<span class="fu">isSecondLessThan</span>(b)</a></code></pre></div>
 <p>Most of this stuff is madness. The custom infix unicode operator should have tipped you off to that: but it’s not to say that <em>nothing</em> here is useful. Compile-time warnings are great. I think the fixed-length array works. But this tuple stuff is too hacky: it only becomes useful if there are some low-level changes to the language.</p>
 <p>What’s really useful, though, is <em>thinking</em> about types with dependency in mind. Getting familiar with what is and isn’t possible to write between the <code class="sourceCode scala">where</code> and the <code class="sourceCode scala">{</code> in an extension gives you a good idea of how powerful protocols and their specialisations are.</p>
 <p>For some extra reading, check out <a href="https://ghc.haskell.org/trac/ghc/wiki/DependentHaskell">DependentHaskell</a>, <a href="https://wiki.haskell.org/Heterogenous_collections">Heterogenous Collections in Haskell</a>, and <a href="http://programmers.stackexchange.com/questions/132835/is-there-a-specific-purpose-for-heterogeneous-lists">Strongly Typed Heterogenous Collections</a>. I’m muddling my way through seeing what’s possible with length-indexed lists, heterogenous lists, and numeral types <a href="https://github.com/oisdk/PretendDependSwift">over here</a>, if you’re interested.</p>

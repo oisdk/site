@@ -23,27 +23,27 @@
         <div id="content">
             <h2>Unfoldl</h2>
 
-            <div class="sourceCode"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><span class="ot">{-# LANGUAGE LambdaCase #-}</span>
-
-<span class="kw">module</span> <span class="dt">Unfoldl</span> <span class="kw">where</span>
-
-<span class="kw">import </span><span class="dt">GHC.Base</span> (build)
-<span class="kw">import </span><span class="dt">Data.Tuple</span> (swap)
-
-<span class="ot">unfoldl ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a]
-unfoldl f b <span class="fu">=</span>
-    build
-        (\c n <span class="ot">-&gt;</span>
-              <span class="kw">let</span> r a <span class="fu">=</span> maybe a (uncurry (r <span class="fu">.</span> (<span class="ot">`c`</span> a))) <span class="fu">.</span> f
-              <span class="kw">in</span> r n b)
-
-<span class="co">-- | &gt;&gt;&gt; toDigs 10 123</span>
-<span class="co">-- [1,2,3]</span>
-<span class="ot">toDigs ::</span> (<span class="dt">Integral</span> a, <span class="dt">Num</span> a) <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]
-toDigs base <span class="fu">=</span>
-  unfoldl (\<span class="kw">case</span>
-    <span class="dv">0</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span>
-    n <span class="ot">-&gt;</span> <span class="dt">Just</span> (swap (n <span class="ot">`quotRem`</span> base)))</code></pre></div>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{-# LANGUAGE LambdaCase #-}</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">module</span> <span class="dt">Unfoldl</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">import</span> <span class="dt">GHC.Base</span> (build)</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="kw">import</span> <span class="dt">Data.Tuple</span> (swap)</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="ot">unfoldl ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">unfoldl f b <span class="fu">=</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">    build</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">        (\c n <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">              <span class="kw">let</span> r a <span class="fu">=</span> maybe a (uncurry (r <span class="fu">.</span> (<span class="ot">`c`</span> a))) <span class="fu">.</span> f</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">              <span class="kw">in</span> r n b)</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="co">-- | &gt;&gt;&gt; toDigs 10 123</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="co">-- [1,2,3]</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="ot">toDigs ::</span> (<span class="dt">Integral</span> a, <span class="dt">Num</span> a) <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">toDigs base <span class="fu">=</span></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  unfoldl (\<span class="kw">case</span></a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">    <span class="dv">0</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">    n <span class="ot">-&gt;</span> <span class="dt">Just</span> (swap (n <span class="ot">`quotRem`</span> base)))</a></code></pre></div>
 
         </div>
         <div id="footer">
