@@ -1,6 +1,7 @@
 ---
 title: Sorting Small Things in Haskell
 tags: Haskell
+series: Sorting
 ---
 
 I was working on some performance-intensive stuff recently, and I ran into the issue of sorting very small amounts of values (think 3, 4, 5).

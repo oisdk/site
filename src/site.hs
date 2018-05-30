@@ -19,6 +19,7 @@ import qualified Text.CSL            as CSL
 import           Text.CSL.Pandoc     (processCites)
 import           Text.Pandoc
 import           Text.Pandoc.Options
+import           Text.Pandoc.Highlighting
 
 --------------------------------------------------------------------------------
 main :: IO ()
@@ -120,8 +121,8 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
 
 postCompiler :: Compiler (Item String)
 postCompiler =
-  writePandocWith (def { writerHTMLMathMethod = MathML Nothing
-                       , writerHighlight = True }) <$>
+  writePandocWith (def { writerHTMLMathMethod = MathML
+                       , writerHighlightStyle = Just kate }) <$>
   readPandocOptionalBiblio
 
 readPandocBiblioLinkCit :: ReaderOptions

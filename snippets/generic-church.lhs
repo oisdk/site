@@ -123,7 +123,7 @@ class Church c where
   type Fold c a :: *
   type Fold c a = FoldGen (Rep c) a
   fold :: Proxy a -> c -> Fold c a
-  default fold :: (Generic c, ChurchGen (Rep c), FoldGen (Rep c) a ~ Fold c a) => proxy a -> c -> Fold c a
+  default fold :: (Generic c, ChurchGen (Rep c), FoldGen (Rep c) a ~ Fold c a) => Proxy a -> c -> Fold c a
   fold = defaultFold
 
 defaultFold :: (Generic c, ChurchGen (Rep c)) => proxy a -> c -> FoldGen (Rep c) a
