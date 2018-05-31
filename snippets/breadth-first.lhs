@@ -32,8 +32,8 @@ levels :: Tree a -> [[a]]
 levels tr = f tr [] where
   f (Node x xs) qs = (x:z) : foldr f zs xs where
     (z,zs) = case qs of
-      []     -> ([],[])
-      (y:ys) -> (y ,ys)
+      [] -> ([],[])
+      (y:ys) -> (y,ys)
 \end{code}
 
 Finally, we can build a tree back up again, monadically.
@@ -78,5 +78,5 @@ breadthFirst c (t :< ts) =
         (y:ys) -> (y,ys)
     rbld = foldr (liftA2 evalState) (pure [])
     fill = traverse (const (state (\(x:xs) -> (x, xs))))
-    cons ys = liftA2 (liftA2 (:) . (<$> ys) . (:<))
+    cons ys = liftA2 (\x -> liftA2 ((:) . (:<) x) ys)
 \end{code}
