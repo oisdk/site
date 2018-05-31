@@ -68,12 +68,11 @@ breadthFirst c (t :< ts) =
     liftA2 (\y -> (y :<) . rt) (c t) (rbld (foldr f [] ts))
   where
     rt = evalState (fill ts)
-    f (x :< xs) qs = cons (fill xs) (c x) (hd qs) : foldr f (tl qs) xs
+    f (x :< xs) qs = cons (fill xs) (c x) z : foldr f zs xs
+      where (z,zs) = case qs of
+          [] -> (pure (pure []), [])
+          (y:ys) -> (y,ys)
     rbld = foldr (liftA2 evalState) (pure [])
     fill = traverse (const (state (\(x:xs) -> (x, xs))))
     cons ys = liftA2 (liftA2 (:) . (<$> ys) . (:<))
-    hd [] = pure (pure [])
-    hd (x:_) = x
-    tl [] = []
-    tl (_:xs) = xs
 \end{code}
