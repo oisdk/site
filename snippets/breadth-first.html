@@ -43,8 +43,8 @@
 <a class="sourceLine" id="cb3-2" data-line-number="2">levels tr <span class="fu">=</span> f tr [] <span class="kw">where</span></a>
 <a class="sourceLine" id="cb3-3" data-line-number="3">  f (<span class="dt">Node</span> x xs) qs <span class="fu">=</span> (x<span class="fu">:</span>z) <span class="fu">:</span> foldr f zs xs <span class="kw">where</span></a>
 <a class="sourceLine" id="cb3-4" data-line-number="4">    (z,zs) <span class="fu">=</span> <span class="kw">case</span> qs <span class="kw">of</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">      []     <span class="ot">-&gt;</span> ([],[])</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">      (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y ,ys)</a></code></pre></div>
+<a class="sourceLine" id="cb3-5" data-line-number="5">      [] <span class="ot">-&gt;</span> ([],[])</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">      (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys)</a></code></pre></div>
 <p>Finally, we can build a tree back up again, monadically.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)</a>
 <a class="sourceLine" id="cb4-2" data-line-number="2">unfoldForestM_BF <span class="fu">=</span> unfoldForestMWith_BF concat</a>
@@ -81,7 +81,7 @@
 <a class="sourceLine" id="cb5-11" data-line-number="11">        (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys)</a>
 <a class="sourceLine" id="cb5-12" data-line-number="12">    rbld <span class="fu">=</span> foldr (liftA2 evalState) (pure [])</a>
 <a class="sourceLine" id="cb5-13" data-line-number="13">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x, xs))))</a>
-<a class="sourceLine" id="cb5-14" data-line-number="14">    cons ys <span class="fu">=</span> liftA2 (liftA2 (<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">&lt;$&gt;</span> ys) <span class="fu">.</span> (<span class="fu">:&lt;</span>))</a></code></pre></div>
+<a class="sourceLine" id="cb5-14" data-line-number="14">    cons ys <span class="fu">=</span> liftA2 (\x <span class="ot">-&gt;</span> liftA2 ((<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">:&lt;</span>) x) ys)</a></code></pre></div>
 
         </div>
         <div id="footer">
