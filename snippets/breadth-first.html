@@ -29,26 +29,18 @@
 <a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">import</span> <span class="dt">Data.Tree</span></a></code></pre></div>
 <p>The most basic is simply converting to a list breadth-first:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">breadthFirst (<span class="dt">Node</span> x xs) <span class="fu">=</span> x <span class="fu">:</span> breadthFirstForest xs</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="ot">breadthFirstForest ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">breadthFirstForest ts <span class="fu">=</span> foldr f b ts []</a>
-<a class="sourceLine" id="cb2-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)</a>
-<a class="sourceLine" id="cb2-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9">    b [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb2-10" data-line-number="10">    b qs <span class="fu">=</span> foldl (foldr f) b qs []</a></code></pre></div>
+<a class="sourceLine" id="cb2-2" data-line-number="2">breadthFirst tr <span class="fu">=</span> f tr b []</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">    b qs <span class="fu">=</span> foldl (foldr f) b qs []</a></code></pre></div>
 <p>Then, we can delimit between levels of the tree:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">levels (<span class="dt">Node</span> x xs) <span class="fu">=</span> [x] <span class="fu">:</span> levelsForest xs</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="ot">levelsForest ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]</a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">levelsForest ts <span class="fu">=</span> foldl f b ts [] []</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb3-7" data-line-number="7">    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)</a>
-<a class="sourceLine" id="cb3-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb3-9" data-line-number="9">    b _ [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb3-10" data-line-number="10">    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</a></code></pre></div>
+<a class="sourceLine" id="cb3-2" data-line-number="2">levels tr <span class="fu">=</span> f tr []</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x <span class="fu">:</span> y) <span class="fu">:</span> foldr f ys xs</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">    f (<span class="dt">Node</span> x xs) []     <span class="fu">=</span> [x]     <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
 <p>Finally, we can build a tree back up again, monadically.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)</a>
 <a class="sourceLine" id="cb4-2" data-line-number="2">unfoldForestM_BF <span class="fu">=</span> unfoldForestMWith_BF concat</a>
@@ -71,6 +63,22 @@
 <a class="sourceLine" id="cb4-19" data-line-number="19">        go ys y (z<span class="fu">:</span>zs) <span class="fu">=</span> (<span class="dt">Node</span> y z <span class="fu">:</span> ys', zs')</a>
 <a class="sourceLine" id="cb4-20" data-line-number="20">          <span class="kw">where</span></a>
 <a class="sourceLine" id="cb4-21" data-line-number="21">            (ys',zs') <span class="fu">=</span> ys zs</a></code></pre></div>
+<p>To generalize some more, we can write a traversal (in the lensy sense) of the cofree comonad:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">breadthFirst</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">breadthFirst c (t <span class="fu">:&lt;</span> ts) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    liftA2 (\y <span class="ot">-&gt;</span> (y <span class="fu">:&lt;</span>) <span class="fu">.</span> rt) (c t) (rbld (foldr f [] ts))</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    rt <span class="fu">=</span> evalState (fill ts)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">    f (x <span class="fu">:&lt;</span> xs) qs <span class="fu">=</span> cons (fill xs) (c x) (hd qs) <span class="fu">:</span> foldr f (tl qs) xs</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">    rbld <span class="fu">=</span> foldr (liftA2 evalState) (pure [])</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x, xs))))</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">    cons ys <span class="fu">=</span> liftA2 (liftA2 (<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">&lt;$&gt;</span> ys) <span class="fu">.</span> (<span class="fu">:&lt;</span>))</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">    hd [] <span class="fu">=</span> pure (pure [])</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">    hd (x<span class="fu">:</span>_) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">    tl [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15">    tl (_<span class="fu">:</span>xs) <span class="fu">=</span> xs</a></code></pre></div>
 
         </div>
         <div id="footer">
