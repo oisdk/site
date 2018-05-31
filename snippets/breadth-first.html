@@ -71,14 +71,13 @@
 <a class="sourceLine" id="cb5-5" data-line-number="5">    liftA2 (\y <span class="ot">-&gt;</span> (y <span class="fu">:&lt;</span>) <span class="fu">.</span> rt) (c t) (rbld (foldr f [] ts))</a>
 <a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">where</span></a>
 <a class="sourceLine" id="cb5-7" data-line-number="7">    rt <span class="fu">=</span> evalState (fill ts)</a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">    f (x <span class="fu">:&lt;</span> xs) qs <span class="fu">=</span> cons (fill xs) (c x) (hd qs) <span class="fu">:</span> foldr f (tl qs) xs</a>
-<a class="sourceLine" id="cb5-9" data-line-number="9">    rbld <span class="fu">=</span> foldr (liftA2 evalState) (pure [])</a>
-<a class="sourceLine" id="cb5-10" data-line-number="10">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x, xs))))</a>
-<a class="sourceLine" id="cb5-11" data-line-number="11">    cons ys <span class="fu">=</span> liftA2 (liftA2 (<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">&lt;$&gt;</span> ys) <span class="fu">.</span> (<span class="fu">:&lt;</span>))</a>
-<a class="sourceLine" id="cb5-12" data-line-number="12">    hd [] <span class="fu">=</span> pure (pure [])</a>
-<a class="sourceLine" id="cb5-13" data-line-number="13">    hd (x<span class="fu">:</span>_) <span class="fu">=</span> x</a>
-<a class="sourceLine" id="cb5-14" data-line-number="14">    tl [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb5-15" data-line-number="15">    tl (_<span class="fu">:</span>xs) <span class="fu">=</span> xs</a></code></pre></div>
+<a class="sourceLine" id="cb5-8" data-line-number="8">    f (x <span class="fu">:&lt;</span> xs) qs <span class="fu">=</span> cons (fill xs) (c x) z <span class="fu">:</span> foldr f zs xs</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">      <span class="kw">where</span> (z,zs) <span class="fu">=</span> <span class="kw">case</span> qs <span class="kw">of</span></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">          [] <span class="ot">-&gt;</span> (pure (pure []), [])</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">          (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys)</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">    rbld <span class="fu">=</span> foldr (liftA2 evalState) (pure [])</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x, xs))))</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">    cons ys <span class="fu">=</span> liftA2 (liftA2 (<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">&lt;$&gt;</span> ys) <span class="fu">.</span> (<span class="fu">:&lt;</span>))</a></code></pre></div>
 
         </div>
         <div id="footer">
