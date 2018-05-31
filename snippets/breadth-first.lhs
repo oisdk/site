@@ -7,14 +7,17 @@ These use implicit queues to efficiently perform breadth-first operations on ros
 \begin{code}
 module BreadthFirst where
 
+import Control.Comonad.Cofree
 import Data.Tree
+import Control.Applicative
+import Control.Monad.State
 \end{code}
 
 The most basic is simply converting to a list breadth-first:
 
 \begin{code}
-breadthFirst :: Tree a -> [a]
-breadthFirst tr = f tr b []
+breadthFirstTree :: Tree a -> [a]
+breadthFirstTree tr = f tr b []
   where
     f (Node x xs) fw bw = x : fw (xs : bw)
 
@@ -26,10 +29,11 @@ Then, we can delimit between levels of the tree:
 
 \begin{code}
 levels :: Tree a -> [[a]]
-levels tr = f tr []
-  where
-    f (Node x xs) (y:ys) = (x : y) : foldr f ys xs
-    f (Node x xs) []     = [x]     : foldr f [] xs
+levels tr = f tr [] where
+  f (Node x xs) qs = (x:z) : foldr f zs xs where
+    (z,zs) = case qs of
+      []     -> ([],[])
+      (y:ys) -> (y ,ys)
 \end{code}
 
 Finally, we can build a tree back up again, monadically.
@@ -68,10 +72,10 @@ breadthFirst c (t :< ts) =
     liftA2 (\y -> (y :<) . rt) (c t) (rbld (foldr f [] ts))
   where
     rt = evalState (fill ts)
-    f (x :< xs) qs = cons (fill xs) (c x) z : foldr f zs xs
-      where (z,zs) = case qs of
-          [] -> (pure (pure []), [])
-          (y:ys) -> (y,ys)
+    f (x :< xs) qs = cons (fill xs) (c x) z : foldr f zs xs where
+      (z,zs) = case qs of
+        [] -> (pure (pure []), [])
+        (y:ys) -> (y,ys)
     rbld = foldr (liftA2 evalState) (pure [])
     fill = traverse (const (state (\(x:xs) -> (x, xs))))
     cons ys = liftA2 (liftA2 (:) . (<$> ys) . (:<))
