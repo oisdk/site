@@ -30,10 +30,8 @@ Then, we can delimit between levels of the tree:
 \begin{code}
 levels :: Tree a -> [[a]]
 levels tr = f tr [] where
-  f (Node x xs) qs = (x:z) : foldr f zs xs where
-    (z,zs) = case qs of
-      [] -> ([],[])
-      (y:ys) -> (y,ys)
+  f (Node x xs) (y:ys) = (x:y) : foldr f ys xs
+  f (Node x xs) []     = [x]   : foldr f [] xs
 \end{code}
 
 Finally, we can build a tree back up again, monadically.
@@ -69,14 +67,16 @@ breadthFirst
     :: (Applicative f, Traversable t)
     => (a -> f b) -> Cofree t a -> f (Cofree t b)
 breadthFirst c (t :< ts) =
-    liftA2 (\y -> (y :<) . rt) (c t) (rbld (foldr f [] ts))
+    liftA2 evalState (map2 (:<) (c t) (fill ts)) chld
   where
-    rt = evalState (fill ts)
-    f (x :< xs) qs = cons (fill xs) (c x) z : foldr f zs xs where
-      (z,zs) = case qs of
-        [] -> (pure (pure []), [])
-        (y:ys) -> (y,ys)
-    rbld = foldr (liftA2 evalState) (pure [])
-    fill = traverse (const (state (\(x:xs) -> (x, xs))))
-    cons ys = liftA2 (\x -> liftA2 ((:) . (:<) x) ys)
+    chld = foldr (liftA2 evalState) (pure []) (foldr f [] ts)
+    fill = traverse (const (state (\(x:xs) -> (x,xs))))
+
+    f (x:<xs) (q:qs) = app2 (\y ys zs -> (y:<ys) : zs) (c x) (fill xs) q
+                     : foldr f qs xs
+    f (x:<xs) []     = map2 (\y ys    -> (y:<ys) : []) (c x) (fill xs)
+                     : foldr f [] xs
+
+    map2 = flip . (fmap   .) . flip . (fmap   .)
+    app2 = flip . (liftA2 .) . flip . (liftA2 .)
 \end{code}
