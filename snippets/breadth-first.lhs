@@ -14,10 +14,7 @@ The most basic is simply converting to a list breadth-first:
 
 \begin{code}
 breadthFirst :: Tree a -> [a]
-breadthFirst (Node x xs) = x : breadthFirstForest xs
-
-breadthFirstForest :: Forest a -> [a]
-breadthFirstForest ts = foldr f b ts []
+breadthFirst tr = f tr b []
   where
     f (Node x xs) fw bw = x : fw (xs : bw)
 
@@ -29,15 +26,10 @@ Then, we can delimit between levels of the tree:
 
 \begin{code}
 levels :: Tree a -> [[a]]
-levels (Node x xs) = [x] : levelsForest xs
-
-levelsForest :: Forest a -> [[a]]
-levelsForest ts = foldl f b ts [] []
+levels tr = f tr []
   where
-    f k (Node x xs) ls qs = k (x : ls) (xs : qs)
-
-    b _ [] = []
-    b k qs = k : foldl (foldl f) b qs [] []
+    f (Node x xs) (y:ys) = (x : y) : foldr f ys xs
+    f (Node x xs) []     = [x]     : foldr f [] xs
 \end{code}
 
 Finally, we can build a tree back up again, monadically.
@@ -64,4 +56,24 @@ unfoldForestMWith_BF r f ts = b [ts] (\ls -> r . ls)
         go ys y (z:zs) = (Node y z : ys', zs')
           where
             (ys',zs') = ys zs
+\end{code}
+
+To generalize some more, we can write a traversal (in the lensy sense) of the cofree comonad:
+
+\begin{code}
+breadthFirst
+    :: (Applicative f, Traversable t)
+    => (a -> f b) -> Cofree t a -> f (Cofree t b)
+breadthFirst c (t :< ts) =
+    liftA2 (\y -> (y :<) . rt) (c t) (rbld (foldr f [] ts))
+  where
+    rt = evalState (fill ts)
+    f (x :< xs) qs = cons (fill xs) (c x) (hd qs) : foldr f (tl qs) xs
+    rbld = foldr (liftA2 evalState) (pure [])
+    fill = traverse (const (state (\(x:xs) -> (x, xs))))
+    cons ys = liftA2 (liftA2 (:) . (<$> ys) . (:<))
+    hd [] = pure (pure [])
+    hd (x:_) = x
+    tl [] = []
+    tl (_:xs) = xs
 \end{code}

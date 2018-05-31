@@ -18,7 +18,6 @@ import           Hakyll.Web.Series
 import qualified Text.CSL            as CSL
 import           Text.CSL.Pandoc     (processCites)
 import           Text.Pandoc
-import           Text.Pandoc.Options
 import           Text.Pandoc.Highlighting
 
 --------------------------------------------------------------------------------
@@ -143,6 +142,7 @@ readPandocBiblioLinkCit ropt csl biblio item = do
 
     return $ fmap (const pandoc') item
 
+addLinkCitations :: Pandoc -> Pandoc
 addLinkCitations (Pandoc meta a) =
   let prevMap = unMeta meta
       newMap = Map.insert "link-citations" (MetaBool True) prevMap
@@ -161,7 +161,6 @@ readPandocOptionalBiblio = do
                           <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
                           <*> load (fromFilePath ("assets/bib/" ++ bibFile))
                           <*> getResourceBody
-
 
 --------------------------------------------------------------------------------
 
