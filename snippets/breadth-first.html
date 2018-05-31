@@ -41,10 +41,8 @@
 <p>Then, we can delimit between levels of the tree:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a>
 <a class="sourceLine" id="cb3-2" data-line-number="2">levels tr <span class="fu">=</span> f tr [] <span class="kw">where</span></a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">  f (<span class="dt">Node</span> x xs) qs <span class="fu">=</span> (x<span class="fu">:</span>z) <span class="fu">:</span> foldr f zs xs <span class="kw">where</span></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">    (z,zs) <span class="fu">=</span> <span class="kw">case</span> qs <span class="kw">of</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">      [] <span class="ot">-&gt;</span> ([],[])</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">      (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys)</a></code></pre></div>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  f (<span class="dt">Node</span> x xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x<span class="fu">:</span>y) <span class="fu">:</span> foldr f ys xs</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  f (<span class="dt">Node</span> x xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
 <p>Finally, we can build a tree back up again, monadically.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)</a>
 <a class="sourceLine" id="cb4-2" data-line-number="2">unfoldForestM_BF <span class="fu">=</span> unfoldForestMWith_BF concat</a>
@@ -72,16 +70,18 @@
 <a class="sourceLine" id="cb5-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</a>
 <a class="sourceLine" id="cb5-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
 <a class="sourceLine" id="cb5-4" data-line-number="4">breadthFirst c (t <span class="fu">:&lt;</span> ts) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">    liftA2 (\y <span class="ot">-&gt;</span> (y <span class="fu">:&lt;</span>) <span class="fu">.</span> rt) (c t) (rbld (foldr f [] ts))</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    liftA2 evalState (map2 (<span class="fu">:&lt;</span>) (c t) (fill ts)) chld</a>
 <a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">    rt <span class="fu">=</span> evalState (fill ts)</a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">    f (x <span class="fu">:&lt;</span> xs) qs <span class="fu">=</span> cons (fill xs) (c x) z <span class="fu">:</span> foldr f zs xs <span class="kw">where</span></a>
-<a class="sourceLine" id="cb5-9" data-line-number="9">      (z,zs) <span class="fu">=</span> <span class="kw">case</span> qs <span class="kw">of</span></a>
-<a class="sourceLine" id="cb5-10" data-line-number="10">        [] <span class="ot">-&gt;</span> (pure (pure []), [])</a>
-<a class="sourceLine" id="cb5-11" data-line-number="11">        (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys)</a>
-<a class="sourceLine" id="cb5-12" data-line-number="12">    rbld <span class="fu">=</span> foldr (liftA2 evalState) (pure [])</a>
-<a class="sourceLine" id="cb5-13" data-line-number="13">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x, xs))))</a>
-<a class="sourceLine" id="cb5-14" data-line-number="14">    cons ys <span class="fu">=</span> liftA2 (\x <span class="ot">-&gt;</span> liftA2 ((<span class="fu">:</span>) <span class="fu">.</span> (<span class="fu">:&lt;</span>) x) ys)</a></code></pre></div>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    chld <span class="fu">=</span> foldr (liftA2 evalState) (pure []) (foldr f [] ts)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x,xs))))</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys) <span class="fu">:</span> zs) (c x) (fill xs) q</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">                     <span class="fu">:</span> foldr f qs xs</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> map2 (\y ys    <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys) <span class="fu">:</span> []) (c x) (fill xs)</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">                     <span class="fu">:</span> foldr f [] xs</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb5-15" data-line-number="15">    map2 <span class="fu">=</span> flip <span class="fu">.</span> (fmap   <span class="fu">.</span>) <span class="fu">.</span> flip <span class="fu">.</span> (fmap   <span class="fu">.</span>)</a>
+<a class="sourceLine" id="cb5-16" data-line-number="16">    app2 <span class="fu">=</span> flip <span class="fu">.</span> (liftA2 <span class="fu">.</span>) <span class="fu">.</span> flip <span class="fu">.</span> (liftA2 <span class="fu">.</span>)</a></code></pre></div>
 
         </div>
         <div id="footer">
