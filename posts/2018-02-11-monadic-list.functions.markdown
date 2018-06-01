@@ -102,7 +102,7 @@ quickSortM p (x:xs) = do
 
 As it should be easy to see, they're very concise and elegant, and strongly resemble the pure versions of the algorithms.
 
-## State
+## State
 
 So the examples above are very interesting and cool, but they don't necessarily have a place in real Haskell code. If you wanted to find the permutations, partitions, or power set of a list you'd probably use a more standard implementation. That's not to say that these monadic functions have no uses, though: especially when coupled with `State`{.haskell} they yield readable and fast implementations for certain tricky functions. `ordNub`{.haskell}, for instance:
 
@@ -248,7 +248,7 @@ We can also try it out with the other monadic list functions:
        └[[1],[2],[3]]
 ```
 
-## Applicative
+## Applicative
 
 You might notice that none of these "monadic" functions actually require a monad constraint: they're all applicative. There's a straightforward implementation that relies only on applicative for most of these functions, with a notable exception: sort. Getting *that* to work with just applicative is the subject of a future post.
 
