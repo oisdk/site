@@ -9,7 +9,7 @@
                    type="application/rss+xml" />
         <lastBuildDate>Fri, 01 Jun 2018 00:00:00 UT</lastBuildDate>
         <item>
-    <title>Breadth-First Rose Trees: Traversing</title>
+    <title>Breadth-First Rose Trees: Traversals and the Cofree Comonad</title>
     <link>http://doisinkidney.com/posts/2018-06-01-rose-trees-breadth-first-traversing.html</link>
     <description><![CDATA[<div class="info">
     Posted on June  1, 2018
