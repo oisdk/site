@@ -102,7 +102,7 @@
 <a class="sourceLine" id="cb6-30" data-line-number="30"><span class="fu">&gt;&gt;&gt;</span> quickSortM (\_ _ <span class="ot">-&gt;</span> [<span class="dt">False</span>,<span class="dt">True</span>]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
 <a class="sourceLine" id="cb6-31" data-line-number="31">[[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>],[<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</a></code></pre></div>
 <p>As it should be easy to see, they’re very concise and elegant, and strongly resemble the pure versions of the algorithms.</p>
-<p>## State</p>
+<h2 id="state">State</h2>
 <p>So the examples above are very interesting and cool, but they don’t necessarily have a place in real Haskell code. If you wanted to find the permutations, partitions, or power set of a list you’d probably use a more standard implementation. That’s not to say that these monadic functions have no uses, though: especially when coupled with <code class="sourceCode haskell"><span class="dt">State</span></code> they yield readable and fast implementations for certain tricky functions. <code class="sourceCode haskell">ordNub</code>, for instance:</p>
 <div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">ordNub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">ordNub <span class="fu">=</span></a>
@@ -190,7 +190,7 @@
 <a class="sourceLine" id="cb15-7" data-line-number="7">   │   ┌[[<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">3</span>]]</a>
 <a class="sourceLine" id="cb15-8" data-line-number="8">   └<span class="dv">2</span><span class="fu">=</span>3┤</a>
 <a class="sourceLine" id="cb15-9" data-line-number="9">       └[[<span class="dv">1</span>],[<span class="dv">2</span>],[<span class="dv">3</span>]]</a></code></pre></div>
-<p>## Applicative</p>
+<h2 id="applicative">Applicative</h2>
 <p>You might notice that none of these “monadic” functions actually require a monad constraint: they’re all applicative. There’s a straightforward implementation that relies only on applicative for most of these functions, with a notable exception: sort. Getting <em>that</em> to work with just applicative is the subject of a future post.</p>
 <h3 id="references" class="unnumbered">References</h3>
 <div id="refs" class="references">
