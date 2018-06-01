@@ -1,6 +1,7 @@
 ---
 title: Rose Trees, Breadth-First
 tags: Haskell, Trees
+series: Breadth-First Traversals
 bibliography: Rose Tree Traversals.bib
 ---
 
