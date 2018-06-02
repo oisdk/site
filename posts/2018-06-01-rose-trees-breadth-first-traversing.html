@@ -239,21 +239,30 @@
 <p>Performance-wise, no one algorithm wins out in every case. For enumeration, the zippy algorithm is the fastest in most cases—except when the tree had a large branching factor; then, the iterative algorithm wins out. For the traversals, the iterative algorithm is usually better—except for monads with more expensive applicative instances.</p>
 <p>I’m still not convinced that the zippy traversal is as optimized as it could be, however.</p>
 <h1 id="fusion">Fusion</h1>
-<p>Using the composability of applicatives, we can fuse several operations over traversables into one pass. Unfortunately, however, this can often introduce a memory overhead that makes the whole operation slower overall.</p>
+<p>Using the composability of applicatives, we can fuse several operations over traversables into one pass. Unfortunately, however, this can often introduce a memory overhead that makes the whole operation slower overall. One such example is the iterative algorithm above:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb32-1" data-line-number="1">breadthFirst c tr <span class="fu">=</span> fmap head (go [tr])</a>
+<a class="sourceLine" id="cb32-2" data-line-number="2">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb32-3" data-line-number="3">    go [] <span class="fu">=</span> pure []</a>
+<a class="sourceLine" id="cb32-4" data-line-number="4">    go xs <span class="fu">=</span> liftA2 evalState zs (go (ys []))</a>
+<a class="sourceLine" id="cb32-5" data-line-number="5">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb32-6" data-line-number="6">        <span class="dt">Compose</span> (<span class="dt">Endo</span> ys,<span class="dt">Compose</span> zs) <span class="fu">=</span> traverse f xs</a>
+<a class="sourceLine" id="cb32-7" data-line-number="7">    f (x <span class="fu">:&lt;</span> xs) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb32-8" data-line-number="8">        <span class="dt">Compose</span></a>
+<a class="sourceLine" id="cb32-9" data-line-number="9">            (<span class="dt">Endo</span> (flip (foldr (<span class="fu">:</span>)) xs), <span class="dt">Compose</span> (map2 (<span class="fu">:&lt;</span>) (c x) (fill xs)))</a></code></pre></div>
 <h1 id="unfolding">Unfolding</h1>
 <p>Building a tree breadth-first, monadically, is still an unsolved problem <span class="citation" data-cites="feuer_is_2015">(it looks like: Feuer <a href="#ref-feuer_is_2015">2015</a>)</span>.</p>
 <p>Using some of these we can implement a monadic breadth-first unfold for the cofree comonad:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="ot">unfoldM ::</span> (<span class="dt">Monad</span> m, <span class="dt">Traversable</span> t)</a>
-<a class="sourceLine" id="cb32-2" data-line-number="2">        <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, t b))</a>
-<a class="sourceLine" id="cb32-3" data-line-number="3">        <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb32-4" data-line-number="4">        <span class="ot">-&gt;</span> m (<span class="dt">Cofree</span> t a)</a>
-<a class="sourceLine" id="cb32-5" data-line-number="5">unfoldM c tr <span class="fu">=</span> go head [tr]</a>
-<a class="sourceLine" id="cb32-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb32-7" data-line-number="7">    go k [] <span class="fu">=</span> pure (k [])</a>
-<a class="sourceLine" id="cb32-8" data-line-number="8">    go k xs <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb32-9" data-line-number="9">        ys <span class="ot">&lt;-</span> traverse c xs</a>
-<a class="sourceLine" id="cb32-10" data-line-number="10">        go (k <span class="fu">.</span> evalState (traverse f ys)) (toList (<span class="dt">Compose</span> (<span class="dt">Compose</span> ys)))</a>
-<a class="sourceLine" id="cb32-11" data-line-number="11">    f (x,xs) <span class="fu">=</span> fmap (x<span class="fu">:&lt;</span>) (fill xs)</a></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb33-1" data-line-number="1"><span class="ot">unfoldM ::</span> (<span class="dt">Monad</span> m, <span class="dt">Traversable</span> t)</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2">        <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, t b))</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3">        <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb33-4" data-line-number="4">        <span class="ot">-&gt;</span> m (<span class="dt">Cofree</span> t a)</a>
+<a class="sourceLine" id="cb33-5" data-line-number="5">unfoldM c tr <span class="fu">=</span> go head [tr]</a>
+<a class="sourceLine" id="cb33-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb33-7" data-line-number="7">    go k [] <span class="fu">=</span> pure (k [])</a>
+<a class="sourceLine" id="cb33-8" data-line-number="8">    go k xs <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb33-9" data-line-number="9">        ys <span class="ot">&lt;-</span> traverse c xs</a>
+<a class="sourceLine" id="cb33-10" data-line-number="10">        go (k <span class="fu">.</span> evalState (traverse f ys)) (toList (<span class="dt">Compose</span> (<span class="dt">Compose</span> ys)))</a>
+<a class="sourceLine" id="cb33-11" data-line-number="11">    f (x,xs) <span class="fu">=</span> fmap (x<span class="fu">:&lt;</span>) (fill xs)</a></code></pre></div>
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-allison_circular_2006">
