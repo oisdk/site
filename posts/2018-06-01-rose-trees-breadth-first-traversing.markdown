@@ -358,7 +358,19 @@ I'm still not convinced that the zippy traversal is as optimized as it could be,
 
 # Fusion
 
-Using the composability of applicatives, we can fuse several operations over traversables into one pass. Unfortunately, however, this can often introduce a memory overhead that makes the whole operation slower overall.
+Using the composability of applicatives, we can fuse several operations over traversables into one pass. Unfortunately, however, this can often introduce a memory overhead that makes the whole operation slower overall. One such example is the iterative algorithm above:
+
+```haskell
+breadthFirst c tr = fmap head (go [tr])
+  where
+    go [] = pure []
+    go xs = liftA2 evalState zs (go (ys []))
+      where
+        Compose (Endo ys,Compose zs) = traverse f xs
+    f (x :< xs) =
+        Compose
+            (Endo (flip (foldr (:)) xs), Compose (map2 (:<) (c x) (fill xs)))
+```
 
 # Unfolding
 
