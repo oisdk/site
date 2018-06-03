@@ -28,7 +28,7 @@
 </div>
 <div class="info">
     
-        Part 2 of a <a href="../series/Breadth-First%20Traversals.html">2-part series on Breadth-First Traversals</a>
+        Part 2 of a <a href="../series/Breadth-First%20Traversals.html">3-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -37,245 +37,73 @@
     
 </div>
 
-<p>Looking again at the issue of writing breadth-first traversals for rose trees, and in particular the problem explored in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015">2015</a>)</span>, I came up with a few new solutions and a generalization which turned out to be efficient.</p>
-<h1 id="the-problem">The Problem</h1>
-<p>The original question was posed by <a href="https://www.facebook.com/groups/programming.haskell/permalink/985981691412832/">Etian Chatav</a>:</p>
-<blockquote>
-<p>What is the correct way to write breadth first traversal of a <code class="sourceCode haskell">[<span class="dt">Tree</span>]</code>?</p>
-</blockquote>
-<p>The breadth-first traversal here is a traversal in the lensy sense, i.e:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> a] <span class="ot">-&gt;</span> f [<span class="dt">Tree</span> b]</a></code></pre></div>
-<p>The <code class="sourceCode haskell"><span class="dt">Tree</span></code> type we’re referring to here is a rose tree; we can take the one defined in <a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#t:Tree"><code class="sourceCode haskell"><span class="dt">Data.Tree</span></code></a>:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Node</span></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">    {<span class="ot"> rootLabel ::</span> a</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">    ,<span class="ot"> subForest ::</span> [<span class="dt">Tree</span> a]</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">    }</a></code></pre></div>
-<p>Finally, instead of solving the (somewhat intermediate) problem of traversing a forest, we’ll look directly at traversing the tree itself. In other words, our solution should have the type:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a></code></pre></div>
-<h1 id="breadth-first-enumeration">Breadth-First Enumeration</h1>
-<p>As in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015">2015</a>)</span>, let’s first look at just converting the tree to a list in breadth-first order. In other words, given the tree:</p>
-<pre><code>   ┌3
- ┌2┤
- │ └4
-1┤
- │ ┌6
- └5┤
-   └7</code></pre>
-<p>We want the list:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">7</span>]</a></code></pre></div>
-<p>Last time I looked at this problem, the function I arrived at was as follows:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">breadthFirstEnumerate ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2">breadthFirstEnumerate ts <span class="fu">=</span> f ts b []</a>
-<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)</a>
-<a class="sourceLine" id="cb6-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">    b qs <span class="fu">=</span> foldl (foldr f) b qs []</a></code></pre></div>
-<p>It’s admittedly a little difficult to understand, but it’s really not too complex: we’re popping items off the front of a queue, and pushing the subforest onto the end. <code class="sourceCode haskell">fw</code> is the recursive call here: that’s where we send the queue with the element pushed on. Even though it may <em>look</em> like we’re pushing onto the front (as we’re using a cons), this is really the <em>end</em> of the queue, since it’s being consumed in reverse, with <code class="sourceCode haskell">foldl</code>.</p>
-<p>This is similar to the technique used in <span class="citation" data-cites="allison_circular_2006">Allison (<a href="#ref-allison_circular_2006">2006</a>)</span> and <span class="citation" data-cites="smith_lloyd_2009">Smith (<a href="#ref-smith_lloyd_2009">2009</a>)</span>, except we avoid explicitly tracking the length.</p>
-<h1 id="level-order-enumeration">Level-Order Enumeration</h1>
-<p>Before we go the full way to traversal, we can try add a little structure to our breadth-first enumeration, by delimiting between levels in the tree. We want our function to have the following type:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a></code></pre></div>
-<p>And looking back at our example tree:</p>
-<pre><code>   ┌3
- ┌2┤
- │ └4
-1┤
- │ ┌6
- └5┤
-   └7</code></pre>
-<p>We now want the list:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1">[[<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">5</span>],[<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">6</span>,<span class="dv">7</span>]]</a></code></pre></div>
-<p>This function is strictly more powerful than <code class="sourceCode haskell">breadthFirstEnumerate</code>, as we can define one in terms of the other:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">breadthFirstEnumerate <span class="fu">=</span> concat <span class="fu">.</span> levels</a></code></pre></div>
-<p>It’s also just a generally useful function, so there are several example implementations available online.</p>
-<h3 id="iterative-style">Iterative-Style</h3>
-<p>The one provided in <a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/src/Data.Tree.html#levels">Data.Tree</a> is as follows:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1">levels t <span class="fu">=</span></a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">    map (map rootLabel) <span class="fu">$</span></a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">        takeWhile (not <span class="fu">.</span> null) <span class="fu">$</span></a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">        iterate (concatMap subForest) [t]</a></code></pre></div>
-<p>Pretty nice, but it looks to me like it’s doing a lot of redundant work. We could write it as an unfold:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1">levels t <span class="fu">=</span>  unfoldr (f <span class="fu">.</span> concat) [[t]]</a>
-<a class="sourceLine" id="cb12-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb12-3" data-line-number="3">    f [] <span class="fu">=</span> <span class="dt">Nothing</span></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">    f xs <span class="fu">=</span> <span class="dt">Just</span> (unzip [(y,ys) <span class="fu">|</span> <span class="dt">Node</span> y ys <span class="ot">&lt;-</span> xs])</a></code></pre></div>
-<h3 id="with-an-implicit-queue">With an (implicit) Queue</h3>
-<p>Another definition, in the style of <code class="sourceCode haskell">breadthFirst</code> above, is as follows:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1">levels ts <span class="fu">=</span> f b ts [] []</a>
-<a class="sourceLine" id="cb13-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb13-3" data-line-number="3">    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)</a>
-<a class="sourceLine" id="cb13-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb13-5" data-line-number="5">    b _ [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb13-6" data-line-number="6">    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</a></code></pre></div>
-<h3 id="zippy-style">Zippy-Style</h3>
-<p>Looking at the implicit queue version, I noticed that it’s just using a church-encoded pair to reverse the direction of the fold. Instead of doing both reversals, we can use a normal pair, and run it in one direction:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1">levels ts <span class="fu">=</span> b (f ts ([],[]))</a>
-<a class="sourceLine" id="cb14-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">    f (<span class="dt">Node</span> x xs) (ls,qs) <span class="fu">=</span> (x<span class="fu">:</span>ls,xs<span class="fu">:</span>qs)</a>
-<a class="sourceLine" id="cb14-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb14-5" data-line-number="5">    b (_,[]) <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb14-6" data-line-number="6">    b (k,qs) <span class="fu">=</span> k <span class="fu">:</span> b (foldr (flip (foldr f)) ([],[]) qs)</a></code></pre></div>
-<p>Secondly, we’re running a fold on the second component of the pair: why not run the fold immediately, rather than building the intermediate list. In fact, we’re running a fold over the <em>whole</em> thing, which we can do straight away:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1">levels ts <span class="fu">=</span> f ts []</a>
-<a class="sourceLine" id="cb15-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb15-3" data-line-number="3">    f (<span class="dt">Node</span> x xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> (x<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb15-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>After looking at it for a while, I realized it’s similar to an inlined version of the algorithm presented in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015">2015</a>)</span>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1">levels t <span class="fu">=</span> [rootLabel t] <span class="fu">:</span> foldr (lzw (<span class="fu">++</span>)) [] (map levels (subForest t))</a>
-<a class="sourceLine" id="cb16-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb16-3" data-line-number="3">    lzw f (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> f x y <span class="fu">:</span> lzw f xs ys</a>
-<a class="sourceLine" id="cb16-4" data-line-number="4">    lzw _ xs [] <span class="fu">=</span> xs</a>
-<a class="sourceLine" id="cb16-5" data-line-number="5">    lzw _ [] ys <span class="fu">=</span> ys</a></code></pre></div>
+<p>I was looking again at the issue of writing breadth-first traversals for rose trees, and in particular the problem explored in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015">2015</a>)</span>. The breadth-first traversal here is a traversal in the lensy sense.</p>
+<p>First, let’s look back at getting the levels out of the tree. Here’s the old function I arrived at last time:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">levels ts <span class="fu">=</span> foldl f b ts [] []</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">    b _ [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</a></code></pre></div>
+<p>After wrangling the definition a little, I got to the following (much cleaner) definition:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">levels tr <span class="fu">=</span> f tr [] <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  f (<span class="dt">Node</span> x xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x<span class="fu">:</span>y) <span class="fu">:</span> foldr f ys xs</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">  f (<span class="dt">Node</span> x xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
 <h1 id="cofree">Cofree</h1>
 <p>Before going any further, all of the functions so far can be redefined to work on the <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Comonad-Cofree.html">cofree comonad</a>:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Cofree</span> f a <span class="fu">=</span> a <span class="fu">:&lt;</span> f (<span class="dt">Cofree</span> f a)</a></code></pre></div>
-<p>When <code class="sourceCode haskell">f</code> is specialized to <code class="sourceCode haskell">[]</code>, we get the original rose tree. So far, though, all we actually require is <code class="sourceCode haskell"><span class="dt">Foldable</span></code>.</p>
-<p>From now on, then, we’ll use <code class="sourceCode haskell"><span class="dt">Cofree</span></code> instead of <code class="sourceCode haskell"><span class="dt">Tree</span></code>.</p>
-<h1 id="traversing">Traversing</h1>
-<p>Finally, we can begin on the traversal itself. We know how to execute the effects in the right order, what’s missing is to build the tree back up in the right order.</p>
-<h3 id="filling">Filling</h3>
-<p>First thing we’ll use is a trick with <code class="sourceCode haskell"><span class="dt">Traversable</span></code>, where we fill a container from a list. In other words:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1">fill [(),(),(),()] [<span class="dv">1</span><span class="fu">..</span>] <span class="fu">=</span> ([<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>],[<span class="dv">5</span><span class="fu">..</span>])</a></code></pre></div>
-<p>With the state monad (or applicative, in this case, I suppose), we can define a “pop” action, which takes an element from the supply:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1">pop <span class="fu">=</span> state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x,xs))</a></code></pre></div>
-<p>And then we <code class="sourceCode haskell">traverse</code> that action over our container:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1">fill <span class="fu">=</span> traverse (const pop)</a></code></pre></div>
-<p>When we use fill, it’ll have the following type:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="ot">breadthFirst ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">             <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
-<a class="sourceLine" id="cb21-3" data-line-number="3">breadthFirst <span class="fu">=</span> <span class="fu">...</span></a>
-<a class="sourceLine" id="cb21-4" data-line-number="4">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb21-5" data-line-number="5">    <span class="fu">...</span></a>
-<a class="sourceLine" id="cb21-6" data-line-number="6"><span class="ot">    fill ::</span> t (<span class="dt">Cofree</span> t a) <span class="ot">-&gt;</span> <span class="dt">State</span> [<span class="dt">Cofree</span> t b] (t (<span class="dt">Cofree</span> t b))</a>
-<a class="sourceLine" id="cb21-7" data-line-number="7">    fill <span class="fu">=</span> traverse (const pop)</a></code></pre></div>
-<p>Hopefully that makes sense: we’re going to get the subforest from here:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Cofree</span> t a <span class="fu">=</span> a <span class="fu">:&lt;</span> t (<span class="dt">Cofree</span> t a)</a>
-<a class="sourceLine" id="cb22-2" data-line-number="2">                       <span class="fu">^^^^^^^^^^^^^^</span></a></code></pre></div>
-<p>And we’re going to fill it with the result of the traversal, which changes the contents from <code>a</code>s to <code>b</code>s.</p>
-<h3 id="composing-applicatives">Composing Applicatives</h3>
-<p>One of the nice things about working with applicatives is that they compose, in a variety of different ways. In other words, if I have one effect, <code class="sourceCode haskell">f</code>, and another <code class="sourceCode haskell">g</code>, and I want to run them both on the contents of some list, I can do it in one pass, either by layering the effects, or putting them side-by-side.</p>
-<p>In our case, we need to deal with two effects: the one generated by the traversal, (the one the caller wants to use), and the internal state we’re using to fill up the forests in our tree. We won’t use <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Data-Functor-Compose.html#t:Compose"><code class="sourceCode haskell"><span class="dt">Compose</span></code></a> explicitly, but you can squint at the implementations a little and imagine we did.</p>
-<h1 id="take-1-zippy-style-traversing">Take 1: Zippy-Style Traversing</h1>
-<p>First we’ll try convert the zippy-style <code class="sourceCode haskell">levels</code> to a traversal. First, convert the function over to the cofree comonad:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1">levels tr <span class="fu">=</span> f tr []</a>
-<a class="sourceLine" id="cb23-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb23-3" data-line-number="3">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> (x<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb23-4" data-line-number="4">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>Next, instead of building up a list of just the root labels, we’ll pair them with the subforests:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1">breadthFirst tr <span class="fu">=</span> f tr []</a>
-<a class="sourceLine" id="cb24-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb24-3" data-line-number="3">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> ((x,xs)<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb24-4" data-line-number="4">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> [(x,xs)]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>Next, we’ll fill the subforests:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1">breadthFirst tr <span class="fu">=</span> f tr []</a>
-<a class="sourceLine" id="cb25-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb25-3" data-line-number="3">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> ((x,fill xs)<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb25-4" data-line-number="4">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> [(x,fill xs)]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>Then, we can run the applicative effect on the root label:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1">breadthFirst c tr <span class="fu">=</span> f tr []</a>
-<a class="sourceLine" id="cb26-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb26-3" data-line-number="3">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> ((c x,fill xs)<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb26-4" data-line-number="4">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> [(c x,fill xs)]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>Now, to combine the effects, we’ll need two operators. These are effectively variants of <code class="sourceCode haskell">liftA2</code> on <code class="sourceCode haskell"><span class="dt">Compose</span></code>, but we can avoid an extra traversal if we define them directly:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1">map2</a>
-<a class="sourceLine" id="cb27-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Functor</span> f, <span class="dt">Functor</span> g)</a>
-<a class="sourceLine" id="cb27-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> f (g c)</a>
-<a class="sourceLine" id="cb27-4" data-line-number="4">map2 f x xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-5" data-line-number="5">    fmap (\y <span class="ot">-&gt;</span> fmap (f y) xs) x</a>
-<a class="sourceLine" id="cb27-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb27-7" data-line-number="7">app2</a>
-<a class="sourceLine" id="cb27-8" data-line-number="8"><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Applicative</span> g)</a>
-<a class="sourceLine" id="cb27-9" data-line-number="9">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> f (g c) <span class="ot">-&gt;</span> f (g d)</a>
-<a class="sourceLine" id="cb27-10" data-line-number="10">app2 f x xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-11" data-line-number="11">    liftA2 (\y <span class="ot">-&gt;</span> liftA2 (f y) xs) x</a></code></pre></div>
-<p>The outer applicative (<code>f</code>) will be the user’s effect, the inner will be <code>State</code>. Using these, we can define the step function above:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1">breadthFirst c tr <span class="fu">=</span> f tr []</a>
-<a class="sourceLine" id="cb28-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb28-3" data-line-number="3">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-4" data-line-number="4">        app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys) <span class="fu">:</span> zs) (c x) (fill xs) q <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb28-5" data-line-number="5">    f (x<span class="fu">:&lt;</span>xs) [] <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-6" data-line-number="6">        map2 (\y ys <span class="ot">-&gt;</span> [y<span class="fu">:&lt;</span>ys]) (c x) (fill xs) <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<p>This builds a list containing all of the level-wise traversals of the tree. To collapse them into one, we can use a fold:</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="ot">breadthFirst ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f)</a>
-<a class="sourceLine" id="cb29-2" data-line-number="2">             <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b)</a>
-<a class="sourceLine" id="cb29-3" data-line-number="3">             <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a</a>
-<a class="sourceLine" id="cb29-4" data-line-number="4">             <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">breadthFirst c tr <span class="fu">=</span></a>
-<a class="sourceLine" id="cb29-6" data-line-number="6">    head <span class="fu">&lt;$&gt;</span> foldr (liftA2 evalState) (pure []) (f tr [])</a>
-<a class="sourceLine" id="cb29-7" data-line-number="7">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb29-8" data-line-number="8">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb29-9" data-line-number="9">        app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys)<span class="fu">:</span>zs) (c x) (fill xs) q <span class="fu">:</span> foldr f qs xs</a>
-<a class="sourceLine" id="cb29-10" data-line-number="10">    f (x<span class="fu">:&lt;</span>xs) [] <span class="fu">=</span></a>
-<a class="sourceLine" id="cb29-11" data-line-number="11">        map2 (\y ys <span class="ot">-&gt;</span> [y<span class="fu">:&lt;</span>ys]) (c x) (fill xs) <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
-<h1 id="take-2-queue-based-traversing">Take 2: Queue-Based Traversing</h1>
-<p>Converting the queue-based implementation is easy once we’ve done it with the zippy one. The result is (to my eye) a little easier to read, also:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb30-1" data-line-number="1">breadthFirst</a>
-<a class="sourceLine" id="cb30-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</a>
-<a class="sourceLine" id="cb30-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
-<a class="sourceLine" id="cb30-4" data-line-number="4">breadthFirst c tr <span class="fu">=</span></a>
-<a class="sourceLine" id="cb30-5" data-line-number="5">    fmap head (f b tr e [])</a>
-<a class="sourceLine" id="cb30-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb30-7" data-line-number="7">    f k (x<span class="fu">:&lt;</span>xs) ls qs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb30-8" data-line-number="8">      k (app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys)<span class="fu">:</span>zs) (c x) (fill xs) ls) (xs<span class="fu">:</span>qs)</a>
-<a class="sourceLine" id="cb30-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb30-10" data-line-number="10">    b _ [] <span class="fu">=</span> pure []</a>
-<a class="sourceLine" id="cb30-11" data-line-number="11">    b l qs <span class="fu">=</span> liftA2 evalState l (foldl (foldl f) b qs e [])</a>
-<a class="sourceLine" id="cb30-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb30-13" data-line-number="13">    e <span class="fu">=</span> pure (pure [])</a></code></pre></div>
-<h1 id="take-3-iterative-traversing">Take 3: Iterative Traversing</h1>
-<p>Transforming the iterative version is slightly different from the other two:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb31-1" data-line-number="1">breadthFirst c tr <span class="fu">=</span> fmap head (go [tr])</a>
-<a class="sourceLine" id="cb31-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb31-3" data-line-number="3">    go [] <span class="fu">=</span> pure []</a>
-<a class="sourceLine" id="cb31-4" data-line-number="4">    go xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb31-5" data-line-number="5">        liftA2</a>
-<a class="sourceLine" id="cb31-6" data-line-number="6">            evalState</a>
-<a class="sourceLine" id="cb31-7" data-line-number="7">            (getCompose (traverse f xs))</a>
-<a class="sourceLine" id="cb31-8" data-line-number="8">            (go (foldr (\(_<span class="fu">:&lt;</span>ys) b <span class="ot">-&gt;</span> foldr (<span class="fu">:</span>) b ys) [] xs))</a>
-<a class="sourceLine" id="cb31-9" data-line-number="9">    f (x<span class="fu">:&lt;</span>xs) <span class="fu">=</span> <span class="dt">Compose</span> (map2 (<span class="fu">:&lt;</span>) (c x) (fill xs))</a></code></pre></div>
-<h1 id="comparison">Comparison</h1>
-<p>Performance-wise, no one algorithm wins out in every case. For enumeration, the zippy algorithm is the fastest in most cases—except when the tree had a large branching factor; then, the iterative algorithm wins out. For the traversals, the iterative algorithm is usually better—except for monads with more expensive applicative instances.</p>
-<p>I’m still not convinced that the zippy traversal is as optimized as it could be, however.</p>
-<h1 id="fusion">Fusion</h1>
-<p>Using the composability of applicatives, we can fuse several operations over traversables into one pass. Unfortunately, however, this can often introduce a memory overhead that makes the whole operation slower overall. One such example is the iterative algorithm above:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb32-1" data-line-number="1">breadthFirst c tr <span class="fu">=</span> fmap head (go [tr])</a>
-<a class="sourceLine" id="cb32-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb32-3" data-line-number="3">    go [] <span class="fu">=</span> pure []</a>
-<a class="sourceLine" id="cb32-4" data-line-number="4">    go xs <span class="fu">=</span> liftA2 evalState zs (go (ys []))</a>
-<a class="sourceLine" id="cb32-5" data-line-number="5">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb32-6" data-line-number="6">        <span class="dt">Compose</span> (<span class="dt">Endo</span> ys,<span class="dt">Compose</span> zs) <span class="fu">=</span> traverse f xs</a>
-<a class="sourceLine" id="cb32-7" data-line-number="7">    f (x <span class="fu">:&lt;</span> xs) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb32-8" data-line-number="8">        <span class="dt">Compose</span></a>
-<a class="sourceLine" id="cb32-9" data-line-number="9">            (<span class="dt">Endo</span> (flip (foldr (<span class="fu">:</span>)) xs), <span class="dt">Compose</span> (map2 (<span class="fu">:&lt;</span>) (c x) (fill xs)))</a></code></pre></div>
-<h1 id="unfolding">Unfolding</h1>
-<p>Building a tree breadth-first, monadically, is still an unsolved problem <span class="citation" data-cites="feuer_is_2015">(it looks like: Feuer <a href="#ref-feuer_is_2015">2015</a>)</span>.</p>
-<p>Using some of these we can implement a monadic breadth-first unfold for the cofree comonad:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb33-1" data-line-number="1"><span class="ot">unfoldM ::</span> (<span class="dt">Monad</span> m, <span class="dt">Traversable</span> t)</a>
-<a class="sourceLine" id="cb33-2" data-line-number="2">        <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, t b))</a>
-<a class="sourceLine" id="cb33-3" data-line-number="3">        <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb33-4" data-line-number="4">        <span class="ot">-&gt;</span> m (<span class="dt">Cofree</span> t a)</a>
-<a class="sourceLine" id="cb33-5" data-line-number="5">unfoldM c tr <span class="fu">=</span> go head [tr]</a>
-<a class="sourceLine" id="cb33-6" data-line-number="6">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb33-7" data-line-number="7">    go k [] <span class="fu">=</span> pure (k [])</a>
-<a class="sourceLine" id="cb33-8" data-line-number="8">    go k xs <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb33-9" data-line-number="9">        ys <span class="ot">&lt;-</span> traverse c xs</a>
-<a class="sourceLine" id="cb33-10" data-line-number="10">        go (k <span class="fu">.</span> evalState (traverse f ys)) (toList (<span class="dt">Compose</span> (<span class="dt">Compose</span> ys)))</a>
-<a class="sourceLine" id="cb33-11" data-line-number="11">    f (x,xs) <span class="fu">=</span> fmap (x<span class="fu">:&lt;</span>) (fill xs)</a></code></pre></div>
-<h1 id="references" class="unnumbered">References</h1>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Cofree</span> f a <span class="fu">=</span> a <span class="fu">:&lt;</span> f (<span class="dt">Cofree</span> f a)</a></code></pre></div>
+<p>When <code class="sourceCode haskell">f</code> is specialized to <code class="sourceCode haskell">[]</code>, we get the original rose tree. But what we actually require is much less specific: <code class="sourceCode haskell">levels</code>, for instance, only needs <code class="sourceCode haskell"><span class="dt">Foldable</span></code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">levelsCofree ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> <span class="dt">Cofree</span> f a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">levelsCofree tr <span class="fu">=</span> f tr []</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    f (x<span class="fu">:&lt;</span>xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x<span class="fu">:</span>y) <span class="fu">:</span> foldr f ys xs</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">    f (x<span class="fu">:&lt;</span>xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
+<p>Using this, we can write the efficient breadth-first traversal:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">breadthFirst</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">breadthFirst c (t<span class="fu">:&lt;</span>ts) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    liftA2 evalState (map2 (<span class="fu">:&lt;</span>) (c t) (fill ts)) chld</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    chld <span class="fu">=</span> foldr (liftA2 evalState) (pure []) (foldr f [] ts)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">    fill <span class="fu">=</span> traverse (const (state (\(x<span class="fu">:</span>xs) <span class="ot">-&gt;</span> (x,xs))))</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs)</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">        <span class="fu">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys) <span class="fu">:</span> zs) (c x) (fill xs) q</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">        <span class="fu">:</span> foldr f qs xs</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">    f (x<span class="fu">:&lt;</span>xs) []</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">        <span class="fu">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="fu">:&lt;</span>ys]) (c x) (fill xs)</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15">        <span class="fu">:</span> foldr f [] xs</a>
+<a class="sourceLine" id="cb5-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb5-17" data-line-number="17">    map2 k x xs <span class="fu">=</span> fmap   (\y <span class="ot">-&gt;</span> fmap   (k y) xs) x</a>
+<a class="sourceLine" id="cb5-18" data-line-number="18">    app2 k x xs <span class="fu">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</a></code></pre></div>
+<p>At every level, the subforest’s shape it taken (<code class="sourceCode haskell">fill</code>), and it’s traversed recursively. We can fuse these two steps into one:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1">breadthFirst</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a  <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">breadthFirst c (t<span class="fu">:&lt;</span>ts) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">    liftA2</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">        evalState</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">        (map2 (<span class="fu">:&lt;</span>) (c t) fill)</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">        (foldr (liftA2 evalState) (pure []) (chld []))</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">    <span class="dt">Compose</span> (<span class="dt">Endo</span> chld,fill) <span class="fu">=</span> go ts</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb6-12" data-line-number="12">    go <span class="fu">=</span> traverse (\x <span class="ot">-&gt;</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> (f x), state (\(y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys))))</a>
+<a class="sourceLine" id="cb6-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb6-14" data-line-number="14">    f (x<span class="fu">:&lt;</span>xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="fu">:&lt;</span>ys) <span class="fu">:</span> zs) (c x) r q <span class="fu">:</span> rs qs</a>
+<a class="sourceLine" id="cb6-15" data-line-number="15">      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="fu">=</span> go xs</a>
+<a class="sourceLine" id="cb6-16" data-line-number="16">    f (x<span class="fu">:&lt;</span>xs) [] <span class="fu">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="fu">:&lt;</span>ys]) (c x) r <span class="fu">:</span> rs []</a>
+<a class="sourceLine" id="cb6-17" data-line-number="17">      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="fu">=</span> go xs</a>
+<a class="sourceLine" id="cb6-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb6-19" data-line-number="19">    map2 k x xs <span class="fu">=</span> fmap   (\y <span class="ot">-&gt;</span> fmap   (k y) xs) x</a>
+<a class="sourceLine" id="cb6-20" data-line-number="20">    app2 k x xs <span class="fu">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</a></code></pre></div>
+<p>The overhead from this approach scraps any benefit, though.</p>
 <div id="refs" class="references">
-<div id="ref-allison_circular_2006">
-<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/" class="uri">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
-</div>
-<div id="ref-feuer_is_2015">
-<p>Feuer, David. 2015. “Is a lazy, breadth-first monadic rose tree unfold possible?” Question. <em>Stack Overflow</em>. <a href="https://stackoverflow.com/q/27748526" class="uri">https://stackoverflow.com/q/27748526</a>.</p>
-</div>
 <div id="ref-gibbons_breadth-first_2015">
 <p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/" class="uri">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
-</div>
-<div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf" class="uri">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
 </div>
 </div>
 
