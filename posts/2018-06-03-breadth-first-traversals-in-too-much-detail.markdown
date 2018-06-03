@@ -69,7 +69,22 @@ breadthFirstEnumerate ts = f ts b []
 
 It's admittedly a little difficult to understand, but it's really not too complex: we're popping items off the front of a queue, and pushing the subforest onto the end. `fw`{.haskell} is the recursive call here: that's where we send the queue with the element pushed on. Even though it may *look* like we're pushing onto the front (as we're using a cons), this is really the *end* of the queue, since it's being consumed in reverse, with `foldl`{.haskell}.
 
-This is similar to the technique used in @allison_circular_2006 and @smith_lloyd_2009, except we avoid explicitly tracking the length.
+We can compare it to the technique used in @allison_circular_2006 and @smith_lloyd_2009, where it's called *corecursive queues*. Breadth-first enumeration is accomplished as follows in @smith_lloyd_2009:
+
+```haskell
+levelOrder :: Tree a -> [a]
+levelOrder tr = map rootLabel qs
+  where
+    qs = enqs [tr] 0 qs
+
+    enqs []     n xs = deq n xs
+    enqs (t:ts) n xs = t : enqs  ts (n+1) xs
+
+    deq 0 _      = []
+    deq n (x:xs) = enqs (subForest x) (n-1) xs
+```
+
+We get to avoid tracking the length of the queue, however.
 
 # Level-Order Enumeration
 
