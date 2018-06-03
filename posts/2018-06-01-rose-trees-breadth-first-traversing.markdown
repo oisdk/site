@@ -354,7 +354,7 @@ breadthFirst c tr = fmap head (go [tr])
 
 Performance-wise, no one algorithm wins out in every case. For enumeration, the zippy algorithm is the fastest in most cases---except when the tree had a large branching factor; then, the iterative algorithm wins out. For the traversals, the iterative algorithm is usually better---except for monads with more expensive applicative instances.
 
-I'm still not convinced that the zippy traversal is as optimized as it could be, however.
+I'm still not convinced that the zippy traversal is as optimized as it could be, however. If anyone has a better implementation, I'd love to see it!
 
 # Fusion
 
@@ -369,7 +369,35 @@ breadthFirst c tr = fmap head (go [tr])
         Compose (Endo ys,Compose zs) = traverse f xs
     f (x :< xs) =
         Compose
-            (Endo (flip (foldr (:)) xs), Compose (map2 (:<) (c x) (fill xs)))
+            (Endo (flip (foldr (:)) xs)
+            ,Compose (map2 (:<) (c x) (fill xs)))
+```
+
+We only traverse the subforest of each node once now, fusing the fill operation with building the list to send to the recursive call. This is expensive (especially memory-wise), though, and traversing the descendant is cheap; the result is that the one-pass version is slower (in my tests).
+
+# Generalizing
+
+The cofree comonad allows us to generalize over the type of "descendants"---from lists (in `Tree`{.haskell}) to anything traversable. We could also generalize over the type of the traversal itself: given a way to access the descendants of a node, we should be able to traverse all nodes in a breadth-first order. This kind of thing is usually accomplished by [Plated](http://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Plated.html): it's a class that gives you a traversal over the immediate descendants of some recursive type. Adapting the iterative version is relatively simple:
+
+```haskell
+breadthFirstOf :: Traversal' a a -> Traversal' a a
+breadthFirstOf trav c tr = fmap head (go [tr])
+  where
+    go [] = pure []
+    go xs =
+        liftA2
+            evalState
+            (getCompose (traverse f xs))
+            (go (foldr (\ys b -> foldrOf trav (:) b ys) [] xs))
+    f xs = Compose (fmap fill (c xs))
+    fill = trav (const (State (\(x:xs) -> (x, xs))))
+```
+
+We can use this version to get back some of the old functions above:
+
+```haskell
+breadthFirstEnumerate ::  Traversable f => Cofree f a -> [a]
+breadthFirstEnumerate = toListOf (breadthFirstOf plate . _extract)
 ```
 
 # Unfolding
