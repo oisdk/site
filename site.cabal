@@ -12,6 +12,7 @@ executable site
                   , hakyll-series >= 0.1 && <= 0.2
                   , containers >= 0.5
                   , pandoc-citeproc >= 0.10
+                  , tardis
   ghc-options:      -threaded
   default-language: Haskell2010
 
