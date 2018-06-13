@@ -32,9 +32,9 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
         route   idRoute
         compile copyFileCompiler
 
-    match "css/*" $ do
-        route   idRoute
-        compile compressCssCompiler
+    -- match "css/*" $ do
+    --     route   idRoute
+    --     compile compressCssCompiler
 
     match (fromList ["about.markdown", "contact.markdown"]) $ do
         route   $ setExtension "html"
@@ -116,6 +116,8 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
+    match "css/default.css" $ compile cssTemplateCompiler
+
 --------------------------------------------------------------------------------
 
 postCompiler :: Compiler (Item String)
@@ -123,6 +125,10 @@ postCompiler =
   writePandocWith (def { writerHTMLMathMethod = MathML
                        , writerHighlightStyle = Just kate }) <$>
   readPandocOptionalBiblio
+
+cssTemplateCompiler :: Compiler (Item Hakyll.Template)
+cssTemplateCompiler = cached "Hakyll.Web.Template.cssTemplateCompiler" $
+    fmap (readTemplate . compressCss) <$> getResourceString
 
 readPandocBiblioLinkCit :: ReaderOptions
                    -> Item CSL
