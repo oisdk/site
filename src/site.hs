@@ -36,6 +36,8 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
     --     route   idRoute
     --     compile compressCssCompiler
 
+    match "css/default.css" $ compile cssTemplateCompiler
+
     match (fromList ["about.markdown", "contact.markdown"]) $ do
         route   $ setExtension "html"
         compile $ pandocCompiler
@@ -116,7 +118,6 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
 
     match "templates/*" $ compile templateBodyCompiler
 
-    match "css/default.css" $ compile cssTemplateCompiler
 
 --------------------------------------------------------------------------------
 
