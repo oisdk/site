@@ -1,7 +1,7 @@
 body {
     color: black;
     font-family: Garamond, Times New Roman, serif;
-    font-size: 93%;
+    font-size: 14px;
     margin: 0px auto 0px auto;
     padding-left: 5px;
     padding-right: 5px;
@@ -9,7 +9,7 @@ body {
 }
 
 math {
-    font-size: 93%;
+    font-size: 14px;
 }
 
 img {
@@ -25,7 +25,7 @@ div#header {
 div#logo a {
     color: black;
     float: left;
-    font-size: 120%;
+    font-size: 20px;
     text-decoration: none
 }
 
@@ -36,7 +36,7 @@ div#header #navigation {
 div#header #navigation a {
     color: black;
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 115%;
+    font-size: 20px;
     margin-left: 12px;
     text-decoration: none;
     text-transform: uppercase
@@ -46,7 +46,7 @@ div#footer {
     font-family: Garamond, Times New Roman, Serif;
     border-top: solid 2px black;
     color: #555;
-    font-size: 80%;
+    font-size: 12px;
     margin-top: 30px;
     padding: 12px 0px 12px 0px;
     text-align: right
@@ -54,19 +54,19 @@ div#footer {
 
 h1 {
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 150%;
+    font-size: 22px;
     font-weight: normal
 }
 
 h2 {
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 130%;
+    font-size: 20px;
     font-weight: normal
 }
 
 div.info {
     color: #555;
-    font-size: 90%;
+    font-size: 15px;
     font-style: italic
 }
 
@@ -127,7 +127,7 @@ ol li.serieslist:before {
 
  .sourceCode,
  code {
-     font-size: 11px;
+     font-size: 10px;
      font-family: menlo, monospace
  }
 
