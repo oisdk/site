@@ -5,7 +5,7 @@ body {
     margin: 0px auto 0px auto;
     padding-left: 5px;
     padding-right: 5px;
-    max-width: 500px
+    max-width: 600px
 }
 
 math {
@@ -13,7 +13,7 @@ math {
 }
 
 img {
-    max-width: 500px
+    max-width: 600px
 }
 
 div#header {
@@ -36,8 +36,8 @@ div#header #navigation {
 div#header #navigation a {
     color: black;
     font-family: Garamond, Times New Roman, Serif;
-    font-size: 20px;
-    margin-left: 12px;
+    font-size: 18px;
+    margin-left: 10px;
     text-decoration: none;
     text-transform: uppercase
 }
