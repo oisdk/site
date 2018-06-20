@@ -58,20 +58,53 @@ instance Show a =>
 We can't (well, shouldn't) us `foldMap`{.haskell} here, because we would be able to tell the difference between different arrangements of parentheses:
 
 ```{.haskell}
-foldMap something [1,2,3]
-((1*2)*(3*()))
-(()*((1*2)*3))
-(((()*1)*2)*3)
+>>> foldMap something [1,2,3]
+
+((1*2)*(3*())) │ (()*((1*2)*3)) │ (((()*1)*2)*3)
+───────────────┼────────────────┼───────────────
+       ┌1      │      ┌()       │       ┌()
+      ┌┤       │      ┤         │      ┌┤
+      │└2      │      │ ┌1      │      │└1
+      ┤        │      │┌┤       │     ┌┤
+      │┌3      │      ││└2      │     │└2
+      └┤       │      └┤        │     ┤
+       └()     │       └3       │     └3
 ```
 
 So we use one of the folds which lets us choose the arrangements of parentheses:
 
 ```{.haskell}
-(foldr (:*:) Empty . map Leaf) [1,2,3,4,5,6]
--- (1*(2*(3*(4*(5*(6*()))))))
+>>> (foldr (:*:) Empty . map Leaf) [1,2,3,4,5,6]
+(1*(2*(3*(4*(5*(6*()))))))
+     ┌1
+    ┌┤
+    │└2
+   ┌┤
+   │└3
+  ┌┤
+  │└4
+ ┌┤
+ │└5
+┌┤
+│└6
+┤
+└()
 
-(foldl (:*:) Empty . map Leaf) [1,2,3,4,5,6]
--- ((((((()*1)*2)*3)*4)*5)*6)
+>>> (foldl (:*:) Empty . map Leaf) [1,2,3,4,5,6]
+((((((()*1)*2)*3)*4)*5)*6)
+┌()
+┤
+│┌1
+└┤
+ │┌2
+ └┤
+  │┌3
+  └┤
+   │┌4
+   └┤
+    │┌5
+    └┤
+     └6
 ```
 
 The issue is that neither of the trees generated are necessarily what we want: often, we want something more *balanced*.
@@ -121,18 +154,61 @@ As you can see, it leaves any leftovers untouched at the end of the list.
 The `go`{.haskell} helper applies `pairMap`{.haskell} repeatedly to the list until it has only one element. This gives us much more balanced results that `foldl`{.haskell} or `foldr`{.haskell} (turn on `-XOverloadedLists`{.haskell} to write non-empty lists using this syntax):
 
 ```{.haskell}
-(treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
--- (((1*2)*(3*4))*(5*6))
+>>> (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
+(((1*2)*(3*4))*(5*6))
+  ┌1
+ ┌┤
+ │└2
+┌┤
+││┌3
+│└┤
+│ └4
+┤
+│┌5
+└┤
+ └6
 
-(treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6,7,8]
--- (((1*2)*(3*4))*((5*6)*(7*8)))
+>>> (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6,7,8]
+(((1*2)*(3*4))*((5*6)*(7*8)))
+  ┌1
+ ┌┤
+ │└2
+┌┤
+││┌3
+│└┤
+│ └4
+┤
+│ ┌5
+│┌┤
+││└6
+└┤
+ │┌7
+ └┤
+  └8
 ```
 
 However, there are still cases where one branch will be much larger than its sibling. The fold fills a balanced binary tree from the left, but any leftover elements are put at the top level. In other words:
 
 ```{.haskell}
-(treeFold (:*:) . fmap Leaf) [1..9]
--- ((((1*2)*(3*4))*((5*6)*(7*8)))*9)
+>>> (treeFold (:*:) . fmap Leaf) [1..9]
+((((1*2)*(3*4))*((5*6)*(7*8)))*9)
+   ┌1
+  ┌┤
+  │└2
+ ┌┤
+ ││┌3
+ │└┤
+ │ └4
+┌┤
+││ ┌5
+││┌┤
+│││└6
+│└┤
+│ │┌7
+│ └┤
+│  └8
+┤
+└9
 ```
 
 That `9`{.haskell} hanging out on its own there is a problem.
@@ -161,15 +237,43 @@ treeFold f = goTo where
 Notice that we have to flip the combining function to make sure the ordering is the same on output. For the earlier example, this solves the issue:
 
 ```{.haskell}
-(treeFold (:*:) . fmap Leaf) [1..9]
--- (((1*2)*((3*4)*(5*6)))*((7*8)*9))
+>>> (treeFold (:*:) . fmap Leaf) [1..9]
+(((1*2)*((3*4)*(5*6)))*((7*8)*9))
+  ┌1
+ ┌┤
+ │└2
+┌┤
+││ ┌3
+││┌┤
+│││└4
+│└┤
+│ │┌5
+│ └┤
+│  └6
+┤
+│ ┌7
+│┌┤
+││└8
+└┤
+ └9
 ```
 
 It does *not* build up the tree as balanced as it possibly could, though:
 
 ```{.haskell}
-(treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
--- ((1*2)*((3*4)*(5*6)))
+>>> (treeFold (:*:) . fmap Leaf) [1,2,3,4,5,6]
+((1*2)*((3*4)*(5*6)))
+ ┌1
+┌┤
+│└2
+┤
+│ ┌3
+│┌┤
+││└4
+└┤
+ │┌5
+ └┤
+  └6
 ```
 
 There's four elements in the right branch, and two in the left in the above example. Three in each would be optimal.
