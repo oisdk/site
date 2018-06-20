@@ -844,10 +844,9 @@ State -> Set State
 Where `State`{.haskell} is an integer. You can represent the set as a vector, where each position is a key, and each value is whether or not that key is present:
 
 $$transfer = \begin{cases}
-1 \quad & \begin{array} ( 0 & 1 & 1 ) \end{array} \\
-2 \quad & \begin{array} ( 1 & 0 & 0 ) \end{array} \\
-3 \quad & \begin{array} ( 0 & 0 & 0 ) \end{array}
-\end{cases}$$
+1 \quad & 0 & 1 & 1 \\
+2 \quad & 1 & 0 & 0 \\
+3 \quad & 0 & 0 & 0 \end{cases}$$
 
 Then, the matrix representation is obvious:
 
