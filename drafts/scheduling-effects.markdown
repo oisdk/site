@@ -37,8 +37,8 @@ oneThenTwo = do
   delay $ liftIO $ print 2
  ```
 
-We first print `1`, then, after a delay, we print `2`. While the scheduling
-isn't visible when we run the above expression:
+We first print `1`, then, after a delay, we print `2`. The `delay`{.haskell}
+doesn't make a difference if we just run the whole thing:
 
 ```haskell
 >>> retract oneThenTwo
@@ -46,8 +46,7 @@ isn't visible when we run the above expression:
 2
 ```
 
-We can *interleave* the effects of these expressions: here the scheduling
-becomes apparent:
+But you can see its effect when we use the `interleave`{.haskell} combinator:
 
  ```haskell
 >>> retract $ interleave (replicate 3 oneThenTwo)
@@ -62,20 +61,18 @@ becomes apparent:
 Hopefully you can see how useful this might be, and the similarity to the
 `Phases`{.haskell} construction.
 
-The genealogy of most coroutine-like-things in Haskell traces back to iteratees 
-
-Before I dive into the implementation (these past few examples used the
-[`IterT`](http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Iter.html)
-monad transformer), let's take a brief detour. While the genealogy of most
-coroutine libraries in Haskell seems to trace back to @blazevic_coroutine_2011
-or @kiselyov_iteratees_2012-1, this particular implementation comes from a
-different place.
+The genealogy of most coroutine libraries in Haskell seems to trace back to
+@blazevic_coroutine_2011 or @kiselyov_iteratees_2012-1: the implementation I
+have been using in these past few examples
+([`IterT`](http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Iter.html))
+comes from a slightly different place. Let's take a quick detour to explore it a
+little.
 
 # Partiality
 
 In functional programming, there are several constructions for modeling
-error-like states: null references with `Maybe`{.haskell}, exceptions with
-`Either`{.haskell}. What separates these approaches from the "unsafe" variants
+error-like states: `Maybe`{.haskell} for your nulls, `Either`{.haskell} for your
+exceptions. What separates these approaches from the "unsafe" variants
 (null pointers, unchecked exceptions) is that we can *prove*, in the type
 system, that the error case is handled correctly.
 
@@ -87,61 +84,102 @@ in Haskell. After all, if I have a function of type:
 String -> Int
 ```
 
-The type system can prove that I won't throw an errors (with `Either`{.haskell},
-that is), because the type `Int`{.haskell} doesn't contain `Left _`{.haskell}.
-I've also proved, miraculously, that I won't make any null dereferences, because
+I can prove that I won't throw any errors (with `Either`{.haskell}, that is),
+because the type `Int`{.haskell} doesn't contain `Left _`{.haskell}. I've also
+proved, miraculously, that I won't make any null dereferences, because
 `Int`{.haskell} also doesn't contain `Nothing`{.haskell}. I *haven't* proved,
 however, that I won't loop infinitely, because (in Haskell), `Int`{.haskell}
 absolutely *does* contain $\bot$.
 
-While we can't prove termination in Haskell, we can:
+So we're somewhat scuppered. On the other hand, While we can't *prove*
+termination in Haskell, we can:
 
 #. Model it.
 #. Prove it in something else.
 
 Which is exactly what Venanzio Capretta did in the fascinating (and quite
-accessible) talk "Partiality is an effect" [@capretta_partiality_2005].
+accessible) talk "Partiality is an effect"
+[@capretta_partiality_2004][^later-version]. 
 
-The monad to encapsulate nontermination is as follows:
+[^later-version]: There is a later, seemingly more formal version of the talk
+    available [@capretta_partiality_2005], but the one from 2004 was a little
+    easier for me to understand, and had a lot more Haskell code.
+
+The monad in question looks like this:
+
+```idris
+data Iter a
+    = Now a
+    | Later (Inf (Iter a))
+```
+
+We're writing in Idris for the time being, so that we can prove termination and
+so on. The "recursive call" to `Iter`{.haskell} is guarded by the
+`Inf`{.haskell} type: this turns on a different kind of totality checking in the
+compiler. Usually, Idris will prevent you from constructing infinite values. But
+that's exactly what we want to do here. Take the little-known function from the
+Prelude 
+[`until`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:until):
+
+```haskell
+until :: (a -> Bool) -> (a -> a) -> a -> a
+```
+
+It's clearly not necessarily total, and the totality checker will complain as
+such when we try and implement it directly:
+
+```idris
+until : (a -> Bool) -> (a -> a) -> a -> a
+until p f x = if p x then x else until p f (f x)
+```
+
+But we can use `Iter`{.haskell} to model that possible totality:
+
+```idris
+until : (a -> Bool) -> (a -> a) -> a -> Iter a
+until p f x = if p x then Now x else Later (until p f (f x))
+```
+
+Of course, nothing's for free: when we get the ability to construct infinite
+values, we lose the ability to consume them.
+
+```idris
+run : Iter a -> a
+run (Now x) = x
+run (Later x) = run x
+```
+
+
+We get an error on the `run`{.haskell} function. However, as you would expect,
+we can run *guarded* iteration: iteration up until some finite point.
+
+```idris
+runUntil : Nat -> Iter a -> Maybe a
+runUntil Z _ = Nothing
+runUntil (S n) (Now x) = Just x
+runUntil (S n) (Later x) = runUntil n x
+```
+
+Making our way back to Haskell, we must first---as is the law---add a type
+parameter, and upgrade our humble monad to a monad transformer:
 
 ```haskell
 newtype IterT m a = IterT { runIterT :: m (Either a (IterT m a)) }
+
+type Iter = IterT Identity
 ```
 
-This can be thought of as a (possibly infinite) layering of `m` over a final
-value `a`{.haskell}. Every layer can be thought of as a "step" of recursion, or
-a single iteration of a loop. So, while we can *write* a function that runs the
-whole thing:
-
-```haskell
-retract :: Monad m => IterT m a -> m a
-retract m = runIterT m >>= either pure retract
-```
-
-We know it's not total. We could, however, run it with an iteration limit:
-
-```haskell
-data Nat = Z | S !Nat
-
-guardedRetract :: Monad m => Nat -> IterT m a -> m (Maybe a)
-guardedRetract Z _ = pure Nothing
-guardedRetract (S n) m = runIterT m >>= either (pure . Just) (guardedRetract n)
-```
-
-And this function is total, as you would expect. This gives you all the
-vocabulary you'd imagine you should have when talking about nontermination, in a
-principled way.
+The semantic meaning of the extra `m`{.haskell} here is interesting: each layer
+adds not just a recursive step, or a single iteration, but a single effect.
+Interpreting things in this way gets us back to the original goal:
 
 # Scheduling
 
-Aside from modeling nontermination, the `IterT`{.haskell} monad can also model
-scheduling: it provides a `delay`{.haskell} function, and
-`interleave`{.haskell}, demonstrated above. `delay`{.haskell}, from the
-perspective of termination, adds one extra step to the computation. To create an
-infinite loop, we just delay forever:
+The `Later`{.haskell} constructor above can be translated to a `delay`{.haskell}
+function on the transformer:
 
 ```haskell
-never = delay never
+delay = IterT . pure . Right
 ```
 
 And using this again, we can write the following incredibly short definition for
