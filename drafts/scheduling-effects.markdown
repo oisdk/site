@@ -315,4 +315,97 @@ lift :: f a -> Phases f a
 lift = Phases . liftAp
 ```
 
-# ListT
+# More Coroutines
+
+In the wonderful article Coroutine Pipelines [@blazevic_coroutine_2011], several
+different threads on coroutine-like constructions are unified. What I've
+demonstrated above isn't yet as powerful as what you might see in a full
+coroutine library: ideally, you'd want generators and sinks. As it turns out,
+when we look back at the note from `IterT`{.haskell}:
+
+```haskell
+IterT ~ FreeT Identity
+```
+
+We can get both of those other constructs by swapping out
+`Identity`{.haskell}[^adjunction]:
+
+[^adjunction]: Small note: `(,) a` and `(->) a` are adjunct. I wonder if there
+    is any implication from this? Certainly, producers and consumers seem
+    adjunct, but there's no instance I can find for it in adjunctions.
+
+```haskell
+Generator a = FreeT ((,) a)
+Sink a = FreeT ((->) a)
+```
+
+(`Sink`{.haskell} is usually called an `Iteratee`{.haskell})
+
+This is the fundamental abstraction that underlies things like the pipes library
+[@gonzalez_pipes_2018].
+
+# Interleaving
+
+The only missing part from the first coroutine example by now is
+`interleave`{.haskell}. In the free library, it has the following signature:
+
+```haskell
+interleave :: Monad m => [IterT m a] -> IterT m [a]
+```
+
+But we should be able to spot that, really, it's a traversal. And, as a
+traversal, it should rely on some underlying `Applicative`{.haskell} instance.
+Let's try and come up with one:
+
+```haskell
+newtype Parallel m f a = Parallel
+    { runParallel :: FreeT m f a
+    }
+
+instance (Functor f, Functor m) =>
+         Functor (Parallel m f) where
+    fmap f = Parallel . FreeT . fmap go . runFreeT . runParallel
+      where
+        go = bimap f (FreeT . fmap go . runFreeT)
+
+instance (Applicative f, Applicative m) =>
+         Applicative (Parallel m f) where
+    pure = Parallel . FreeT . pure . Pure
+    Parallel fs' <*> Parallel xs' = Parallel (unw fs' xs')
+      where
+        unw (FreeT fs) (FreeT xs) = FreeT (liftA2 go fs xs)
+        go (Pure f) = bimap f (runParallel . fmap f . Parallel)
+        go (Free fs) = Free . \case
+            Pure x -> fmap (runParallel . fmap ($x) . Parallel) fs
+            Free xs -> liftA2 unw fs xs
+```
+
+Now, interleave is just `sequenceA`{.haskell}!
+
+Here's a question: can we get a monad out of `Parallel`{.haskell}? What would it
+even look like? Luckily, we can leverage what we already know about similar
+types to give us a hint. `IterT`{.haskell} (or, more specifically, `FreeT ((,)
+a)`{.haskell}) looks a lot like ["`ListT`{.haskell} done
+right"](https://wiki.haskell.org/ListT_done_right). So much so, in fact, that
+most coroutine libraries provide their own version of the `ListT`{.haskell} done
+right type. Following the analogy, the `Parallel`{.haskell} type above has a
+non-transformer analogue: `ZipList`{.haskell}! This is perhaps the best-known
+"Applicative-not-Monad". Its limitations are the same as those for this type: to
+collapse two layers into one, we'd need to go to each position in the outer
+layer, and extract the relevant position in the inner. The issue is that,
+because the list is finite, we don't know that the inner layer will always have
+an entry at the corresponding position.
+
+# Timekeeping
+
+Conor McBride wrote a post a while back exploring a similar interesting idea
+[@mcbride_time_2009]. Again, the purpose was to describe nontermination in a
+total setting, but the example program to demonstrate the construction was...
+breadth-first relabeling! This was taken further by Robert Atkey
+[-@atkey_how_2011] with the notion of "clock variables". A clock variable
+represents how much time is left in a computation: i.e., how many more
+productive steps it can take before diverging. Thinking back to the list
+analogy, that sounds suspiciously like length-indexed vectors. What's
+interesting about *that* is that length-indexed vectors have a similar
+applicative instance to ZipLists, but they also have a monad instance! Let's see
+if that works for the iterator.
