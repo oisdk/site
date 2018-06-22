@@ -62,7 +62,7 @@ Hopefully you can see how useful this might be, and the similarity to the
 `Phases`{.haskell} construction.
 
 The genealogy of most coroutine libraries in Haskell seems to trace back to
-@blazevic_coroutine_2011 or @kiselyov_iteratees_2012-1: the implementation I
+@blazevic_coroutine_2011 or @kiselyov_iteratees_2012: the implementation I
 have been using in these past few examples
 ([`IterT`](http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Iter.html))
 comes from a slightly different place. Let's take a quick detour to explore it a
@@ -77,7 +77,7 @@ exceptions. What separates these approaches from the "unsafe" variants
 system, that the error case is handled correctly.
 
 Conspicuously absent from the usual toolbox for modeling partiality is a way to
-model *nontermination*. At first blush, it may seem strange to attempt to do so
+model *nontermination*. At first glance, it may seem strange to attempt to do so
 in Haskell. After all, if I have a function of type:
 
 ```haskell
@@ -117,8 +117,7 @@ We're writing in Idris for the time being, so that we can prove termination and
 so on. The "recursive call" to `Iter`{.haskell} is guarded by the
 `Inf`{.haskell} type: this turns on a different kind of totality checking in the
 compiler. Usually, Idris will prevent you from constructing infinite values. But
-that's exactly what we want to do here. Take the little-known function from the
-Prelude 
+that's exactly what we want to do here. Take the little-known function
 [`until`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:until):
 
 ```haskell
@@ -382,30 +381,140 @@ instance (Applicative f, Applicative m) =>
 
 Now, interleave is just `sequenceA`{.haskell}!
 
-Here's a question: can we get a monad out of `Parallel`{.haskell}? What would it
-even look like? Luckily, we can leverage what we already know about similar
-types to give us a hint. `IterT`{.haskell} (or, more specifically, `FreeT ((,)
-a)`{.haskell}) looks a lot like ["`ListT`{.haskell} done
-right"](https://wiki.haskell.org/ListT_done_right). So much so, in fact, that
-most coroutine libraries provide their own version of the `ListT`{.haskell} done
-right type. Following the analogy, the `Parallel`{.haskell} type above has a
-non-transformer analogue: `ZipList`{.haskell}! This is perhaps the best-known
-"Applicative-not-Monad". Its limitations are the same as those for this type: to
-collapse two layers into one, we'd need to go to each position in the outer
-layer, and extract the relevant position in the inner. The issue is that,
-because the list is finite, we don't know that the inner layer will always have
-an entry at the corresponding position.
+# Applicatives, Again
+
+So we can see that there's a "parallel" applicative for both the free monad and
+the free applicative. To try and understand this type a little better, we can
+leverage our intuition about a much simpler, more familiar setting: lists.
+There's an interesting similarity between lists and the free monad: `FreeT ((,)
+a)`{.haskell}) looks a lot like "[`ListT`{.haskell} done
+right](https://wiki.haskell.org/ListT_done_right)" (so much so, in fact, that
+most coroutine libraries provide their own version of it). More concretely, list
+also has a famous "parallel" applicative:
+[`ZipList`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Applicative.html#t:ZipList)!
+
+```haskell
+newtype ZipList a
+    = ZipList 
+    { getZipList :: [a]
+    } deriving Functor
+
+instance Applicative ZipList where
+  pure = ZipList . repeat
+  liftA2 f (ZipList xs) (ZipList ys) = ZipList (zipWith f xs ys)
+```
+
+We'll use some of our knowledge about `ZipList`{.haskell} to help us in the next
+section.
 
 # Timekeeping
 
-Conor McBride wrote a post a while back exploring a similar interesting idea
-[@mcbride_time_2009]. Again, the purpose was to describe nontermination in a
-total setting, but the example program to demonstrate the construction was...
-breadth-first relabeling! This was taken further by Robert Atkey
-[-@atkey_how_2011] with the notion of "clock variables". A clock variable
-represents how much time is left in a computation: i.e., how many more
-productive steps it can take before diverging. Thinking back to the list
-analogy, that sounds suspiciously like length-indexed vectors. What's
-interesting about *that* is that length-indexed vectors have a similar
-applicative instance to ZipLists, but they also have a monad instance! Let's see
-if that works for the iterator.
+We've seen that efforts to model both coroutines and partiality end up in the
+same neighborhood: there's yet another way to get there, which seems (at first)
+almost the opposite of the second. It starts with a blog post from Conor McBride
+[-@mcbride_time_2009] called "Time flies like an applicative functor".
+Curiously, here too breadth-first labeling is the focus. Remember first the
+lovely circular solution from @jones_linear-time_1993-1:
+
+```haskell
+data Tree a = Leaf | Node a (Tree a) (Tree a)
+
+relabel :: Tree x -> [[a]] -> (Tree a, [[a]])
+relabel Leaf xss = (Leaf,xss)
+relabel (Node _ l r) ((x:xs):xss0) =
+  let (l',xss1) = relabel l xss0
+      (r',xss2) = relabel r xss1
+  in (Node x l' r',xs:xss2)
+  
+bflabel :: Tree x -> [a] -> Tree a
+bflabel tr xs = u
+  where
+    (u,xss) = relabel tr (xs:xss)
+```
+
+As lovely as it is, spare a thought for the poor totality checker: it's hard to
+imagine how it would even *start* to show that something so lazy and circular
+would terminate. `IterT`{.haskell} won't help us here, either: it can help us
+express programs that *might* diverge, not weird-looking ones that definitely
+won't. 
+
+The solution presented is a type (`De`{.haskell}) which has a limited set of
+combinators: a fixpoint (`fix :: (De x -> x) -> x`{.haskell}), and an
+applicative instance. As long as all problematic recursive calls are instead
+expressed using those combinators, the termination checker should be satisfied.
+
+`De`{.haskell} can be thought of as a "delay" wrapper. Values of type `De
+a`{.haskell} are one step in the future, `De (De a)`{.haskell} are two, and so
+on. This idea was later expanded upon in @atkey_how_2011 and
+@atkey_productive_2013 to *clock variables*. Instead of types with a delay,
+types are tagged with how much more time they have (something like "fuel" in the
+Idris sense, maybe). So a value of type $a^\mathsf{K}$ is tagged with time
+$\mathsf{K}$, effectively meaning "I can produce $\mathsf{K}$ more values before
+I diverge or am given some more information". By "produce more values" we mean
+that it can have its constructor examined: so for lists, it would mean that it
+can produce up until the $\mathsf{K}$th cons-cell. From the other direction, we
+can talk about types that will be able to produce values *after* a certain
+amount of time (they're "delayed"). These are written $\rhd^\mathsf{K}$. Let's
+first try express some of this in the free monad:
+
+```haskell
+data Delay :: K -> (Type -> Type) -> (Type -> Type) -> Type -> Type where
+  Now   :: a -> Delay n f m a
+  Later :: f (DelayT n f m a) -> Delay (S n) f m a
+
+instance (Functor f, Functor m) => Functor (Delay n f m) where
+  fmap f (Now x) = Now (f x)
+  fmap f (Later xs) = Later (fmap (fmap f) xs)
+
+newtype DelayT n f m a = DelayT { runDelayT :: m (Delay n f m a) }
+
+instance (Functor f, Functor m) =>
+         Functor (DelayT n f m) where
+    fmap f = DelayT . fmap (fmap f) . runDelayT
+```
+
+Straight away, we can express one of the combinators in the paper, "force":
+$(\forall \mathsf{K}. \rhd^\mathsf{K} A) \rightarrow A$.
+
+```haskell
+force :: Functor m => (∀ k. DelayT k f m a) -> m a
+force (DelayT xs) = fmap go xs
+  where
+    go :: Delay Z f m a -> a
+    go (Now x) = x
+```
+
+We also get an applicative:
+
+```haskell
+instance (Applicative f, Applicative m) =>
+         Applicative (DelayT n f m) where
+    pure = DelayT . pure . Now
+    DelayT fs' <*> DelayT xs' = DelayT (liftA2 go fs' xs')
+      where
+        go :: ∀ k a b. Delay k f m (a -> b) -> Delay k f m a -> Delay k f m b
+        go (Now f) = fmap f
+        go (Later fs) = Later . \case
+            Now x -> fmap (fmap ($x)) fs
+            Later xs -> liftA2 (<*>) fs xs
+```
+
+
+What's the relevance to what we have so far? Well, in the paper, the connection
+between the partiality monad and clock variables is explored, but what caught
+my eye is that `De`{.haskell} is a classic "applicative-not-monad": just like
+`ZipList`{.haskell}.
+
+Let's think about why `ZipList`{.haskell} can't be a monad. When we use
+`<*>`{.haskell}, we combine values in the corresponding positions. For
+`join`{.haskell} to be valid, it has to *flatten* corresponding positions: we
+need to take the ith entry from the ith `ZipList`{.haskell}. but we don't know
+that the ith `ZipList`{.haskell} will always have an ith entry: so we can't
+define `join`{.haskell}, so no monad.
+
+What if all of the lists were of the same length, though? In that case, we could
+be sure that every position in the outer list has a corresponding position in
+the inner. In fact, this constraint is what lets us define monad for
+length-indexed lists. To me, clock variables over some free monad-thing look
+suspiciously like length-indexed lists: can we use the same logic to get a monad
+out of it?
