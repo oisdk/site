@@ -454,8 +454,22 @@ I diverge or am given some more information". By "produce more values" we mean
 that it can have its constructor examined: so for lists, it would mean that it
 can produce up until the $\mathsf{K}$th cons-cell. From the other direction, we
 can talk about types that will be able to produce values *after* a certain
-amount of time (they're "delayed"). These are written $\rhd^\mathsf{K}$. Let's
-first try express some of this in the free monad:
+amount of time (they're "delayed"). These are written $\rhd^\mathsf{K}$. These
+two concepts are kind of the inverse; you might think of $\rhd^\mathsf{K}$ as
+$-\mathsf{K}$. So, for instance, for a stream, if you give it a new value, it
+can produce extra information for one more step, making the type of cons:
+
+$$
+\text{a} \rightarrow \text{Stream a}^\mathsf{K} \rightarrow \text{Stream a}^\mathsf{K+1}
+$$
+
+Or, using the "delay" notion:
+
+$$
+\text{a} \rightarrow \rhd^\mathsf{K}\text{Stream a} \rightarrow \text{Stream a}
+$$
+
+Let's first try express some of this in the free monad:
 
 ```haskell
 data Delay :: K -> (Type -> Type) -> (Type -> Type) -> Type -> Type where
@@ -483,6 +497,14 @@ force (DelayT xs) = fmap go xs
     go :: Delay Z f m a -> a
     go (Now x) = x
 ```
+
+If the type is delayed however long we want it to be, then it mustn't really be
+delayed at all.
+
+
+Finally, we can express recursion:
+
+## Cofree fix
 
 We also get an applicative:
 
