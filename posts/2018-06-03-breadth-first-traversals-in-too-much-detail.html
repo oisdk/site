@@ -5,7 +5,7 @@
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Breadth-First Traversals in Far Too Much Detail - Donnacha Oisín Kidney</title>
-        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:14px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}</style>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}</style>
     </head>
     <body>
         <div id="header">
@@ -28,7 +28,7 @@
 </div>
 <div class="info">
     
-        Part 3 of a <a href="../series/Breadth-First%20Traversals.html">3-part series on Breadth-First Traversals</a>
+        Part 3 of a <a href="../series/Breadth-First%20Traversals.html">4-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -320,7 +320,7 @@
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-allison_circular_2006">
-<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/" class="uri">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
+<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October 30): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/" class="uri">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
 </div>
 <div id="ref-feuer_is_2015">
 <p>Feuer, David. 2015. “Is a lazy, breadth-first monadic rose tree unfold possible?” Question. <em>Stack Overflow</em>. <a href="https://stackoverflow.com/q/27748526" class="uri">https://stackoverflow.com/q/27748526</a>.</p>
@@ -329,7 +329,7 @@
 <p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/" class="uri">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
 </div>
 <div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf" class="uri">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em>, July 29. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf" class="uri">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
 </div>
 </div>
 
