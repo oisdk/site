@@ -449,29 +449,37 @@ on. This idea was later expanded upon in @atkey_how_2011 and
 @atkey_productive_2013 to *clock variables*. Instead of types with a delay,
 types are tagged with how much more time they have (something like "fuel" in the
 Idris sense, maybe). So a value of type $a^\mathsf{K}$ is tagged with time
-$\mathsf{K}$, effectively meaning "I can produce $\mathsf{K}$ more values before
-I diverge or am given some more information". By "produce more values" we mean
-that it can have its constructor examined: so for lists, it would mean that it
-can produce up until the $\mathsf{K}$th cons-cell. From the other direction, we
-can talk about types that will be able to produce values *after* a certain
-amount of time (they're "delayed"). These are written $\rhd^\mathsf{K}$. These
-two concepts are kind of the inverse; you might think of $\rhd^\mathsf{K}$ as
-$-\mathsf{K}$. So, for instance, for a stream, if you give it a new value, it
-can produce extra information for one more step, making the type of cons:
+$\mathsf{K}$, effectively meaning "I have $\mathsf{K}$ productive steps left
+before I diverge". "Productive steps" will mean something different for every
+data type: for lists, it could mean that it can produce up until the
+$\mathsf{K}$th cons-cell. In the paper [@atkey_productive_2013] this is fleshed
+out a little more, with fixpoint combinators and so on. As a concrete example,
+take the type of the cons operator on streams:
 
-$$
-\text{a} \rightarrow \text{Stream a}^\mathsf{K} \rightarrow \text{Stream a}^\mathsf{K+1}
-$$
+\begin{equation}
+\text{Cons} : \text{a}
+\rightarrow \text{Stream a}^\mathsf{K}
+\rightarrow \text{Stream a}^{\mathsf{K}+1}
+\end{equation}
 
-Or, using the "delay" notion:
+It increments the clock on the type, saying that it has one more productive step
+than it did before. This is kind of the opposite of a "delay": previously, the
+scheduling types have meant "this is available $\mathsf{K}$ number of steps in the
+future" rather than "this is available for another $\mathsf{K}$ steps". We can
+still describe delays in this system, though, using the $\rhd^\mathsf{K}$
+notation:
 
-$$
-\text{a} \rightarrow \rhd^\mathsf{K}\text{Stream a} \rightarrow \text{Stream a}
-$$
+\begin{equation}
+\text{Cons} : \text{a}
+\rightarrow \rhd^\mathsf{K}\text{Stream a}
+\rightarrow \text{Stream a}
+\end{equation}
 
 Let's first try express some of this in the free monad:
 
 ```haskell
+data K = Z | S K
+
 data Delay :: K -> (Type -> Type) -> (Type -> Type) -> Type -> Type where
   Now   :: a -> Delay n f m a
   Later :: f (DelayT n f m a) -> Delay (S n) f m a
@@ -487,24 +495,20 @@ instance (Functor f, Functor m) =>
     fmap f = DelayT . fmap (fmap f) . runDelayT
 ```
 
-Straight away, we can express one of the combinators in the paper, "force":
-$(\forall \mathsf{K}. \rhd^\mathsf{K} A) \rightarrow A$.
+If the type is delayed however long we want it to be, then it mustn't really be
+delayed at all. Next, remember that we have types for streams (generators) from
+the `IterT`{.haskell} monad:
 
 ```haskell
-force :: Functor m => (∀ k. DelayT k f m a) -> m a
-force (DelayT xs) = fmap go xs
-  where
-    go :: Delay Z f m a -> a
-    go (Now x) = x
+type Stream n a = DelayT n ((,) a)
 ```
 
-If the type is delayed however long we want it to be, then it mustn't really be
-delayed at all.
+And cons does indeed have the right type:
 
-
-Finally, we can express recursion:
-
-## Cofree fix
+```haskell
+cons :: Applicative m => a -> Stream n a m b -> Stream (S n) a m b
+cons x xs = DelayT (pure (Later (x,xs)))
+```
 
 We also get an applicative:
 
@@ -521,22 +525,25 @@ instance (Applicative f, Applicative m) =>
             Later xs -> liftA2 (<*>) fs xs
 ```
 
+Now, I'm not sure how much this stuff actually corresponds to the paper, but
+what caught my eye is the statement that `De`{.haskell} is a classic
+"applicative-not-monad": just like `ZipList`{.haskell}. However, under the
+analogy that the free monad is listy, and the parallel construction is
+ziplist-y, what we have in the `DelayT`{.haskell} is the equivalent of a
+length-indexed list. These have an applicative instance similar to ziplists: but
+they also have a monad. Can we apply the same trick here?
 
-What's the relevance to what we have so far? Well, in the paper, the connection
-between the partiality monad and clock variables is explored, but what caught
-my eye is that `De`{.haskell} is a classic "applicative-not-monad": just like
-`ZipList`{.haskell}.
+# Future Posts
 
-Let's think about why `ZipList`{.haskell} can't be a monad. When we use
-`<*>`{.haskell}, we combine values in the corresponding positions. For
-`join`{.haskell} to be valid, it has to *flatten* corresponding positions: we
-need to take the ith entry from the ith `ZipList`{.haskell}. but we don't know
-that the ith `ZipList`{.haskell} will always have an ith entry: so we can't
-define `join`{.haskell}, so no monad.
+There's a lot of fascinating stuff out there---about clock variables,
+especially---that I hope to get a chance to learn about once I get a chance.
+What I'm particularly interested to follow up on includes:
 
-What if all of the lists were of the same length, though? In that case, we could
-be sure that every position in the outer list has a corresponding position in
-the inner. In fact, this constraint is what lets us define monad for
-length-indexed lists. To me, clock variables over some free monad-thing look
-suspiciously like length-indexed lists: can we use the same logic to get a monad
-out of it?
+#. Comonads and their relationship to these constructions. Streams are naturally
+   expressed as comonads, could they be used as a basis on which to build a similar
+   "delay" mechanism?
+#. I'd love to explore more efficient implementations like the ones in @spivey_faster_2017.
+#. I'm interested to see the relationship between these types, power series, and
+   algebras for combinatorial search [@spivey_algebras_2009].
+
+# References
