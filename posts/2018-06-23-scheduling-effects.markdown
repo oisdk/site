@@ -495,8 +495,23 @@ instance (Functor f, Functor m) =>
     fmap f = DelayT . fmap (fmap f) . runDelayT
 ```
 
-If the type is delayed however long we want it to be, then it mustn't really be
-delayed at all. Next, remember that we have types for streams (generators) from
+We can straight away express one of the combinators from the paper,
+`force`{.haskell}:
+
+```haskell
+force :: Functor m => (∀ k. DelayT k f m a) -> m a
+force (DelayT xs) = fmap f xs
+  where
+    f :: Delay Z f m a -> a
+    f (Now x) = x
+```
+
+Similar trick to
+[`runST`{.haskell}](http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-ST.html#v:runST)
+here: if the type is delayed however long we want it to be, then it mustn't
+really be delayed at all.
+
+Next, remember that we have types for streams (generators) from
 the `IterT`{.haskell} monad:
 
 ```haskell
