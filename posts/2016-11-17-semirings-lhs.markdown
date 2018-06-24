@@ -829,7 +829,7 @@ Alternatively, you can swap in the underlying data structure. Instead of a map, 
 
 A square matrix can be understood as a map from pairs of indices to values. This lets us use it to represent the state transfer function. Take, for instance, a regular expression with three possible states. Its state transfer function might look like this:
 
-$$transfer = \begin{cases}
+$$\text{transfer} = \begin{cases}
 1 \quad & \{ 2, 3 \} \\
 2 \quad & \{ 1 \} \\
 3 \quad & \emptyset
@@ -843,14 +843,14 @@ State -> Set State
 
 Where `State`{.haskell} is an integer. You can represent the set as a vector, where each position is a key, and each value is whether or not that key is present:
 
-$$transfer = \begin{cases}
+$$\text{transfer} = \begin{cases}
 1 \quad & 0 & 1 & 1 \\
 2 \quad & 1 & 0 & 0 \\
 3 \quad & 0 & 0 & 0 \end{cases}$$
 
 Then, the matrix representation is obvious:
 
-$$transfer = \left( \begin{array}{ccc}
+$$\text{transfer} = \left( \begin{array}{ccc}
 0 & 1 & 1 \\
 1 & 0 & 0 \\
 0 & 0 & 0 \end{array} \right)$$
