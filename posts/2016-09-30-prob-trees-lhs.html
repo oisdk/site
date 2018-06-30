@@ -136,20 +136,20 @@
 <a class="sourceLine" id="cb10-18" data-line-number="18">      </a>
 <a class="sourceLine" id="cb10-19" data-line-number="19"><span class="ot">compress ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a</a>
 <a class="sourceLine" id="cb10-20" data-line-number="20">compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="dt">Just</span> ys <span class="fu">=</span> (fromDistrib <span class="fu">.</span> counts <span class="fu">.</span> toDistrib) xs <span class="kw">in</span> ys</a></code></pre></div>
-<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation" data-cites="larsen_memory_2011">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation" data-cites="scibior_practical_2015">Scibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
+<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation" data-cites="larsen_memory_2011">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation" data-cites="scibior_practical_2015">Ścibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
 <h3 id="references" class="unnumbered">References</h3>
 <div id="refs" class="references">
 <div id="ref-erwig_functional_2006">
-<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. <a href="http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf">http://icerote.net/doc/library/programming/fp/Probabilistic%20functional%20programming%20in%20Haskell.pdf</a>.</p>
+<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in Haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. doi:<a href="https://doi.org/10.1017/S0956796805005721">10.1017/S0956796805005721</a>. <a href="http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html\#JFP06a" class="uri">http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html\#JFP06a</a>.</p>
 </div>
 <div id="ref-kidd_build_2007">
-<p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502&amp;rep=rep1&amp;type=pdf</a>.</p>
+<p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502\&amp;rep=rep1\&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502\&amp;rep=rep1\&amp;type=pdf</a>.</p>
 </div>
 <div id="ref-larsen_memory_2011">
-<p>Larsen, Ken Friis. 2011. “Memory efficient implementation of probability monads.” <a href="http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf" class="uri">http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf</a>.</p>
+<p>Larsen, Ken Friis. 2011. “Memory Efficient Implementation of Probability Monads.” <a href="http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf" class="uri">http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf</a>.</p>
 </div>
 <div id="ref-scibior_practical_2015">
-<p>Scibior, A., Z. Ghahramani, and A. D. Gordon. 2015. “Practical probabilistic programming with monads.” In <em>2015 ACM SIGPLAN symposium on haskell</em>, 50:165–176. ACM. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
+<p>Ścibior, Adam, Zoubin Ghahramani, and Andrew D. Gordon. 2015. “Practical Probabilistic Programming with Monads.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 50:165–176. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804317">10.1145/2804302.2804317</a>. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
 </div>
 </div>
 
