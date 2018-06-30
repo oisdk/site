@@ -1,6 +1,6 @@
 ---
 title: Single-Pass Huffman Coding
-tags: Haskell, folds
+tags: Haskell, Folds
 bibliography: One Pass Laziness.bib
 ---
 

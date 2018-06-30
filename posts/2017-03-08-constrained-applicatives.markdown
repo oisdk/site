@@ -1,6 +1,6 @@
 ---
 title: Constrained Applicatives
-tags: Haskell
+tags: Haskell, Applicative
 bibliography: Restricted Monads.bib
 ---
 

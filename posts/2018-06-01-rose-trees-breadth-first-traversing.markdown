@@ -1,6 +1,6 @@
 ---
 title: "Breadth-First Rose Trees: Traversals and the Cofree Comonad"
-tags: Haskell, Trees
+tags: Haskell
 series: Breadth-First Traversals
 bibliography: Rose Tree Traversals.bib
 ---

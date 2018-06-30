@@ -1,6 +1,6 @@
 ---
 title: Countdown
-tags: Haskell
+tags: Haskell, Algorithms
 bibliography: Countdown.bib
 ---
 

@@ -1,7 +1,6 @@
 ---
 title: Monty Hall
-tags: Haskell, Swift
-series: probability
+tags: Haskell, Swift, Probability
 ---
 
 The Monty Hall problem is a great example of how counter-intuitive probability can sometimes be. It goes something like this: say you're on a gameshow, with the chance to win a car. You're shown three doors, and the car is behind one, goats behind the other two. You pick a door, say the leftmost, but then the host of the gameshow stops you before it's opened. He opens one of the two doors you didn't pick, revealing a goat. He then asks you if you'd like to change your decision. So? Do you?

@@ -1,6 +1,6 @@
 ---
 title: 5 Cool Things You Can Do With Pattern Synonyms
-tags: Haskell
+tags: Haskell, Pattern Synonyms
 ---
 
 [Pattern Synonyms](https://ghc.haskell.org/trac/ghc/wiki/PatternSynonyms) is an excellent extension for Haskell. There are some [very](https://ocharles.org.uk/blog/posts/2014-12-03-pattern-synonyms.html) [cool](https://www.schoolofhaskell.com/user/icelandj/Pattern%20synonyms) examples of their use out there, and I thought I'd add to the list.

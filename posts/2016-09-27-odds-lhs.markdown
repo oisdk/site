@@ -1,7 +1,6 @@
 ---
 title: A Different Probability Monad
-tags: Haskell
-series: probability
+tags: Haskell, Probability
 ---
 One of the more unusual monads is the "probability monad":
 ```{.haskell .literate .hidden_source}

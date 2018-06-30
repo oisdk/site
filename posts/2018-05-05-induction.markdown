@@ -1,6 +1,6 @@
 ---
 title: Type-Level Induction in Haskell
-tags: Haskell
+tags: Haskell, Dependent Types
 ---
 
 The code from this post is available as a

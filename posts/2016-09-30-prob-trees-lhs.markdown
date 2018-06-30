@@ -1,8 +1,7 @@
 ---
 title: Probability Trees
-tags: Haskell
+tags: Haskell, Probability
 bibliography: Probability.bib
-series: probability
 ---
 ```{.haskell .literate .hidden_source}
 {-# language DeriveFunctor, DeriveFoldable #-}

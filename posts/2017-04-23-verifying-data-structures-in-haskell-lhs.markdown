@@ -1,7 +1,7 @@
 ---
 title: Verifying Data Structures in Haskell
 bibliography: Data Structures.bib
-tags: Haskell, Dependent Types
+tags: Haskell, Dependent Types, Data Structures
 ---
 
 ```{.haskell .literate .hidden_source}

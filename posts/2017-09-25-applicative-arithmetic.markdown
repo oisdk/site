@@ -1,6 +1,6 @@
 ---
 title: Applicative Arithmetic
-tags: Haskell
+tags: Haskell, Applicative
 ---
 
 # Safer Arithmetic

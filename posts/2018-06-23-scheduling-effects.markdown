@@ -2,6 +2,7 @@
 title: Scheduling Effects
 series: Breadth-First Traversals
 bibliography: Delay Monad.bib
+tags: Haskell
 ---
 
 After the [last

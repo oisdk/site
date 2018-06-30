@@ -1,6 +1,6 @@
 ---
 title: Sorting Small Things in Haskell
-tags: Haskell
+tags: Haskell, Algorithms
 series: Sorting
 ---
 

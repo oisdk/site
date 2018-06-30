@@ -1,6 +1,6 @@
 ---
 title: Revisiting a Trie in Haskell
-tags: Haskell
+tags: Haskell, Data Structures
 series: tries
 ---
 

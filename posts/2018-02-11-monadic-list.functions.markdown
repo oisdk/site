@@ -1,6 +1,6 @@
 ---
 title: Monadic List Functions
-tags: Haskell, applicative
+tags: Haskell, Applicative
 bibliography: Monadic List Functions.bib
 ---
 

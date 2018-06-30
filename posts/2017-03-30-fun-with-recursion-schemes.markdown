@@ -1,6 +1,6 @@
 ---
 title: Fun with Recursion Schemes
-tags: Haskell
+tags: Haskell, Recursion Schemes
 bibliography: PrettyPrinting.bib
 ---
 

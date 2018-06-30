@@ -1,6 +1,6 @@
 ---
 title: Folding Two Things at Once
-tags: Haskell
+tags: Haskell, Recursion Schemes
 ---
 
 There's a whole family of Haskell brainteasers surrounding one function: `foldr`{.haskell}. The general idea is to convert some function on lists which uses recursion into one that uses `foldr`{.haskell}. `map`{.haskell}, for instance:
