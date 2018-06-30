@@ -384,6 +384,10 @@ expect = flip runCont
 
 Support, though, isn't possible.
 
+This version is also called the Giry monad: there's a deep and fascinating
+theory behind it, which I probably won't be able to do justice to here. Check
+out Jared Tobin's post -@tobin_implementing_2017 for a good deep dive on it.
+
 # Cofree
 
 The branching structure of the tree captures the semantics of the probability
