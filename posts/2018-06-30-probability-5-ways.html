@@ -273,6 +273,7 @@
 <p>Here, also, we get the monad instance for free. In contrast to previously, expect is free:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1">expect <span class="fu">=</span> flip runCont</a></code></pre></div>
 <p>Support, though, isn’t possible.</p>
+<p>This version is also called the Giry monad: there’s a deep and fascinating theory behind it, which I probably won’t be able to do justice to here. Check out Jared Tobin’s post <span class="citation" data-cites="tobin_implementing_2017">(<a href="#ref-tobin_implementing_2017">2017</a>)</span> for a good deep dive on it.</p>
 <h1 id="cofree">Cofree</h1>
 <p>The branching structure of the tree captures the semantics of the probability monad well, but it doesn’t give us much insight into the original implementation. The question is, how can we deconstruct this:</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Prob</span> a</a>
@@ -358,6 +359,9 @@
 </div>
 <div id="ref-scibior_practical_2015">
 <p>Ścibior, Adam, Zoubin Ghahramani, and Andrew D. Gordon. 2015. “Practical Probabilistic Programming with Monads.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 50:165–176. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804317">10.1145/2804302.2804317</a>. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
+</div>
+<div id="ref-tobin_implementing_2017">
+<p>Tobin, Jared. 2017. “Implementing the Giry Monad.” <em>jtobin.io</em>. <a href="https://jtobin.io/giry-monad-implementation" class="uri">https://jtobin.io/giry-monad-implementation</a>.</p>
 </div>
 <div id="ref-uustalu_essence_2005">
 <p>Uustalu, Tarmo, and Varmo Vene. 2005. “The Essence of Dataflow Programming.” In <em>Proceedings of the Third Asian Conference on Programming Languages and Systems</em>, 2–18. APLAS’05. Berlin, Heidelberg: Springer-Verlag. doi:<a href="https://doi.org/10.1007/11575467_2">10.1007/11575467_2</a>. <a href="http://dx.doi.org/10.1007/11575467_2" class="uri">http://dx.doi.org/10.1007/11575467_2</a>.</p>
