@@ -12,7 +12,7 @@ I'm going to present five here, some of which I have not seen before.
 
 # The Classic
 
-As presented in the paper, the simple and elegant formulation of probability
+As presented in the paper, a simple and elegant formulation of probability
 distributions looks like this:
 
 ```haskell
@@ -21,6 +21,19 @@ newtype Prob a
     { runProb :: [(a, Rational)]
     }
 ```
+
+It's a list of possible events, each tagged with their probability of happening.
+Here's the probability distribution representing a die roll, for instance:
+
+```haskell
+die :: Prob Integer
+die = [ (x, 1/6) | x <- [1..6] ]
+```
+
+The semantics can afford to be a little fuzzy: it doesn't hugely matter if the
+probabilities don't add up to 1; negative numbers wouldn't make much sense,
+though, I suppose. The other thing is that an empty list wouldn't make a huge
+amount of sense.
 
 Its monadic structure multiplies conditional events:
 
@@ -484,6 +497,9 @@ append = foldProb f (\x y ->  Prob . (x :<) . WithChance y . runProb)
 instance Monad Prob where
     xs >>= f = foldProb (append . f) f xs
 ```
+
+We see here that we're talking about gambling-style odds, rather than
+probability. I wonder if the two representations are dual somehow?
 
 The application of comonads to streams (`ListT`{.haskell}) has been explored
 before [@uustalu_essence_2005]; I wonder if there are any insights to be gleaned
