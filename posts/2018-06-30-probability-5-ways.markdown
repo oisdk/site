@@ -31,9 +31,10 @@ die = [ (x, 1/6) | x <- [1..6] ]
 ```
 
 The semantics can afford to be a little fuzzy: it doesn't hugely matter if the
-probabilities don't add up to 1; negative numbers wouldn't make much sense,
-though, I suppose. The other thing is that an empty list wouldn't make a huge
-amount of sense.
+probabilities don't add up to 1 (you can still extract meaningful answers when
+they don't). However, I can't see a way in which either negative probabilities
+or an empty list would make sense. It would be nice if those states were
+unrepresentable.
 
 Its monadic structure multiplies conditional events:
 
