@@ -325,7 +325,7 @@ fromList p = go . foldMap (\x -> singleton (p x) (Pure x))
       Just ((xp,x),ys) -> case minView ys of
         Nothing -> x
         Just ((yp,y),zs) ->
-            go (insertHeap (xp+yp) (Free (Choose (xp+yp) x y)) zs)
+          go (insertHeap (xp+yp) (Free (Choose (xp/(xp+yp)) x y)) zs)
 ```
 
 And finally, it gets the same notation as before:
