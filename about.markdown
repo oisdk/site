@@ -17,5 +17,5 @@ This site is generated using [Hakyll](https://jaspervdj.be/hakyll/), a fantastic
 static site generator written in Haskell. The source code for the site is
 [here](https://github.com/oisdk/site).
 
-Feel free to contact me using the links above, I'm usually ok at responding to
+Feel free to contact me using the links above; I'm usually ok at responding to
 emails.
