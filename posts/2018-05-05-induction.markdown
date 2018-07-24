@@ -14,7 +14,7 @@ data ℕ
     | S ℕ
 ```
 
-Using the new `TypeFamilyDependencies`{.haskell} extension, we can parameterize the notion of "size". I'm going to use the proportion symbol here:
+Using the new `TypeFamilyDependencies`{.haskell} extension, these numbers can be used to describe the "size" of some type. I'm going to use the proportion symbol here:
 
 ```haskell
 type family (t ∷ k) ∝ (n ∷ ℕ) = (a ∷ Type) | a → t n k
