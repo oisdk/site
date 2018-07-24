@@ -40,7 +40,7 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">data</span> ℕ</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Z</span></a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">S</span> ℕ</a></code></pre></div>
-<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, we can parameterize the notion of “size”. I’m going to use the proportion symbol here:</p>
+<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, these numbers can be used to describe the “size” of some type. I’m going to use the proportion symbol here:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">type</span> family (t <span class="ot">∷</span> k) ∝ (n <span class="ot">∷</span> ℕ) <span class="fu">=</span> (a <span class="ot">∷</span> <span class="dt">Type</span>) <span class="fu">|</span> a <span class="ot">→</span> t n k</a></code></pre></div>
 <p>Then, we can use it to provide an inductive class on the natural numbers:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Finite</span> n <span class="kw">where</span></a>

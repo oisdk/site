@@ -594,7 +594,7 @@
 <a class="sourceLine" id="cb26-8" data-line-number="8">  liftA2 f (<span class="dt">ZipList</span> xs) (<span class="dt">ZipList</span> ys) <span class="fu">=</span> <span class="dt">ZipList</span> (zipWith f xs ys)</a></code></pre></div>
 <p>We’ll use some of our knowledge about <code class="sourceCode haskell"><span class="dt">ZipList</span></code> to help us in the next section.</p>
 <h1 id="timekeeping">Timekeeping</h1>
-<p>We’ve seen that efforts to model both coroutines and partiality end up in the same neighborhood: there’s yet another way to get there, which seems (at first) almost the opposite of the second. It starts with a blog post from Conor McBride <span class="citation" data-cites="mcbride_time_2009">(<a href="#ref-mcbride_time_2009">2009</a>)</span> called “Time flies like an applicative functor”. Curiously, here too breadth-first labeling is the focus. Remember first the lovely circular solution from <span class="citation" data-cites="jones_linear-time_1993-1">Jones and Gibbons (<a href="#ref-jones_linear-time_1993-1">1993</a>)</span>:</p>
+<p>We’ve seen that efforts to model both coroutines and partiality end up in the same neighborhood: there’s yet another way to get there, which seems (at first) almost the opposite of the second. It starts with a blog post from Conor McBride <span class="citation" data-cites="mcbride_time_2009">(<a href="#ref-mcbride_time_2009">2009</a>)</span> called “Time flies like an applicative functor”. Curiously, here too breadth-first labeling is the focus. Remember first the lovely circular solution from <span class="citation" data-cites="jones_linear-time_1993-1">(<span class="citeproc-not-found" data-reference-id="jones_linear-time_1993-1"><strong>???</strong></span>)</span>:</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> <span class="fu">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</a>
 <a class="sourceLine" id="cb27-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb27-3" data-line-number="3"><span class="ot">relabel ::</span> <span class="dt">Tree</span> x <span class="ot">-&gt;</span> [[a]] <span class="ot">-&gt;</span> (<span class="dt">Tree</span> a, [[a]])</a>
@@ -683,14 +683,8 @@
 <div id="ref-capretta_partiality_2004">
 <p>Capretta, Venanzio, Thorsten Altenkirch, and Tarmo Uustalu. 2004. “Partiality is an effect.” In <em>Dependently Typed Programming</em>, 04381:20. Dagstuhl seminar proceedings. Dagstuhl, Germany: Internationales Begegnungs- und Forschungszentrum für Informatik (IBFI), Schloss Dagstuhl, Germany. <a href="https://www.ioc.ee/~tarmo/tday-veskisilla/uustalu-slides.pdf" class="uri">https://www.ioc.ee/~tarmo/tday-veskisilla/uustalu-slides.pdf</a>.</p>
 </div>
-<div id="ref-capretta_partiality_2005">
-<p>———. 2005. “Partiality is an effect.” In <em>Slides for a talk given by Uustalu at the 22nd meeting of IFIP Working Group</em>. Vol. 2. <a href="https://www.cs.ox.ac.uk/ralf.hinze/WG2.8/22/slides/tarmo.pdf" class="uri">https://www.cs.ox.ac.uk/ralf.hinze/WG2.8/22/slides/tarmo.pdf</a>.</p>
-</div>
 <div id="ref-gonzalez_pipes_2018">
 <p>Gonzalez, Gabriel. 2018. “Pipes: Compositional pipelines.” <a href="http://hackage.haskell.org/package/pipes" class="uri">http://hackage.haskell.org/package/pipes</a>.</p>
-</div>
-<div id="ref-jones_linear-time_1993-1">
-<p>Jones, Geraint, and Jeremy Gibbons. 1993. <em>Linear-time Breadth-first Tree Algorithms: An Exercise in the Arithmetic of Folds and Zips</em>. Dept of Computer Science, University of Auckland. <a href="http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/linear.ps.gz" class="uri">http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/linear.ps.gz</a>.</p>
 </div>
 <div id="ref-kiselyov_iteratees_2012">
 <p>Kiselyov, Oleg. 2012. “Iteratees.” In <em>Proceedings of the 11th International Conference on Functional and Logic Programming</em>, 166–181. Lecture notes in computer science. Berlin, Heidelberg: Springer, Berlin, Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-29822-6_15">10.1007/978-3-642-29822-6_15</a>. <a href="http://okmij.org/ftp/Haskell/Iteratee/describe.pdf" class="uri">http://okmij.org/ftp/Haskell/Iteratee/describe.pdf</a>.</p>
@@ -708,7 +702,7 @@
 <section class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>There is a later, seemingly more formal version of the talk available <span class="citation" data-cites="capretta_partiality_2005">(Capretta, Altenkirch, and Uustalu <a href="#ref-capretta_partiality_2005">2005</a>)</span>, but the one from 2004 was a little easier for me to understand, and had a lot more Haskell code.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>There is a later, seemingly more formal version of the talk available <span class="citation" data-cites="capretta_partiality_2005">(<span class="citeproc-not-found" data-reference-id="capretta_partiality_2005"><strong>???</strong></span>)</span>, but the one from 2004 was a little easier for me to understand, and had a lot more Haskell code.<a href="#fnref1" class="footnote-back">↩</a></p></li>
 <li id="fn2"><p>Small note: <code>(,) a</code> and <code>(-&gt;) a</code> are adjunct. I wonder if there is any implication from this? Certainly, producers and consumers seem adjunct, but there’s no instance I can find for it in adjunctions.<a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </section>
@@ -1298,7 +1292,7 @@
 <div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">data</span> ℕ</a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Z</span></a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">S</span> ℕ</a></code></pre></div>
-<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, we can parameterize the notion of “size”. I’m going to use the proportion symbol here:</p>
+<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, these numbers can be used to describe the “size” of some type. I’m going to use the proportion symbol here:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">type</span> family (t <span class="ot">∷</span> k) ∝ (n <span class="ot">∷</span> ℕ) <span class="fu">=</span> (a <span class="ot">∷</span> <span class="dt">Type</span>) <span class="fu">|</span> a <span class="ot">→</span> t n k</a></code></pre></div>
 <p>Then, we can use it to provide an inductive class on the natural numbers:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Finite</span> n <span class="kw">where</span></a>
