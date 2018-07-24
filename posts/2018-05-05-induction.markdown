@@ -6,7 +6,8 @@ tags: Haskell, Dependent Types
 The code from this post is available as a
 [gist](https://gist.github.com/oisdk/23c430b807c788dd43dc4d986c5fdfdd).
 
-One of the most basic tools for use in type-level programming is the Peano definition of the natural numbers:
+One of the most basic tools for use in type-level programming is the Peano
+definition of the natural numbers:
 
 ```haskell
 data ℕ
@@ -14,7 +15,9 @@ data ℕ
     | S ℕ
 ```
 
-Using the new `TypeFamilyDependencies`{.haskell} extension, these numbers can be used to describe the "size" of some type. I'm going to use the proportion symbol here:
+Using the new `TypeFamilyDependencies`{.haskell} extension, these numbers can be
+used to describe the "size" of some type. I'm going to use the proportion symbol
+here:
 
 ```haskell
 type family (t ∷ k) ∝ (n ∷ ℕ) = (a ∷ Type) | a → t n k
@@ -35,9 +38,13 @@ instance Finite n ⇒ Finite (S n) where
     {-# inline induction #-}
 ```
 
-The `induction`{.haskell} function reads as the standard mathematical definition of induction: given a proof (value) of the zero case, and a proof that any proof is true for its successor, we can give you a proof of any finite number.
+The `induction`{.haskell} function reads as the standard mathematical definition
+of induction: given a proof (value) of the zero case, and a proof that any proof
+is true for its successor, we can give you a proof of any finite number.
 
-An added bonus here is that the size of something can usually be resolved at compile-time, so any inductive function on it should also be resolved at compile time.
+An added bonus here is that the size of something can usually be resolved at
+compile-time, so any inductive function on it should also be resolved at compile
+time.
 
 We can use it to provide the standard instances for basic length-indexed lists:
 
@@ -56,7 +63,8 @@ instance Functor (List n) where
     fmap f (x :- xs) = f x :- fmap f xs
 ```
 
-However, for `Applicative`{.haskell}, we need some way to recurse on the size of the list. This is where induction comes in.
+However, for `Applicative`{.haskell}, we need some way to recurse on the size of
+the list. This is where induction comes in.
 
 ```haskell
 type instance '(List,a) ∝ n = List n a
@@ -70,7 +78,9 @@ instance Finite n ⇒
     pure x = induction Nil (x :-)
 ```
 
-But can we also write `<*>`{.haskell} using induction? Yes! Because we've factored out the induction itself, we just need to describe the notion of a "sized" function:
+But can we also write `<*>`{.haskell} using induction? Yes! Because we've
+factored out the induction itself, we just need to describe the notion of a
+"sized" function:
 
 ```haskell
 data a ↦ b
@@ -89,13 +99,15 @@ instance Finite n ⇒
             (\k (f :- fs) (x :- xs) → f x :- k fs xs)
 ```
 
-What about the `Monad`{.haskell} instance? For that, we need a little bit of plumbing: the type signature of `>>=`{.haskell} is:
+What about the `Monad`{.haskell} instance? For that, we need a little bit of
+plumbing: the type signature of `>>=`{.haskell} is:
 
 ```haskell
 (>>=) ∷ m a → (a → m b) → m b
 ```
 
-One of the parameters (the second `a`) doesn't have a size: we'll need to work around that, with `Const`{.haskell}:
+One of the parameters (the second `a`) doesn't have a size: we'll need to work
+around that, with `Const`{.haskell}:
 
 ```haskell
 type instance (Const a ∷ ℕ → Type) ∝ n = Const a n
@@ -123,4 +135,12 @@ instance Finite n ⇒
 
 ## Type Family Dependencies
 
-Getting the above to work actually took a surprising amount of work: the crux is that the `∝`{.haskell} type family needs to be injective, so the "successor" proof can typecheck. Unfortunately, this means that every type can only have one notion of "size". What I'd prefer is to be able to pass in a function indicating exactly *how* to get the size out of a type, that could change depending on the situation. So we could recurse on the first argument of a function, for instance, or just its second, or just the result. This would need either type-level lambdas (which would be cool), or [generalized type family dependencies](https://ghc.haskell.org/trac/ghc/ticket/10832).
+Getting the above to work actually took a surprising amount of work: the crux is
+that the `∝`{.haskell} type family needs to be injective, so the "successor"
+proof can typecheck. Unfortunately, this means that every type can only have one
+notion of "size". What I'd prefer is to be able to pass in a function indicating
+exactly *how* to get the size out of a type, that could change depending on the
+situation. So we could recurse on the first argument of a function, for
+instance, or just its second, or just the result. This would need either
+type-level lambdas (which would be cool), or [generalized type family
+dependencies](https://ghc.haskell.org/trac/ghc/ticket/10832).
