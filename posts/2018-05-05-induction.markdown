@@ -23,7 +23,7 @@ here:
 type family (t ∷ k) ∝ (n ∷ ℕ) = (a ∷ Type) | a → t n k
 ```
 
-Then, we can use it to provide an inductive class on the natural numbers:
+Using this type family we can describe induction on the natural numbers:
 
 ```haskell
 class Finite n where
@@ -40,7 +40,8 @@ instance Finite n ⇒ Finite (S n) where
 
 The `induction`{.haskell} function reads as the standard mathematical definition
 of induction: given a proof (value) of the zero case, and a proof that any proof
-is true for its successor, we can give you a proof of any finite number.
+is true for its successor, we can give you a proof of the case for any finite
+number.
 
 An added bonus here is that the size of something can usually be resolved at
 compile-time, so any inductive function on it should also be resolved at compile
