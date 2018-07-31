@@ -313,9 +313,9 @@ indices. Its
 is also different: briefly, universes are one of the ways to avoid Russell's
 paradox when you're dealing with dependent types.
 
-In normal, standard Haskell (how quaint!), we think of types as things that
-describe values. When you've got a list, everything in the list has the same
-type, and that is good and right.
+In normal, standard Haskell, we think of types as things that describe values
+(how quaint!). When you've got a list, everything in the list has the same type,
+and that is good and right.
 
 These days, though, we're not so constrained:
 
@@ -348,10 +348,11 @@ This can quite happily store elements of different types:
 </div>
 
 And look at that bizarre-looking list on the wrong side of "`::`{.haskell}"!
-What type does `[Bool, String, Integer]`{.haskell} have? Why, `[Type]`{.haskell}
-of course!
+Types aren't just describing values, they're acting like values themselves. What
+type does `[Bool, String, Integer]`{.haskell} even have, anyway? Why,
+`[Type]`{.haskell} of course!
 
-So were seeing that types can be put in lists, and types have types: the natural
+So we see that types can be put in lists, and types have types: the natural
 question then is:
 
 <div class="row">
