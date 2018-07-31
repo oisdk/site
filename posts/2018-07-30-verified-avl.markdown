@@ -153,12 +153,20 @@ equality:
 
 <div class="row">
   <div class="column">
-  $$***$$ 
+  ```haskell
+  infix 4 ==
+  data (==) :: Type
+            -> Type
+            -> Type where
+    Refl :: x == x
+  ```
   </div>
   <div class="column">
   ```agda
   infix 4 _≡_
-  data _≡_ {a} {A : Set a} (x : A) : A → Set a where
+  data _≡_ {a} {A : Set a}
+           (x : A) 
+           : A → Set a where
     refl : x ≡ x
   ```
   </div>
@@ -174,7 +182,10 @@ type, and the unit type.
 
 <div class="row">
   <div class="column">
-  $$***$$ 
+  ```haskell
+  data Void :: Type where
+  data Unit :: Type where Unit :: Unit
+  ```
   </div>
   <div class="column">
   ```agda
@@ -191,7 +202,13 @@ lying. How do we use this? Well, first, on the numbers:
 
 <div class="row">
   <div class="column">
-  $$***$$ 
+  ```haskell
+  type family (n :: N) < (m :: N)
+      :: Type where
+    x   < Z   = Void
+    Z   < S y = Unit
+    S x < S y = x < y
+  ```
   </div>
   <div class="column">
   ```agda
@@ -213,7 +230,17 @@ happens). That might look something like this:
 
 <div class="row">
   <div class="column">
-  $$***$$ 
+
+  ```haskell
+  signature Key where
+    import Data.Kind
+    data Key
+    type family (n :: Key) < (m :: Key)
+      :: Type
+
+  module AVL where
+    import Key
+  ```
   </div>
   <div class="column">
   ```agda
@@ -221,7 +248,7 @@ happens). That might look something like this:
     {k r} (Key : Set k)
     {_<_ : Rel Key r}
     (isStrictTotalOrder
-    : IsStrictTotalOrder _≡_ _<_)
+     : IsStrictTotalOrder _≡_ _<_)
     where
 
     open IsStrictTotalOrder isStrictTotalOrder
@@ -242,7 +269,25 @@ the greatest and least elements of the set.
 
 <div class="row">
   <div class="column">
-  $$***$$ 
+  ```haskell
+  
+  
+  data Bound = LB | IB Key | UB
+  
+  
+
+  infix 4 <:
+
+  type family (x :: Bound) <: (y :: Bound)
+      :: Type where
+    LB   <: LB   = Void
+    LB   <: UB   = Unit
+    LB   <: IB _ = Unit
+    UB   <: _    = Void
+    IB _ <: LB   = Void
+    IB _ <: UB   = Unit
+    IB x <: IB y = x < y
+  ```
   </div>
   <div class="column">
   ```agda
@@ -324,12 +369,22 @@ These days, though, we're not so constrained:
   ```haskell
   infixr 5 :-
   data List xs where
-    Nil :: List '[]
-    (:-) :: x -> List xs -> List (x : xs)
+    Nil  :: List '[]
+    (:-) :: x
+         -> List xs
+         -> List (x : xs)
   ```
   </div>
   <div class="column">
-  $$***$$ 
+  ```agda
+  infixr 5 _፦_
+  data List′ : List Set → Set where
+    nil : List′ []
+    _፦_ : ∀ {x xs}
+        → x 
+        → List′ xs 
+        → List′ (x ∷ xs)
+  ```
   </div>
 </div>
 
@@ -343,7 +398,10 @@ This can quite happily store elements of different types:
   ```
   </div>
   <div class="column">
-  $$***$$ 
+  ```agda
+  example : List′ (Bool ∷ String ∷ ℕ ∷ [])
+  example = true ፦ "true" ፦ 1 ፦ nil
+  ```
   </div>
 </div>
 
@@ -362,7 +420,9 @@ question then is:
   ```
   </div>
   <div class="column">
-  $$***$$ 
+  ```agda
+  Set : ???
+  ```
   </div>
 </div>
 
