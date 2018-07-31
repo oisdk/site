@@ -216,7 +216,7 @@
 </div>
 </div>
 <p>The two definitions are similar, but have a few obvious differences. The Agda version stores the ordering proof at the leaves, as well as the bounds as indices. Its <a href="https://pigworker.wordpress.com/2015/01/09/universe-hierarchies/"><em>universe</em></a> is also different: briefly, universes are one of the ways to avoid Russell’s paradox when you’re dealing with dependent types.</p>
-<p>In normal, standard Haskell (how quaint!), we think of types as things that describe values. When you’ve got a list, everything in the list has the same type, and that is good and right.</p>
+<p>In normal, standard Haskell, we think of types as things that describe values (how quaint!). When you’ve got a list, everything in the list has the same type, and that is good and right.</p>
 <p>These days, though, we’re not so constrained:</p>
 <div class="row">
 <div class="column">
@@ -239,8 +239,8 @@
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
 </div>
 </div>
-<p>And look at that bizarre-looking list on the wrong side of “<code class="sourceCode haskell"><span class="ot">::</span></code>”! What type does <code class="sourceCode haskell">[<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</code> have? Why, <code class="sourceCode haskell">[<span class="dt">Type</span>]</code> of course!</p>
-<p>So were seeing that types can be put in lists, and types have types: the natural question then is:</p>
+<p>And look at that bizarre-looking list on the wrong side of “<code class="sourceCode haskell"><span class="ot">::</span></code>”! Types aren’t just describing values, they’re acting like values themselves. What type does <code class="sourceCode haskell">[<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</code> even have, anyway? Why, <code class="sourceCode haskell">[<span class="dt">Type</span>]</code> of course!</p>
+<p>So we see that types can be put in lists, and types have types: the natural question then is:</p>
 <div class="row">
 <div class="column">
 <div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="dt">Type</span><span class="ot"> ::</span> <span class="fu">???</span></a></code></pre></div>
