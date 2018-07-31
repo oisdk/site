@@ -5,21 +5,25 @@ bibliography: AVL.bib
 ---
 
 I've been writing a lot of Agda recently, and had the occasion to write a
-[Fenwick tree](https://en.wikipedia.org/wiki/Fenwick_tree) with some
-rebalancing. I decided to use an AVL tree to rebalance the structure, rather
-than a red-black tree, for two reasons:
+[Fenwick tree](https://en.wikipedia.org/wiki/Fenwick_tree) that did some
+rebalancing. I went with [AVL](https://en.wikipedia.org/wiki/AVL_tree)-style
+rebalancing (rather than
+[red-black](https://en.wikipedia.org/wiki/Red–black_tree) or [trees of bounded
+balance](https://en.wikipedia.org/wiki/Weight-balanced_tree)). I'd written
+pretty full implementations of the other two before, and the Agda standard
+library [@danielsson_agda_2018] has an implementation already that I was able to
+use as a starting point. Also, apparently, AVL trees seem to perform better than
+red-black trees in practice [@pfaff_performance_2004].
 
-#. AVL trees seem to perform better than red-black trees in practice
-[@pfaff_performance_2004].
-#. The Agda standard library [@danielsson_agda_2018] has an implementation of
-AVL trees already.
+This post will be similar in style to Stephanie Weirich's talk
+[-@weirich_depending_2014], which compares an Agda implementation of verified
+red-black trees to a Haskell one. When there's two columns of code side-by-side,
+the left-hand side is Haskell, the right Agda.
 
-After watching a talk by Stephanie Weirich [-@weirich_depending_2014] on
-comparing a verified implementation of red-black trees in Haskell and Agda, I
-thought I'd do the same here for AVL trees. My implementation of AVL trees is
-actually a little different from the one in the Agda standard library, although
-for the ordering proofs it uses the same technique, from Conor McBride
-[-@mcbride_how_2014].
+The method of constructing the ordering proof is taken from "How to Keep Your
+Neighbours in Order" [-@mcbride_how_2014] by Conor McBride; the structural
+proofs are somewhat inspired by the implementation in the Agda standard library,
+but are mainly my own.
 
 # Height
 
@@ -56,9 +60,6 @@ start as every dependently-typed program does: with Peano numbers.
   ```
   </div>
 </div>
-
-(for the rest of this post, when there's two columns, the left is for Haskell,
-the right for Agda)
 
 The trees will be balanced one of three possible ways: left-heavy, right-heavy,
 or even. We can represent these three cases in a GADT in the case of Haskell,
@@ -192,6 +193,9 @@ module AVL
   open IsStrictTotalOrder isStrictTotalOrder
 ```
 
+(the `k`{.agda} and `r`{.agda} here, as well as the `Lift`{.agda}ing noise
+below, are to do with Agda's universe system, which I'll try explain in a bit)
+
 Now, the trick for the ordering is to keep a proof that two neighboring values
 are ordered correctly in the tree at each leaf (as there's a leaf between every
 pair of nodes, this is exactly the place you *should* store such a proof). A
@@ -218,8 +222,6 @@ _[<]_ : [∙] → [∙] → Set r
 [ _ ]  [<] ⌈⌉    = Lift r ⊤
 [ x ]  [<] [ y ] = x < y
 ```
-
-The "lifting" business going on is to deal with Agda's universe levels.
 
 # The Tree Type
 
@@ -265,9 +267,14 @@ The two definitions are similar, but have a few obvious differences. The Agda
 version stores the ordering proof at the leaves, as well as the bounds as
 indices. Its
 [*universe*](https://pigworker.wordpress.com/2015/01/09/universe-hierarchies/)
-is also different: briefly, universes are related to Russell's paradox. In
-Haskell, once you start fiddling around with dependent types, one of the things
-you might write is a heterogeneous list:
+is also different: briefly, universes are one of the ways to avoid Russell's
+paradox when you're dealing with dependent types.
+
+In normal, standard Haskell (how quaint!), we think of types as things that
+describe values. When you've got a list, everything in the list has the same
+type, and that is good and right.
+
+These days, though, we're not so constrained:
 
 ```haskell
 infixr 5 :-
@@ -283,31 +290,22 @@ example :: List [Bool, String, Integer]
 example = True :- "true" :- 1 :- Nil
 ```
 
-It will complain, however, if the types get *too* different:
+And look at that bizarre-looking list on the wrong side of "`::`{.haskell}"!
+What type does `[Bool, String, Integer]`{.haskell} have? Why, `[Type]`{.haskell}
+of course!
+
+So were seeing that types can be put in lists, and types have types: the natural
+question then is:
 
 ```haskell
-impossible :: List [Bool, String, Maybe]
+Type :: ???
 ```
 
-That's because `Maybe`{.haskell} has a different *kind* than the other two.
-While the value-level list can have different types, the type-level list is
-homogeneous: it's a list of `Type`{.haskell}, but `Maybe`{.haskell} is `Type ->
-Type`{.haskell}.
-
-Suppose we wanted to write a list of different kinds, like:
-
-```haskell
-strange :: List [Type -> Type, Type, Type -> (Type -> Type)]
-```
-
-This type-level list is also homogeneous, but here's the question: what's its
-type? Is it still `[Type]`{.haskell}? Or something else entirely?
-
-This is where Haskell and Agda diverge: in Haskell, we say that list has type
-`[Type]`{.haskell}, and that's that. However, that implies `Type ::
-Type`{.haskell} (as the old extension `TypeInType`{.haskell} implied), which,
-from the point of view of correctness, opens the door to Russell's paradox
-(we've allowed a set to be a member of itself).
+And this is where Haskell and Agda diverge: in Haskell, we say `Type ::
+Type`{.haskell} (as the old extension `TypeInType`{.haskell} implied), and
+that's that. From a certain point of view, we've opened the door to Russell's
+paradox (we've allowed a set to be a member of itself). This isn't an issue in
+Haskell, though, as the type-level language was already inconsistent.
 
 Agda goes another way, saying that `Set`{.agda} (Agda's equivalent for
 `Type`{.haskell}) has the type `Set₁`{.agda}, and `Set₁`{.agda} has the type
@@ -359,7 +357,11 @@ Because the size of the tree returned might change, we'll need to wrap it in a d
 
 We could actually have the Agda definition be the same as Haskell's, it doesn't
 make much difference. I'm mainly using it here to demonstrate dependent pairs in
-Agda.
+Agda. The first member of the pair is just a boolean (increased in height/not
+increased in height). The second member is a tree whose height *depends* on the
+actual value of the boolean. The `∃`{.agda} business is just a fancy syntax; it
+also waggles its eyebrows at the way a (dependent) pair of type `(x , y)` means
+"There exists an x such that y".
 
 Using this, we can write the type for right-rotation:
 
@@ -539,27 +541,30 @@ pivotal pragmatism and balance approach.
 
 # Conclusion
 
-Overall, I found the experience of programming in Agda very enjoyable. The
-things I liked surprised me, also:
+Overall, I've been enjoying programming in Agda. The things I liked and didn't
+like surprised me:
 
 Editor Support
 
-:   Excellent. I use [spacemacs](http://spacemacs.org), and the whole thing
+:   Is excellent. I use [spacemacs](http://spacemacs.org), and the whole thing
     worked pretty seamlessly. Proof search and auto was maybe not as powerful as
     Idris', although that might be down to lack of experience (note---as I write
     this, I see you can enable case-splitting in proof search, so it looks like
-    it's much more powerful than I thought). In particular, it was much better
-    than Haskell's editor support: I have managed, for about five minutes, to
-    get case-splitting to work in emacs.
+    I was right about my lack of experience). In many ways, it was much better
+    than Haskell's editor support: personally, I have never managed to get
+    case-splitting to work in my Haskell setup, never mind some of the fancier
+    features that you get in Agda.
     
-    It's worth noting that my experience with Idris is similar: far better
-    editor support than Haskell. It's missing lots of extra tools, like linters,
-    code formatters, but the tight integration with the compiler was so useful
-    it more than made up for it.
+    It's worth noting that my experience with Idris is similar: maybe it's
+    something about dependent types?
+    
+    Of course, I missed lots of extra tools, like linters, code formatters,
+    etc., but the tight integration with the compiler was so useful it more than
+    made up for it.
     
     Also, I'd implore anyone who's had trouble with emacs before to give
     [spacemacs](http://spacemacs.org) a go. It works well out-of-the-box, and
-    it has a system for keybinding discovery that worked really well for me.
+    has a system for keybinding discovery that *actually works*.
 
 Documentation
 
@@ -571,37 +576,35 @@ Documentation
     worked-out examples available online for different concepts when I needed to
     figure them out.
 
-LaTeX Generation
-
-:   Literate programming is something I have begun to experiment with more
-    lately, and Agda's support for it is... admirable? Because LaTeX doesn't
-    really support unicode, any attempt to generate unicode-heavy documents
-    seems doomed to fail. So while it took a lot of tinkering to get it to work,
-    I'm happy that I managed to use Agda for LaTeX generation at all.
-
 Now, the thing about a lot of these complaints/commendations (*especially* with
 regards to tooling and personal setups) is that people tend to be pretty bad
-about evaluating how difficult finicky tasks like editor setups are. So where I
-say Agda has good editor support, it may be that my learning Agda coincided with
-me first understanding emacs.
+about evaluating how difficult finicky tasks like editor setups are. Once you've
+gotten the hang of some of this stuff, you forget that you ever didn't. Agda is
+the second dependently-typed language I've really gone for a deepish dive on,
+and I've been using spacemacs for a while, so YMMV.
 
-That said, my biggest disappointment was performance, and in particular
+One area of the language itself that I would have liked to see more on was
 irrelevance. Looking back at the definition of the tree type, in the Haskell
 version there's no singleton storing the height (the balance type stores all the
 information we need), which means that it definitely doesn't exist at runtime.
 As I understand it, that implies that the type should be irrelevant in the
-equivalent Agda. However, when the proof is marked as irrelevant, everything
-works fine, except that missing cases warnings start showing up everywhere. I'm
-not sure why this is. Also, the conditions for equality proof erasure are very
-unclear to me.
+equivalent Agda. However, when I actually mark it as irrelevant, everything
+works fine, except that missing cases warnings start showing up. I couldn't
+figure out why: Haskell was able to infer full case coverage without the index,
+after all. Equality proof erasure, also: is it safe? Consistent?
+
+All in all, I'd encourage more Haskellers to give Agda a try. It's fun,
+interesting, and $\mathcal{Unicode}$!
 
 # Further Reading
 
-At the end of these articles, I often see the dreaded phrase "deletion is left
-as an exercise to the reader". Not so here! There's a pdf of the Agda code in
-this post, with deletion included, [here](/pdfs/AVL.pdf). The repository with
-the literate Agda code for that is available
+No "deletion is left as an exercise to the reader" here, no sir! Fuller
+implementations of both the Haskell and Agda versions of the code here are
+available: first, a pdf of the Agda code with lovely colours is
+[here](/pdfs/AVL.pdf). The accompanying repository is
 [here](https://github.com/oisdk/agda-avl), and the equivalent for the Haskell
-code is [here](https://github.com/oisdk/verified-avl).
+code is [here](https://github.com/oisdk/verified-avl). Of course, if you would
+rather read something by someone who knows what they're talking about, please
+see the
 
 # References
