@@ -134,21 +134,35 @@ verify that its contents are ordered correctly. Unfortunately, this property is
 a little out of reach for Haskell, but it's 100% doable in Agda. First, we'll
 need a way to describe orders on a data type. In Haskell, we might write:
 
-```haskell
-class Ord a where
-  (==) :: a -> a -> Bool
-  (<)  :: a -> a -> Bool
-```
+<div class="row">
+  <div class="column">
+  ```haskell
+  class Ord a where
+    (==) :: a -> a -> Bool
+    (<)  :: a -> a -> Bool
+  ```
+  </div>
+  <div class="column">
+  $$***$$ 
+  </div>
+</div>
 
 That `Bool`{.haskell} throws away any information gained in the comparison,
 though: we want to supply a proof with the result of the comparison. First,
 equality:
 
-```agda
-infix 4 _≡_
-data _≡_ {a} {A : Set a} (x : A) : A → Set a where
-  refl : x ≡ x
-```
+<div class="row">
+  <div class="column">
+  $$***$$ 
+  </div>
+  <div class="column">
+  ```agda
+  infix 4 _≡_
+  data _≡_ {a} {A : Set a} (x : A) : A → Set a where
+    refl : x ≡ x
+  ```
+  </div>
+</div>
 
 This is one of the many ways to describe equality in Agda. It's a  type with
 only one constructor, and it can only be constructed when its two arguments are
@@ -158,22 +172,36 @@ that whatever things those arguments refer to must be the same.
 Next, we need to describe an order. For this, we'll need two types: the empty
 type, and the unit type.
 
-```agda
-data ⊥ : Set where
-data ⊤ : Set where ⟨⟩ : ⊤
-```
+<div class="row">
+  <div class="column">
+  $$***$$ 
+  </div>
+  <div class="column">
+  ```agda
+  data ⊥ : Set where
+  data ⊤ : Set where ⟨⟩ : ⊤
+  ```
+  </div>
+</div>
 
 These are kind of like type-level Bools, with one extra, powerful addition: they
 keep their proof after construction. Because `⊥`{.agda} has no constructors, if
 someone tells you they're going to give you one, you can be pretty sure they're
 lying. How do we use this? Well, first, on the numbers:
 
-```agda
-_ℕ<_ : ℕ → ℕ → Set
-x     ℕ< zero  = ⊥
-zero  ℕ< suc y = ⊤
-suc x ℕ< suc y = x ℕ< y
-```
+<div class="row">
+  <div class="column">
+  $$***$$ 
+  </div>
+  <div class="column">
+  ```agda
+  _ℕ<_ : ℕ → ℕ → Set
+  x     ℕ< zero  = ⊥
+  zero  ℕ< suc y = ⊤
+  suc x ℕ< suc y = x ℕ< y
+  ```
+  </div>
+</div>
 
 Therefore, if we ask for something of type `x ℕ< y`{.agda} (for some `x` and
 `y`), we know that it only exists when `x` really is less than `y` (according to
@@ -183,15 +211,23 @@ For our actual code, we'll parameterize the whole thing over some abstract key
 type. We'll do this using a module (a feature recently added to Haskell, as it
 happens). That might look something like this:
 
-```agda
-module AVL
-  {k r} (Key : Set k)
-  {_<_ : Rel Key r}
-  (isStrictTotalOrder : IsStrictTotalOrder _≡_ _<_)
-  where
+<div class="row">
+  <div class="column">
+  $$***$$ 
+  </div>
+  <div class="column">
+  ```agda
+  module AVL
+    {k r} (Key : Set k)
+    {_<_ : Rel Key r}
+    (isStrictTotalOrder
+    : IsStrictTotalOrder _≡_ _<_)
+    where
 
-  open IsStrictTotalOrder isStrictTotalOrder
-```
+    open IsStrictTotalOrder isStrictTotalOrder
+  ```
+  </div>
+</div>
 
 (the `k`{.agda} and `r`{.agda} here, as well as the `Lift`{.agda}ing noise
 below, are to do with Agda's universe system, which I'll try explain in a bit)
@@ -204,24 +240,31 @@ each leaf is missing one neighboring value, so how can it store a proof of
 order? The solution is to affix two elements to our key type which we define as
 the greatest and least elements of the set.
 
-```agda
-infix 5 [_]
+<div class="row">
+  <div class="column">
+  $$***$$ 
+  </div>
+  <div class="column">
+  ```agda
+  infix 5 [_]
 
-data [∙] : Set k where
-  ⌊⌋ ⌈⌉ : [∙]
-  [_]   : (k : Key) → [∙]
+  data [∙] : Set k where
+    ⌊⌋ ⌈⌉ : [∙]
+    [_]   : (k : Key) → [∙]
 
-infix 4 _[<]_
+  infix 4 _[<]_
 
-_[<]_ : [∙] → [∙] → Set r
-⌊⌋     [<] ⌊⌋    = Lift r ⊥
-⌊⌋     [<] ⌈⌉    = Lift r ⊤
-⌊⌋     [<] [ _ ] = Lift r ⊤
-⌈⌉     [<] _     = Lift r ⊥
-[ _ ]  [<] ⌊⌋    = Lift r ⊥
-[ _ ]  [<] ⌈⌉    = Lift r ⊤
-[ x ]  [<] [ y ] = x < y
-```
+  _[<]_ : [∙] → [∙] → Set r
+  ⌊⌋     [<] ⌊⌋    = Lift r ⊥
+  ⌊⌋     [<] ⌈⌉    = Lift r ⊤
+  ⌊⌋     [<] [ _ ] = Lift r ⊤
+  ⌈⌉     [<] _     = Lift r ⊥
+  [ _ ]  [<] ⌊⌋    = Lift r ⊥
+  [ _ ]  [<] ⌈⌉    = Lift r ⊤
+  [ x ]  [<] [ y ] = x < y
+  ```
+  </div>
+</div>
 
 # The Tree Type
 
@@ -276,19 +319,33 @@ type, and that is good and right.
 
 These days, though, we're not so constrained:
 
-```haskell
-infixr 5 :-
-data List xs where
-  Nil :: List '[]
-  (:-) :: x -> List xs -> List (x : xs)
-```
+<div class="row">
+  <div class="column">
+  ```haskell
+  infixr 5 :-
+  data List xs where
+    Nil :: List '[]
+    (:-) :: x -> List xs -> List (x : xs)
+  ```
+  </div>
+  <div class="column">
+  $$***$$ 
+  </div>
+</div>
 
 This can quite happily store elements of different types:
 
-```haskell
-example :: List [Bool, String, Integer]
-example = True :- "true" :- 1 :- Nil
-```
+<div class="row">
+  <div class="column">
+  ```haskell
+  example :: List [Bool, String, Integer]
+  example = True :- "true" :- 1 :- Nil
+  ```
+  </div>
+  <div class="column">
+  $$***$$ 
+  </div>
+</div>
 
 And look at that bizarre-looking list on the wrong side of "`::`{.haskell}"!
 What type does `[Bool, String, Integer]`{.haskell} have? Why, `[Type]`{.haskell}
@@ -297,9 +354,16 @@ of course!
 So were seeing that types can be put in lists, and types have types: the natural
 question then is:
 
-```haskell
-Type :: ???
-```
+<div class="row">
+  <div class="column">
+  ```haskell
+  Type :: ???
+  ```
+  </div>
+  <div class="column">
+  $$***$$ 
+  </div>
+</div>
 
 And this is where Haskell and Agda diverge: in Haskell, we say `Type ::
 Type`{.haskell} (as the old extension `TypeInType`{.haskell} implied), and
@@ -318,6 +382,18 @@ of the key, the value, and the relation, respectively.
     the type" `Set₁`{.agda} it means that `Set`{.haskell} is *in* `Set₁`{.agda},
     not the other way around.
 
+<div class="row">
+  <div class="column">
+  ```haskell
+  Type :: Type
+  ```
+  </div>
+  <div class="column">
+  ```agda
+  Set : Set₁
+  ```
+  </div>
+</div>
 # Rotations
 
 AVL trees maintain their invariants through relatively simple rotations. We'll
