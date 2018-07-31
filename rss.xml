@@ -97,33 +97,74 @@
 </div>
 <h1 id="ordering">Ordering</h1>
 <p>Along with the verification of the structure of the tree, we will also want to verify that its contents are ordered correctly. Unfortunately, this property is a little out of reach for Haskell, but it’s 100% doable in Agda. First, we’ll need a way to describe orders on a data type. In Haskell, we might write:</p>
+<div class="row">
+<div class="column">
 <div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Ord</span> a <span class="kw">where</span></a>
 <a class="sourceLine" id="cb7-2" data-line-number="2"><span class="ot">  (==) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></a>
 <a class="sourceLine" id="cb7-3" data-line-number="3"><span class="ot">  (&lt;)  ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></a></code></pre></div>
+</div>
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+</div>
 <p>That <code class="sourceCode haskell"><span class="dt">Bool</span></code> throws away any information gained in the comparison, though: we want to supply a proof with the result of the comparison. First, equality:</p>
+<div class="row">
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+<div class="column">
 <div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≡<span class="ot">_</span></a>
 <a class="sourceLine" id="cb8-2" data-line-number="2"><span class="kw">data</span> <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">:</span> A <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
 <a class="sourceLine" id="cb8-3" data-line-number="3">  refl <span class="ot">:</span> x ≡ x</a></code></pre></div>
+</div>
+</div>
 <p>This is one of the many ways to describe equality in Agda. It’s a type with only one constructor, and it can only be constructed when its two arguments are the same. When we pattern match on the constructor, then, we’re given a proof that whatever things those arguments refer to must be the same.</p>
 <p>Next, we need to describe an order. For this, we’ll need two types: the empty type, and the unit type.</p>
+<div class="row">
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+<div class="column">
 <div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">data</span> ⊥ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
 <a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">data</span> ⊤ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span> ⟨⟩ <span class="ot">:</span> ⊤</a></code></pre></div>
+</div>
+</div>
 <p>These are kind of like type-level Bools, with one extra, powerful addition: they keep their proof after construction. Because <code class="sourceCode agda">⊥</code> has no constructors, if someone tells you they’re going to give you one, you can be pretty sure they’re lying. How do we use this? Well, first, on the numbers:</p>
+<div class="row">
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+<div class="column">
 <div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">_</span>ℕ&lt;<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span></a>
 <a class="sourceLine" id="cb10-2" data-line-number="2">x     ℕ&lt; zero  <span class="ot">=</span> ⊥</a>
 <a class="sourceLine" id="cb10-3" data-line-number="3">zero  ℕ&lt; suc y <span class="ot">=</span> ⊤</a>
 <a class="sourceLine" id="cb10-4" data-line-number="4">suc x ℕ&lt; suc y <span class="ot">=</span> x ℕ&lt; y</a></code></pre></div>
+</div>
+</div>
 <p>Therefore, if we ask for something of type <code class="sourceCode agda">x ℕ&lt; y</code> (for some <code>x</code> and <code>y</code>), we know that it only exists when <code>x</code> really is less than <code>y</code> (according to the definition above).</p>
 <p>For our actual code, we’ll parameterize the whole thing over some abstract key type. We’ll do this using a module (a feature recently added to Haskell, as it happens). That might look something like this:</p>
+<div class="row">
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+<div class="column">
 <div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">module</span> AVL</a>
 <a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="ot">{</span>k r<span class="ot">}</span> <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span> k<span class="ot">)</span></a>
 <a class="sourceLine" id="cb11-3" data-line-number="3">  <span class="ot">{_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> Rel Key r<span class="ot">}</span></a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="ot">(</span>isStrictTotalOrder <span class="ot">:</span> IsStrictTotalOrder <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">_</span>&lt;<span class="ot">_)</span></a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb11-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">  <span class="kw">open</span> IsStrictTotalOrder isStrictTotalOrder</a></code></pre></div>
+<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="ot">(</span>isStrictTotalOrder</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">  <span class="ot">:</span> IsStrictTotalOrder <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">_</span>&lt;<span class="ot">_)</span></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">  <span class="kw">open</span> IsStrictTotalOrder isStrictTotalOrder</a></code></pre></div>
+</div>
+</div>
 <p>(the <code class="sourceCode agda">k</code> and <code class="sourceCode agda">r</code> here, as well as the <code class="sourceCode agda">Lift</code>ing noise below, are to do with Agda’s universe system, which I’ll try explain in a bit)</p>
 <p>Now, the trick for the ordering is to keep a proof that two neighboring values are ordered correctly in the tree at each leaf (as there’s a leaf between every pair of nodes, this is exactly the place you <em>should</em> store such a proof). A problem arises with the extremal leaves in the tree (leftmost and rightmost): each leaf is missing one neighboring value, so how can it store a proof of order? The solution is to affix two elements to our key type which we define as the greatest and least elements of the set.</p>
+<div class="row">
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+<div class="column">
 <div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">infix</span> <span class="dv">5</span> [<span class="ot">_</span>]</a>
 <a class="sourceLine" id="cb12-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb12-3" data-line-number="3"><span class="kw">data</span> [∙] <span class="ot">:</span> <span class="dt">Set</span> k <span class="kw">where</span></a>
@@ -140,6 +181,8 @@
 <a class="sourceLine" id="cb12-14" data-line-number="14">[ <span class="ot">_</span> ]  [&lt;] ⌊⌋    <span class="ot">=</span> Lift r ⊥</a>
 <a class="sourceLine" id="cb12-15" data-line-number="15">[ <span class="ot">_</span> ]  [&lt;] ⌈⌉    <span class="ot">=</span> Lift r ⊤</a>
 <a class="sourceLine" id="cb12-16" data-line-number="16">[ x ]  [&lt;] [ y ] <span class="ot">=</span> x &lt; y</a></code></pre></div>
+</div>
+</div>
 <h1 id="the-tree-type">The Tree Type</h1>
 <p>After all that, we can get bring back Haskell into the story, and define or tree types:</p>
 <div class="row">
@@ -175,63 +218,92 @@
 <p>The two definitions are similar, but have a few obvious differences. The Agda version stores the ordering proof at the leaves, as well as the bounds as indices. Its <a href="https://pigworker.wordpress.com/2015/01/09/universe-hierarchies/"><em>universe</em></a> is also different: briefly, universes are one of the ways to avoid Russell’s paradox when you’re dealing with dependent types.</p>
 <p>In normal, standard Haskell (how quaint!), we think of types as things that describe values. When you’ve got a list, everything in the list has the same type, and that is good and right.</p>
 <p>These days, though, we’re not so constrained:</p>
+<div class="row">
+<div class="column">
 <div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span></a>
 <a class="sourceLine" id="cb15-2" data-line-number="2"><span class="kw">data</span> <span class="dt">List</span> xs <span class="kw">where</span></a>
 <a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">List</span> <span class="ch">&#39;[]</span></a>
 <a class="sourceLine" id="cb15-4" data-line-number="4"><span class="ot">  (:-) ::</span> x <span class="ot">-&gt;</span> <span class="dt">List</span> xs <span class="ot">-&gt;</span> <span class="dt">List</span> (x <span class="fu">:</span> xs)</a></code></pre></div>
+</div>
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+</div>
 <p>This can quite happily store elements of different types:</p>
+<div class="row">
+<div class="column">
 <div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">example ::</span> <span class="dt">List</span> [<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</a>
 <a class="sourceLine" id="cb16-2" data-line-number="2">example <span class="fu">=</span> <span class="dt">True</span> <span class="fu">:-</span> <span class="st">&quot;true&quot;</span> <span class="fu">:-</span> <span class="dv">1</span> <span class="fu">:-</span> <span class="dt">Nil</span></a></code></pre></div>
+</div>
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+</div>
 <p>And look at that bizarre-looking list on the wrong side of “<code class="sourceCode haskell"><span class="ot">::</span></code>”! What type does <code class="sourceCode haskell">[<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</code> have? Why, <code class="sourceCode haskell">[<span class="dt">Type</span>]</code> of course!</p>
 <p>So were seeing that types can be put in lists, and types have types: the natural question then is:</p>
+<div class="row">
+<div class="column">
 <div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="dt">Type</span><span class="ot"> ::</span> <span class="fu">???</span></a></code></pre></div>
+</div>
+<div class="column">
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+</div>
+</div>
 <p>And this is where Haskell and Agda diverge: in Haskell, we say <code class="sourceCode haskell"><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></code> (as the old extension <code class="sourceCode haskell"><span class="dt">TypeInType</span></code> implied), and that’s that. From a certain point of view, we’ve opened the door to Russell’s paradox (we’ve allowed a set to be a member of itself). This isn’t an issue in Haskell, though, as the type-level language was already inconsistent.</p>
 <p>Agda goes another way, saying that <code class="sourceCode agda"><span class="dt">Set</span></code> (Agda’s equivalent for <code class="sourceCode haskell"><span class="dt">Type</span></code>) has the type <code class="sourceCode agda"><span class="dt">Set₁</span></code>, and <code class="sourceCode agda"><span class="dt">Set₁</span></code> has the type <code class="sourceCode agda"><span class="dt">Set₂</span></code>, and so on<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>. These different sets are called “universes” and their numbers “levels”. When we write <code class="sourceCode agda">k ⊔ v ⊔ r</code>, we’re saying we want to take the greatest universe level from those three possible levels: the level of the key, the value, and the relation, respectively.</p>
+<div class="row">
+<div class="column">
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></a></code></pre></div>
+</div>
+<div class="column">
+<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="dt">Set</span> <span class="ot">:</span> <span class="dt">Set₁</span></a></code></pre></div>
+</div>
+</div>
 <h1 id="rotations">Rotations</h1>
 <p>AVL trees maintain their invariants through relatively simple rotations. We’ll start with the right rotation, which fixes an imbalance of two on the left. Because the size of the tree returned might change, we’ll need to wrap it in a datatype:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Inserted</span><span class="ot"> ::</span> <span class="dt">Type</span></a>
-<a class="sourceLine" id="cb18-2" data-line-number="2">              <span class="ot">-&gt;</span> <span class="dt">Type</span></a>
-<a class="sourceLine" id="cb18-3" data-line-number="3">              <span class="ot">-&gt;</span> <span class="dt">N</span></a>
-<a class="sourceLine" id="cb18-4" data-line-number="4">              <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb18-5" data-line-number="5">        <span class="dt">Stay</span><span class="ot"> ::</span> <span class="dt">Tree</span> n k v</a>
-<a class="sourceLine" id="cb18-6" data-line-number="6">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a>
-<a class="sourceLine" id="cb18-7" data-line-number="7">        <span class="dt">Incr</span><span class="ot"> ::</span> <span class="dt">Tree</span> (<span class="dt">S</span> n) k v</a>
-<a class="sourceLine" id="cb18-8" data-line-number="8">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Inserted</span><span class="ot"> ::</span> <span class="dt">Type</span></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">              <span class="ot">-&gt;</span> <span class="dt">Type</span></a>
+<a class="sourceLine" id="cb20-3" data-line-number="3">              <span class="ot">-&gt;</span> <span class="dt">N</span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4">              <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb20-5" data-line-number="5">        <span class="dt">Stay</span><span class="ot"> ::</span> <span class="dt">Tree</span> n k v</a>
+<a class="sourceLine" id="cb20-6" data-line-number="6">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a>
+<a class="sourceLine" id="cb20-7" data-line-number="7">        <span class="dt">Incr</span><span class="ot"> ::</span> <span class="dt">Tree</span> (<span class="dt">S</span> n) k v</a>
+<a class="sourceLine" id="cb20-8" data-line-number="8">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb19-1" data-line-number="1">Inserted  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>v<span class="ot">}</span> </a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">              <span class="ot">(</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">)</span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3">              <span class="ot">(</span>l u <span class="ot">:</span> [∙]<span class="ot">)</span></a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">              <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">→</span></a>
-<a class="sourceLine" id="cb19-5" data-line-number="5">              <span class="dt">Set</span> <span class="ot">(</span>k ⊔ v ⊔ r<span class="ot">)</span></a>
-<a class="sourceLine" id="cb19-6" data-line-number="6">Inserted V l u n <span class="ot">=</span></a>
-<a class="sourceLine" id="cb19-7" data-line-number="7">  ∃[ inc? ] Tree V l u <span class="ot">(</span>if inc?</a>
-<a class="sourceLine" id="cb19-8" data-line-number="8">                           then suc n</a>
-<a class="sourceLine" id="cb19-9" data-line-number="9">                           else n<span class="ot">)</span></a>
-<a class="sourceLine" id="cb19-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb19-11" data-line-number="11"><span class="kw">pattern</span> 0+ tr <span class="ot">=</span> false  , tr</a>
-<a class="sourceLine" id="cb19-12" data-line-number="12"><span class="kw">pattern</span> 1+ tr <span class="ot">=</span> true   , tr</a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb21-1" data-line-number="1">Inserted  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>v<span class="ot">}</span> </a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">              <span class="ot">(</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">)</span></a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">              <span class="ot">(</span>l u <span class="ot">:</span> [∙]<span class="ot">)</span></a>
+<a class="sourceLine" id="cb21-4" data-line-number="4">              <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">→</span></a>
+<a class="sourceLine" id="cb21-5" data-line-number="5">              <span class="dt">Set</span> <span class="ot">(</span>k ⊔ v ⊔ r<span class="ot">)</span></a>
+<a class="sourceLine" id="cb21-6" data-line-number="6">Inserted V l u n <span class="ot">=</span></a>
+<a class="sourceLine" id="cb21-7" data-line-number="7">  ∃[ inc? ] Tree V l u <span class="ot">(</span>if inc?</a>
+<a class="sourceLine" id="cb21-8" data-line-number="8">                           then suc n</a>
+<a class="sourceLine" id="cb21-9" data-line-number="9">                           else n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb21-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb21-11" data-line-number="11"><span class="kw">pattern</span> 0+ tr <span class="ot">=</span> false  , tr</a>
+<a class="sourceLine" id="cb21-12" data-line-number="12"><span class="kw">pattern</span> 1+ tr <span class="ot">=</span> true   , tr</a></code></pre></div>
 </div>
 </div>
 <p>We could actually have the Agda definition be the same as Haskell’s, it doesn’t make much difference. I’m mainly using it here to demonstrate dependent pairs in Agda. The first member of the pair is just a boolean (increased in height/not increased in height). The second member is a tree whose height <em>depends</em> on the actual value of the boolean. The <code class="sourceCode agda">∃</code> business is just a fancy syntax; it also waggles its eyebrows at the way a (dependent) pair of type <code>(x , y)</code> means “There exists an x such that y”.</p>
 <p>Using this, we can write the type for right-rotation:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">rotr ::</span> k</a>
-<a class="sourceLine" id="cb20-2" data-line-number="2">     <span class="ot">-&gt;</span> v</a>
-<a class="sourceLine" id="cb20-3" data-line-number="3">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> (<span class="dt">S</span> rh)) k v</a>
-<a class="sourceLine" id="cb20-4" data-line-number="4">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</a>
-<a class="sourceLine" id="cb20-5" data-line-number="5">     <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v (<span class="dt">S</span> (<span class="dt">S</span> rh))</a></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="ot">rotr ::</span> k</a>
+<a class="sourceLine" id="cb22-2" data-line-number="2">     <span class="ot">-&gt;</span> v</a>
+<a class="sourceLine" id="cb22-3" data-line-number="3">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> (<span class="dt">S</span> rh)) k v</a>
+<a class="sourceLine" id="cb22-4" data-line-number="4">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</a>
+<a class="sourceLine" id="cb22-5" data-line-number="5">     <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v (<span class="dt">S</span> (<span class="dt">S</span> rh))</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb21"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb21-1" data-line-number="1">rotʳ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>lb ub rh v<span class="ot">}</span> <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">     <span class="ot">→</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></a>
-<a class="sourceLine" id="cb21-3" data-line-number="3">     <span class="ot">→</span> V k</a>
-<a class="sourceLine" id="cb21-4" data-line-number="4">     <span class="ot">→</span> Tree V lb [ k ] <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a>
-<a class="sourceLine" id="cb21-5" data-line-number="5">     <span class="ot">→</span> Tree V [ k ] ub rh</a>
-<a class="sourceLine" id="cb21-6" data-line-number="6">     <span class="ot">→</span> Inserted V lb ub <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb23-1" data-line-number="1">rotʳ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>lb ub rh v<span class="ot">}</span> <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></a>
+<a class="sourceLine" id="cb23-2" data-line-number="2">     <span class="ot">→</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></a>
+<a class="sourceLine" id="cb23-3" data-line-number="3">     <span class="ot">→</span> V k</a>
+<a class="sourceLine" id="cb23-4" data-line-number="4">     <span class="ot">→</span> Tree V lb [ k ] <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a>
+<a class="sourceLine" id="cb23-5" data-line-number="5">     <span class="ot">→</span> Tree V [ k ] ub rh</a>
+<a class="sourceLine" id="cb23-6" data-line-number="6">     <span class="ot">→</span> Inserted V lb ub <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a></code></pre></div>
 </div>
 </div>
 <p>There are two possible cases, single rotation:</p>
@@ -242,50 +314,50 @@
 }
 </style>
 <div class="tree">
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1">   ┌a       ┌a</a>
-<a class="sourceLine" id="cb22-2" data-line-number="2"> ┌y┤       y┤</a>
-<a class="sourceLine" id="cb22-3" data-line-number="3"> │ └b <span class="fu">---&gt;</span>  │ ┌b</a>
-<a class="sourceLine" id="cb22-4" data-line-number="4">x┤          └x┤</a>
-<a class="sourceLine" id="cb22-5" data-line-number="5"> └c           └c</a></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1">   ┌a       ┌a</a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"> ┌y┤       y┤</a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"> │ └b <span class="fu">---&gt;</span>  │ ┌b</a>
+<a class="sourceLine" id="cb24-4" data-line-number="4">x┤          └x┤</a>
+<a class="sourceLine" id="cb24-5" data-line-number="5"> └c           └c</a></code></pre></div>
 </div>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">L</span> a b) c <span class="fu">=</span></a>
-<a class="sourceLine" id="cb23-2" data-line-number="2">  <span class="dt">Stay</span> (<span class="dt">Node</span> y yv <span class="dt">O</span> a (<span class="dt">Node</span> x xv <span class="dt">O</span> b c))</a>
-<a class="sourceLine" id="cb23-3" data-line-number="3">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">O</span> a b) c <span class="fu">=</span></a>
-<a class="sourceLine" id="cb23-4" data-line-number="4">  <span class="dt">Incr</span> (<span class="dt">Node</span> y yv <span class="dt">R</span> a (<span class="dt">Node</span> x xv <span class="dt">L</span> b c))</a></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">L</span> a b) c <span class="fu">=</span></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">  <span class="dt">Stay</span> (<span class="dt">Node</span> y yv <span class="dt">O</span> a (<span class="dt">Node</span> x xv <span class="dt">O</span> b c))</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">O</span> a b) c <span class="fu">=</span></a>
+<a class="sourceLine" id="cb25-4" data-line-number="4">  <span class="dt">Incr</span> (<span class="dt">Node</span> y yv <span class="dt">R</span> a (<span class="dt">Node</span> x xv <span class="dt">L</span> b c))</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb24"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb24-1" data-line-number="1">rotʳ x xv <span class="ot">(</span>node y yv ◿ a b<span class="ot">)</span> c <span class="ot">=</span></a>
-<a class="sourceLine" id="cb24-2" data-line-number="2">  0+ <span class="ot">(</span>node y yv ▽ a <span class="ot">(</span>node x xv ▽  b c<span class="ot">))</span></a>
-<a class="sourceLine" id="cb24-3" data-line-number="3">rotʳ x xv <span class="ot">(</span>node y yv ▽ a b<span class="ot">)</span> c <span class="ot">=</span></a>
-<a class="sourceLine" id="cb24-4" data-line-number="4">  1+ <span class="ot">(</span>node y yv ◺ a <span class="ot">(</span>node x xv ◿  b c<span class="ot">))</span></a></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb26-1" data-line-number="1">rotʳ x xv <span class="ot">(</span>node y yv ◿ a b<span class="ot">)</span> c <span class="ot">=</span></a>
+<a class="sourceLine" id="cb26-2" data-line-number="2">  0+ <span class="ot">(</span>node y yv ▽ a <span class="ot">(</span>node x xv ▽  b c<span class="ot">))</span></a>
+<a class="sourceLine" id="cb26-3" data-line-number="3">rotʳ x xv <span class="ot">(</span>node y yv ▽ a b<span class="ot">)</span> c <span class="ot">=</span></a>
+<a class="sourceLine" id="cb26-4" data-line-number="4">  1+ <span class="ot">(</span>node y yv ◺ a <span class="ot">(</span>node x xv ◿  b c<span class="ot">))</span></a></code></pre></div>
 </div>
 </div>
 <p>And double:</p>
 <div class="tree">
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1">   ┌a           ┌a</a>
-<a class="sourceLine" id="cb25-2" data-line-number="2"> ┌y┤          ┌y┤</a>
-<a class="sourceLine" id="cb25-3" data-line-number="3"> │ │ ┌b       │ └b</a>
-<a class="sourceLine" id="cb25-4" data-line-number="4"> │ └z┤  <span class="fu">---&gt;</span> z┤</a>
-<a class="sourceLine" id="cb25-5" data-line-number="5"> │   └c       │ ┌c</a>
-<a class="sourceLine" id="cb25-6" data-line-number="6">x┤            └x┤</a>
-<a class="sourceLine" id="cb25-7" data-line-number="7"> └d             └d</a></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1">   ┌a           ┌a</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2"> ┌y┤          ┌y┤</a>
+<a class="sourceLine" id="cb27-3" data-line-number="3"> │ │ ┌b       │ └b</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4"> │ └z┤  <span class="fu">---&gt;</span> z┤</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5"> │   └c       │ ┌c</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6">x┤            └x┤</a>
+<a class="sourceLine" id="cb27-7" data-line-number="7"> └d             └d</a></code></pre></div>
 </div>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">R</span> a </a>
-<a class="sourceLine" id="cb26-2" data-line-number="2">            (<span class="dt">Node</span> z zv bl b c)) d <span class="fu">=</span></a>
-<a class="sourceLine" id="cb26-3" data-line-number="3">  <span class="dt">Stay</span> (<span class="dt">Node</span> z zv <span class="dt">O</span> </a>
-<a class="sourceLine" id="cb26-4" data-line-number="4">         (<span class="dt">Node</span> y yv (balr bl) a b)</a>
-<a class="sourceLine" id="cb26-5" data-line-number="5">         (<span class="dt">Node</span> x xv (ball bl) c d))</a></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1">rotr x xv (<span class="dt">Node</span> y yv <span class="dt">R</span> a </a>
+<a class="sourceLine" id="cb28-2" data-line-number="2">            (<span class="dt">Node</span> z zv bl b c)) d <span class="fu">=</span></a>
+<a class="sourceLine" id="cb28-3" data-line-number="3">  <span class="dt">Stay</span> (<span class="dt">Node</span> z zv <span class="dt">O</span> </a>
+<a class="sourceLine" id="cb28-4" data-line-number="4">         (<span class="dt">Node</span> y yv (balr bl) a b)</a>
+<a class="sourceLine" id="cb28-5" data-line-number="5">         (<span class="dt">Node</span> x xv (ball bl) c d))</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb27"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb27-1" data-line-number="1">rotʳ x xv <span class="ot">(</span>node y yv ◺  a</a>
-<a class="sourceLine" id="cb27-2" data-line-number="2">            <span class="ot">(</span>node z zv bl b c<span class="ot">))</span> d <span class="ot">=</span></a>
-<a class="sourceLine" id="cb27-3" data-line-number="3">  0+ <span class="ot">(</span>node z zv ▽</a>
-<a class="sourceLine" id="cb27-4" data-line-number="4">       <span class="ot">(</span>node y yv <span class="ot">(</span>⃕ bl<span class="ot">)</span> a b<span class="ot">)</span></a>
-<a class="sourceLine" id="cb27-5" data-line-number="5">       <span class="ot">(</span>node x xv <span class="ot">(</span>⃔ bl<span class="ot">)</span> c d<span class="ot">))</span></a></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb29-1" data-line-number="1">rotʳ x xv <span class="ot">(</span>node y yv ◺  a</a>
+<a class="sourceLine" id="cb29-2" data-line-number="2">            <span class="ot">(</span>node z zv bl b c<span class="ot">))</span> d <span class="ot">=</span></a>
+<a class="sourceLine" id="cb29-3" data-line-number="3">  0+ <span class="ot">(</span>node z zv ▽</a>
+<a class="sourceLine" id="cb29-4" data-line-number="4">       <span class="ot">(</span>node y yv <span class="ot">(</span>⃕ bl<span class="ot">)</span> a b<span class="ot">)</span></a>
+<a class="sourceLine" id="cb29-5" data-line-number="5">       <span class="ot">(</span>node x xv <span class="ot">(</span>⃔ bl<span class="ot">)</span> c d<span class="ot">))</span></a></code></pre></div>
 </div>
 </div>
 <p>I won’t bore you with left-rotation: suffice to say, it’s the opposite of right-rotation.</p>
@@ -293,66 +365,66 @@
 <p>Finally, the main event: insertion. Once the above functions have all been defined, it’s not very difficult, as it happens: by and large, the types guide you to the right answer. Of course, this is only after we decided to use the pivotal pragmatism and balance approach.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1">insertWith</a>
-<a class="sourceLine" id="cb28-2" data-line-number="2"><span class="ot">    ::</span> <span class="dt">Ord</span> k</a>
-<a class="sourceLine" id="cb28-3" data-line-number="3">    <span class="ot">=&gt;</span> (v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> v)</a>
-<a class="sourceLine" id="cb28-4" data-line-number="4">    <span class="ot">-&gt;</span> k</a>
-<a class="sourceLine" id="cb28-5" data-line-number="5">    <span class="ot">-&gt;</span> v</a>
-<a class="sourceLine" id="cb28-6" data-line-number="6">    <span class="ot">-&gt;</span> <span class="dt">Tree</span> h k v</a>
-<a class="sourceLine" id="cb28-7" data-line-number="7">    <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v h</a>
-<a class="sourceLine" id="cb28-8" data-line-number="8">insertWith _ v vc <span class="dt">Leaf</span> <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-9" data-line-number="9">  <span class="dt">Incr</span> (<span class="dt">Node</span> v vc <span class="dt">O</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</a>
-<a class="sourceLine" id="cb28-10" data-line-number="10">insertWith f v vc (<span class="dt">Node</span> k kc bl tl tr) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-11" data-line-number="11">  <span class="kw">case</span> compare v k <span class="kw">of</span></a>
-<a class="sourceLine" id="cb28-12" data-line-number="12">    <span class="dt">LT</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-13" data-line-number="13">      <span class="kw">case</span> insertWith f v vc tl <span class="kw">of</span></a>
-<a class="sourceLine" id="cb28-14" data-line-number="14">        <span class="dt">Stay</span> tl&#39; <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-15" data-line-number="15">          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl&#39; tr)</a>
-<a class="sourceLine" id="cb28-16" data-line-number="16">        <span class="dt">Incr</span> tl&#39; <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></a>
-<a class="sourceLine" id="cb28-17" data-line-number="17">          <span class="dt">L</span> <span class="ot">-&gt;</span> rotr k kc tl&#39; tr</a>
-<a class="sourceLine" id="cb28-18" data-line-number="18">          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">L</span> tl&#39; tr)</a>
-<a class="sourceLine" id="cb28-19" data-line-number="19">          <span class="dt">R</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl&#39; tr)</a>
-<a class="sourceLine" id="cb28-20" data-line-number="20">    <span class="dt">EQ</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-21" data-line-number="21">      <span class="dt">Stay</span> (<span class="dt">Node</span> v (f vc kc) bl tl tr)</a>
-<a class="sourceLine" id="cb28-22" data-line-number="22">    <span class="dt">GT</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-23" data-line-number="23">      <span class="kw">case</span> insertWith f v vc tr <span class="kw">of</span></a>
-<a class="sourceLine" id="cb28-24" data-line-number="24">        <span class="dt">Stay</span> tr&#39; <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-25" data-line-number="25">          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl tr&#39;)</a>
-<a class="sourceLine" id="cb28-26" data-line-number="26">        <span class="dt">Incr</span> tr&#39; <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></a>
-<a class="sourceLine" id="cb28-27" data-line-number="27">          <span class="dt">L</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl tr&#39;)</a>
-<a class="sourceLine" id="cb28-28" data-line-number="28">          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">R</span> tl tr&#39;)</a>
-<a class="sourceLine" id="cb28-29" data-line-number="29">          <span class="dt">R</span> <span class="ot">-&gt;</span> rotl k kc tl tr&#39;</a></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb30-1" data-line-number="1">insertWith</a>
+<a class="sourceLine" id="cb30-2" data-line-number="2"><span class="ot">    ::</span> <span class="dt">Ord</span> k</a>
+<a class="sourceLine" id="cb30-3" data-line-number="3">    <span class="ot">=&gt;</span> (v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> v)</a>
+<a class="sourceLine" id="cb30-4" data-line-number="4">    <span class="ot">-&gt;</span> k</a>
+<a class="sourceLine" id="cb30-5" data-line-number="5">    <span class="ot">-&gt;</span> v</a>
+<a class="sourceLine" id="cb30-6" data-line-number="6">    <span class="ot">-&gt;</span> <span class="dt">Tree</span> h k v</a>
+<a class="sourceLine" id="cb30-7" data-line-number="7">    <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v h</a>
+<a class="sourceLine" id="cb30-8" data-line-number="8">insertWith _ v vc <span class="dt">Leaf</span> <span class="fu">=</span></a>
+<a class="sourceLine" id="cb30-9" data-line-number="9">  <span class="dt">Incr</span> (<span class="dt">Node</span> v vc <span class="dt">O</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</a>
+<a class="sourceLine" id="cb30-10" data-line-number="10">insertWith f v vc (<span class="dt">Node</span> k kc bl tl tr) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb30-11" data-line-number="11">  <span class="kw">case</span> compare v k <span class="kw">of</span></a>
+<a class="sourceLine" id="cb30-12" data-line-number="12">    <span class="dt">LT</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb30-13" data-line-number="13">      <span class="kw">case</span> insertWith f v vc tl <span class="kw">of</span></a>
+<a class="sourceLine" id="cb30-14" data-line-number="14">        <span class="dt">Stay</span> tl&#39; <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb30-15" data-line-number="15">          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl&#39; tr)</a>
+<a class="sourceLine" id="cb30-16" data-line-number="16">        <span class="dt">Incr</span> tl&#39; <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></a>
+<a class="sourceLine" id="cb30-17" data-line-number="17">          <span class="dt">L</span> <span class="ot">-&gt;</span> rotr k kc tl&#39; tr</a>
+<a class="sourceLine" id="cb30-18" data-line-number="18">          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">L</span> tl&#39; tr)</a>
+<a class="sourceLine" id="cb30-19" data-line-number="19">          <span class="dt">R</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl&#39; tr)</a>
+<a class="sourceLine" id="cb30-20" data-line-number="20">    <span class="dt">EQ</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb30-21" data-line-number="21">      <span class="dt">Stay</span> (<span class="dt">Node</span> v (f vc kc) bl tl tr)</a>
+<a class="sourceLine" id="cb30-22" data-line-number="22">    <span class="dt">GT</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb30-23" data-line-number="23">      <span class="kw">case</span> insertWith f v vc tr <span class="kw">of</span></a>
+<a class="sourceLine" id="cb30-24" data-line-number="24">        <span class="dt">Stay</span> tr&#39; <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb30-25" data-line-number="25">          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl tr&#39;)</a>
+<a class="sourceLine" id="cb30-26" data-line-number="26">        <span class="dt">Incr</span> tr&#39; <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></a>
+<a class="sourceLine" id="cb30-27" data-line-number="27">          <span class="dt">L</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl tr&#39;)</a>
+<a class="sourceLine" id="cb30-28" data-line-number="28">          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">R</span> tl tr&#39;)</a>
+<a class="sourceLine" id="cb30-29" data-line-number="29">          <span class="dt">R</span> <span class="ot">-&gt;</span> rotl k kc tl tr&#39;</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb29-1" data-line-number="1">insert <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>l u h v<span class="ot">}</span></a>
-<a class="sourceLine" id="cb29-2" data-line-number="2">           <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></a>
-<a class="sourceLine" id="cb29-3" data-line-number="3">           <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-4" data-line-number="4">       <span class="ot">→</span> V k</a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">       <span class="ot">→</span> <span class="ot">(</span>V k <span class="ot">→</span> V k <span class="ot">→</span> V k<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-6" data-line-number="6">       <span class="ot">→</span> Tree V l u h</a>
-<a class="sourceLine" id="cb29-7" data-line-number="7">       <span class="ot">→</span> l &lt; k &lt; u</a>
-<a class="sourceLine" id="cb29-8" data-line-number="8">       <span class="ot">→</span> Inserted V l u h</a>
-<a class="sourceLine" id="cb29-9" data-line-number="9">insert v vc f <span class="ot">(</span>leaf l&lt;u<span class="ot">)</span> <span class="ot">(</span>l , u<span class="ot">)</span> <span class="ot">=</span></a>
-<a class="sourceLine" id="cb29-10" data-line-number="10">  1+ <span class="ot">(</span>node v vc ▽ <span class="ot">(</span>leaf l<span class="ot">)</span> <span class="ot">(</span>leaf u<span class="ot">))</span></a>
-<a class="sourceLine" id="cb29-11" data-line-number="11">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> prf</a>
-<a class="sourceLine" id="cb29-12" data-line-number="12">  <span class="kw">with</span> compare v k</a>
-<a class="sourceLine" id="cb29-13" data-line-number="13">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(</span>l , <span class="ot">_)</span></a>
-<a class="sourceLine" id="cb29-14" data-line-number="14">    <span class="ot">|</span> tri&lt; a <span class="ot">_</span> <span class="ot">_</span> <span class="kw">with</span> insert v vc f tl <span class="ot">(</span>l , a<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-15" data-line-number="15"><span class="ot">...</span> <span class="ot">|</span> 0+ tl′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl′ tr<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-16" data-line-number="16"><span class="ot">...</span> <span class="ot">|</span> 1+ tl′ <span class="kw">with</span> bl</a>
-<a class="sourceLine" id="cb29-17" data-line-number="17"><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> rotʳ k kc tl′ tr</a>
-<a class="sourceLine" id="cb29-18" data-line-number="18"><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc  ◿  tl′ tr<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-19" data-line-number="19"><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc  ▽  tl′ tr<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-20" data-line-number="20">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">_</span></a>
-<a class="sourceLine" id="cb29-21" data-line-number="21">    <span class="ot">|</span> tri≈ <span class="ot">_</span> refl <span class="ot">_</span> <span class="ot">=</span></a>
-<a class="sourceLine" id="cb29-22" data-line-number="22">        0+ <span class="ot">(</span>node k <span class="ot">(</span>f vc kc<span class="ot">)</span> bl tl tr<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-23" data-line-number="23">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(_</span> , u<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-24" data-line-number="24">    <span class="ot">|</span> tri&gt; <span class="ot">_</span> <span class="ot">_</span> c <span class="kw">with</span> insert v vc f tr <span class="ot">(</span>c , u<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-25" data-line-number="25"><span class="ot">...</span> <span class="ot">|</span> 0+ tr′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl tr′<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-26" data-line-number="26"><span class="ot">...</span> <span class="ot">|</span> 1+ tr′ <span class="kw">with</span> bl</a>
-<a class="sourceLine" id="cb29-27" data-line-number="27"><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc ▽ tl tr′<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-28" data-line-number="28"><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc ◺ tl tr′<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-29" data-line-number="29"><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> rotˡ k kc tl tr′</a></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb31-1" data-line-number="1">insert <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>l u h v<span class="ot">}</span></a>
+<a class="sourceLine" id="cb31-2" data-line-number="2">           <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></a>
+<a class="sourceLine" id="cb31-3" data-line-number="3">           <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-4" data-line-number="4">       <span class="ot">→</span> V k</a>
+<a class="sourceLine" id="cb31-5" data-line-number="5">       <span class="ot">→</span> <span class="ot">(</span>V k <span class="ot">→</span> V k <span class="ot">→</span> V k<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-6" data-line-number="6">       <span class="ot">→</span> Tree V l u h</a>
+<a class="sourceLine" id="cb31-7" data-line-number="7">       <span class="ot">→</span> l &lt; k &lt; u</a>
+<a class="sourceLine" id="cb31-8" data-line-number="8">       <span class="ot">→</span> Inserted V l u h</a>
+<a class="sourceLine" id="cb31-9" data-line-number="9">insert v vc f <span class="ot">(</span>leaf l&lt;u<span class="ot">)</span> <span class="ot">(</span>l , u<span class="ot">)</span> <span class="ot">=</span></a>
+<a class="sourceLine" id="cb31-10" data-line-number="10">  1+ <span class="ot">(</span>node v vc ▽ <span class="ot">(</span>leaf l<span class="ot">)</span> <span class="ot">(</span>leaf u<span class="ot">))</span></a>
+<a class="sourceLine" id="cb31-11" data-line-number="11">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> prf</a>
+<a class="sourceLine" id="cb31-12" data-line-number="12">  <span class="kw">with</span> compare v k</a>
+<a class="sourceLine" id="cb31-13" data-line-number="13">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(</span>l , <span class="ot">_)</span></a>
+<a class="sourceLine" id="cb31-14" data-line-number="14">    <span class="ot">|</span> tri&lt; a <span class="ot">_</span> <span class="ot">_</span> <span class="kw">with</span> insert v vc f tl <span class="ot">(</span>l , a<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-15" data-line-number="15"><span class="ot">...</span> <span class="ot">|</span> 0+ tl′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl′ tr<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-16" data-line-number="16"><span class="ot">...</span> <span class="ot">|</span> 1+ tl′ <span class="kw">with</span> bl</a>
+<a class="sourceLine" id="cb31-17" data-line-number="17"><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> rotʳ k kc tl′ tr</a>
+<a class="sourceLine" id="cb31-18" data-line-number="18"><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc  ◿  tl′ tr<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-19" data-line-number="19"><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc  ▽  tl′ tr<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-20" data-line-number="20">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">_</span></a>
+<a class="sourceLine" id="cb31-21" data-line-number="21">    <span class="ot">|</span> tri≈ <span class="ot">_</span> refl <span class="ot">_</span> <span class="ot">=</span></a>
+<a class="sourceLine" id="cb31-22" data-line-number="22">        0+ <span class="ot">(</span>node k <span class="ot">(</span>f vc kc<span class="ot">)</span> bl tl tr<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-23" data-line-number="23">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(_</span> , u<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-24" data-line-number="24">    <span class="ot">|</span> tri&gt; <span class="ot">_</span> <span class="ot">_</span> c <span class="kw">with</span> insert v vc f tr <span class="ot">(</span>c , u<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-25" data-line-number="25"><span class="ot">...</span> <span class="ot">|</span> 0+ tr′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl tr′<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-26" data-line-number="26"><span class="ot">...</span> <span class="ot">|</span> 1+ tr′ <span class="kw">with</span> bl</a>
+<a class="sourceLine" id="cb31-27" data-line-number="27"><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc ▽ tl tr′<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-28" data-line-number="28"><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc ◺ tl tr′<span class="ot">)</span></a>
+<a class="sourceLine" id="cb31-29" data-line-number="29"><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> rotˡ k kc tl tr′</a></code></pre></div>
 </div>
 </div>
 <h1 id="conclusion">Conclusion</h1>
