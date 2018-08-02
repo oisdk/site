@@ -464,30 +464,23 @@ Because the size of the tree returned might change, we'll need to wrap it in a d
 <div class="row">
   <div class="column">
   ```haskell
-  data Inserted :: Type
-                -> Type
-                -> N
-                -> Type where
-          Stay :: Tree n k v
-               -> Inserted k v n
-          Incr :: Tree (S n) k v
-               -> Inserted k v n
+  data (++?) :: (N -> Type)
+             -> (N -> Type)
+             where
+    Stay :: t n     -> t ++? n
+    Incr :: t (S n) -> t ++? n
   ```
   </div>
   <div class="column">
   ```agda
-  Inserted  : ∀ {v} 
-                (V : Key → Set v)
-                (l u : [∙])
-                (n : ℕ) →
-                Set (k ⊔ v ⊔ r)
-  Inserted V l u n =
-    ∃[ inc? ] Tree V l u (if inc?
-                             then suc n
-                             else n)
 
-  pattern 0+ tr = false  , tr
-  pattern 1+ tr = true   , tr
+  _1?+⟨_⟩ : ∀ {𝓁} (T : ℕ → Set 𝓁) → ℕ → Set 𝓁
+  T 1?+⟨ n ⟩ = ∃[ inc? ] T (if inc?
+                              then suc n
+                              else n)
+
+  pattern 0+_ tr = false , tr
+  pattern 1+_ tr = true  , tr
   ```
   </div>
 </div>
@@ -509,7 +502,7 @@ Using this, we can write the type for right-rotation:
        -> v
        -> Tree (S (S rh)) k v
        -> Tree rh k v
-       -> Inserted k v (S (S rh))
+       -> Tree k v ++? S (S rh)
   ```
   </div>
   <div class="column">
@@ -519,7 +512,7 @@ Using this, we can write the type for right-rotation:
        → V k
        → Tree V lb [ k ] (suc (suc rh))
        → Tree V [ k ] ub rh
-       → Inserted V lb ub (suc (suc rh))
+       → Tree V lb ub 1?+⟨ suc (suc rh) ⟩
   ```
   </div>
 </div>
@@ -615,7 +608,7 @@ pivotal pragmatism and balance approach.
       -> k
       -> v
       -> Tree h k v
-      -> Inserted k v h
+      -> Tree k v ++? h
   insertWith _ v vc Leaf =
     Incr (Node v vc O Leaf Leaf)
   insertWith f v vc (Node k kc bl tl tr) =
@@ -649,7 +642,7 @@ pivotal pragmatism and balance approach.
          → (V k → V k → V k)
          → Tree V l u h
          → l < k < u
-         → Inserted V l u h
+         → Tree V l u 1?+⟨ h ⟩
   insert v vc f (leaf l<u) (l , u) =
     1+ (node v vc ▽ (leaf l) (leaf u))
   insert v vc f (node k kc bl tl tr) prf
