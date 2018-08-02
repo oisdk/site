@@ -306,28 +306,21 @@
 <p>AVL trees maintain their invariants through relatively simple rotations. We’ll start with the right rotation, which fixes an imbalance of two on the left. Because the size of the tree returned might change, we’ll need to wrap it in a datatype:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Inserted</span><span class="ot"> ::</span> <span class="dt">Type</span></a>
-<a class="sourceLine" id="cb28-2" data-line-number="2">              <span class="ot">-&gt;</span> <span class="dt">Type</span></a>
-<a class="sourceLine" id="cb28-3" data-line-number="3">              <span class="ot">-&gt;</span> <span class="dt">N</span></a>
-<a class="sourceLine" id="cb28-4" data-line-number="4">              <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb28-5" data-line-number="5">        <span class="dt">Stay</span><span class="ot"> ::</span> <span class="dt">Tree</span> n k v</a>
-<a class="sourceLine" id="cb28-6" data-line-number="6">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a>
-<a class="sourceLine" id="cb28-7" data-line-number="7">        <span class="dt">Incr</span><span class="ot"> ::</span> <span class="dt">Tree</span> (<span class="dt">S</span> n) k v</a>
-<a class="sourceLine" id="cb28-8" data-line-number="8">             <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v n</a></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1"><span class="kw">data</span><span class="ot"> (++?) ::</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</a>
+<a class="sourceLine" id="cb28-2" data-line-number="2">           <span class="ot">-&gt;</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</a>
+<a class="sourceLine" id="cb28-3" data-line-number="3">           <span class="kw">where</span></a>
+<a class="sourceLine" id="cb28-4" data-line-number="4">  <span class="dt">Stay</span><span class="ot"> ::</span> t n     <span class="ot">-&gt;</span> t <span class="fu">++?</span> n</a>
+<a class="sourceLine" id="cb28-5" data-line-number="5">  <span class="dt">Incr</span><span class="ot"> ::</span> t (<span class="dt">S</span> n) <span class="ot">-&gt;</span> t <span class="fu">++?</span> n</a></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb29-1" data-line-number="1">Inserted  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>v<span class="ot">}</span> </a>
-<a class="sourceLine" id="cb29-2" data-line-number="2">              <span class="ot">(</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-3" data-line-number="3">              <span class="ot">(</span>l u <span class="ot">:</span> [∙]<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-4" data-line-number="4">              <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">→</span></a>
-<a class="sourceLine" id="cb29-5" data-line-number="5">              <span class="dt">Set</span> <span class="ot">(</span>k ⊔ v ⊔ r<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-6" data-line-number="6">Inserted V l u n <span class="ot">=</span></a>
-<a class="sourceLine" id="cb29-7" data-line-number="7">  ∃[ inc? ] Tree V l u <span class="ot">(</span>if inc?</a>
-<a class="sourceLine" id="cb29-8" data-line-number="8">                           then suc n</a>
-<a class="sourceLine" id="cb29-9" data-line-number="9">                           else n<span class="ot">)</span></a>
-<a class="sourceLine" id="cb29-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb29-11" data-line-number="11"><span class="kw">pattern</span> 0+ tr <span class="ot">=</span> false  , tr</a>
-<a class="sourceLine" id="cb29-12" data-line-number="12"><span class="kw">pattern</span> 1+ tr <span class="ot">=</span> true   , tr</a></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb29-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb29-2" data-line-number="2"><span class="ot">_</span>1?+⟨<span class="ot">_</span>⟩ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>𝓁<span class="ot">}</span> <span class="ot">(</span>T <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁<span class="ot">)</span> <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁</a>
+<a class="sourceLine" id="cb29-3" data-line-number="3">T 1?+⟨ n ⟩ <span class="ot">=</span> ∃[ inc? ] T <span class="ot">(</span>if inc?</a>
+<a class="sourceLine" id="cb29-4" data-line-number="4">                            then suc n</a>
+<a class="sourceLine" id="cb29-5" data-line-number="5">                            else n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb29-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb29-7" data-line-number="7"><span class="kw">pattern</span> 0+<span class="ot">_</span> tr <span class="ot">=</span> false , tr</a>
+<a class="sourceLine" id="cb29-8" data-line-number="8"><span class="kw">pattern</span> 1+<span class="ot">_</span> tr <span class="ot">=</span> true  , tr</a></code></pre></div>
 </div>
 </div>
 <p>We could actually have the Agda definition be the same as Haskell’s, it doesn’t make much difference. I’m mainly using it here to demonstrate dependent pairs in Agda. The first member of the pair is just a boolean (increased in height/not increased in height). The second member is a tree whose height <em>depends</em> on the actual value of the boolean. The <code class="sourceCode agda">∃</code> business is just a fancy syntax; it also waggles its eyebrows at the way a (dependent) pair of type <code>(x , y)</code> means “There exists an x such that y”.</p>
@@ -338,7 +331,7 @@
 <a class="sourceLine" id="cb30-2" data-line-number="2">     <span class="ot">-&gt;</span> v</a>
 <a class="sourceLine" id="cb30-3" data-line-number="3">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> (<span class="dt">S</span> rh)) k v</a>
 <a class="sourceLine" id="cb30-4" data-line-number="4">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</a>
-<a class="sourceLine" id="cb30-5" data-line-number="5">     <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v (<span class="dt">S</span> (<span class="dt">S</span> rh))</a></code></pre></div>
+<a class="sourceLine" id="cb30-5" data-line-number="5">     <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="fu">++?</span> <span class="dt">S</span> (<span class="dt">S</span> rh)</a></code></pre></div>
 </div>
 <div class="column">
 <div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb31-1" data-line-number="1">rotʳ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>lb ub rh v<span class="ot">}</span> <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></a>
@@ -346,7 +339,7 @@
 <a class="sourceLine" id="cb31-3" data-line-number="3">     <span class="ot">→</span> V k</a>
 <a class="sourceLine" id="cb31-4" data-line-number="4">     <span class="ot">→</span> Tree V lb [ k ] <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a>
 <a class="sourceLine" id="cb31-5" data-line-number="5">     <span class="ot">→</span> Tree V [ k ] ub rh</a>
-<a class="sourceLine" id="cb31-6" data-line-number="6">     <span class="ot">→</span> Inserted V lb ub <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></a></code></pre></div>
+<a class="sourceLine" id="cb31-6" data-line-number="6">     <span class="ot">→</span> Tree V lb ub 1?+⟨ suc <span class="ot">(</span>suc rh<span class="ot">)</span> ⟩</a></code></pre></div>
 </div>
 </div>
 <p>There are two possible cases, single rotation:</p>
@@ -414,7 +407,7 @@
 <a class="sourceLine" id="cb38-4" data-line-number="4">    <span class="ot">-&gt;</span> k</a>
 <a class="sourceLine" id="cb38-5" data-line-number="5">    <span class="ot">-&gt;</span> v</a>
 <a class="sourceLine" id="cb38-6" data-line-number="6">    <span class="ot">-&gt;</span> <span class="dt">Tree</span> h k v</a>
-<a class="sourceLine" id="cb38-7" data-line-number="7">    <span class="ot">-&gt;</span> <span class="dt">Inserted</span> k v h</a>
+<a class="sourceLine" id="cb38-7" data-line-number="7">    <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="fu">++?</span> h</a>
 <a class="sourceLine" id="cb38-8" data-line-number="8">insertWith _ v vc <span class="dt">Leaf</span> <span class="fu">=</span></a>
 <a class="sourceLine" id="cb38-9" data-line-number="9">  <span class="dt">Incr</span> (<span class="dt">Node</span> v vc <span class="dt">O</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</a>
 <a class="sourceLine" id="cb38-10" data-line-number="10">insertWith f v vc (<span class="dt">Node</span> k kc bl tl tr) <span class="fu">=</span></a>
@@ -446,7 +439,7 @@
 <a class="sourceLine" id="cb39-5" data-line-number="5">       <span class="ot">→</span> <span class="ot">(</span>V k <span class="ot">→</span> V k <span class="ot">→</span> V k<span class="ot">)</span></a>
 <a class="sourceLine" id="cb39-6" data-line-number="6">       <span class="ot">→</span> Tree V l u h</a>
 <a class="sourceLine" id="cb39-7" data-line-number="7">       <span class="ot">→</span> l &lt; k &lt; u</a>
-<a class="sourceLine" id="cb39-8" data-line-number="8">       <span class="ot">→</span> Inserted V l u h</a>
+<a class="sourceLine" id="cb39-8" data-line-number="8">       <span class="ot">→</span> Tree V l u 1?+⟨ h ⟩</a>
 <a class="sourceLine" id="cb39-9" data-line-number="9">insert v vc f <span class="ot">(</span>leaf l&lt;u<span class="ot">)</span> <span class="ot">(</span>l , u<span class="ot">)</span> <span class="ot">=</span></a>
 <a class="sourceLine" id="cb39-10" data-line-number="10">  1+ <span class="ot">(</span>node v vc ▽ <span class="ot">(</span>leaf l<span class="ot">)</span> <span class="ot">(</span>leaf u<span class="ot">))</span></a>
 <a class="sourceLine" id="cb39-11" data-line-number="11">insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> prf</a>
