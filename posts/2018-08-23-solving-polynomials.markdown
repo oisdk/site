@@ -356,53 +356,36 @@ Also, we can kill two birds with one stone here: if we disallow zeroes
 representation. Finally, we have a representation:
 
 ```agda
-mutual
-  Poly : ℕ → Set (a ⊔ ℓ)
-  Poly zero = Lift ℓ Carrier
-  Poly (suc n) = Coeffs n
+infixr 4 0≠_
+record Coeff : Set ℓ where
+  inductive
+  constructor 0≠_
+  field
+    coeff : Carrier
+    .{coeff≠0} : ¬ Zero-C coeff
 
-  Coeffs : ℕ → Set (a ⊔ ℓ)
-  Coeffs n = List (Coeff n × ℕ)
-
-  infixr 4 0≠_
-  record Coeff (i : ℕ) : Set (a ⊔ ℓ) where
-    inductive
-    constructor 0≠_
-    field
-      poly : Poly i
-      .{poly≠0} : ¬ Zero i poly
-
-  Zero : ∀ n → Poly n → Set ℓ
-  Zero zero (lift x) = Zero-C x
-  Zero (suc n) [] = Lift ℓ ⊤
-  Zero (suc n) (x ∷ xs) = Lift ℓ ⊥
+Poly : Set ℓ
+Poly = List (Coeff × ℕ)
 ```
 
-The coefficients are ensured to be nonzero, as promised. We define a function
-(`Zero`) which returns a set based on a polynomial: the record `Coeff` stores an
-element of that set in its second field. When the polynomial is zero, though:
-the set returned is the empty set ($\bot$): so there's no way that there's
-actually an element in that second field. I've also marked the proof as
-irrelevant (that's the dot before it), so that it's not computed at runtime.
+The coefficients are ensured to be nonzero, as promised. We allow the user to
+supply an "Is zero" property, which is what we use to ensure every coefficient
+is indeed not zero. I've also marked the proof as irrelevant (that's the dot
+before it), so that it's not computed at runtime.
 
 To make things easier, we can define a normalizing variant of `∷`:
 
 ```agda
-zero? : ∀ {n} → (p : Poly n) → Dec (Zero n p)
-zero? {zero} (lift x) = x ≟C 0#
-zero? {suc n} [] = yes (lift tt)
-zero? {suc n} (x ∷ xs) = no lower
-
 infixr 8 _⍓_
-_⍓_ : ∀ {n} → Coeffs n → ℕ → Coeffs n
+_⍓_ : Poly → ℕ → Poly
 [] ⍓ i = []
 ((x , j) ∷ xs) ⍓ i = (x , j ℕ.+ i) ∷ xs
 
 infixr 5 _∷↓_
-_∷↓_ : ∀ {n} → (Poly n × ℕ) → Coeffs n → Coeffs n
-(x , i) ∷↓ xs with zero? x
+_∷↓_ : (Carrier × ℕ) → Poly → Poly
+(x , i) ∷↓ xs with zero-c? x
 ... | yes p = xs ⍓ suc i
-... | no ¬p = (x ,~ ¬p , i) ∷ xs
+... | no ¬p = (0≠_ x {¬p} , i) ∷ xs
 ```
 
 # Addition
@@ -448,15 +431,233 @@ Agda, but it does occasionally come up. Even when it does, the complaints often
 complexity. For instance, the straightforward translation of `⊞` doesn't pass:
 
 ```agda
-_⊞_ : ∀ {n} → Poly n → Poly n → Poly n
-_⊞_ {zero} (lift x) (lift y) = lift (x + y)
-_⊞_ {suc n} [] ys = ys
-_⊞_ {suc n} (x ∷ xs) [] = x ∷ xs
-_⊞_ {suc n} ((x , i) ∷ xs) ((y , j) ∷ ys) with ℕ.compare i j
-... | ℕ.less    .i k = (x , i) ∷ xs ⊞ ((y , k) ∷ ys)
-... | ℕ.equal   .i   = (poly x ⊞ poly y , i) ∷↓ (xs ⊞ ys)
-... | ℕ.greater .j k = (y , j) ∷ ((x , k) ∷ xs) ⊞ ys
+_⊞_ : Poly → Poly → Poly
+_⊞_ [] ys = ys
+_⊞_ (x ∷ xs) [] = x ∷ xs
+_⊞_ ((x , i) ∷ xs) ((y , j) ∷ ys) with compare i j
+... | less    .i k = (x , i) ∷ xs ⊞ ((y , k) ∷ ys)
+... | equal   .i   = (coeff x + coeff y , i) ∷↓ (xs ⊞ ys)
+... | greater .j k = (y , j) ∷ ((x , k) ∷ xs) ⊞ ys
 ```
+
+Why? Well because the arguments passed in the recursive calls aren't strictly
+smaller---or, at least, Agda can't see that they are. You see, *we* know that
+(for instance) the `k` passed in is smaller than the `j` before it, but it's not
+trivial to show that, so Agda complains.
+
+One trick to make termination more obvious is too eliminate any redundancy in
+the code. For instance, the first clause above checks if the left-hand-side list
+is empty: but when we call back to the function in the `greater` clause, we
+should be able to skip that check. Here's the strategy: split every clause which
+checks for some condition into its own function, and then call the correct
+function when you know a condition must be passed. 
+
+```agda
+mutual
+  infixl 6 _⊞_
+  _⊞_ : Poly → Poly → Poly
+  [] ⊞ ys = ys
+  ((x , i) ∷ xs) ⊞ ys = ⊞-zip-r x i xs ys
+
+  ⊞-zip-r : Coeff → ℕ → Poly → Poly → Poly
+  ⊞-zip-r x i xs [] = (x , i) ∷ xs
+  ⊞-zip-r x i xs ((y , j) ∷ ys) = ⊞-zip (compare i j) x xs y ys
+
+  ⊞-zip : ∀ {p q}
+        → Ordering p q
+        → Coeff
+        → Poly
+        → Coeff
+        → Poly
+        → Poly
+  ⊞-zip (less    i k) x xs y ys = (x , i) ∷ ⊞-zip-r y k ys xs
+  ⊞-zip (greater j k) x xs y ys = (y , j) ∷ ⊞-zip-r x k xs ys
+  ⊞-zip (equal   i  ) (0≠ x) xs (0≠ y) ys =
+    (x + y , i) ∷↓ (xs ⊞ ys)
+```
+
+And it works! This function is structurally terminating. You'll notice that
+effectively every sum type gets its own function: the first only checks if its
+left argument is cons or nil, the second its right, and the third checks the
+result of the comparison. This should also make the function more efficient:
+we're effectively manually performing call-pattern specialization
+[@jones_call-pattern_2007]. I wonder if that optimization can be used in the
+termination checker?
+
+# Multiplication
+
+The version of multiplication I began this article with was an inlined version
+of shift and add. What I'm going to write here is the same, but not inlined:
+this will allow us to use `⊞` in the definition, and consequently, in the
+proofs:
+
+```agda
+infixl 7 _⋊_
+_⋊_ : Carrier → Poly → Poly
+_⋊_ x = foldr ⋊-step []
+  where
+  ⋊-step : Coeff × ℕ → Poly → Poly
+  ⋊-step (0≠ y , i) ys = (x * y , i) ∷↓ ys
+
+infixl 7 _⊠_
+_⊠_ : Poly → Poly → Poly
+xs ⊠ [] = []
+xs ⊠ ((0≠ y , j) ∷ ys) = foldr ⊠-step [] xs ⍓ j
+  where
+  ⊠-step : Coeff × ℕ → Poly → Poly
+  ⊠-step (0≠ x , i) xs = (x * y , i) ∷↓ (x ⋊ ys ⊞ xs ⊠ ys)
+```
+
+# Binary
+
+Before we continue with the polynomials, we can take a brief detour to talk
+about binary numbers in proof assistants. Quite often a list of booleans will be
+used (instead of the normal Peano encoding) to improve the efficiency of
+manipulation, while maintaining some of the ability to write proofs. Also, some
+[data structures mimic the structure of binary
+numbers](2017-04-23-verifying-data-structures-in-haskell-lhs.html), meaning that
+the proofs can often carry over.
+
+One of the problems that shows up in implementations is the same as our problem
+above: redundant zeroes. There are a
+[number](https://lists.chalmers.se/pipermail/agda/2018/010379.html) of
+[ways](http://www.botik.ru/pub/local/Mechveliani/binNat/) to get around this,
+but here we see a pleasingly simple one: represent it as a sparse polynomial!
+There's no need for pairs, since there's only one possible coefficient (1, since
+we've disallowed zeroes). So all we have instead is a list of the number of
+zeroes between each 1:
+
+```agda
+0  = []
+52 = 001011 = [2,1,0]
+4  = 001    = [2]
+5  = 101    = [0,1]
+10 = 0101   = [1,1]
+
+Bin : Set
+Bin = List ℕ
+```
+
+These are unique representations, and the functions on them are quite simple:
+
+```agda
+incr′ : ℕ → Bin → Bin
+incr′ i [] = i ∷ []
+incr′ i (suc x ∷ xs) = i ∷ x ∷ xs
+incr′ i (zero ∷ xs) = incr′ (suc i) xs
+
+incr : Bin → Bin
+incr = incr′ 0
+
+infixl 6 _+_
+_+_ : Bin → Bin → Bin
+[] + ys = ys
+(x ∷ xs) + ys = +-zip-r x xs ys
+  where
+  +-zip : ∀ {x y} → Ordering x y → Bin → Bin → Bin
+  +-zip-r : ℕ → Bin → Bin → Bin
+
+  +-zip (less    i k) xs ys = i ∷ +-zip-r k ys xs
+  +-zip (equal   k  ) xs ys = incr′ (suc k) (xs + ys)
+  +-zip (greater j k) xs ys = j ∷ +-zip-r k xs ys
+
+  +-zip-r x xs [] = x ∷ xs
+  +-zip-r x xs (y ∷ ys) = +-zip (compare x y) xs ys
+
+pow : ℕ → Bin → Bin
+pow i [] = []
+pow i (x ∷ xs) = (x ℕ.+ i) ∷ xs
+
+infixl 7 _*_
+_*_ : Bin → Bin → Bin
+_*_ [] _ = []
+_*_ (x ∷ xs) = pow x ∘ foldr (λ y ys → y ∷ xs + ys) []
+```
+
+# Multivariate Polynomials
+
+Up until now our polynomial has been an expression in just one variable. For it
+to be truly useful, though, we'd like to be able to extend it to many: luckily
+there's a well-known isomorphism we can use too extend our earlier
+implementation. A multivariate polynomial is one where its coefficients are
+polynomials with one fewer variable [@cheng_functional_2018]. In Agda, this
+looks like the following:
+
+```agda
+mutual
+  Poly : ℕ → Set ℓ
+  Poly zero = Lift ℓ Carrier
+  Poly (suc n) = Coeffs n
+
+  Coeffs : ℕ → Set ℓ
+  Coeffs n = List (Coeff n × ℕ)
+
+  infixr 5 0≠_
+  record Coeff (n : ℕ) : Set ℓ where
+    inductive
+    constructor 0≠_
+    field
+      poly : Poly n
+      .{poly≠0} : ¬ Zero n poly
+
+  Zero : ∀ n → Poly n → Set ℓ
+  Zero zero (lift x) = Zero-C x
+  Zero (suc n) [] = Lift ℓ ⊤
+  Zero (suc n) (x ∷ xs) = Lift ℓ ⊥
+```
+
+The addition function looks similar to before, with an extra first helper to
+check if the polynomial is constant:
+
+```agda
+mutual
+  infixl 6 _⊞_
+  _⊞_ : ∀ {n} → Poly n → Poly n → Poly n
+  _⊞_ {zero} (lift x) (lift y) = lift (x + y)
+  _⊞_ {suc n} = ⊞-coeffs
+
+  ⊞-coeffs : ∀ {n} → Coeffs n → Coeffs n → Coeffs n
+  ⊞-coeffs [] ys = ys
+  ⊞-coeffs ((x , i) ∷ xs) ys = ⊞-zip-r x i xs ys
+
+  ⊞-zip-r : ∀ {n} → Coeff n → ℕ → Coeffs n → Coeffs n → Coeffs n
+  ⊞-zip-r x i xs [] = (x , i) ∷ xs
+  ⊞-zip-r x i xs ((y , j) ∷ ys) = ⊞-zip (compare i j) x xs y ys
+
+  ⊞-zip : ∀ {p q n}
+        → Ordering p q
+        → (x : Coeff n)
+        → Coeffs n
+        → (y : Coeff n)
+        → Coeffs n
+        → Coeffs n
+  ⊞-zip (less    i k) x xs y ys = (x , i) ∷ ⊞-zip-r y k ys xs
+  ⊞-zip (greater j k) x xs y ys = (y , j) ∷ ⊞-zip-r x k xs ys
+  ⊞-zip (equal   i  ) (0≠ x) xs (0≠ y) ys =
+    (x ⊞ y , i) ∷↓ (⊞-coeffs xs ys)
+```
+
+However, there is opportunity for optimization here, as again is exploited in
+the Coq implementation. We actually have a similar kind of gap for nesting as we
+do for exponentiation: consider a polynomial with 4 variables, $W, X, Y, Z$. The
+representation will be something like this:
+
+```agda
+Poly of [W,X,Y,Z] with coefficients C = 
+  Poly of W with coefficients (
+    Poly of X with coefficients (
+      Poly of Y with coefficients (
+        Poly of Z with coefficients C)))
+```
+
+Therefore, if we want to represent the expression $Z^2$, we're going to need
+three levels of nesting before we get to what we need.
+
+# Gapless Nesting
+
+We'll start by attempting a similar approach to removing the exponent gaps.
+Straight away, though, we run into a problem: the poly type is *indexed* by the
+number of variables it contains. 
 
 # List Homomorphism
 @mu_algebra_2009
