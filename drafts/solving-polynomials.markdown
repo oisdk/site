@@ -863,7 +863,7 @@ data Ordering : ℕ → ℕ → Set where
 ≤-compare (≤-s i≤n) (≤-s j≤n) = ≤-compare i≤n j≤n
 ```
 
-A few things too note here:
+A few things to note here:
 
 #. The ≤-compare function is one of those reassuring ones for which Agda can
 automatically fill in the implementation from the type.
@@ -920,6 +920,109 @@ irrel (≤-s x) y = {!!}
 >   been disabled.
 >
 > when checking that the expression ? has type `m≤m ≡ y`
+
+So we're not able to proceed without K, it would seem.
+
+At the same time, I noticed I'd have to prove other, more complex properties
+about `≤`, and it was all looking quite daunting, until I realized that I hadn't
+had to prove *any* of these things for the exponentiation case: why not? Well
+because the precise proofs we needed were given to us, in the result of the
+`compare` function. What we got in `≤-compare` were just proofs about the
+lengths, when really we should have looked for proofs about the inequalities
+themselves.
+
+# Indexed Ordering
+
+So what would a type for comparisons of the inequalities look like? Well, if we
+mimic the one for numbers:
+
+```agda
+data Ordering : ℕ → ℕ → Set where
+  less    : ∀ m k → Ordering m (suc (m + k))
+  equal   : ∀ m   → Ordering m m
+  greater : ∀ m k → Ordering (suc (m + k)) mv
+```
+
+We can see that we'll need some notion of `+` for an inequality: as it turns
+out, *transitivity* is the function we're looking for.
+
+```agda
+infixl 6 _⋈_
+_⋈_ : ∀ {x y z} → x ≤ y → y ≤ z → x ≤ z
+xs ⋈ m≤m = xs
+xs ⋈ (≤-s ys) = ≤-s (xs ⋈ ys)
+```
+
+With that, we can write the new `Ordering` type:
+
+```agda
+data Ordering {n : ℕ} : ∀ {i j}
+                      → (i≤n : i ≤ n)
+                      → (j≤n : j ≤ n)
+                      → Set
+                      where
+  _<_ : ∀ {i j-1}
+      → (i≤j-1 : i ≤ j-1)
+      → (j≤n : suc j-1 ≤ n)
+      → Ordering (≤-s i≤j-1 ⋈ j≤n) j≤n
+  _>_ : ∀ {i-1 j}
+      → (i≤n : suc i-1 ≤ n)
+      → (j≤i-1 : j ≤ i-1)
+      → Ordering i≤n (≤-s j≤i-1 ⋈ i≤n)
+  eq : ∀ {i} → (i≤n : i ≤ n) → Ordering i≤n i≤n
+```
+
+The compare function (written here as an operator):
+
+```agda
+_∺_ : ∀ {i j n}
+    → (x : i ≤ n)
+    → (y : j ≤ n)
+    → Ordering x y
+m≤m ∺ m≤m = eq m≤m
+m≤m ∺ ≤-s y = m≤m > y
+≤-s x ∺ m≤m = x < m≤m
+≤-s x ∺ ≤-s y with x ∺ y
+≤-s .(≤-s i≤j-1 ⋈ y) ∺ ≤-s y                | i≤j-1 < .y = i≤j-1 < ≤-s y
+≤-s x                ∺ ≤-s .(≤-s j≤i-1 ⋈ x) | .x > j≤i-1 = ≤-s x > j≤i-1
+≤-s x                ∺ ≤-s .x               | eq .x = eq (≤-s x)
+```
+
+Again, closely mimicking the sparse exponent encoding, we'll write a "power" and
+normalizing constructor:
+
+```agda
+_Π↑_ : ∀ {n m} → Poly n → (suc n ≤ m) → Poly m
+(xs Π i≤n) Π↑ n≤m = xs Π (≤-s i≤n ⋈ n≤m)
+
+infixr 4 _Π↓_
+_Π↓_ : ∀ {i n} → Coeffs i → suc i ≤ n → Poly n
+[]                       Π↓ i≤n = Κ 0# Π z≤n
+(x ≠0 Δ zero  ∷ [])      Π↓ i≤n = x Π↑ i≤n
+(x₁   Δ zero  ∷ x₂ ∷ xs) Π↓ i≤n = Σ (x₁ Δ zero  ∷ x₂ ∷ xs) Π i≤n
+(x    Δ suc j ∷ xs)      Π↓ i≤n = Σ (x  Δ suc j ∷ xs) Π i≤n
+```
+
+Finally, we can write our addition (I've omitted the parts which haven't
+changed):
+
+```agda
+infixl 6 _⊞_
+_⊞_ : ∀ {n} → Poly n → Poly n → Poly n
+(xs Π i≤n) ⊞ (ys Π j≤n) = ⊞-match (i≤n ∺ j≤n) xs ys
+
+⊞-match : ∀ {i j n}
+      → {i≤n : i ≤ n}
+      → {j≤n : j ≤ n}
+      → Ordering i≤n j≤n
+      → FlatPoly i
+      → FlatPoly j
+      → Poly n
+⊞-match (eq i&j≤n)    (Κ x)  (Κ y)  = Κ (x + y)         Π  i&j≤n
+⊞-match (eq i&j≤n)    (Σ xs) (Σ ys) = ⊞-coeffs    xs ys Π↓ i&j≤n
+⊞-match (i≤j-1 < j≤n)  xs    (Σ ys) = ⊞-inj i≤j-1 xs ys Π↓ j≤n
+⊞-match (i≤n > j≤i-1) (Σ xs)  ys    = ⊞-inj j≤i-1 ys xs Π↓ i≤n
+```
 
 # List Homomorphism
 @mu_algebra_2009
