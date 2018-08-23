@@ -657,7 +657,269 @@ three levels of nesting before we get to what we need.
 
 We'll start by attempting a similar approach to removing the exponent gaps.
 Straight away, though, we run into a problem: the poly type is *indexed* by the
-number of variables it contains. 
+number of variables it contains. The direct way to encode this might look
+something like this:
+
+```agda
+data Poly : ℕ → Set (a ⊔ ℓ) where
+  _Π_ : (gap : ℕ) → ∀ {i} → FlatPoly i → Poly (suc (gap ℕ.+ i))
+```
+
+Where `FlatPoly` is effectively the non-gappy type we had earlier. If you
+actually tried to use this type, though, you'd run into issues:
+
+```agda
+_⊞_ : ∀ {n} → Poly n → Poly n → Poly n
+(gap Π x) ⊞ ys = {!!}
+```
+
+Try to pattern match on `ys` and you'll get the following error:
+
+> I'm not sure if there should be a case for the constructor `_Π_`,
+> because I get stuck when trying to solve the following unification
+> problems (inferred index `≟` expected index):
+>
+> ```agda
+>   suc (gap₂ ℕ.+ i₁) ≟ suc (gap₁ ℕ.+ i)
+> ```
+>
+> when checking that the expression ? has type
+>
+> ```agda
+>   Poly (suc (gap ℕ.+ ;i))
+> ```
+
+Why aren't you sure, Agda?! There is a case for it! I know there is!
+
+The problem is that Agda is trying to unify something with a *function*, rather
+than constructors. Avoiding this problem is known as "Don't touch the green
+slime!" [@mcbride_polynomial_2018]:
+
+> When combining prescriptive and descriptive indices, ensure both are in
+> constructor form. Exclude defined functions which yield difficult
+> unification problems.
+
+So we're going to have to do something else.
+
+# Storing Inequalities
+
+Since all we need to know about the nested polynomial is that it does indeed
+have a smaller number of variables than the outer, we can store that fact in a
+proof:
+
+```agda
+infixl 6 _Π_
+record Poly (n : ℕ) : Set (a ⊔ ℓ) where
+  inductive
+  constructor _Π_
+  field
+    {i} : ℕ
+    flat  : FlatPoly i
+    i≤n   : i ≤ n
+```
+
+We won't get any of the problems above using this approach, and we can go ahead
+with the rest of the implementation. Like with the exponents, we should store a
+proof that this nesting structure is as compact as possible: that it's in normal
+form. There are two cases when a polynomial isn't in normal form: when it's an
+empty list (it could instead be the constant 0), or when it only has one
+constant coefficient. We can express this, like with `Zero`, in a function:
+
+```agda
+mutual
+  infixl 6 _Π_
+  record Poly (n : ℕ) : Set (a ⊔ ℓ) where
+    inductive
+    constructor _Π_
+    field
+      {i} : ℕ
+      flat  : FlatPoly i
+      i≤n   : i ≤ n
+
+  data FlatPoly : ℕ → Set (a ⊔ ℓ) where
+    Κ : Carrier → FlatPoly 0
+    Σ : ∀ {n} → (xs : Coeffs n) → .{xn : Norm xs} → FlatPoly (suc n)
+
+  infixl 6 _Δ_
+  record CoeffExp (i : ℕ) : Set (a ⊔ ℓ) where
+    inductive
+    constructor _Δ_
+    field
+      coeff : Coeff i
+      pow   : ℕ
+
+  Coeffs : ℕ → Set (a ⊔ ℓ)
+  Coeffs n = List (CoeffExp n)
+
+  infixl 6 _≠0
+  record Coeff (i : ℕ) : Set (a ⊔ ℓ) where
+    inductive
+    constructor _≠0
+    field
+      poly : Poly i
+      .{poly≠0} : ¬ Zero poly
+
+  Zero : ∀ {n} → Poly n → Set ℓ
+  Zero (Κ x       Π _) = Zero-C x
+  Zero (Σ []      Π _) = Lift ℓ ⊤
+  Zero (Σ (_ ∷ _) Π _) = Lift ℓ ⊥
+
+  Norm : ∀ {i} → Coeffs i → Set
+  Norm []                  = ⊥
+  Norm (_ Δ zero  ∷ [])    = ⊥
+  Norm (_ Δ zero  ∷ _ ∷ _) = ⊤
+  Norm (_ Δ suc _ ∷ _)     = ⊤
+```
+
+# Choosing the Inequality
+
+There are multiple ways to express `x ≤ y` in Agda: in the standard library,
+three of them are defined for natural numbers.
+
+## Option 1: The Standard Way
+
+The first definition of `≤` is as follows:
+
+```agda
+data _≤_ : ℕ → ℕ → Set where
+   z≤n : ∀ {n}                 → zero  ≤ n
+   s≤s : ∀ {m n} (m≤n : m ≤ n) → suc m ≤ suc n
+```
+
+It actually worked fine, for a bit, until I realized that I had actually made
+the time complexity *worse* by using this encoding of gaps. To understand why,
+remember the addition function above with the gappy exponent encoding. For it to
+work, we needed to compare the gaps, and proceed based on that. We'll need to do
+a similar comparison on variable counts for this gappy encoding. However, we
+don't store the *gaps* now, we store the number of variables in the nested
+polynomial. Consider the following sequence of nestings:
+
+```agda
+(5 ≤ 6), (4 ≤ 5), (3 ≤ 4), (1 ≤ 3), (0 ≤ 1)
+```
+
+The outer polynomial has 6 variables, but it has a gap to its inner polynomial
+of 5, and so on. The comparisons will be made on 5, 4, 3, 1, and 0. Like
+repeatedly taking the length of the tail of a list, this is quadratic. There
+must be a better way.
+
+## Option 2: With Refl
+
+Once you realize we need to be comparing the gaps and not the tails, the third
+encoding of `≤` jumps out:
+
+```agda
+record _≤″_ (m n : ℕ) : Set where
+  constructor less-than-or-equal
+  field
+    {k}   : ℕ
+    proof : m + k ≡ n
+```
+
+It stores the gap *right there*: in `k`!
+
+Unfortunately, though, we're still stuck. While you can indeed run your
+comparison on `k`, you're not left with much information about the rest. Say,
+for instance, you find out that two respective `k`s are equal. What about the
+`m`s? Of course, you *can* show that they must be equal as well, but it requires
+a proof. Similarly in the less-than or greater-than cases: each time, you need
+to show that the information about `k` corresponds to information about `m`.
+Again, all of this can be done, but it all requires propositional proofs, which
+are messy, and slow. Erasure is an option, but I'm not sure of the correctness
+of that approach.
+
+## Option 3
+
+What we really want is to *run* the comparison function on the gap, but get the
+result on the tail. Turns out we can do exactly that with the following:
+
+```agda
+infix 4 _≤_
+data _≤_ (m : ℕ) : ℕ → Set where
+  m≤m : m ≤ m
+  ≤-s : ∀ {n} → (m≤n : m ≤ n) → m ≤ suc n
+```
+
+(This is a rewritten version of _≤′_ from Data.Nat.Base).
+
+While this structure stores the same information as ≤, it does so by induction
+on the *gap*. That structure can be used to write a comparison function which
+was linear in the size of the gap (even though it was comparing the length of
+the tail):
+
+```agda
+data Ordering : ℕ → ℕ → Set where
+  less    : ∀ {n m} → n ≤ m → Ordering n (suc m)
+  greater : ∀ {n m} → m ≤ n → Ordering (suc n) m
+  equal   : ∀ {n}           → Ordering n n
+
+≤-compare : ∀ {i j n}
+          → (i≤n : i ≤ n)
+          → (j≤n : j ≤ n)
+          → Ordering i j
+≤-compare m≤m m≤m = equal
+≤-compare m≤m (≤-s m≤n) = greater m≤n
+≤-compare (≤-s m≤n) m≤m = less m≤n
+≤-compare (≤-s i≤n) (≤-s j≤n) = ≤-compare i≤n j≤n
+```
+
+A few things too note here:
+
+#. The ≤-compare function is one of those reassuring ones for which Agda can
+automatically fill in the implementation from the type.
+#. This function looks somewhat similar to the one for comparing ℕ in Data.Nat,
+and as a result, the "matching" logic for degree and number of variables began
+too look similar.
+
+# Irrelevance and K
+
+I proceeded happily with the new proof, and the functions began to materialize
+mechanically. The proofs did, too, until I was asked to prove the following:
+
+```agda
+∀ {i n}
+→ (x : i ≤ n)
+→ (y : i ≤ n)
+→ ∀ xs Ρ
+→ Σ⟦ xs ⟧ (drop-1 x Ρ) ≈ Σ⟦ xs ⟧ (drop-1 y Ρ)
+```
+
+I've already proven that both sides have the same polynomials, and the same
+variables. All I needed to do now was show that the `drop-1` functions behaved
+the same. These simply drop the gap from the front of the supplied vector, so
+the nested polynomial gets the variables it needs.
+
+It seems like it shouldn't be a problem: after all, every inequality proof is
+*irrelevant*: its structure is entirely determined by its type. By all
+accounts, we should be able to prove something like this:
+
+```agda
+irrel : ∀ {i  n}
+      → (x : i ≤ n)
+      → (y : i ≤ n)
+      → x ≡ y
+```
+
+If you go ahead and try it, though, with `--without-K` turned on, you'll get the
+following error when you try pattern match on `y` in the first line:
+
+```agda
+irrel m≤m y = {!!}
+irrel (≤-s x) y = {!!}
+```
+
+> I'm not sure if there should be a case for the constructor `m≤m`,
+> because I get stuck when trying to solve the following unification
+> problems (inferred index `≟` expected index):
+> ```agda
+>   i ≟ i
+> ```
+> Possible reason why unification failed:
+>
+> > Cannot eliminate reflexive equation `i = i` of type `ℕ` because K has
+>   been disabled.
+>
+> when checking that the expression ? has type `m≤m ≡ y`
 
 # List Homomorphism
 @mu_algebra_2009
@@ -669,10 +931,6 @@ Semiring has a free equivalent: [@rivas_monoids_2015]
 # Correct by construction
 
 @geuvers_automatically_2017
-
-@mcbride_polynomial_2018
-
-# K
 
 # Setoid
 
