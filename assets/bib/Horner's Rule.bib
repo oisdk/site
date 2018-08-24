@@ -223,4 +223,24 @@ This project considers the development of such automated theorem provers in Agda
   file = {/Users/doisinkidney/Zotero/storage/DB4NV3DI/1013535783234473984.html}
 }
 
+@inproceedings{kiselyov_extensible_2013-2,
+  address = {New York, NY, USA},
+  series = {Haskell '13},
+  title = {Extensible {{Effects}}: {{An Alternative}} to {{Monad Transformers}}},
+  isbn = {978-1-4503-2383-3},
+  shorttitle = {Extensible {{Effects}}},
+  doi = {10.1145/2503778.2503791},
+  abstract = {We design and implement a library that solves the long-standing problem of combining effects without imposing restrictions on their interactions (such as static ordering). Effects arise from interactions between a client and an effect handler (interpreter); interactions may vary throughout the program and dynamically adapt to execution conditions. Existing code that relies on monad transformers may be used with our library with minor changes, gaining efficiency over long monad stacks. In addition, our library has greater expressiveness, allowing for practical idioms that are inefficient, cumbersome, or outright impossible with monad transformers. Our alternative to a monad transformer stack is a single monad, for the coroutine-like communication of a client with its handler. Its type reflects possible requests, i.e., possible effects of a computation. To support arbitrary effects and their combinations, requests are values of an extensible union type, which allows adding and, notably, subtracting summands. Extending and, upon handling, shrinking of the union of possible requests is reflected in its type, yielding a type-and-effect system for Haskell. The library is lightweight, generalizing the extensible exception handling to other effects and accurately tracking them in types.},
+  language = {en},
+  urldate = {2018-08-24},
+  url = {http://okmij.org/ftp/Haskell/extensible/},
+  booktitle = {Proceedings of the 2013 {{ACM SIGPLAN Symposium}} on {{Haskell}}},
+  publisher = {{ACM}},
+  author = {Kiselyov, Oleg and Sabry, Amr and Swords, Cameron},
+  year = {2013},
+  keywords = {coroutine,effect handler,effect interaction,Effects,Haskell,monad,monad transformer,open union,type and effect system},
+  pages = {59--70},
+  file = {/Users/doisinkidney/Zotero/storage/PDUC9QH6/exteff.pdf;/Users/doisinkidney/Zotero/storage/XTZHSAEH/Kiselyov et al. - 2013 - Extensible Effects An Alternative to Monad Transf.pdf}
+}
+
 

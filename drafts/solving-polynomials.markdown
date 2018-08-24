@@ -16,7 +16,7 @@ xs <.> (yh:ys) = foldr f [] xs
     g x y a [] = [(x, y)] : a []
 ```
 
-It's the discrete convolution of the two lists.
+It's an implementation of discrete convolution no lists.
 [Previously](2017-10-13-convolutions-and-semirings.html) I discussed it in
 relation to search patterns: it corresponds (somewhat) to breadth-first search
 (rather than depth-first).
@@ -59,11 +59,20 @@ $$16 - 8x -15x^2 + 4x^3 + 4x^4$$
 
 # So What's The Use?
 
-Now these things have numerous uses, but what I've been using them for is their
-"freeness". I'm going to be a bit fast and loose with the definitions here, but
-bear with me: free objects are "minimal" examples of some class (class can
-indeed be a Haskell class here, but it's more general). The classic example is
-lists:
+This operation on lists, along with its companion in the form of addition:
+
+```haskell
+(<+>) :: [a] -> [a] -> [[a]]
+[] <+> ys = map pure ys
+xs <+> [] = map pure xs
+(x:xs) <+> (y:ys) = [x,y] : (xs <+> ys)
+```
+
+allow us to interpret lists as polynomials. This kind of thing has a number of
+uses, but for now I'm interested in the "freeness" of this representation. I'm
+going to be a bit fast and loose with the definitions here, but bear with me:
+free objects are "minimal" examples of some class (class can indeed be a Haskell
+class here, but it's more general). The classic example is lists:
 
 ```haskell
 data List a = Nil | Cons a (List a)
@@ -91,71 +100,140 @@ empty = Nil
 -- xs ++ empty = xs
 ```
 
-And you get *nothing else*. Combining lists isn't commutative, for instance.
+And you get *nothing else*. One could imagine a class of commutative monoids,
+for instance, which adds commutativity to the requirement of associativity: any
+free monoid should not be a member of this class, as they'd no longer be a
+"minimal" monoid, because they supported an extra law. In short, free objects of
+some class are those which:
 
-The other thing we'll need is `foldMap`{.haskell}:
+#. Obey the laws of the class.
+#. Do not obey any further laws which can't be derived from the laws of the
+   class.
+
+You should be a little suspicious of the informality of the language there:
+we'll nail down the definition a little more later.
+
+We'll need two more things:
 
 ```haskell
-foldMap :: forall m. Monoid m => (a -> m) -> List a -> m
+pure :: forall a.             a -> List a
+fold :: forall m. Monoid m => List m -> m
 ```
 
-`foldMap`{.haskell} kind of "interprets" the list in some underlying monoid.
-Think about it like this: in the middle of writing some program, you find
-yourself scrawling some massive, complex expression using the monoid
-operations. However, indecisive programmer that you are, you can't quite decide
-on *which* monoid you're going to end up using. Here's where lists come in: you
-can procrastinate, writing all of your expressions in terms of lists, and then
-interpreting them with `foldMap` when you're good and ready. In case you're
-worried about the correctness of this approach, `foldMap` forms a valid monoid
-homomorphism, which means it satisfies the laws:
+`pure`{.haskell} here is indeed the same pure as the one from
+`Applicative`{.haskell}, but that's just a coincidence, I'm afraid---we won't be
+using it for anything applicative-y today.
+
+These two functions will allow us to treat lists as a little language for monoid
+expressions. `pure` will give use variables, and `fold`{.haskell} will let us
+execute the AST.
+
+The correctness of this language is ensured by the fact that `fold` is a
+*homomorphism*. This means it follows the laws:
 
 ```haskell
-foldMap f (xs ++ ys) == foldMap f xs <> foldMap f ys
-foldMap f empty == mempty
+fold (xs ++ ys) == fold xs <> fold ys
+fold [] == mempty
 ```
 
 In other words, it doesn't make a difference if you use the monoid operations on
-lists and then `foldMap`, or if you `foldMap` and then use the monoid operations
+lists and then `fold`, or if you `fold` and then use the monoid operations
 on the result: you'll still get the same answer.
 
-The somewhat silly example above probably didn't convince you of the usefulness
-of the homomorphism. After all, when you decide what monoid you're going to use,
-why not just go back to the original expressions and sub it in?
+# No Really, What's The Use?
 
-Well, there's one place you really *do* have to postpone choosing concrete
-values: inside a lambda. Now, ordinarily, this would be no problem, since most
-of the time we only inspect lambdas by running them. This is not the case if we
-want too *prove* things about those lambdas, though. Consider the proposition:
+Yeah, yeah. Well, free objects in combination with homomorphisms are probably
+most well-known in Haskell in the context of "extensible effects"
+[@kiselyov_extensible_2013-2].
+
+Here, though, we're going to use the "AST" way of looking at things to prove
+equality of equations written in the class of the free object.
+
+In Agda, you have two notions of equality. Definitional equality is the more
+superficial of the two: if two expressions *look* equal, they are.
 
 ```agda
-∀ w x y z → (w <> x) <> (y <> z) ≡ w <> ((x <> y) <> z)
+x + y ≡ x + y
 ```
 
-We know it's true, because `<>` is associative, so parentheses don't matter, but
-it's difficult to convince the compiler of that fact. If there were concrete
-values subbed in, we could run the expression, and just look at the result:
-again, though, we want to prove this property in the abstract. If we use
-*lists*, though:
+Well, it goes a little further than that: it will run functions to normal form,
+without looking under a lambda. That's why, with the following definition of
+`+`:
+
+```agda
+_+_ : ℕ → ℕ → ℕ
+zero + y = y
+suc x + y = suc (x + y)
+```
+
+The first function here will typecheck, and the second will not:
+
+```agda
++-identityˡ : ∀ x → 0 + x ≡ x
++-identityˡ _ = refl
+
++-identityʳ : ∀ x → x + 0 ≡ x
++-identityʳ _ = refl
+```
+
+We *can* get the second to typecheck, though, like so:
+
+```agda
++-identityʳ : ∀ x → x + 0 ≡ x
++-identityʳ zero = refl
++-identityʳ (suc x) = cong suc (+-identityʳ x)
+```
+
+We just need to hold Agda's hand, showing it that all cases do indeed result in
+the correct answer.
+
+This gets tedious, fast, especially when there are lots of variables involved.
+Consider:
+
+```agda
+prop : ∀ w x y z →  w ∙ (((x ∙ ε) ∙ y) ∙ z) ≈ (w ∙ x) ∙ (y ∙ z)
+```
+
+The proof is ugly and mechanical:
+
+```agda
+prop : ∀ w x y z →  w ∙ (((x ∙ ε) ∙ y) ∙ z) ≈ (w ∙ x) ∙ (y ∙ z)
+prop w x y z =
+  (refl ⟨ ∙-cong ⟩ assoc (x ∙ ε) y z)
+    ⟨ trans ⟩
+  (sym (assoc w (x ∙ ε) (y ∙ z)))
+    ⟨ trans ⟩
+  (refl ⟨ ∙-cong ⟩ identityʳ x ⟨ ∙-cong ⟩ refl)
+```
+
+We know it's true, because `∙` is associative, so parentheses don't matter, and
+`ε` is the empty value, so it doesn't affect anything, but it's difficult to
+convince the compiler of that fact. Like the examples with `+` above, the `∙`
+may rely on the values of its arguments to run, so Agda can't go any further
+with the expression.
+
+Here's where lists come in: they don't rely on their contents *at all* for the
+monoid operations (otherwise they wouldn't be free monoids), so they can run all
+they like. In fact:
+
 
 ```agda
 prop : ∀ {a} {A : Set a} {w x y z : A}
-     → ([ w ] ++ [ x ]) ++ ([ y ] ++ [ z ])
-     ≡ [ w ] ++ (([ x ] ++ [ y ]) ++ [ z ])
+     →  [ w ] ++ ((([ x ] ++ []) ++ [ y ]) ++ [ z ])
+     ≡ ([ w ] ++ [ x ]) ++ ([ y ] ++ [ z ])
 prop = refl
 ```
 
-The expression doesn't rely on the contents of the lists, so it can be run
-without inspecting them. What's more, because we know that `foldMap`{.haskell}
-forms a homomorphism, we can use the above proof to prove the original identity.
 Effectively, lists are a normal form for expressions over monoids: if the two
 normalized expressions are equal, then the expressions themselves must be equal.
-The implementation is a little weird, but once done you can write stuff like
-this:
+In combination with the homomorphism, this can be used to make an automatic
+solver. The implementation is a little weird, but once done you can write stuff
+like this:
 
 ```agda
-prop : ∀ w x y z → (w ∙ x) ∙ (y ∙ z) ≈ w ∙ ((x ∙ y) ∙ z)
+prop : ∀ w x y z → w ∙ (((x ∙ ε) ∙ y) ∙ z) ≈ (w ∙ x) ∙ (y ∙ z)
 prop = solve 4
-  (λ w x y z → (w ⊕ x) ⊕ (y ⊕ z) ⊜ w ⊕ ((x ⊕ y) ⊕ z))
+  (λ w x y z →  w ⊕ (((x ⊕ id) ⊕ y) ⊕ z) ⊜ (w ⊕ x) ⊕ (y ⊕ z))
   refl
 ```
 
@@ -224,22 +302,6 @@ _⊠_ : Poly → Poly → Poly
 (x ∷ xs) ⊠ (y ∷ ys) =
   x * y ∷ (List.map (x *_) ys ⊞ (xs ⊠ (y ∷ ys)))
 ```
-
-Here, we've defined addition and multiplication. One of the important concepts
-we'll rely on is *Horner's rule*: it's a method for evaluating these polynomials
-that reduces the number of multiplications we have to perform. It looks like
-this:
-
-```agda
-⟦_⟧ : Poly → Carrier → Carrier
-⟦ p ⟧ ρ = List.foldr (λ x xs → x + xs * ρ) 0# p
-```
-
-# Multiple Variables
-
-...
-
-(naive version)
 
 # Proving Homomorphism
 
@@ -356,15 +418,15 @@ Also, we can kill two birds with one stone here: if we disallow zeroes
 representation. Finally, we have a representation:
 
 ```agda
-infixr 4 0≠_
-record Coeff : Set ℓ where
+infixr 5 0≠_
+record Coeff : Set (a ⊔ ℓ) where
   inductive
   constructor 0≠_
   field
     coeff : Carrier
     .{coeff≠0} : ¬ Zero-C coeff
 
-Poly : Set ℓ
+Poly : Set (a ⊔ ℓ)
 Poly = List (Coeff × ℕ)
 ```
 
@@ -418,10 +480,14 @@ information on its arguments.
 
 # Suspicion
 
-While the gapless representation is *meant* to be more efficient, it looks unary
-to me.
-
-...
+While the gapless representation is *meant* to be more efficient, that compare
+function is linear in the size of its smaller argument, so I don't see
+how---with peano numbers, at any rate---we have actually improved complexity.
+We've definitely reduced the number of operations on the underlying semiring,
+and there may be efficiency gains elsewhere (multiplication seems a good bit
+faster), but I wonder if there's a way to use a more efficient version of
+`compare`? For instance, both `_+_` and `_*_` call out to primitive
+implementations; it would be interesting to do the same for `compare`.
 
 # Termination & Redundancy
 
@@ -542,9 +608,13 @@ These are unique representations, and the functions on them are quite simple:
 
 ```agda
 incr′ : ℕ → Bin → Bin
+incr″ : ℕ → ℕ → Bin → Bin
+
 incr′ i [] = i ∷ []
-incr′ i (suc x ∷ xs) = i ∷ x ∷ xs
-incr′ i (zero ∷ xs) = incr′ (suc i) xs
+incr′ i (x ∷ xs) = incr″ i x xs
+
+incr″ i zero xs = incr′ (suc i) xs
+incr″ i (suc x) xs = i ∷ x ∷ xs
 
 incr : Bin → Bin
 incr = incr′ 0
@@ -554,15 +624,32 @@ _+_ : Bin → Bin → Bin
 [] + ys = ys
 (x ∷ xs) + ys = +-zip-r x xs ys
   where
-  +-zip : ∀ {x y} → Ordering x y → Bin → Bin → Bin
-  +-zip-r : ℕ → Bin → Bin → Bin
+  +-zip   :     ∀ {x y} → Ordering x y → Bin → Bin → Bin
+  ∔-zip   : ℕ → ∀ {i j} → Ordering i j → Bin → Bin → Bin
+  +-zip-r :     ℕ → Bin → Bin → Bin
+  ∔-zip-r : ℕ → ℕ → Bin → Bin → Bin
+  ∔-cin   : ℕ → Bin → Bin → Bin
+  ∔-zip-c : ℕ → ℕ → ℕ → Bin → Bin → Bin
 
   +-zip (less    i k) xs ys = i ∷ +-zip-r k ys xs
-  +-zip (equal   k  ) xs ys = incr′ (suc k) (xs + ys)
+  +-zip (equal   k  ) xs ys = ∔-cin (suc k) xs ys
   +-zip (greater j k) xs ys = j ∷ +-zip-r k xs ys
 
   +-zip-r x xs [] = x ∷ xs
   +-zip-r x xs (y ∷ ys) = +-zip (compare x y) xs ys
+
+  ∔-cin i [] = incr′ i
+  ∔-cin i (x ∷ xs) = ∔-zip-r i x xs
+
+  ∔-zip-r i x xs [] = incr″ i x xs
+  ∔-zip-r i x xs (y ∷ ys) = ∔-zip i (compare y x) ys xs
+
+  ∔-zip-c c zero k xs ys = ∔-zip-r (suc c) k xs ys
+  ∔-zip-c c (suc i) k xs ys = c ∷ i ∷ +-zip-r k xs ys
+
+  ∔-zip c (less    i k) xs ys = ∔-zip-c c i k ys xs
+  ∔-zip c (greater j k) xs ys = ∔-zip-c c j k xs ys
+  ∔-zip c (equal     k) xs ys = c ∷ ∔-cin k xs ys
 
 pow : ℕ → Bin → Bin
 pow i [] = []
@@ -840,12 +927,12 @@ data _≤_ (m : ℕ) : ℕ → Set where
   ≤-s : ∀ {n} → (m≤n : m ≤ n) → m ≤ suc n
 ```
 
-(This is a rewritten version of _≤′_ from Data.Nat.Base).
+(This is a rewritten version of `_≤′_` from Data.Nat.Base).
 
-While this structure stores the same information as ≤, it does so by induction
-on the *gap*. That structure can be used to write a comparison function which
-was linear in the size of the gap (even though it was comparing the length of
-the tail):
+While this structure stores the same information as `_≤_`, it does so by
+induction on the *gap*. That structure can be used to write a comparison
+function which was linear in the size of the gap (even though it was comparing
+the length of the tail):
 
 ```agda
 data Ordering : ℕ → ℕ → Set where
@@ -865,7 +952,7 @@ data Ordering : ℕ → ℕ → Set where
 
 A few things to note here:
 
-#. The ≤-compare function is one of those reassuring ones for which Agda can
+#. The `≤-compare` function is one of those reassuring ones for which Agda can
 automatically fill in the implementation from the type.
 #. This function looks somewhat similar to the one for comparing ℕ in Data.Nat,
 and as a result, the "matching" logic for degree and number of variables began
@@ -1023,6 +1110,51 @@ _⊞_ : ∀ {n} → Poly n → Poly n → Poly n
 ⊞-match (i≤j-1 < j≤n)  xs    (Σ ys) = ⊞-inj i≤j-1 xs ys Π↓ j≤n
 ⊞-match (i≤n > j≤i-1) (Σ xs)  ys    = ⊞-inj j≤i-1 ys xs Π↓ i≤n
 ```
+
+# Evaluation
+
+For evaluating our polynomials, we'll make use of "Horner's rule": this is just
+a simple algorithm that cuts down on the number of multiplications required. In
+the gappy encoding, it would have looked like this:
+
+```agda
+⟦_⟧ : Poly → Carrier → Carrier
+⟦ xs ⟧ ρ = foldr (λ y ys → y + ys * ρ) 0# xs
+```
+
+Adding the gaps in, we need to encode something like this:
+
+```agda
+⟦_⟧ : Poly → Carrier → Carrier
+⟦ xs ⟧ ρ = foldr coeff-eval 0# xs
+  where
+  coeff-eval : Coeff × ℕ → Carrier → Carrier
+  coeff-eval (0≠ x , i) xs = (x + xs * ρ) * ρ ^ i
+```
+
+Finally, if we want to handle multiple variables, we'll get the following:
+
+```agda
+drop : ∀ {i n} → i ≤ n → Vec Carrier n → Vec Carrier i
+drop m≤m Ρ = Ρ
+drop (≤-s si≤n) (_ ∷ Ρ) = drop si≤n Ρ
+
+vec-uncons : ∀ {n} → Vec Carrier (suc n) → Carrier × Vec Carrier n
+vec-uncons (x ∷ xs) = x , xs
+
+drop-1 : ∀ {i n} → suc i ≤ n → Vec Carrier n → Carrier × Vec Carrier i
+drop-1 si≤n xs = vec-uncons (drop si≤n xs)
+
+mutual
+  Σ⟦_⟧ : ∀ {n} → Coeffs n → (Carrier × Vec Carrier n) → Carrier
+  Σ⟦ x ≠0 Δ i ∷ xs ⟧ (ρ , Ρ) = (⟦ x ⟧ Ρ + Σ⟦ xs ⟧ (ρ , Ρ) * ρ) * ρ ^ i
+  Σ⟦ [] ⟧ _ = 0#
+
+  ⟦_⟧ : ∀ {n} → Poly n → Vec Carrier n → Carrier
+  ⟦ Κ x  Π i≤n ⟧ _ = x
+  ⟦ Σ xs Π i≤n ⟧ Ρ = Σ⟦ xs ⟧ (drop-1 i≤n Ρ)
+```
+
 
 # List Homomorphism
 @mu_algebra_2009
