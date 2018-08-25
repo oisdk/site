@@ -486,8 +486,38 @@ how---with peano numbers, at any rate---we have actually improved complexity.
 We've definitely reduced the number of operations on the underlying semiring,
 and there may be efficiency gains elsewhere (multiplication seems a good bit
 faster), but I wonder if there's a way to use a more efficient version of
-`compare`? For instance, both `_+_` and `_*_` call out to primitive
-implementations; it would be interesting to do the same for `compare`.
+`compare`?
+
+Using some of the tricks in Ulf Norell's [Agda
+prelude](https://github.com/UlfNorell/agda-prelude), we can implement an unsafe
+version:
+
+```agda
+less-hom : ∀ n m → ((n < m) ≡ true) → m ≡ suc (n + (m - n - 1))
+less-hom zero zero ()
+less-hom zero (suc m) _ = refl
+less-hom (suc n) zero ()
+less-hom (suc n) (suc m) n<m = cong suc (less-hom n m n<m)
+
+eq-hom : ∀ n m → ((n == m) ≡ true) → n ≡ m
+eq-hom zero zero _ = refl
+eq-hom zero (suc m) ()
+eq-hom (suc n) zero ()
+eq-hom (suc n) (suc m) n≡m = cong suc (eq-hom n m n≡m)
+
+gt-hom : ∀ n m → ((n < m) ≡ false) → ((n == m) ≡ false) → n ≡ suc (m + (n - m - 1))
+gt-hom zero zero n<m ()
+gt-hom zero (suc m) () n≡m
+gt-hom (suc n) zero n<m n≡m = refl
+gt-hom (suc n) (suc m) n<m n≡m = cong suc (gt-hom n m n<m n≡m)
+
+compare : (n m : ℕ) → Ordering n m
+compare n m with n < m  | inspect (_<_ n) m
+compare n m | true | [ n<m ] rewrite TrustMe.erase (less-hom n m n<m) = less n (m - n - 1)
+compare n m | false | [ n≮m ] with n == m | inspect (_==_ n) m
+compare n m | false | [ n≮m ] | true  | [ n≡m ] rewrite TrustMe.erase (eq-hom n m n≡m) = equal m
+compare n m | false | [ n≮m ] | false | [ n≢m ] rewrite TrustMe.erase (gt-hom n m n≮m n≢m) = greater m (n - m - 1)v
+```
 
 # Termination & Redundancy
 
@@ -1155,18 +1185,24 @@ mutual
   ⟦ Σ xs Π i≤n ⟧ Ρ = Σ⟦ xs ⟧ (drop-1 i≤n Ρ)
 ```
 
+We see here again that the choice of inequality was the right one: we only pay
+for the amount of the vector that we drop, rather than for the size of the tail,
+as we might using another one of the inequalities.
+
+# Writing the Proofs
 
 # List Homomorphism
 @mu_algebra_2009
 
-# Other structures
+# Setoid
 
-Semiring has a free equivalent: [@rivas_monoids_2015]
+-- Traced
+-- Isomorphisms
 
 # Correct by construction
 
 @geuvers_automatically_2017
 
-# Setoid
+# Other structures
 
-traced
+Semiring has a free equivalent: [@rivas_monoids_2015]
