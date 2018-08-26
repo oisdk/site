@@ -16,7 +16,7 @@ xs <.> (yh:ys) = foldr f [] xs
     g x y a [] = [(x, y)] : a []
 ```
 
-It's an implementation of discrete convolution no lists.
+It's an implementation of discrete convolution on lists.
 [Previously](2017-10-13-convolutions-and-semirings.html) I discussed it in
 relation to search patterns: it corresponds (somewhat) to breadth-first search
 (rather than depth-first).
@@ -110,9 +110,6 @@ some class are those which:
 #. Do not obey any further laws which can't be derived from the laws of the
    class.
 
-You should be a little suspicious of the informality of the language there:
-we'll nail down the definition a little more later.
-
 We'll need two more things:
 
 ```haskell
@@ -125,7 +122,7 @@ fold :: forall m. Monoid m => List m -> m
 using it for anything applicative-y today.
 
 These two functions will allow us to treat lists as a little language for monoid
-expressions. `pure` will give use variables, and `fold`{.haskell} will let us
+expressions. `pure` will give us variables, and `fold`{.haskell} will let us
 execute the AST.
 
 The correctness of this language is ensured by the fact that `fold` is a
@@ -251,7 +248,7 @@ need to nail down the representation we're going to use.
 
 # Horner Normal Form
 
-Our first stab at a representation will look like this:
+Our first stab at a representation will start off like this:
 
 ```agda
 open import Algebra
@@ -285,6 +282,8 @@ record RawRing c : Set (suc c) where
 `Raw` refers to the fact that it doesn't carry any proofs. `Op₂ A` is a type
 synonym for `A → A → A`.
 
+Now, for the actual functions:
+
 ```agda
 open import Data.List as List using (List; _∷_; [])
 
@@ -303,54 +302,6 @@ _⊠_ : Poly → Poly → Poly
   x * y ∷ (List.map (x *_) ys ⊞ (xs ⊠ (y ∷ ys)))
 ```
 
-# Proving Homomorphism
-
-Writing more involved proofs in Agda is actually reasonably pleasant. For
-instance, later on we'll be using this definition of exponentiation:
-
-```agda
-infixr 8 _^_
-_^_ : Carrier → ℕ → Carrier
-x ^ zero = 1#
-x ^ suc n = x * x ^ n
-```
-
-A property we'll rely on is the following familiar identity:
-
-$$ x^i x^j = x^{i + j} $$
-
-A proof of this fact looks like this:
-
-```agda
-pow-add : ∀ x i j
-        → x ^ i * x ^ j ≈ x ^ (i ℕ.+ j)
-pow-add x zero j = *-identityˡ (x ^ j)
-pow-add x (suc i) j =
-  begin
-    x ^ suc i * x ^ j
-  ≡⟨⟩
-    (x * x ^ i) * x ^ j
-  ≈⟨ *-assoc x _ _ ⟩
-    x * (x ^ i * x ^ j)
-  ≈⟨ *≫ pow-add x i j ⟩
-    x * x ^ (i ℕ.+ j)
-  ≡⟨⟩
-    x ^ suc (i ℕ.+ j)
-  ∎
-```
-
-First, the type of the proof uses $\approx$ rather than the normal $\equiv$.
-That's because we're not actually using propositional equality. We're using an
-arbitrary equivalence relation supplied along with the ring. We'll see later how
-to use this flexibility to do some cool things.
-
-Next, the function is defined as two clauses: we recurse on `i`, as you might
-expect in an Idris-style proof.
-
-The second clause, though, is a total departure from the normal syntax. There's
-nothing built-in about it, though: it's all normal operators and functions
-defined in the standard library. In the brackets (`⟨ ⟩`) is the reason for the
-equality on either side.
 
 # Gaps
 
@@ -391,12 +342,12 @@ A brief aside: in the paper, the following power index:
 
 Is said to be the representation of:
 
-$$ P \ast X^i + c $$
+$$ P \times X^i + c $$
 
 This didn't make a huge amount of sense to me, though. Since we're representing
 the preceding gap, I decided to go with the following translation:
 
-$$ (P \ast X + c) * X^i $$
+$$ (P \times X + c) * X^i $$
 
 By way of example, the polynomial:
 
@@ -410,7 +361,7 @@ Will be represented as:
 
 Or, mathematically:
 
-$$ x^0 * (3 + x * x^1 * (2 + x * x^2 * (4 + x * x^1 * (2 + x * 0)))) $$
+$$ x^0 (3 + x x^1 (2 + x x^2 * (4 + x x^1 (2 + x 0)))) $$
 
 
 Also, we can kill two birds with one stone here: if we disallow zeroes
@@ -488,9 +439,51 @@ and there may be efficiency gains elsewhere (multiplication seems a good bit
 faster), but I wonder if there's a way to use a more efficient version of
 `compare`?
 
-Using some of the tricks in Ulf Norell's [Agda
-prelude](https://github.com/UlfNorell/agda-prelude), we can implement an unsafe
-version:
+There are
+[seven](https://agda.readthedocs.io/en/v2.5.4/language/built-ins.html#functions-on-natural-numbers)
+functions on natural numbers which Agda will replace with their equivalents on
+Haskell's `Integer`. The three of interest here are:
+
+```agda
+_-_ : N → ℕ → ℕ
+n     - zero  = n
+zero  - suc m = zero
+suc n - suc m = n - m
+{-# BUILTIN NATMINUS _-_ #-}
+
+_==_ : ℕ → ℕ → Bool
+zero  == zero  = true
+suc n == suc m = n == m
+_     == _     = false
+{-# BUILTIN NATEQUALS _==_ #-}
+
+_<_ : ℕ → ℕ → Bool
+_     < zero  = false
+zero  < suc _ = true
+suc n < suc m = n < m
+{-# BUILTIN NATLESS _<_ #-}
+```
+
+The implementation you see is kind of a lie: at runtime, those functions are
+replaced by their faster, unverified implementations. This is good news for us,
+though: we can try reimplement `compare` using them, and we should get a much
+quicker function. Our first try ends in failure:
+
+```agda
+compare : (n m : ℕ) → Ordering n m
+compare n m with n < m
+compare n m | true = less n (m - n - 1)
+compare n m | false with n == m
+compare n m | false | false = greater m (n - m - 1)
+compare n m | false | true = equal m
+```
+
+Agda complains:
+
+> `suc (n + (m - n - 1)) != m of type ℕ`
+
+Hmm. Evidently, we need to prove something. Here's what that proof might look
+like:
 
 ```agda
 less-hom : ∀ n m → ((n < m) ≡ true) → m ≡ suc (n + (m - n - 1))
@@ -498,7 +491,13 @@ less-hom zero zero ()
 less-hom zero (suc m) _ = refl
 less-hom (suc n) zero ()
 less-hom (suc n) (suc m) n<m = cong suc (less-hom n m n<m)
+```
 
+Wait---have we just given up efficiency here? Well, no, because we can
+[*erase*](https://agda.github.io/agda-stdlib/Relation.Binary.PropositionalEquality.TrustMe.html)
+the proof, which hopefully mean it isn't computed at runtime:
+
+```agda
 eq-hom : ∀ n m → ((n == m) ≡ true) → n ≡ m
 eq-hom zero zero _ = refl
 eq-hom zero (suc m) ()
@@ -513,10 +512,10 @@ gt-hom (suc n) (suc m) n<m n≡m = cong suc (gt-hom n m n<m n≡m)
 
 compare : (n m : ℕ) → Ordering n m
 compare n m with n < m  | inspect (_<_ n) m
-compare n m | true | [ n<m ] rewrite TrustMe.erase (less-hom n m n<m) = less n (m - n - 1)
-compare n m | false | [ n≮m ] with n == m | inspect (_==_ n) m
-compare n m | false | [ n≮m ] | true  | [ n≡m ] rewrite TrustMe.erase (eq-hom n m n≡m) = equal m
-compare n m | false | [ n≮m ] | false | [ n≢m ] rewrite TrustMe.erase (gt-hom n m n≮m n≢m) = greater m (n - m - 1)v
+... | true  | [ n<m ] rewrite erase (less-hom n m n<m) = less n (m - n - 1)
+... | false | [ n≮m ] with n == m | inspect (_==_ n) m
+... | true  | [ n≡m ] rewrite erase (eq-hom n m n≡m) = equal m
+... | false | [ n≢m ] rewrite erase (gt-hom n m n≮m n≢m) = greater m (n - m - 1)
 ```
 
 # Termination & Redundancy
@@ -541,7 +540,7 @@ smaller---or, at least, Agda can't see that they are. You see, *we* know that
 (for instance) the `k` passed in is smaller than the `j` before it, but it's not
 trivial to show that, so Agda complains.
 
-One trick to make termination more obvious is too eliminate any redundancy in
+One trick to make termination more obvious is to eliminate any redundancy in
 the code. For instance, the first clause above checks if the left-hand-side list
 is empty: but when we call back to the function in the `greater` clause, we
 should be able to skip that check. Here's the strategy: split every clause which
@@ -695,7 +694,7 @@ _*_ (x ∷ xs) = pow x ∘ foldr (λ y ys → y ∷ xs + ys) []
 
 Up until now our polynomial has been an expression in just one variable. For it
 to be truly useful, though, we'd like to be able to extend it to many: luckily
-there's a well-known isomorphism we can use too extend our earlier
+there's a well-known isomorphism we can use to extend our earlier
 implementation. A multivariate polynomial is one where its coefficients are
 polynomials with one fewer variable [@cheng_functional_2018]. In Agda, this
 looks like the following:
@@ -774,16 +773,17 @@ three levels of nesting before we get to what we need.
 
 We'll start by attempting a similar approach to removing the exponent gaps.
 Straight away, though, we run into a problem: the poly type is *indexed* by the
-number of variables it contains. The direct way to encode this might look
-something like this:
+number of variables it contains. So the overall type will have to correspond to
+the gap size in some way. The direct way to encode that would be something like
+this:
 
 ```agda
 data Poly : ℕ → Set (a ⊔ ℓ) where
   _Π_ : (gap : ℕ) → ∀ {i} → FlatPoly i → Poly (suc (gap ℕ.+ i))
 ```
 
-Where `FlatPoly` is effectively the non-gappy type we had earlier. If you
-actually tried to use this type, though, you'd run into issues:
+Where `FlatPoly` is effectively the gappy type we had earlier. If you actually
+tried to use this type, though, you'd run into issues:
 
 ```agda
 _⊞_ : ∀ {n} → Poly n → Poly n → Poly n
@@ -905,9 +905,9 @@ data _≤_ : ℕ → ℕ → Set where
 
 It actually worked fine, for a bit, until I realized that I had actually made
 the time complexity *worse* by using this encoding of gaps. To understand why,
-remember the addition function above with the gappy exponent encoding. For it to
+remember the addition function above with the gapless exponent encoding. For it to
 work, we needed to compare the gaps, and proceed based on that. We'll need to do
-a similar comparison on variable counts for this gappy encoding. However, we
+a similar comparison on variable counts for this gapless encoding. However, we
 don't store the *gaps* now, we store the number of variables in the nested
 polynomial. Consider the following sequence of nestings:
 
@@ -984,9 +984,9 @@ A few things to note here:
 
 #. The `≤-compare` function is one of those reassuring ones for which Agda can
 automatically fill in the implementation from the type.
-#. This function looks somewhat similar to the one for comparing ℕ in Data.Nat,
+#. This function looks somewhat similar to the one for comparing `ℕ` in Data.Nat,
 and as a result, the "matching" logic for degree and number of variables began
-too look similar.
+to look similar.
 
 # Irrelevance and K
 
@@ -1152,7 +1152,7 @@ the gappy encoding, it would have looked like this:
 ⟦ xs ⟧ ρ = foldr (λ y ys → y + ys * ρ) 0# xs
 ```
 
-Adding the gaps in, we need to encode something like this:
+For the gapless, we get the following:
 
 ```agda
 ⟦_⟧ : Poly → Carrier → Carrier
@@ -1191,17 +1191,199 @@ as we might using another one of the inequalities.
 
 # Writing the Proofs
 
+We're going to prove homomorphism according to some
+[setoid](https://en.wikipedia.org/wiki/Setoid): an equivalence relation over
+some set. This relation could be propositional equality (for instance), but it's
+not necessary: it could instead be something more exotic which we'll see later.
+
+As an equivalence relation, it needs the following three functions:
+
+```agda
+-- Reflexivity
+refl : ∀ {x} → x ≈ x
+-- Symmetry
+sym : ∀ {x y} → x ≈ y → y ≈ x
+-- Transitivity
+trans : ∀ {x y z} → x ≈ y → y ≈ z → x ≈ z
+```
+
+And, as the type we're working with is a ring, it will need to obey the ring
+laws, according to the above relation. For example:
+
+```agda
+*-comm : ∀ x y → x * y ≈ y * x
+```
+
+There's one more thing: because this is a setoid, you don't get *congruence*
+automatically. This means that the user has to supply a further two functions:
+
+```agda
++-cong : ∀ {x₁ x₂ y₁ y₂} → x₁ ≈ x₂ → y₁ ≈ y₂ → x₁ + y₁ ≈ x₂ + y₂
+*-cong : ∀ {x₁ x₂ y₁ y₂} → x₁ ≈ x₂ → y₁ ≈ y₂ → x₁ * y₁ ≈ x₂ * y₂
+```
+
+With all of this stuff, we could go ahead and prove everything we need at this
+point. But it's more than a little painful: for instance, we'll need later on a
+definition for exponentiation.
+
+```agda
+infixr 8 _^_
+_^_ : Carrier → ℕ → Carrier
+x ^ zero = 1#
+x ^ suc n = x * x ^ n
+```
+
+A property we'll rely on is the following familiar identity:
+
+$$ x^i x^j = x^{i + j} $$
+
+A proof of this fact looks like this:
+
+```agda
+pow-add : ∀ x i j
+        → x ^ i * x ^ j ≈ x ^ (i ℕ.+ j)
+pow-add : ∀ x i j → x ^ i * x ^ j ≈ x ^ (i ℕ.+ j)
+pow-add x zero j = *-identityˡ (x ^ j)
+pow-add x (suc i) j =
+  *-assoc x (x ^ i) (x ^ j)
+    ⟨ trans ⟩
+  (refl ⟨ *-cong ⟩ pow-add x i j)
+```
+
+The brackets (`⟨ ⟩`) work like backticks in Haskell: they turn a function with
+two arguments into an infix operator.
+
+The issue is that it's hard to see what's going on. First things first, the
+pattern "`refl ⟨ *-cong ⟩ prf`" will be used often: basically, it means "apply
+`prf` to the right-hand-side of the `*`". To cut down on noise, we can define
+some operators to do that for us:
+
+```agda
+infixr 1 ≪+_ +≫_ ≪*_ *≫_
+≪+_ : ∀ {x₁ x₂ y} → x₁ ≈ x₂ → x₁ + y ≈ x₂ + y
+≪+ prf = +-cong prf refl
+
++≫_ : ∀ {x y₁ y₂} → y₁ ≈ y₂ → x + y₁ ≈ x + y₂
++≫_ = +-cong refl
+
+≪*_ : ∀ {x₁ x₂ y} → x₁ ≈ x₂ → x₁ * y ≈ x₂ * y
+≪* prf = *-cong prf refl
+
+*≫_ : ∀ {x y₁ y₂} → y₁ ≈ y₂ → x * y₁ ≈ x * y₂
+*≫_ = *-cong refl
+```
+
+"`≪+`" means: "apply this proof to the left hand side of the plus". Because
+they're right-associative, they can be chained, so if we wanted to drill down
+into some large expression, we could write "`≪+ ≪+ *≫ ≪* prf`", which would mean
+"to the left of the plus, left again, right of the times, and left of the
+times", like directions.
+
+That doesn't solve the real issue, though: the proof is hard to read because we
+don't know what's going on inside it. If we were to write it out with a pen and
+paper, we'd write the state of the expression after each rewrite along with the
+rules we were using too justify it. Luckily, we can do the same in Agda, like
+so:
+
+```agda
+pow-add : ∀ x i j → x ^ i * x ^ j ≈ x ^ (i ℕ.+ j)
+pow-add x zero j = *-identityˡ (x ^ j)
+pow-add x (suc i) j =
+  begin
+    x ^ suc i * x ^ j
+  ≡⟨⟩
+    (x * x ^ i) * x ^ j
+  ≈⟨ *-assoc x (x ^ i) (x ^ j) ⟩
+    x * (x ^ i * x ^ j)
+  ≈⟨ *≫ pow-add x i j ⟩
+    x * x ^ (i ℕ.+ j)
+  ≡⟨⟩
+    x ^ suc (i ℕ.+ j)
+  ∎
+```
+
+The syntax works like this: `begin` signals the start of the proof, `∎` the end.
+In between, you write the state of the expression, interspersed with the rules
+that allow you too rewrite it from one form to the next. `≡⟨⟩` is the simplest
+rule: you use it when a rewrite is definitionally equal. So on our first
+rewrite, we're just using the definition of `^`. Then, `≈⟨ prf ⟩` applies the
+equality inside the brackets.
+
+This way of writing proofs is very powerful: it makes what might seem
+intractably complex manageable. 
+
+Also, while it may *seem* like this is a special language feature, these are all
+actually just normal operators, defined in the standard library.
+
 # List Homomorphism
+
+We use list algebras too make the proofs cleaner.
+
 @mu_algebra_2009
 
 # Setoid
 
--- Traced
--- Isomorphisms
+I mentioned that the notion of equality we were using was more general than
+propositional, and that we could use it more flexibly in different contexts.
+
+## Tracing
+
+First off, we can look at lists (again). The three things required by an
+equivalence relation: reflexivity, transitivity, and symmetry, are all familiar
+functions on lists: empty lists, concatenation, and reversal. For propositional
+equality, of course, these lists are purely abstract. For us, though, we can
+fill them with whatever we want.
+
+[Wolfram
+Alpha](http://www.wolframalpha.com/examples/pro-features/step-by-step-solutions/v)
+will let you perform various manipulations on equations and expressions, even
+with abstract variables. What's most useful about the manipulations is that it
+will also provide "step-by-step solutions" of the transformations.
+
+We can do the same here, with a custom setoid:
+
+```agda
+infix 4 _≡⋯≡_
+infixr 5 _≡⟨_⟩_
+data _≡⋯≡_ : A → A → Set a where
+  [refl] : ∀ {x} →  x ≡⋯≡ x
+  _≡⟨_⟩_ : ∀ {x} y {z} → String → y ≡⋯≡ z → x ≡⋯≡ z
+  cong₁ : ∀ {x y z} {f : A → A}
+        → String
+        → x ≡⋯≡ y
+        → f y ≡⋯≡ z
+        → f x ≡⋯≡ z
+  cong₂ : ∀ {x₁ x₂ y₁ y₂ z} {f : A → A → A}
+        → String
+        → x₁ ≡⋯≡ x₂
+        → y₁ ≡⋯≡ y₂
+        → f x₂ y₂ ≡⋯≡ z
+        → f x₁ y₁ ≡⋯≡ z
+```
+
+## Isomorphism
+
+The other loosish notion of equivalence is *isomorphism*
+[@coquand_isomorphism_2013].
 
 # Correct by construction
 
-@geuvers_automatically_2017
+The Coq style is too write the implementation is correctness by construction
+[@geuvers_automatically_2017].
+
+```agda
+infixr 0 ⟦⟧⇐_ ⟦_∷_⟨_⟩⟧⇐_
+data Poly (expr : Carrier) : Set (a ⊔ ℓ) where
+  ⟦⟧⇐_  : expr ≋ 0# → Poly expr
+  ⟦_∷_⟨_⟩⟧⇐_ : ∀ x xs → Poly xs → expr ≋ (λ ρ → x Coeff.+ ρ Coeff.* xs ρ) → Poly expr
+
+_⊞_ : ∀ {x y} → Poly x → Poly y → Poly (x + y)
+(⟦⟧⇐ xp) ⊞ (⟦⟧⇐ yp) = ⟦⟧⇐ xp ⟨ +-cong ⟩ yp ⟨ trans ⟩ +-identityˡ _
+(⟦⟧⇐ xp) ⊞ (⟦ y ∷ ys ⟨ ys′ ⟩⟧⇐ yp) = ⟦ y ∷ ys ⟨ ys′ ⟩⟧⇐ xp ⟨ +-cong ⟩ yp ⟨ trans ⟩ +-identityˡ _
+(⟦ x ∷ xs ⟨ xs′ ⟩⟧⇐ xp) ⊞ (⟦⟧⇐ yp) = ⟦ x ∷ xs ⟨ xs′ ⟩⟧⇐ xp ⟨ +-cong ⟩ yp ⟨ trans ⟩ +-identityʳ _
+(⟦ x ∷ xs ⟨ xs′ ⟩⟧⇐ xp) ⊞ (⟦ y ∷ ys ⟨ ys′ ⟩⟧⇐ yp) = ⟦ x Coeff.+ y ∷ xs + ys ⟨ xs′ ⊞ ys′ ⟩⟧⇐
+  xp ⟨ +-cong ⟩ yp ⟨ trans ⟩  λ ρ → +-distrib _ _ _ _ ρ
+```
 
 # Other structures
 
