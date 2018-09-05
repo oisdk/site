@@ -857,22 +857,22 @@
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-erwig_functional_2006">
-<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in Haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. doi:<a href="https://doi.org/10.1017/S0956796805005721">10.1017/S0956796805005721</a>. <a href="http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html\#JFP06a" class="uri">http://web.engr.oregonstate.edu/~erwig/papers/abstracts.html\#JFP06a</a>.</p>
+<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in Haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. doi:<a href="https://doi.org/10.1017/S0956796805005721">10.1017/S0956796805005721</a>.</p>
 </div>
 <div id="ref-kidd_build_2007">
-<p>Kidd, Eric. 2007. “Build your own probability monads.” <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502\&amp;rep=rep1\&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.129.9502\&amp;rep=rep1\&amp;type=pdf</a>.</p>
+<p>Kidd, Eric. 2007. “Build your own probability monads.”</p>
 </div>
 <div id="ref-larsen_memory_2011">
-<p>Larsen, Ken Friis. 2011. “Memory Efficient Implementation of Probability Monads.” <a href="http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf" class="uri">http://www.diku.dk/~kflarsen/t/ProbMonad-unpublished.pdf</a>.</p>
+<p>Larsen, Ken Friis. 2011. “Memory Efficient Implementation of Probability Monads.”</p>
 </div>
 <div id="ref-scibior_practical_2015">
-<p>Ścibior, Adam, Zoubin Ghahramani, and Andrew D. Gordon. 2015. “Practical Probabilistic Programming with Monads.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 50:165–176. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804317">10.1145/2804302.2804317</a>. <a href="http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf" class="uri">http://mlg.eng.cam.ac.uk/pub/pdf/SciGhaGor15.pdf</a>.</p>
+<p>Ścibior, Adam, Zoubin Ghahramani, and Andrew D. Gordon. 2015. “Practical Probabilistic Programming with Monads.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 50:165–176. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804317">10.1145/2804302.2804317</a>.</p>
 </div>
 <div id="ref-tobin_implementing_2017">
-<p>Tobin, Jared. 2017. “Implementing the Giry Monad.” <em>jtobin.io</em>. <a href="https://jtobin.io/giry-monad-implementation" class="uri">https://jtobin.io/giry-monad-implementation</a>.</p>
+<p>Tobin, Jared. 2017. “Implementing the Giry Monad.” <em>jtobin.io</em>.</p>
 </div>
 <div id="ref-uustalu_essence_2005">
-<p>Uustalu, Tarmo, and Varmo Vene. 2005. “The Essence of Dataflow Programming.” In <em>Proceedings of the Third Asian Conference on Programming Languages and Systems</em>, 2–18. APLAS’05. Berlin, Heidelberg: Springer-Verlag. doi:<a href="https://doi.org/10.1007/11575467_2">10.1007/11575467_2</a>. <a href="http://dx.doi.org/10.1007/11575467_2" class="uri">http://dx.doi.org/10.1007/11575467_2</a>.</p>
+<p>Uustalu, Tarmo, and Varmo Vene. 2005. “The Essence of Dataflow Programming.” In <em>Proceedings of the Third Asian Conference on Programming Languages and Systems</em>, 2–18. APLAS’05. Berlin, Heidelberg: Springer-Verlag. doi:<a href="https://doi.org/10.1007/11575467_2">10.1007/11575467_2</a>.</p>
 </div>
 </div>
 <section class="footnotes">
