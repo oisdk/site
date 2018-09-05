@@ -1282,8 +1282,7 @@ times", like directions.
 That doesn't solve the real issue, though: the proof is hard to read because we
 don't know what's going on inside it. If we were to write it out with a pen and
 paper, we'd write the state of the expression after each rewrite along with the
-rules we were using too justify it. Luckily, we can do the same in Agda, like
-so:
+rules we were using to justify it. Luckily, we can do the same in Agda, like so:
 
 ```agda
 pow-add : ∀ x i j → x ^ i * x ^ j ≈ x ^ (i ℕ.+ j)

@@ -2,9 +2,7 @@
 title: About
 ---
 I'm an undergraduate computer science student, studying at
-[UCC](https://www.ucc.ie) in Cork, Ireland. At the moment (March--September
-2018), I'm working on a project in [rle](http://www.rle.mit.edu) at
-[MIT](http://web.mit.edu) on anonymity and privacy in data disclosure.
+[UCC](https://www.ucc.ie) in Cork, Ireland.
 
 I'm mainly interested in statically-typed functional programming. Currently I'm
 coding in [Haskell](http://haskell.org), [Idris](http://idris-lang.org), and

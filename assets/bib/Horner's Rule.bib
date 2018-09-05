@@ -1,4 +1,18 @@
 
+@inproceedings{brady_inductive_2004,
+  series = {LNCS},
+  title = {Inductive {{Families Need Not Store Their Indices}}},
+  volume = {3085},
+  booktitle = {Types for {{Proofs}} and {{Programs}}, {{Torino}}, 2003},
+  publisher = {{Springer-Verlag}},
+  author = {Brady, Edwin and McBride, Conor and McKinna, James},
+  editor = {Berardi, Stefano and Coppo, Mario and Damiani, Ferrucio},
+  year = {2004},
+  keywords = {Alternative Implementation,Dependent Type,Elimination Rule,Functional Language,Type Theory},
+  pages = {115-129},
+  file = {/Users/doisinkidney/Zotero/storage/9Y2NHXFZ/Brady et al. - 2004 - Inductive Families Need Not Store Their Indices.pdf}
+}
+
 @inproceedings{rivas_monoids_2015,
   title = {From Monoids to Near-Semirings: The Essence of {{MonadPlus}} and {{Alternative}}},
   isbn = {978-1-4503-3516-4},
@@ -72,6 +86,56 @@ This article recovers the essence of these two type classes by extending monoids
   year = {2005},
   pages = {98-113},
   file = {/Users/doisinkidney/Zotero/storage/GTPFHWSU/Grégoire and Mahboubi - 2005 - Proving Equalities in a Commutative Ring Done Righ.pdf;/Users/doisinkidney/Zotero/storage/KK2HQB4Z/11541868_7.html}
+}
+
+@article{gumundsson_formalizing_2017,
+  title = {Formalizing the Translation Method in {{Agda}}},
+  abstract = {If \dbend\dbend\dbend\dbend\dbend\dbend{} and \dbend\dbend\dbend\dbend\dbend\dbend{} are sets of combinatorial objects, the translation method, introduced by Wood and Zeilberger (2009), allows one to turn an algebraic proof of the identity |\dbend\dbend\dbend\dbend\dbend\dbend{} | = |\dbend\dbend\dbend\dbend\dbend\dbend{}| into a bijection between \dbend\dbend\dbend\dbend\dbend\dbend{} and \dbend\dbend\dbend\dbend\dbend\dbend. We give a formalized implementation of the translation method in the programming language Agda. In contrast to the implementation previously given by Wood and Zeilberger, the bijections produced by our implementation are formally verified, making our implementation more robust. We also take advantage of the fact that Agda is a proof assistant, allowing users of our implementation to use the existing facilities provided by Agda for developing proofs. In particular, converting an existing algebraic proof for use in our implementation is often straightforward.},
+  language = {en},
+  author = {Gu\dh{}mundsson, Bjarki \'Ag\'ust},
+  month = jun,
+  year = {2017},
+  pages = {112},
+  file = {/Users/doisinkidney/Zotero/storage/IHJEUPEG/Guðmundsson - Formalizing the translation method in Agda.pdf}
+}
+
+@article{johnson_sparse_1974,
+  title = {Sparse Polynomial Arithmetic},
+  volume = {8},
+  issn = {01635824},
+  doi = {10.1145/1086837.1086847},
+  abstract = {Sparse polynomial representations are used in a number of algebraic manipulation systems, including Aitran. This paper discusses the arithmetic operations with sparsely represented polynomials; we give particular attention to multiplication and division\textbullet{} We give new algorithms for multiplying two polynomials, with n and m terms, in time mnlogm; these algorithms have the property that, in the usual univariate dense case, the algorithm is bounded by ran. Division algorithms are discussed which run in comparable time.},
+  language = {en},
+  number = {3},
+  journal = {ACM SIGSAM Bulletin},
+  author = {Johnson, Stephen C.},
+  month = aug,
+  year = {1974},
+  pages = {63-71},
+  file = {/Users/doisinkidney/Zotero/storage/N574968I/Johnson - 1974 - Sparse polynomial arithmetic.pdf}
+}
+
+@article{meshveliani_dependent_nodate,
+  title = {Dependent {{Types}} for an {{Adequate Programming}} of {{Algebra}}},
+  abstract = {This research compares the author's experience in programming algebra in Haskell and in Agda (currently the former experience is large, and the latter is small). There are discussed certain hopes and doubts related to the dependently typed and verified programming of symbolic computation. This concerns the 1) author's experience history, 2) algebraic class hierarchy design, 3) proof cost overhead in evaluation and in coding, 4) other subjects. Various examples are considered.},
+  language = {en},
+  author = {Meshveliani, Sergei D},
+  pages = {15},
+  file = {/Users/doisinkidney/Zotero/storage/SESGEH6A/Meshveliani - Dependent Types for an Adequate Programming of Alg.pdf}
+}
+
+@misc{noauthor_s._nodate,
+  title = {S.~{{D}}.~{{Meshveliani}}, ``{{Programming}} Basic Computer Algebra in a Language with Dependent Types'', {{Program Systems}}: {{Theory}} and {{Applications}}, 6:4 (2015), 313\textendash{}340},
+  howpublished = {http://www.mathnet.ru/php/archive.phtml?wshow=paper\&jrnid=ps\&paperid=190\&option\_lang=eng},
+  file = {/Users/doisinkidney/Zotero/storage/AVB6TJEI/archive.html}
+}
+
+@article{paulson_future_nodate,
+  title = {The {{Future}} of {{Formalised Mathematics}}},
+  language = {en},
+  author = {Paulson, Lawrence C},
+  pages = {35},
+  file = {/Users/doisinkidney/Zotero/storage/R9S6SV6Y/Paulson - The Future of Formalised Mathematics.pdf}
 }
 
 @phdthesis{zalakain_evidence-providing_2017,
@@ -238,6 +302,48 @@ This project considers the development of such automated theorem provers in Agda
   school = {KTH Royal Institue of Technology},
   author = {Lioubartsev, Dmitrij},
   file = {/Users/doisinkidney/Zotero/storage/2Z62FSZP/FULLTEXT01.pdf}
+}
+
+@article{wood_translation_2009,
+  title = {A {{Translation Method}} for {{Finding Combinatorial Bijections}}},
+  volume = {13},
+  issn = {0219-3094},
+  doi = {10.1007/s00026-009-0024-y},
+  abstract = {Consider a combinatorial identity that can be proved by induction. In this paper, we describe a general method for translating the inductive proof into a recursive bijection. Furthermore, we will demonstrate that the resulting recursive bijection can often be defined in a direct, non-recursive way. Thus, the translation method often results in a bijective proof of the identity that helps illuminate the underlying combinatorial structures. This paper has two main parts: First, we describe the translation method and the accompanying Maple code; and second, we give a few examples of how the method has been used to discover new bijections.},
+  language = {en},
+  number = {3},
+  journal = {Annals of Combinatorics},
+  author = {Wood, Philip Matchett and Zeilberger, Doron},
+  month = oct,
+  year = {2009},
+  keywords = {05A19,bijection,bijective proof,combinatorial identity},
+  pages = {383},
+  file = {/Users/doisinkidney/Zotero/storage/6UJ9BBPT/Wood and Zeilberger - 2009 - A Translation Method for Finding Combinatorial Bij.pdf}
+}
+
+@phdthesis{van_der_walt_reflection_2012,
+  type = {Master's {{Thesis}}},
+  title = {Reflection in {{Agda}}},
+  author = {{van der Walt}, P. D.},
+  year = {2012},
+  file = {/Users/doisinkidney/Zotero/storage/X358AMNW/van der Walt - 2012 - Reflection in Agda.pdf;/Users/doisinkidney/Zotero/storage/8ZQY4FCH/256628.html}
+}
+
+@inproceedings{lindley_hasochism_2013,
+  address = {New York, NY, USA},
+  series = {Haskell '13},
+  title = {Hasochism: {{The Pleasure}} and {{Pain}} of {{Dependently Typed Haskell Programming}}},
+  isbn = {978-1-4503-2383-3},
+  shorttitle = {Hasochism},
+  doi = {10.1145/2503778.2503786},
+  abstract = {Haskell's type system has outgrown its Hindley-Milner roots to the extent that it now stretches to the basics of dependently typed programming. In this paper, we collate and classify techniques for programming with dependent types in Haskell, and contribute some new ones. In particular, through extended examples---merge-sort and rectangular tilings---we show how to exploit Haskell's constraint solver as a theorem prover, delivering code which, as Agda programmers, we envy. We explore the compromises involved in simulating variations on the theme of the dependent function space in an attempt to help programmers put dependent types to work, and to inform the evolving language design both of Haskell and of dependently typed languages more broadly.},
+  booktitle = {Proceedings of the 2013 {{ACM SIGPLAN Symposium}} on {{Haskell}}},
+  publisher = {{ACM}},
+  author = {Lindley, Sam and McBride, Conor},
+  year = {2013},
+  keywords = {data type promotion,dependent types,invariants,proof search,singletons},
+  pages = {81--92},
+  file = {/Users/doisinkidney/Zotero/storage/U7CFKDH5/Lindley and McBride - 2013 - Hasochism The Pleasure and Pain of Dependently Ty.pdf}
 }
 
 
