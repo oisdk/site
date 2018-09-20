@@ -203,9 +203,10 @@ Data.Nat](https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9
 
 # Inspect
 
-The use-case I had for this is a little long, I'm afraid, but it *did* come in
-handy. Basically, if you're trying to prove something about a function, you may
-well want to *run* that function and pattern match on the result.
+The use-case I had for this is a little long, I'm afraid (too long to include
+here), but it *did* come in handy. Basically, if you're trying to prove
+something about a function, you may well want to *run* that function and pattern
+match on the result.
 
 ```agda
 f-is-the-same-as-g : ∀ x → f x ≡ g x
