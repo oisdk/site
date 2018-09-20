@@ -7,8 +7,115 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Mon, 30 Jul 2018 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Thu, 20 Sep 2018 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Agda Tips</title>
+    <link>http://doisinkidney.com/posts/2018-09-20-agda-tips.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on September 20, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Agda.html">Agda</a>
+    
+</div>
+
+<p>I’m in the middle of quite a large Agda project at the moment, and I’ve picked up a few tips and tricks in the past few weeks. I’d imagine a lot of these are quite obvious once you get to grips with Agda, so I’m writing them down before I forget that they were once confusing stumbling blocks. Hopefully this helps other people trying to learn the language!</p>
+<h1 id="parameterized-modules-strangeness">Parameterized Modules Strangeness</h1>
+<p>Agda lets you parameterize modules, just as you can datatypes, with types, values, etc. It’s extremely handy for those situations where you want to be generic over some type, but that type won’t change inside the generic code. The keys to dictionaries is a good example: you can start the module with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">module</span> Map <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="kw">where</span></a></code></pre></div>
+<p>And now, where in Haskell you’d have to write something like <code>Ord a =&gt; Map a</code>… in pretty much any function signature, you can just refer to <code>Key</code>, and you’re good to go. It’s kind of like a dynamic type synonym, in that way.</p>
+<p>Here’s the strangeness, though: what if you don’t supply one of the arguments?</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">import</span> Map</a></code></pre></div>
+<p>This won’t give you a type error, strange as it may seem. This will perform <em>lambda lifting</em>, meaning that now, every function exported by the module will have the type signature:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="ot">...</span></a></code></pre></div>
+<p>Preceding its normal signature. In other words, it changes it into what you would have had to write in Haskell.</p>
+<p>This is a powerful feature, but it can also give you some confusing errors if you don’t know about it (especially if the module has implicit arguments).</p>
+<h1 id="auto">Auto</h1>
+<p>If you’ve got a hole in your program, you can put the cursor in it and press <code>SPC-m-a</code> (in spacemacs), and Agda will try and find the automatic solution to the problem. For a while, I didn’t think much of this feature, as rare was the program which Agda could figure out. Turns out I was just using it wrong! Into the hole you should type the options for the proof search: enabling case-splitting (<code>-c</code>), enabling the use of available definitions (<code>-r</code>), and listing possible solutions (<code>-l</code>).</p>
+<h1 id="well-founded-recursion">Well-Founded Recursion</h1>
+<p>Often, a program will not be obviously terminating (according to Agda’s termination checker). The first piece of advice is this: <em>don’t</em> use well-founded recursion. It’s a huge hammer, and often you can get away with fiddling with the function (try inlining definitions, rewriting generic functions to monomorphic versions, or replacing with-blocks with helper functions), or using one of the <a href="https://gallais.github.io/blog/termination-tricks.html">more lightweight techniques</a> out there.</p>
+<p>However, sometimes it really is the best option, so you have to grit your teeth and use it. What I expected (and what I used originally) was a recursion combinator, with a type something like:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb4-1" data-line-number="1">wf-rec <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a b<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">{</span>B <span class="ot">:</span> <span class="dt">Set</span> b<span class="ot">}</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">       <span class="ot">→</span> <span class="ot">((</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> <span class="ot">((</span>y <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> y &lt; x <span class="ot">→</span> B<span class="ot">)</span> <span class="ot">→</span> B<span class="ot">)</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">       <span class="ot">→</span> A <span class="ot">→</span> B</a></code></pre></div>
+<p>So we’re trying to generate a function of type <code>A → B</code>, but there’s a hairy recursive call in there somewhere. Instead we use this function, and pass it a version of our function that uses the supplied function rather than making a recursive call:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb5-1" data-line-number="1">terminating <span class="ot">:</span> A <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">terminating <span class="ot">=</span> wf-rec <span class="ot">(λ</span> x recursive-call <span class="ot">→</span> <span class="ot">...)</span></a></code></pre></div>
+<p>In other words, instead of calling the function itself, you call <code>recursive-call</code> above. Along with the argument, you supply a proof that it’s smaller than the outer argument (<code>y &lt; x</code>; assume for now that the definition of <code>&lt;</code> is just some relation like <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L31"><code>_&lt;_</code> in Data.Nat</a>).</p>
+<p>But wait! You don’t have to use it! Instead of all that, you can just pass the <code>Acc _&lt;_ x</code> type as a parameter to your function. In other words, if you have a dangerous function:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb6-1" data-line-number="1">f <span class="ot">:</span> A <span class="ot">→</span> B</a></code></pre></div>
+<p>Instead write:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb7-1" data-line-number="1">f-step <span class="ot">:</span> <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> Acc <span class="ot">_</span>&lt;<span class="ot">_</span> x <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">f-step <span class="ot">=</span> <span class="ot">...</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">f <span class="ot">:</span> A <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">f x <span class="ot">=</span> f-step x <span class="ot">...</span></a></code></pre></div>
+<p>Once you pattern match on the accessibility relation, the termination checker is satisfied. This is much easier to understand (for me anyway), and made it <em>much</em> easier to write proofs about it.</p>
+<p>Thanks to <a href="http://oleg.fi">Oleg Grenrus (phadej)</a> on irc for helping me out with this! Funnily enough, he actually recommended the <code>Acc</code> approach, and I instead originally went with the recursion combinator. Would have saved a couple hours if I’d just listened! Also worth mentioning is the approach recommended by <a href="https://gallais.github.io">Guillaume Allais (gallais)</a>, detailed <a href="https://gallais.github.io/agdarsec/Induction.Nat.Strong.html">here</a>. Haven’t had time to figure it out, so this article may be updated to recommend it instead in the future.</p>
+<h1 id="dont-touch-the-green-slime">Don’t Touch The Green Slime!</h1>
+<p>This one is really important. If I hadn’t read the exact explanation <a href="https://twitter.com/pigworker/status/1013535783234473984">here</a> I think I may have given up with Agda (or at the very least the project I’m working on) out of frustration.</p>
+<p>Basically the problem arises like this. Say you’re writing a function to split a vector in two. You can specify the type pretty precisely:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1">split <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a n m<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">→</span> Vec A <span class="ot">(</span>n + m<span class="ot">)</span> <span class="ot">→</span> Vec A n × Vec A m</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">split xs <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<p>Try to pattern-match on <code>xs</code>, though, and you’ll get the following error:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb9-1" data-line-number="1">I&#39;m not sure if there should be a case for the <span class="kw">constructor</span> [],</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">because I get stuck when trying <span class="kw">to</span> solve the following unification</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  zero ≟ n + m</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">when checking that the expression ? has type Vec <span class="ot">.</span>A <span class="ot">.</span>n × Vec <span class="ot">.</span>A <span class="ot">.</span>m</a></code></pre></div>
+<p>What?! That’s weird. Anyway, you fiddle around with the function, end up pattern matching on the <code>n</code> instead, and continue on with your life.</p>
+<p>What about this, though: you want to write a type for proofs that one number is less than or equal to another. You go with something like this:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≤<span class="ot">_</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="kw">data</span> <span class="ot">_</span>≤<span class="ot">_</span> <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  proof <span class="ot">:</span> <span class="ot">∀</span> k <span class="ot">→</span> n ≤ n + k</a></code></pre></div>
+<p>And you want to use it in a proof. Here’s the example we’ll be using: if two numbers are less than some limit <code>u</code>, then their maximum is also less than that limit:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb11-1" data-line-number="1">max <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">max zero m <span class="ot">=</span> m</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">max <span class="ot">(</span>suc n<span class="ot">)</span> zero <span class="ot">=</span> suc n</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">max <span class="ot">(</span>suc n<span class="ot">)</span> <span class="ot">(</span>suc m<span class="ot">)</span> <span class="ot">=</span> suc <span class="ot">(</span>max n m<span class="ot">)</span></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">max-≤ <span class="ot">:</span> <span class="ot">∀</span> n m <span class="ot">{</span>u<span class="ot">}</span> <span class="ot">→</span> n ≤ u <span class="ot">→</span> m ≤ u <span class="ot">→</span> max n m ≤ u</a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">max-≤ n m <span class="ot">(</span>proof k<span class="ot">)</span> m≤u <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<p>It won’t let you match on <code>m≤u</code>! Here’s the error:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb12-1" data-line-number="1">I&#39;m not sure if there should be a case for the <span class="kw">constructor</span> proof,</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">because I get stuck when trying <span class="kw">to</span> solve the following unification</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">  m₁ + k₂ ≟ n₁ + k₁</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">when checking that the expression ? has type max n m ≤ n + k</a></code></pre></div>
+<p>What do you <em>mean</em> you’re not sure if there’s a case for the constructor <code>proof</code>: it’s the <em>only</em> case!</p>
+<p>The problem is that Agda is trying to <em>unify</em> two types who both have calls to user-defined functions in them, which is a hard problem. As phrased by Conor McBride:</p>
+<blockquote>
+<p>When combining prescriptive and descriptive indices, ensure both are in constructor form. Exclude defined functions which yield difficult unification problems.</p>
+</blockquote>
+<p>So if you ever get the “I’m not sure if…” error, try either to:</p>
+<ol>
+<li>Redefine the indices so they use constructors, not functions.</li>
+<li>Remove the index, instead having a proof inside the type of equality. What does that mean? Basically, transform the definition of <code>≤</code> above into <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L72-L76">the one in Data.Nat</a>.</li>
+</ol>
+<h1 id="inspect">Inspect</h1>
+<p>The use-case I had for this is a little long, I’m afraid, but it <em>did</em> come in handy. Basically, if you’re trying to prove something about a function, you may well want to <em>run</em> that function and pattern match on the result.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb13-1" data-line-number="1">f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">f-is-the-same-as-g x <span class="kw">with</span> f x</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<p>This is a little different from the normal way of doing things, where you’d pattern match on the argument. It is a pattern you’ll sometimes need to write, though. And here’s the issue: that <code>y</code> has nothing to do with <code>f x</code>, as far as Agda is concerned. All you’ve done is introduced a new variable, and that’s that.</p>
+<p>This is exactly the problem <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Relation/Binary/PropositionalEquality.agda#L111-L113"><code>inspect</code></a> solves: it runs your function, giving you a result, but <em>also</em> giving you a proof that the result is equal to running the function. You use it like this:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb14-1" data-line-number="1">f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">f-is-the-same-as-g x <span class="kw">with</span> f x <span class="ot">|</span> inspect f x</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">|</span> [ fx≡y ] <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<h1 id="spc-g-g">SPC-G-G</h1>
+<p>Finally, because the Agda standard library is a big fan of type synonyms (<code>Op₂ A</code> instead of <code>A → A → A</code> for example), it’s handy to know that pressing <code>SPC-G-G</code> (in spacemacs) over any identifier will bring you to the definition. Also, you can normalize a type with <code>SPC-m-n</code></p>
+<h1 id="future-tips">Future Tips</h1>
+<p>Once I’m finished the project, I’ll try write up a guide on how to do literate Agda files. There were a couple of weird nuances that I had to pick up on the way, mainly to do with getting unicode to work.</p>
+]]></description>
+    <pubDate>Thu, 20 Sep 2018 00:00:00 UT</pubDate>
+    <guid>http://doisinkidney.com/posts/2018-09-20-agda-tips.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Verified AVL Trees in Haskell and Agda</title>
     <link>http://doisinkidney.com/posts/2018-07-30-verified-avl.html</link>
     <description><![CDATA[<div class="info">
@@ -484,16 +591,16 @@
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-danielsson_agda_2018">
-<p>Danielsson, Nils Anders. 2018. “The Agda standard library.” <a href="https://agda.github.io/agda-stdlib/README.html" class="uri">https://agda.github.io/agda-stdlib/README.html</a>.</p>
+<p>Danielsson, Nils Anders. 2018. “The Agda standard library.”</p>
 </div>
 <div id="ref-mcbride_how_2014">
-<p>McBride, Conor Thomas. 2014. “How to Keep Your Neighbours in Order.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 297–309. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>. <a href="https://personal.cis.strath.ac.uk/conor.mcbride/pub/Pivotal.pdf" class="uri">https://personal.cis.strath.ac.uk/conor.mcbride/pub/Pivotal.pdf</a>.</p>
+<p>McBride, Conor Thomas. 2014. “How to Keep Your Neighbours in Order.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 297–309. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>.</p>
 </div>
 <div id="ref-pfaff_performance_2004">
-<p>Pfaff, Ben. 2004. “Performance Analysis of BSTs in System Software.” In <em>Proceedings of the Joint International Conference on Measurement and Modeling of Computer Systems</em>, 410–411. SIGMETRICS ’04/performance ’04. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1005686.1005742">10.1145/1005686.1005742</a>. <a href="https://benpfaff.org/papers/libavl.pdf" class="uri">https://benpfaff.org/papers/libavl.pdf</a>.</p>
+<p>Pfaff, Ben. 2004. “Performance Analysis of BSTs in System Software.” In <em>Proceedings of the Joint International Conference on Measurement and Modeling of Computer Systems</em>, 410–411. SIGMETRICS ’04/performance ’04. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1005686.1005742">10.1145/1005686.1005742</a>.</p>
 </div>
 <div id="ref-weirich_depending_2014">
-<p>Weirich, Stephanie. 2014. “Depending on Types.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 241–241. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>. <a href="https://www.cis.upenn.edu/~sweirich/talks/icfp14.pdf" class="uri">https://www.cis.upenn.edu/~sweirich/talks/icfp14.pdf</a>.</p>
+<p>Weirich, Stephanie. 2014. “Depending on Types.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 241–241. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>.</p>
 </div>
 </div>
 <section class="footnotes">
@@ -2095,471 +2202,6 @@
 ]]></description>
     <pubDate>Thu, 12 Apr 2018 00:00:00 UT</pubDate>
     <guid>http://doisinkidney.com/posts/2018-04-12-pattern-synonyms.html</guid>
-    <dc:creator>Donnacha Oisín Kidney</dc:creator>
-</item>
-<item>
-    <title>Countdown</title>
-    <link>http://doisinkidney.com/posts/2018-03-20-countdown.html</link>
-    <description><![CDATA[<div class="info">
-    Posted on March 20, 2018
-</div>
-<div class="info">
-    
-</div>
-<div class="info">
-    
-        Tags: <a href="/tags/Haskell.html">Haskell</a>, <a href="/tags/Algorithms.html">Algorithms</a>
-    
-</div>
-
-<p>There’s a popular UK TV show called <a href="https://en.wikipedia.org/wiki/Countdown_(game_show)">Countdown</a> with a round where contestants have to get as close to some target number as possible by constructing an arithmetic expression from six random numbers.</p>
-<p>You don’t have to use all of the numbers, and you’re allowed use four operations: addition, subtraction, multiplication, and division. Additionally, each stage of the calculation must result in a positive integer.</p>
-<p>Here’s an example. Try get to the target 586:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mo>,</mo><mn>25</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>5</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">100,25,1,5,3,10</annotation></semantics></math></p>
-<p>On the show, contestants get 30 seconds to think of an answer.</p>
-<details>
-<summary> Solution </summary> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn><mo>+</mo><mn>100</mn><mo>*</mo><mn>5</mn><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10 + 100 * 5 + 1</annotation></semantics></math>
-</details>
-<p>Solving it in Haskell was first explored in depth in <span class="citation" data-cites="hutton_countdown_2002">Hutton (<a href="#ref-hutton_countdown_2002">2002</a>)</span>. There, a basic “generate-and-test” implementation was provided and proven correct.</p>
-<p>As an optimization problem, there are several factors which will influence the choice of algorithm:</p>
-<ol type="1">
-<li>There’s no obvious heuristic for constructing subexpressions in order to get to a final result. In other words, if we have <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>*</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 * 10</annotation></semantics></math>, there’s no easy way to tell which is “closer” to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>586</mn><annotation encoding="application/x-tex">586</annotation></semantics></math>. The latter is closer numerically, but the former is what we ended up using in the solution.</li>
-<li>Because certain subexpressions aren’t allowed, we’ll be able to prune the search space as we go.</li>
-<li>Ideally, we’d only want to calculate each possible subexpression once, making it a pretty standard dynamic programming problem.</li>
-</ol>
-<p>I’ll be focusing on the third point in this post, but we can add the second point in at the end. First, however, let’s write a naive implementation.</p>
-<h2 id="generating-all-expressions">Generating all Expressions</h2>
-<p>I can’t think of a simpler way to solve the problem than generate-and-test, so we’ll work from there. Testing is easy (<code class="sourceCode haskell">(target <span class="fu">==</span>) <span class="fu">.</span> eval</code>), so we’ll focus on generation. The core function we’ll use for this is usually called “unmerges”:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">unmerges [x,y] <span class="fu">=</span> [([x],[y])]</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">unmerges (x<span class="fu">:</span>xs) <span class="fu">=</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">    ([x],xs) <span class="fu">:</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">    concat</a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">        [ [(x<span class="fu">:</span>ys,zs),(ys,x<span class="fu">:</span>zs)]</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">        <span class="fu">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs ]</a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">unmerges _ <span class="fu">=</span> []</a></code></pre></div>
-<p>It generates all possible 2-partitions of a list, ignoring order:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> unmerges <span class="st">&quot;abc&quot;</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">[(<span class="st">&quot;a&quot;</span>,<span class="st">&quot;bc&quot;</span>),(<span class="st">&quot;ab&quot;</span>,<span class="st">&quot;c&quot;</span>),(<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ac&quot;</span>)]</a></code></pre></div>
-<p>I haven’t looked much into how to optimize this function or make it nicer, as we’ll be swapping it out later.</p>
-<p>Next, we need to make the recursive calls:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">allExprs ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">allExprs _ [x] <span class="fu">=</span> [x]</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">allExprs c xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">    [ e</a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">    <span class="fu">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">    , y <span class="ot">&lt;-</span> allExprs c ys</a>
-<a class="sourceLine" id="cb3-7" data-line-number="7">    , z <span class="ot">&lt;-</span> allExprs c zs</a>
-<a class="sourceLine" id="cb3-8" data-line-number="8">    , e <span class="ot">&lt;-</span> c y z ]</a></code></pre></div>
-<p>Finally, using the <a href="https://hackage.haskell.org/package/simple-reflect">simple-reflect</a> library, we can take a look at the output:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="fu">+</span>y,x<span class="fu">*</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">[<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span>,<span class="dv">1</span> <span class="fu">*</span> <span class="dv">2</span>]</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="fu">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="fu">+</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">[<span class="dv">1</span> <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>),<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>,<span class="dv">2</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">3</span>)]</a></code></pre></div>
-<p>Even at this early stage, we can actually already write a rudimentary solution:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">countdown ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">countdown xs targ <span class="fu">=</span></a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">    filter</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">        ((<span class="fu">==</span>) targ <span class="fu">.</span> toInteger)</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">        (allExprs</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">             (\x y <span class="ot">-&gt;</span> [x,y,x<span class="fu">+</span>y,x<span class="fu">*</span>y])</a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">             (map fromInteger xs))</a>
-<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="fu">&gt;&gt;&gt;</span> mapM_ print (countdown [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>] <span class="dv">586</span>)</a>
-<a class="sourceLine" id="cb5-10" data-line-number="10"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span>))</a>
-<a class="sourceLine" id="cb5-11" data-line-number="11"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-12" data-line-number="12"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>))</a>
-<a class="sourceLine" id="cb5-13" data-line-number="13"><span class="dv">1</span> <span class="fu">+</span> <span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-14" data-line-number="14"><span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> (<span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span>))</a>
-<a class="sourceLine" id="cb5-15" data-line-number="15"><span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-16" data-line-number="16"><span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">10</span>))</a>
-<a class="sourceLine" id="cb5-17" data-line-number="17"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span>) <span class="fu">+</span> <span class="dv">10</span></a>
-<a class="sourceLine" id="cb5-18" data-line-number="18"><span class="dv">1</span> <span class="fu">+</span> <span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">10</span></a>
-<a class="sourceLine" id="cb5-19" data-line-number="19"><span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span>) <span class="fu">+</span> <span class="dv">10</span></a>
-<a class="sourceLine" id="cb5-20" data-line-number="20"><span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-21" data-line-number="21"><span class="dv">1</span> <span class="fu">+</span> <span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-22" data-line-number="22"><span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>))</a>
-<a class="sourceLine" id="cb5-23" data-line-number="23"><span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb5-24" data-line-number="24"><span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> (<span class="dv">1</span> <span class="fu">+</span> <span class="dv">10</span>))</a></code></pre></div>
-<p>As you can see from the output, there’s a lot of repetition. We’ll need to do some memoization to speed it up.</p>
-<h2 id="pure-memoization">Pure Memoization</h2>
-<p>The normal way most programmers think about “memoization” is something like this:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb6-1" data-line-number="1">memo_dict <span class="op">=</span> {<span class="dv">0</span>:<span class="dv">0</span>,<span class="dv">1</span>:<span class="dv">1</span>}</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="kw">def</span> fib(n):</a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">    <span class="cf">if</span> n <span class="kw">in</span> memo_dict:</a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">        <span class="cf">return</span> memo_dict[n]</a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">    <span class="cf">else</span>:</a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">        res <span class="op">=</span> fib(n<span class="dv">-1</span>) <span class="op">+</span> fib(n<span class="dv">-2</span>)</a>
-<a class="sourceLine" id="cb6-8" data-line-number="8">        memo_dict[n] <span class="op">=</span> res</a>
-<a class="sourceLine" id="cb6-9" data-line-number="9">        <span class="cf">return</span> res</a></code></pre></div>
-<p>In other words, it’s a fundamentally stateful process. We need to mutate some mapping when we haven’t seen the argument before.</p>
-<p>Using laziness, though, we can emulate the same behavior purely. Instead of mutating the mapping on function calls, we fill the whole thing at the beginning, and then index into it. As long as the mapping is lazy, it’ll only evaluate the function calls when they’re needed. We could use lists as our mapping to the natural numbers:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1">fibs <span class="fu">=</span> <span class="dv">0</span> <span class="fu">:</span> <span class="dv">1</span> <span class="fu">:</span> map fib [<span class="dv">2</span><span class="fu">..</span>]</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">fib n <span class="fu">=</span> fibs <span class="fu">!!</span> (n<span class="fu">-</span><span class="dv">1</span>) <span class="fu">+</span> fibs <span class="fu">!!</span> (n<span class="fu">-</span><span class="dv">2</span>)</a></code></pre></div>
-<p>The benefit here is that we avoid the extra work of redundant calls. However, we pay for the speedup in three ways:</p>
-<ol class="example" type="1">
-<li>Space: we need to take up memory space storing the cached solutions.</li>
-<li>Indexing: while we no longer have to pay for the expensive recursive calls, we <em>do</em> now have to pay for indexing into the data structure. In this example, we’re paying linear time to index into the list.</li>
-<li>Generality: the memoization is tied directly to the argument type to the function. We need to be able to use the argument to our memoized function as an index into some data structure. While a lot of argument types admit some type of indexing (whether they’re <code class="sourceCode haskell"><span class="dt">Hashable</span></code>, <code class="sourceCode haskell"><span class="dt">Ord</span></code>, etc.), some don’t, and we can’t memoize those using this technique.</li>
-</ol>
-<p>We’re going to look at a technique that allow us to somewhat mitigate 2 and 3 above, using something called a <em>nexus</em>.</p>
-<h2 id="nexuses">Nexuses</h2>
-<p>The standard technique of memoization is focused on the arguments to the function, creating a concrete representation of them in memory to map to the results. Using nexuses, as described in <span class="citation" data-cites="bird_functional_2003">Bird and Hinze (<a href="#ref-bird_functional_2003">2003</a>)</span>, we’ll instead focus on the function itself, creating a concrete representation of its call graph in memory. Here’s the call graph of Fibonacci:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">                                            ┌fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">                                   ┌fib(<span class="dv">2</span>)<span class="fu">=</span>1┤</a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">                                   │        └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">                          ┌fib(<span class="dv">3</span>)<span class="fu">=</span>2┤</a>
-<a class="sourceLine" id="cb8-5" data-line-number="5">                          │        └fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-6" data-line-number="6">                 ┌fib(<span class="dv">4</span>)<span class="fu">=</span>3┤</a>
-<a class="sourceLine" id="cb8-7" data-line-number="7">                 │        │        ┌fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-8" data-line-number="8">                 │        └fib(<span class="dv">2</span>)<span class="fu">=</span>1┤</a>
-<a class="sourceLine" id="cb8-9" data-line-number="9">                 │                 └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb8-10" data-line-number="10">        ┌fib(<span class="dv">5</span>)<span class="fu">=</span>5┤</a>
-<a class="sourceLine" id="cb8-11" data-line-number="11">        │        │                 ┌fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-12" data-line-number="12">        │        │        ┌fib(<span class="dv">2</span>)<span class="fu">=</span>1┤</a>
-<a class="sourceLine" id="cb8-13" data-line-number="13">        │        │        │        └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb8-14" data-line-number="14">        │        └fib(<span class="dv">3</span>)<span class="fu">=</span>2┤</a>
-<a class="sourceLine" id="cb8-15" data-line-number="15">        │                 └fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-16" data-line-number="16">fib(<span class="dv">6</span>)<span class="fu">=</span>8┤</a>
-<a class="sourceLine" id="cb8-17" data-line-number="17">        │                          ┌fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-18" data-line-number="18">        │                 ┌fib(<span class="dv">2</span>)<span class="fu">=</span>1┤</a>
-<a class="sourceLine" id="cb8-19" data-line-number="19">        │                 │        └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb8-20" data-line-number="20">        │        ┌fib(<span class="dv">3</span>)<span class="fu">=</span>2┤</a>
-<a class="sourceLine" id="cb8-21" data-line-number="21">        │        │        └fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-22" data-line-number="22">        └fib(<span class="dv">4</span>)<span class="fu">=</span>3┤</a>
-<a class="sourceLine" id="cb8-23" data-line-number="23">                 │        ┌fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb8-24" data-line-number="24">                 └fib(<span class="dv">2</span>)<span class="fu">=</span>1┤</a>
-<a class="sourceLine" id="cb8-25" data-line-number="25">                          └fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a></code></pre></div>
-<p>Turning <em>that</em> into a concrete datatype wouldn’t do us much good: it still has the massively redundant computations in it. However, we can recognize that entire subtrees are duplicates of each other: in those cases, instead of creating both subtrees, we could just create one and have each parent point to it<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1">        ┌fib(<span class="dv">5</span>)<span class="fu">=</span>5┬────────┬fib(<span class="dv">3</span>)<span class="fu">=</span>2┬────────┬fib(<span class="dv">1</span>)<span class="fu">=</span><span class="dv">1</span></a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">fib(<span class="dv">6</span>)<span class="fu">=</span>8┤        │        │        │        │</a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">        └────────┴fib(<span class="dv">4</span>)<span class="fu">=</span>3┴────────┴fib(<span class="dv">2</span>)<span class="fu">=</span>1┴fib(<span class="dv">0</span>)<span class="fu">=</span><span class="dv">0</span></a></code></pre></div>
-<p>This is a nexus. In Haskell, it’s not observably different from the other form, except that it takes up significantly less space. It’s also much quicker to construct.</p>
-<p>If we use it to memoize <code class="sourceCode haskell">fib</code>, we’ll no longer be indexing on the argument: we’ll instead follow the relevant branch in the tree to the subcomputation, which is just chasing a pointer. It also means the argument doesn’t have to be constrained to any specific type. Here’s how you’d do it:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span></a>
-<a class="sourceLine" id="cb12-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Leaf</span></a>
-<a class="sourceLine" id="cb12-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">Node</span></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">    {<span class="ot"> val   ::</span> <span class="dt">Integer</span></a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">    ,<span class="ot"> left  ::</span> <span class="dt">Tree</span></a>
-<a class="sourceLine" id="cb12-6" data-line-number="6">    ,<span class="ot"> right ::</span> <span class="dt">Tree</span>}</a>
-<a class="sourceLine" id="cb12-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb12-8" data-line-number="8"><span class="ot">fib ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></a>
-<a class="sourceLine" id="cb12-9" data-line-number="9">fib <span class="fu">=</span> val <span class="fu">.</span> go</a>
-<a class="sourceLine" id="cb12-10" data-line-number="10">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb12-11" data-line-number="11">    go <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span></a>
-<a class="sourceLine" id="cb12-12" data-line-number="12">    go <span class="dv">1</span> <span class="fu">=</span> <span class="dt">Node</span> <span class="dv">1</span> (<span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>) <span class="dt">Leaf</span></a>
-<a class="sourceLine" id="cb12-13" data-line-number="13">    go n <span class="fu">=</span> node t (left t) <span class="kw">where</span> t <span class="fu">=</span> go (n<span class="fu">-</span><span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb12-14" data-line-number="14">    node l r <span class="fu">=</span> <span class="dt">Node</span> (val l <span class="fu">+</span> val r) l r</a></code></pre></div>
-<p>So this approach sounds amazing, right? No constraints on the argument type, no need to pay for indexing: why doesn’t everyone use it everywhere? The main reason is that figuring out a nexus for the call-graph is <em>hard</em>. In fact, finding an optimal one is NP-hard in general <span class="citation" data-cites="steffen_table_2006">(Steffen and Giegerich <a href="#ref-steffen_table_2006">2006</a>)</span>.</p>
-<p>The second problem is that it’s difficult to abstract out. The standard technique of memoization relies on building a mapping from keys to values: about as bread-and-butter as it gets in programming. Even more, we already know how to say “values of this type can be used efficiently as keys in some mapping”: for Data.Map it’s <code class="sourceCode haskell"><span class="dt">Ord</span></code>, for Data.HashMap it’s <code class="sourceCode haskell"><span class="dt">Hashable</span></code>. All of this together means we can build a nice library for memoization which exports the two following functions:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">memoHash ::</span> <span class="dt">Hashable</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</a>
-<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="ot">memoOrd ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</a></code></pre></div>
-<p>Building a nexus, however, is not bread-and-butter. On top of that, it’s difficult to say something like “recursive functions of this structure can be constructed using a nexus”. What’s the typeclass for that? In comparison to the signatures above, the constraint will need to be on the <em>arrows</em>, not the <code class="sourceCode haskell">a</code>. Even talking about the structure of recursive functions is regarded as somewhat of an advanced subject: that said, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a> package allows us to do so, and even has facilities for constructing something <em>like</em> nexuses with histomorphisms <span class="citation" data-cites="tobin_time_2016">(Tobin <a href="#ref-tobin_time_2016">2016</a>)</span>. I’m still looking to see if there’s a library out there that <em>does</em> manage to abstract nexuses in an ergonomic way, so I’d love to hear if there was one (or if there’s some more generalized form which accomplishes the same).</p>
-<h2 id="memoizing-countdown">Memoizing Countdown</h2>
-<p>That’s enough preamble. The nexus we want to construct for countdown is <em>not</em> going to memoize as much as possible: in particular, we’re only going to memoize the shape of the trees, not the operators used. This will massively reduce the memory overhead, and still give a decent speedup <span class="citation" data-cites="bird_countdown:_2005">(Bird and Mu <a href="#ref-bird_countdown:_2005">2005</a>, 11 “building a skeleton tree first”)</span>.</p>
-<p>With that in mind, the ideal nexus looks something like this:</p>
-<p><img src="/images/boolean-lattice.svg" /></p>
-<p>We can represent the tree in Haskell as a rose tree:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb14-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Node</span></a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">    {<span class="ot"> root   ::</span> a</a>
-<a class="sourceLine" id="cb14-4" data-line-number="4">    ,<span class="ot"> forest ::</span> <span class="dt">Forest</span> a</a>
-<a class="sourceLine" id="cb14-5" data-line-number="5">    }</a>
-<a class="sourceLine" id="cb14-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb14-7" data-line-number="7"><span class="kw">type</span> <span class="dt">Forest</span> a <span class="fu">=</span> [<span class="dt">Tree</span> a]</a></code></pre></div>
-<p>Constructing the nexus itself isn’t actually the most interesting part of this solution: <em>consuming</em> it is. We need to be able to go from the structure above into a list that’s the equivalent of <code class="sourceCode haskell">unmerges</code>. Doing a breadth-first traversal of the diagram above (without the top element) will give us:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>b</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>c</mi><mo>,</mo><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>d</mi><mo>,</mo><mi>c</mi><mi>d</mi><mo>,</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi></mrow><annotation encoding="application/x-tex">abc, abd, acd, bcd, ab, ac, bc, ad, bd, cd, a, b, c, d</annotation></semantics></math></p>
-<p>If you split that list in half, and zip it with its reverse, you’ll get the output of <code class="sourceCode haskell">unmerges</code>.</p>
-<p>However, the breadth-first traversal of the diagram isn’t the same thing as the breadth-first traversal of the rose tree. The latter will traverse <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>b</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>c</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abc, abd, acd, bcd</annotation></semantics></math>, and then the children of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>c</mi><mo>,</mo><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">ab,ac,bc</annotation></semantics></math>), and then the children of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">ab,ad,bd</annotation></semantics></math>): and here’s our problem. We traverse <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi></mrow><annotation encoding="application/x-tex">ab</annotation></semantics></math> twice, because we can’t know that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math> are pointing to the same value. What we have to do is first prune the tree, removing duplicates, and then perform a breadth-first traversal on that.</p>
-<h3 id="pruning">Pruning</h3>
-<p>Luckily, the duplicates follow a pattern, allowing us to remove them without having to do any equality checking. In each row, the first node has no duplicates in its children, the second’s first child is a duplicate, the third’s first and second children are duplicates, and so on. You should be able to see this in the diagram above. Adapting a little from the paper, we get an algorithm like this:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="ot">para ::</span> (a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb15-2" data-line-number="2">para f b <span class="fu">=</span> go</a>
-<a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb15-4" data-line-number="4">    go [] <span class="fu">=</span> b</a>
-<a class="sourceLine" id="cb15-5" data-line-number="5">    go (x<span class="fu">:</span>xs) <span class="fu">=</span> f x xs (go xs)</a>
-<a class="sourceLine" id="cb15-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb15-7" data-line-number="7"><span class="ot">prune ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> <span class="dt">Forest</span> a</a>
-<a class="sourceLine" id="cb15-8" data-line-number="8">prune ts <span class="fu">=</span> pruneAt ts <span class="dv">0</span> </a>
-<a class="sourceLine" id="cb15-9" data-line-number="9">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb15-10" data-line-number="10">    pruneAt <span class="fu">=</span> para f (const [])</a>
-<a class="sourceLine" id="cb15-11" data-line-number="11">    f (<span class="dt">Node</span> x []) t _ _ <span class="fu">=</span> <span class="dt">Node</span> x [] <span class="fu">:</span> t</a>
-<a class="sourceLine" id="cb15-12" data-line-number="12">    f (<span class="dt">Node</span> x us) _ a k <span class="fu">=</span></a>
-<a class="sourceLine" id="cb15-13" data-line-number="13">        <span class="dt">Node</span> x (pruneAt (drop k us) k) <span class="fu">:</span> a (k <span class="fu">+</span> <span class="dv">1</span>)</a></code></pre></div>
-<h3 id="breadth-first-traversal">Breadth-First Traversal</h3>
-<p>I went through this in a <a href="/posts/2018-03-17-rose-trees-breadth-first.html">previous post</a>, so this is the end solution:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb16-2" data-line-number="2">breadthFirst ts <span class="fu">=</span> foldr f b ts []</a>
-<a class="sourceLine" id="cb16-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb16-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs<span class="fu">:</span>bw)</a>
-<a class="sourceLine" id="cb16-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb16-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb16-7" data-line-number="7">    b q <span class="fu">=</span> foldl (foldr f) b q []</a></code></pre></div>
-<p>With the appropriate incantations, this is actually the fastest implementation I’ve found.</p>
-<h3 id="fusing">Fusing</h3>
-<p>We can actually inline both of the above functions, fusing them together:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="ot">spanNexus ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb17-2" data-line-number="2">spanNexus ts <span class="fu">=</span> foldr f (const b) ts <span class="dv">0</span> []</a>
-<a class="sourceLine" id="cb17-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb17-4" data-line-number="4">    f (<span class="dt">Node</span> x us) fw k bw <span class="fu">=</span> x <span class="fu">:</span> fw (k<span class="fu">+</span><span class="dv">1</span>) ((drop k us, k) <span class="fu">:</span> bw)</a>
-<a class="sourceLine" id="cb17-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb17-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb17-7" data-line-number="7">    b qs <span class="fu">=</span> foldl (uncurry <span class="fu">.</span> foldr f <span class="fu">.</span> const) b qs []</a></code></pre></div>
-<h3 id="halving-convolving-and-folding">Halving, Convolving, and Folding</h3>
-<p>So, now we can go from the tree to our list of splits. Next step is to convert that list into the output of unmerges, by zipping the reverse of the first half with the second. We can use an algorithm described in <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005">2005</a>)</span> to do the zipping and reversing:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1">fold xs n <span class="fu">=</span> go xs n (const [])</a>
-<a class="sourceLine" id="cb18-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb18-3" data-line-number="3">    go xs <span class="dv">0</span>     k <span class="fu">=</span> k xs</a>
-<a class="sourceLine" id="cb18-4" data-line-number="4">    go (x<span class="fu">:</span>xs) n k <span class="fu">=</span> go xs (n<span class="fu">-</span><span class="dv">2</span>) (\(y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (x,y) <span class="fu">:</span> k ys)</a></code></pre></div>
-<p>And we can inline the function which collapses those results into one:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1">fold xs n <span class="fu">=</span> go xs n (const [])</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3">    go <span class="dv">0</span> xss k <span class="fu">=</span> k xss</a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">    go n (xs<span class="fu">:</span>xss) k <span class="fu">=</span></a>
-<a class="sourceLine" id="cb19-5" data-line-number="5">        go (n<span class="fu">-</span><span class="dv">2</span>) xss (\(ys<span class="fu">:</span>yss) <span class="ot">-&gt;</span> [ z</a>
-<a class="sourceLine" id="cb19-6" data-line-number="6">                                      <span class="fu">|</span> x <span class="ot">&lt;-</span> xs</a>
-<a class="sourceLine" id="cb19-7" data-line-number="7">                                      , y <span class="ot">&lt;-</span> ys</a>
-<a class="sourceLine" id="cb19-8" data-line-number="8">                                      , z <span class="ot">&lt;-</span> cmb x y</a>
-<a class="sourceLine" id="cb19-9" data-line-number="9">                                      ] <span class="fu">++</span> k yss)</a></code></pre></div>
-<p>And that’s all we need!</p>
-<details>
-<p><summary> Full Code </summary></p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Tree</span> <span class="kw">as</span> <span class="dt">Rose</span></a>
-<a class="sourceLine" id="cb20-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb20-3" data-line-number="3"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb20-4" data-line-number="4">    <span class="fu">=</span> <span class="dt">Leaf</span> <span class="dt">Int</span> a</a>
-<a class="sourceLine" id="cb20-5" data-line-number="5">    <span class="fu">|</span> <span class="dt">Node</span> [<span class="dt">Tree</span> a]</a>
-<a class="sourceLine" id="cb20-6" data-line-number="6">    <span class="kw">deriving</span> (<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">Functor</span>)</a>
-<a class="sourceLine" id="cb20-7" data-line-number="7">    </a>
-<a class="sourceLine" id="cb20-8" data-line-number="8"><span class="ot">enumerateTrees ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb20-9" data-line-number="9">enumerateTrees _ [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb20-10" data-line-number="10">enumerateTrees cmb xs <span class="fu">=</span> (extract <span class="fu">.</span> steps <span class="fu">.</span> initial) xs</a>
-<a class="sourceLine" id="cb20-11" data-line-number="11">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb20-12" data-line-number="12">    step <span class="fu">=</span> map nodes <span class="fu">.</span> group</a>
-<a class="sourceLine" id="cb20-13" data-line-number="13"></a>
-<a class="sourceLine" id="cb20-14" data-line-number="14">    steps [x] <span class="fu">=</span> x</a>
-<a class="sourceLine" id="cb20-15" data-line-number="15">    steps xs <span class="fu">=</span> steps (step xs)</a>
-<a class="sourceLine" id="cb20-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb20-17" data-line-number="17">    initial <span class="fu">=</span> map (<span class="dt">Leaf</span> <span class="dv">1</span> <span class="fu">.</span> flip <span class="dt">Rose.Node</span> [] <span class="fu">.</span> pure)</a>
-<a class="sourceLine" id="cb20-18" data-line-number="18"></a>
-<a class="sourceLine" id="cb20-19" data-line-number="19">    extract (<span class="dt">Leaf</span> _ x) <span class="fu">=</span> Rose.rootLabel x</a>
-<a class="sourceLine" id="cb20-20" data-line-number="20">    extract (<span class="dt">Node</span> [x]) <span class="fu">=</span> extract x</a>
-<a class="sourceLine" id="cb20-21" data-line-number="21"></a>
-<a class="sourceLine" id="cb20-22" data-line-number="22">    group [_] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb20-23" data-line-number="23">    group (<span class="dt">Leaf</span> _ x<span class="fu">:</span>vs) <span class="fu">=</span> <span class="dt">Node</span> [<span class="dt">Leaf</span> <span class="dv">2</span> [x, y] <span class="fu">|</span> <span class="dt">Leaf</span> _ y <span class="ot">&lt;-</span> vs] <span class="fu">:</span> group vs</a>
-<a class="sourceLine" id="cb20-24" data-line-number="24">    group (<span class="dt">Node</span>   u<span class="fu">:</span>vs) <span class="fu">=</span> <span class="dt">Node</span> (zipWith comb (group u) vs) <span class="fu">:</span> group vs</a>
-<a class="sourceLine" id="cb20-25" data-line-number="25"></a>
-<a class="sourceLine" id="cb20-26" data-line-number="26">    comb (<span class="dt">Leaf</span> n xs) (<span class="dt">Leaf</span> _ x) <span class="fu">=</span> <span class="dt">Leaf</span> (n <span class="fu">+</span> <span class="dv">1</span>) (xs <span class="fu">++</span> [x])</a>
-<a class="sourceLine" id="cb20-27" data-line-number="27">    comb (<span class="dt">Node</span> us) (<span class="dt">Node</span> vs) <span class="fu">=</span> <span class="dt">Node</span> (zipWith comb us vs)</a>
-<a class="sourceLine" id="cb20-28" data-line-number="28"></a>
-<a class="sourceLine" id="cb20-29" data-line-number="29">    forest ts <span class="fu">=</span> foldr f (const b) ts <span class="dv">0</span> []</a>
-<a class="sourceLine" id="cb20-30" data-line-number="30">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb20-31" data-line-number="31">        f (<span class="dt">Rose.Node</span> x []) fw <span class="fu">!</span>k bw <span class="fu">=</span> x <span class="fu">:</span> fw (k <span class="fu">+</span> <span class="dv">1</span>) bw</a>
-<a class="sourceLine" id="cb20-32" data-line-number="32">        f (<span class="dt">Rose.Node</span> x us) fw <span class="fu">!</span>k bw <span class="fu">=</span> x <span class="fu">:</span> fw (k <span class="fu">+</span> <span class="dv">1</span>) ((drop k us, k) <span class="fu">:</span> bw)</a>
-<a class="sourceLine" id="cb20-33" data-line-number="33"></a>
-<a class="sourceLine" id="cb20-34" data-line-number="34">        b [] <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb20-35" data-line-number="35">        b qs <span class="fu">=</span> foldl (uncurry <span class="fu">.</span> foldr f <span class="fu">.</span> const) b qs []</a>
-<a class="sourceLine" id="cb20-36" data-line-number="36"></a>
-<a class="sourceLine" id="cb20-37" data-line-number="37">    nodes (<span class="dt">Leaf</span> n x) <span class="fu">=</span> <span class="dt">Leaf</span> <span class="dv">1</span> (node n x)</a>
-<a class="sourceLine" id="cb20-38" data-line-number="38">    nodes (<span class="dt">Node</span> xs) <span class="fu">=</span> <span class="dt">Node</span> (map nodes xs)</a>
-<a class="sourceLine" id="cb20-39" data-line-number="39"></a>
-<a class="sourceLine" id="cb20-40" data-line-number="40">    node n ts <span class="fu">=</span> <span class="dt">Rose.Node</span> (walk (<span class="dv">2</span> <span class="fu">^</span> n <span class="fu">-</span> <span class="dv">2</span>) (forest ts) (const [])) ts</a>
-<a class="sourceLine" id="cb20-41" data-line-number="41">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb20-42" data-line-number="42">        walk <span class="dv">0</span> xss k <span class="fu">=</span> k xss</a>
-<a class="sourceLine" id="cb20-43" data-line-number="43">        walk n (xs<span class="fu">:</span>xss) k <span class="fu">=</span></a>
-<a class="sourceLine" id="cb20-44" data-line-number="44">            walk (n<span class="fu">-</span><span class="dv">2</span>) xss (\(ys<span class="fu">:</span>yss) <span class="ot">-&gt;</span> [ z</a>
-<a class="sourceLine" id="cb20-45" data-line-number="45">                                         <span class="fu">|</span> x <span class="ot">&lt;-</span> xs</a>
-<a class="sourceLine" id="cb20-46" data-line-number="46">                                         , y <span class="ot">&lt;-</span> ys</a>
-<a class="sourceLine" id="cb20-47" data-line-number="47">                                         , z <span class="ot">&lt;-</span> cmb x y</a>
-<a class="sourceLine" id="cb20-48" data-line-number="48">                                         ] <span class="fu">++</span> k yss)</a></code></pre></div>
-</details>
-<h2 id="using-it-for-countdown">Using it for Countdown</h2>
-<p>The first thing to do for the Countdown solution is to figure out a representation for expressions. The one from simple-reflect is perfect for displaying the result, but we should memoize its calculation.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Memoed</span></a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Memoed</span></a>
-<a class="sourceLine" id="cb21-3" data-line-number="3">  {<span class="ot"> expr   ::</span> <span class="dt">Expr</span></a>
-<a class="sourceLine" id="cb21-4" data-line-number="4">  ,<span class="ot"> result ::</span> <span class="dt">Int</span></a>
-<a class="sourceLine" id="cb21-5" data-line-number="5">  }</a></code></pre></div>
-<p>Then, some helpers for building:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Op</span> <span class="fu">=</span> <span class="dt">Add</span> <span class="fu">|</span> <span class="dt">Dif</span> <span class="fu">|</span> <span class="dt">Mul</span> <span class="fu">|</span> <span class="dt">Div</span></a>
-<a class="sourceLine" id="cb22-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb22-3" data-line-number="3">binOp f g x y <span class="fu">=</span> <span class="dt">Memoed</span> ((f <span class="ot">`on`</span> expr) x y) ((g <span class="ot">`on`</span> result) x y)</a>
-<a class="sourceLine" id="cb22-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb22-5" data-line-number="5"><span class="ot">apply ::</span> <span class="dt">Op</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span></a>
-<a class="sourceLine" id="cb22-6" data-line-number="6">apply <span class="dt">Add</span> x y <span class="fu">=</span> binOp (<span class="fu">+</span>) (<span class="fu">+</span>) x y</a>
-<a class="sourceLine" id="cb22-7" data-line-number="7">apply <span class="dt">Dif</span> x y</a>
-<a class="sourceLine" id="cb22-8" data-line-number="8">  <span class="fu">|</span> result y <span class="fu">&lt;</span> result x <span class="fu">=</span> binOp (<span class="fu">-</span>) (<span class="fu">-</span>) x y</a>
-<a class="sourceLine" id="cb22-9" data-line-number="9">  <span class="fu">|</span> otherwise <span class="fu">=</span> binOp (<span class="fu">-</span>) (<span class="fu">-</span>) y x</a>
-<a class="sourceLine" id="cb22-10" data-line-number="10">apply <span class="dt">Mul</span> x y <span class="fu">=</span> binOp (<span class="fu">*</span>) (<span class="fu">*</span>) x y</a>
-<a class="sourceLine" id="cb22-11" data-line-number="11">apply <span class="dt">Div</span> x y <span class="fu">=</span> binOp div div x y</a></code></pre></div>
-<p>Finally, the full algorithm:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="ot">enumerateExprs ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Memoed</span>]</a>
-<a class="sourceLine" id="cb23-2" data-line-number="2">enumerateExprs <span class="fu">=</span> enumerateTrees cmb <span class="fu">.</span> map (\x <span class="ot">-&gt;</span> <span class="dt">Memoed</span> (fromIntegral x) x)</a>
-<a class="sourceLine" id="cb23-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb23-4" data-line-number="4">    cmb x y <span class="fu">=</span></a>
-<a class="sourceLine" id="cb23-5" data-line-number="5">        nubs <span class="fu">$</span></a>
-<a class="sourceLine" id="cb23-6" data-line-number="6">        x <span class="fu">:</span></a>
-<a class="sourceLine" id="cb23-7" data-line-number="7">        y <span class="fu">:</span></a>
-<a class="sourceLine" id="cb23-8" data-line-number="8">        [ apply op x y</a>
-<a class="sourceLine" id="cb23-9" data-line-number="9">        <span class="fu">|</span> op <span class="ot">&lt;-</span> [<span class="dt">Add</span>, <span class="dt">Dif</span>, <span class="dt">Mul</span>, <span class="dt">Div</span>]</a>
-<a class="sourceLine" id="cb23-10" data-line-number="10">        , legal op (result x) (result y) ]</a>
-<a class="sourceLine" id="cb23-11" data-line-number="11">    legal <span class="dt">Add</span> _ _ <span class="fu">=</span> <span class="dt">True</span></a>
-<a class="sourceLine" id="cb23-12" data-line-number="12">    legal <span class="dt">Dif</span> x y <span class="fu">=</span> x <span class="fu">/=</span> y</a>
-<a class="sourceLine" id="cb23-13" data-line-number="13">    legal <span class="dt">Mul</span> _ _ <span class="fu">=</span> <span class="dt">True</span></a>
-<a class="sourceLine" id="cb23-14" data-line-number="14">    legal <span class="dt">Div</span> x y <span class="fu">=</span> x <span class="ot">`mod`</span> y <span class="fu">==</span> <span class="dv">0</span></a>
-<a class="sourceLine" id="cb23-15" data-line-number="15">    nubs xs <span class="fu">=</span> foldr f (const []) xs IntSet.empty</a>
-<a class="sourceLine" id="cb23-16" data-line-number="16">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb23-17" data-line-number="17">        f e a s</a>
-<a class="sourceLine" id="cb23-18" data-line-number="18">          <span class="fu">|</span> IntSet.member (result e) s <span class="fu">=</span> a s</a>
-<a class="sourceLine" id="cb23-19" data-line-number="19">          <span class="fu">|</span> otherwise <span class="fu">=</span> e <span class="fu">:</span> a (IntSet.insert (result e) s)</a>
-<a class="sourceLine" id="cb23-20" data-line-number="20"></a>
-<a class="sourceLine" id="cb23-21" data-line-number="21"><span class="ot">countdown ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</a>
-<a class="sourceLine" id="cb23-22" data-line-number="22">countdown targ <span class="fu">=</span> map expr <span class="fu">.</span> filter ((<span class="fu">==</span>) targ <span class="fu">.</span> result) <span class="fu">.</span> enumerateExprs</a>
-<a class="sourceLine" id="cb23-23" data-line-number="23"></a>
-<a class="sourceLine" id="cb23-24" data-line-number="24"><span class="fu">&gt;&gt;&gt;</span> (mapM_ print <span class="fu">.</span> reduction <span class="fu">.</span> head) (countdown <span class="dv">586</span> [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>])</a>
-<a class="sourceLine" id="cb23-25" data-line-number="25"><span class="dv">25</span> <span class="fu">*</span> <span class="dv">3</span> <span class="fu">+</span> <span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb23-26" data-line-number="26"><span class="dv">75</span> <span class="fu">+</span> <span class="dv">1</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb23-27" data-line-number="27"><span class="dv">76</span> <span class="fu">+</span> (<span class="dv">100</span> <span class="fu">*</span> <span class="dv">5</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb23-28" data-line-number="28"><span class="dv">76</span> <span class="fu">+</span> (<span class="dv">500</span> <span class="fu">+</span> <span class="dv">10</span>)</a>
-<a class="sourceLine" id="cb23-29" data-line-number="29"><span class="dv">76</span> <span class="fu">+</span> <span class="dv">510</span></a>
-<a class="sourceLine" id="cb23-30" data-line-number="30"><span class="dv">586</span></a></code></pre></div>
-<p>There are some optimizations going on here, taken mainly from <span class="citation" data-cites="bird_countdown:_2005">Bird and Mu (<a href="#ref-bird_countdown:_2005">2005</a>)</span>:</p>
-<ol type="1">
-<li>We filter out illegal operations, as described originally.</li>
-<li>We filter out any expressions that have the same value.</li>
-</ol>
-<h2 id="testing-the-implementation">Testing the Implementation</h2>
-<p>So we’ve followed the paper, written the code: time to test. The specification of the function is relatively simple: calculate all applications of the commutative operator to some input, <em>without</em> recalculating subtrees.</p>
-<p>We’ll need a free structure for the “commutative operator”:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb24-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Leaf</span> a</a>
-<a class="sourceLine" id="cb24-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:^:</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb24-4" data-line-number="4">    <span class="kw">deriving</span> (<span class="dt">Foldable</span>,<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>)</a></code></pre></div>
-<p>Here’s the problem: it’s not commutative! We can remedy it by only exporting a constructor that creates the tree in a commutative way, and we can make it a pattern synonym so it looks normal:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="ot">{-# LANGUAGE DeriveFoldable  #-}</span></a>
-<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="ot">{-# LANGUAGE PatternSynonyms #-}</span></a>
-<a class="sourceLine" id="cb25-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb25-4" data-line-number="4"><span class="kw">module</span> <span class="dt">Commutative</span></a>
-<a class="sourceLine" id="cb25-5" data-line-number="5">  (<span class="dt">Tree</span>(<span class="dt">Leaf</span>)</a>
-<a class="sourceLine" id="cb25-6" data-line-number="6">  ,pattern (<span class="fu">:*:</span>))</a>
-<a class="sourceLine" id="cb25-7" data-line-number="7">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb25-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb25-9" data-line-number="9"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb25-10" data-line-number="10">    <span class="fu">=</span> <span class="dt">Leaf</span> a</a>
-<a class="sourceLine" id="cb25-11" data-line-number="11">    <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:^:</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb25-12" data-line-number="12">    <span class="kw">deriving</span> (<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>,<span class="dt">Foldable</span>)</a>
-<a class="sourceLine" id="cb25-13" data-line-number="13"></a>
-<a class="sourceLine" id="cb25-14" data-line-number="14">pattern<span class="ot"> (:*:) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb25-15" data-line-number="15">pattern xs <span class="fu">:*:</span> ys <span class="ot">&lt;-</span> xs <span class="fu">:^:</span> ys <span class="kw">where</span></a>
-<a class="sourceLine" id="cb25-16" data-line-number="16">  xs <span class="fu">:*:</span> ys</a>
-<a class="sourceLine" id="cb25-17" data-line-number="17">      <span class="fu">|</span> xs <span class="fu">&lt;=</span> ys <span class="fu">=</span> xs <span class="fu">:^:</span> ys</a>
-<a class="sourceLine" id="cb25-18" data-line-number="18">      <span class="fu">|</span> otherwise <span class="fu">=</span> ys <span class="fu">:^:</span> xs</a>
-<a class="sourceLine" id="cb25-19" data-line-number="19"></a>
-<a class="sourceLine" id="cb25-20" data-line-number="20"><span class="ot">{-# COMPLETE Leaf, (:*:) #-}</span></a></code></pre></div>
-<p>Now we need to check if all applications are actually tested. First, to generate all trees:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="ot">allTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</a>
-<a class="sourceLine" id="cb26-2" data-line-number="2">allTrees [x] <span class="fu">=</span> Set.singleton (<span class="dt">Leaf</span> x)</a>
-<a class="sourceLine" id="cb26-3" data-line-number="3">allTrees xs <span class="fu">=</span> Set.unions (map (uncurry f) (unmerges xs))</a>
-<a class="sourceLine" id="cb26-4" data-line-number="4">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb26-5" data-line-number="5">    f ls rs <span class="fu">=</span> Set.fromList ((liftA2 (<span class="fu">:*:</span>) <span class="ot">`on`</span> (Set.toList <span class="fu">.</span> allTrees)) ls rs)</a>
-<a class="sourceLine" id="cb26-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb26-7" data-line-number="7"><span class="ot">allSubTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</a>
-<a class="sourceLine" id="cb26-8" data-line-number="8">allSubTrees [x] <span class="fu">=</span> Set.singleton (<span class="dt">Leaf</span> x)</a>
-<a class="sourceLine" id="cb26-9" data-line-number="9">allSubTrees xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb26-10" data-line-number="10">    Set.unions (map (uncurry f <span class="fu">.</span> (allSubTrees <span class="fu">***</span> allSubTrees)) (unmerges xs))</a>
-<a class="sourceLine" id="cb26-11" data-line-number="11">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb26-12" data-line-number="12">    f ls rs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb26-13" data-line-number="13">        Set.unions</a>
-<a class="sourceLine" id="cb26-14" data-line-number="14">            [ls, rs, Set.fromList ((liftA2 (<span class="fu">:*:</span>) <span class="ot">`on`</span> Set.toList) ls rs)]</a></code></pre></div>
-<p>Then, to test:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="ot">prop_exhaustiveSearch ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></a>
-<a class="sourceLine" id="cb27-2" data-line-number="2">prop_exhaustiveSearch n <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-3" data-line-number="3">         <span class="kw">let</span> src <span class="fu">=</span> [<span class="dv">0</span> <span class="fu">..</span> fromIntegral n]</a>
-<a class="sourceLine" id="cb27-4" data-line-number="4">             expect <span class="fu">=</span> allSubTrees src</a>
-<a class="sourceLine" id="cb27-5" data-line-number="5">             actual <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-6" data-line-number="6">                 Set.fromList</a>
-<a class="sourceLine" id="cb27-7" data-line-number="7">                     (enumerateTrees</a>
-<a class="sourceLine" id="cb27-8" data-line-number="8">                          (\xs ys <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb27-9" data-line-number="9">                                [xs, ys, xs <span class="fu">:*:</span> ys])</a>
-<a class="sourceLine" id="cb27-10" data-line-number="10">                          (map <span class="dt">Leaf</span> src))</a>
-<a class="sourceLine" id="cb27-11" data-line-number="11">         <span class="kw">in</span> expect <span class="fu">==</span> actual</a>
-<a class="sourceLine" id="cb27-12" data-line-number="12"></a>
-<a class="sourceLine" id="cb27-13" data-line-number="13"><span class="ot">prop_exhaustiveSearchFull ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></a>
-<a class="sourceLine" id="cb27-14" data-line-number="14">prop_exhaustiveSearchFull n <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-15" data-line-number="15">         <span class="kw">let</span> src <span class="fu">=</span> [<span class="dv">0</span> <span class="fu">..</span> fromIntegral n]</a>
-<a class="sourceLine" id="cb27-16" data-line-number="16">             expect <span class="fu">=</span> Map.fromSet (const <span class="dv">1</span>) (allTrees src)</a>
-<a class="sourceLine" id="cb27-17" data-line-number="17">             actual <span class="fu">=</span></a>
-<a class="sourceLine" id="cb27-18" data-line-number="18">                 freqs</a>
-<a class="sourceLine" id="cb27-19" data-line-number="19">                     (enumerateTrees</a>
-<a class="sourceLine" id="cb27-20" data-line-number="20">                          (\xs ys <span class="ot">-&gt;</span> [xs <span class="fu">:*:</span> ys])</a>
-<a class="sourceLine" id="cb27-21" data-line-number="21">                          (map <span class="dt">Leaf</span> src))</a>
-<a class="sourceLine" id="cb27-22" data-line-number="22">         <span class="kw">in</span> expect <span class="fu">==</span> actual</a></code></pre></div>
-<p>Testing for repeated calls is more tricky. Remember, the memoization is supposed to be unobservable: in order to see it, we’re going to have to use some unsafe operations.</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1">traceSubsequences</a>
-<a class="sourceLine" id="cb28-2" data-line-number="2"><span class="ot">    ::</span> ((<span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>]) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>])</a>
-<a class="sourceLine" id="cb28-3" data-line-number="3">    <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</a>
-<a class="sourceLine" id="cb28-4" data-line-number="4">    <span class="ot">-&gt;</span> (<span class="dt">Map</span> (<span class="dt">Tree</span> <span class="dt">Int</span>) <span class="dt">Int</span>, [<span class="dt">Tree</span> <span class="dt">Int</span>])</a>
-<a class="sourceLine" id="cb28-5" data-line-number="5">traceSubsequences enm ints <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-6" data-line-number="6">    runST <span class="fu">$</span></a>
-<a class="sourceLine" id="cb28-7" data-line-number="7">    <span class="kw">do</span> ref <span class="ot">&lt;-</span> newSTRef Map.empty</a>
-<a class="sourceLine" id="cb28-8" data-line-number="8">       <span class="kw">let</span> res <span class="fu">=</span> enm (combine ref) (map (conv ref) ints)</a>
-<a class="sourceLine" id="cb28-9" data-line-number="9">       traverse_ (foldr seq (pure ())) res</a>
-<a class="sourceLine" id="cb28-10" data-line-number="10">       intm <span class="ot">&lt;-</span> readSTRef ref</a>
-<a class="sourceLine" id="cb28-11" data-line-number="11">       pure (intm, res)</a>
-<a class="sourceLine" id="cb28-12" data-line-number="12">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb28-13" data-line-number="13">    combine ref xs ys <span class="fu">=</span> unsafeRunST ([xs <span class="fu">:*:</span> ys] <span class="fu">&lt;$</span> modifySTRef&#39; ref (incr (xs <span class="fu">:*:</span> ys)))</a>
-<a class="sourceLine" id="cb28-14" data-line-number="14">    <span class="ot">{-# NOINLINE combine #-}</span></a>
-<a class="sourceLine" id="cb28-15" data-line-number="15">    conv ref x <span class="fu">=</span> unsafeRunST (<span class="dt">Leaf</span> x <span class="fu">&lt;$</span> modifySTRef&#39; ref (incr (<span class="dt">Leaf</span> x)))</a>
-<a class="sourceLine" id="cb28-16" data-line-number="16">    <span class="ot">{-# NOINLINE conv #-}</span></a>
-<a class="sourceLine" id="cb28-17" data-line-number="17">    unsafeRunST cmp <span class="fu">=</span> unsafePerformIO (unsafeSTToIO cmp)</a>
-<a class="sourceLine" id="cb28-18" data-line-number="18"></a>
-<a class="sourceLine" id="cb28-19" data-line-number="19"><span class="ot">prop_noRepeatedCalls ::</span> <span class="dt">Property</span></a>
-<a class="sourceLine" id="cb28-20" data-line-number="20">prop_noRepeatedCalls <span class="fu">=</span></a>
-<a class="sourceLine" id="cb28-21" data-line-number="21">    property <span class="fu">$</span> sized <span class="fu">$</span></a>
-<a class="sourceLine" id="cb28-22" data-line-number="22">    \n <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb28-23" data-line-number="23">         pure <span class="fu">$</span></a>
-<a class="sourceLine" id="cb28-24" data-line-number="24">         <span class="kw">let</span> src <span class="fu">=</span> [<span class="dv">0</span> <span class="fu">..</span> n]</a>
-<a class="sourceLine" id="cb28-25" data-line-number="25">             (tint,tres) <span class="fu">=</span> fmap freqs (traceSubsequences enumerateTrees src)</a>
-<a class="sourceLine" id="cb28-26" data-line-number="26">             (fint,fres) <span class="fu">=</span> fmap freqs (traceSubsequences dummyEnumerate src)</a>
-<a class="sourceLine" id="cb28-27" data-line-number="27">         <span class="kw">in</span> counterexample</a>
-<a class="sourceLine" id="cb28-28" data-line-number="28">                (mapCompare (freqs (allSubTrees src)) tint)</a>
-<a class="sourceLine" id="cb28-29" data-line-number="29">                (all (<span class="dv">1</span> <span class="fu">==</span>) tint) <span class="fu">.&amp;&amp;.</span></a>
-<a class="sourceLine" id="cb28-30" data-line-number="30">            counterexample (mapCompare tres fres) (tres <span class="fu">==</span> fres) <span class="fu">.&amp;&amp;.</span></a>
-<a class="sourceLine" id="cb28-31" data-line-number="31">            (n <span class="fu">&gt;</span> <span class="dv">2</span> <span class="fu">==&gt;</span> tint <span class="fu">/=</span> fint)</a></code></pre></div>
-<p>Here, <code class="sourceCode haskell">dummyEnumerate</code> is some method which performs the same task, but <em>doesn’t</em> construct a nexus, so we can ensure that our tests really do catch faulty implementations.</p>
-<div id="refs" class="references">
-<div id="ref-bird_functional_2003">
-<p>Bird, Richard, and Ralf Hinze. 2003. “Functional Pearl Trouble Shared is Trouble Halved.” In <em>Proceedings of the 2003 ACM SIGPLAN Workshop on Haskell</em>, 1–6. Haskell ’03. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/871895.871896">10.1145/871895.871896</a>. <a href="http://doi.acm.org/10.1145/871895.871896" class="uri">http://doi.acm.org/10.1145/871895.871896</a>.</p>
-</div>
-<div id="ref-bird_countdown:_2005">
-<p>Bird, Richard, and Shin-Cheng Mu. 2005. “Countdown: A case study in origami programming.” <em>Journal of Functional Programming</em> 15 (05) (August): 679. doi:<a href="https://doi.org/10.1017/S0956796805005642">10.1017/S0956796805005642</a>. <a href="http://www.journals.cambridge.org/abstract_S0956796805005642" class="uri">http://www.journals.cambridge.org/abstract_S0956796805005642</a>.</p>
-</div>
-<div id="ref-danvy_there_2005">
-<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869" class="uri">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
-</div>
-<div id="ref-hutton_countdown_2002">
-<p>Hutton, Graham. 2002. “The Countdown Problem.” <em>J. Funct. Program.</em> 12 (6) (November): 609–616. doi:<a href="https://doi.org/10.1017/S0956796801004300">10.1017/S0956796801004300</a>. <a href="http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf" class="uri">http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf</a>.</p>
-</div>
-<div id="ref-steffen_table_2006">
-<p>Steffen, Peter, and Robert Giegerich. 2006. “Table Design in Dynamic Programming.” <em>Information and Computation</em> 204 (9) (September): 1325–1345. doi:<a href="https://doi.org/10.1016/j.ic.2006.02.006">10.1016/j.ic.2006.02.006</a>. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf</a>.</p>
-</div>
-<div id="ref-tobin_time_2016">
-<p>Tobin, Jared. 2016. “Time Traveling Recursion Schemes.” <em>jtobin.io</em>. <a href="https://jtobin.io/time-traveling-recursion" class="uri">https://jtobin.io/time-traveling-recursion</a>.</p>
-</div>
-</div>
-<section class="footnotes">
-<hr />
-<ol>
-<li id="fn1"><p>If you think that structure looks more like a funny linked list than a tree, that’s because it is. Instead of talking about “left” and “right” branches, we could talk about the first and second elements in a list: in fact, this is exactly what’s happening in the famous <code class="sourceCode haskell">zipWith</code> Fibonacci implementation (in reverse).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1">fibs <span class="fu">=</span> <span class="dv">0</span> <span class="fu">:</span> <span class="dv">1</span> <span class="fu">:</span> zipWith (<span class="fu">+</span>) fibs (tail fibs)</a></code></pre></div>
-<p>Or, in my favourite version:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">fib n <span class="fu">=</span> fix ((<span class="fu">:</span>) <span class="dv">0</span> <span class="fu">.</span> scanl (<span class="fu">+</span>) <span class="dv">1</span>) <span class="fu">!!</span> n</a></code></pre></div>
-<a href="#fnref1" class="footnote-back">↩</a></li>
-</ol>
-</section>
-]]></description>
-    <pubDate>Tue, 20 Mar 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-03-20-countdown.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
