@@ -97,7 +97,7 @@
 <li>Remove the index, instead having a proof inside the type of equality. What does that mean? Basically, transform the definition of <code>≤</code> above into <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L72-L76">the one in Data.Nat</a>.</li>
 </ol>
 <h1 id="inspect">Inspect</h1>
-<p>The use-case I had for this is a little long, I’m afraid, but it <em>did</em> come in handy. Basically, if you’re trying to prove something about a function, you may well want to <em>run</em> that function and pattern match on the result.</p>
+<p>The use-case I had for this is a little long, I’m afraid (too long to include here), but it <em>did</em> come in handy. Basically, if you’re trying to prove something about a function, you may well want to <em>run</em> that function and pattern match on the result.</p>
 <div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb13-1" data-line-number="1">f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</a>
 <a class="sourceLine" id="cb13-2" data-line-number="2">f-is-the-same-as-g x <span class="kw">with</span> f x</a>
 <a class="sourceLine" id="cb13-3" data-line-number="3">f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
