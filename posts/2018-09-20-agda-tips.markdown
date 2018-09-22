@@ -249,16 +249,16 @@ That's where the similarities stop though. In Haskell, *all* types are
 irrelevant: they're figments of the typechecker's imagination. You can't get a
 type at runtime full stop.
 
-In dependently typed languages, this isn't a distinction we can rely on. Types
-are values and values are types, so quite often they *need* to exist at runtime.
-As you might guess, though, they don't always need to. The length of a
-length-indexed vector, for instance, is completely determined by the structure
-of the vector: why would you bother storing all of that information at runtime?
-This is what Idris recognizes, and what it tries to remedy: it analyses code for
-these kinds of opportunities for elision, and does so when it can. Kind of like
-Haskell's fusion, though, it's an invisible optimization, and there's no way to
-make Idris throw a type error when it can't elide something you want it to
-elide.
+In dependently typed languages, this isn't a distinction we can rely on. The
+line between runtime entities and compile-time entities is drawn elsewhere, so
+quite often types *need* to exist at runtime. As you might guess, though, they
+don't always need to. The length of a length-indexed vector, for instance, is
+completely determined by the structure of the vector: why would you bother
+storing all of that information at runtime? This is what Idris recognizes, and
+what it tries to remedy: it analyses code for these kinds of opportunities for
+elision, and does so when it can. Kind of like Haskell's fusion, though, it's an
+invisible optimization, and there's no way to make Idris throw a type error when
+it can't elide something you want it to elide.
 
 Agda is totally different. Something is irrelevant in Agda if it's *unique*. Or,
 rather, it's irrelevant if all you rely on is its existence. It's used for
