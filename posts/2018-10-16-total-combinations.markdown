@@ -131,10 +131,19 @@ record Stream {a} (A : Set a) : Set a where
 open Stream
 ```
 
-In Agda, you can differentiate between infinite types (`coinductive` above),
-finite types (you'd use the `inductive` keyword), and possibly finite types.
-Also, this is a record, rather than a sum type: there's no empty case, so we
-don't need multiple cases.
+In Haskell, there was no need to define a separate stream type: the type of
+lists contains both finite and infinite lists.
+
+Agda can get a little more specific: here, we've used the `coinductive` keyword,
+which means we're free to create infinite `Stream`s. Rather than the usual
+termination checking (which would kick in when we consume a recursive, inductive
+type), we now get productivity checking: when creating a `Stream`, the `tail`
+must always be available in finite time. For a finite type, we'd have used the
+`inductive` keyword instead; this wouldn't be much use, though, since there's no
+way to create a finite `Stream` without a nil constructor![^thanks-gelisam]
+
+[^thanks-gelisam]: Thanks to [gelisam](http://gelisam.blogspot.com/) for
+    pointing out the poor phrasing here. Updated on 2018/10/16
 
 One of the interesting things about working with infinite data (when you're
 forced to notice that it's infinite, as you are in Agda) is that *everything*
