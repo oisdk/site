@@ -99,7 +99,8 @@
 <a class="sourceLine" id="cb7-6" data-line-number="6">    head <span class="ot">:</span> A</a>
 <a class="sourceLine" id="cb7-7" data-line-number="7">    tail <span class="ot">:</span> Stream A</a>
 <a class="sourceLine" id="cb7-8" data-line-number="8"><span class="kw">open</span> Stream</a></code></pre></div>
-<p>In Agda, you can differentiate between infinite types (<code>coinductive</code> above), finite types (you’d use the <code>inductive</code> keyword), and possibly finite types. Also, this is a record, rather than a sum type: there’s no empty case, so we don’t need multiple cases.</p>
+<p>In Haskell, there was no need to define a separate stream type: the type of lists contains both finite and infinite lists.</p>
+<p>Agda can get a little more specific: here, we’ve used the <code>coinductive</code> keyword, which means we’re free to create infinite <code>Stream</code>s. Rather than the usual termination checking (which would kick in when we consume a recursive, inductive type), we now get productivity checking: when creating a <code>Stream</code>, the <code>tail</code> must always be available in finite time. For a finite type, we’d have used the <code>inductive</code> keyword instead; this wouldn’t be much use, though, since there’s no way to create a finite <code>Stream</code> without a nil constructor!<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
 <p>One of the interesting things about working with infinite data (when you’re forced to notice that it’s infinite, as you are in Agda) is that <em>everything</em> gets flipped. So you have to prove productivity, not totality; you use product types, rather than sums; and to define functions, you use <em>co</em>patterns, rather than patterns.</p>
 <h1 id="copatterns">Copatterns</h1>
 <p>Copatterns are a handy syntactic construct for writing functions about record types. Let’s start with an example, and then I’ll try explain a little:</p>
@@ -140,7 +141,7 @@
 <div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb14-1" data-line-number="1">cons <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>i a<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">→</span> A <span class="ot">→</span> Stream <span class="ot">{</span>i<span class="ot">}</span> A <span class="ot">→</span> Stream <span class="ot">{</span>↑ i<span class="ot">}</span> A</a>
 <a class="sourceLine" id="cb14-2" data-line-number="2">head <span class="ot">(</span>cons x xs<span class="ot">)</span> <span class="ot">=</span> x</a>
 <a class="sourceLine" id="cb14-3" data-line-number="3">tail <span class="ot">(</span>cons x xs<span class="ot">)</span> <span class="ot">=</span> xs</a></code></pre></div>
-<p>Conversely, we can write a different definition of <code>tail</code> that consumes one value<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>:</p>
+<p>Conversely, we can write a different definition of <code>tail</code> that consumes one value<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>:</p>
 <div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb15-1" data-line-number="1">tail′ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>i a<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">→</span> Stream <span class="ot">{</span>↑ i<span class="ot">}</span> A <span class="ot">→</span> Stream <span class="ot">{</span>i<span class="ot">}</span> A</a>
 <a class="sourceLine" id="cb15-2" data-line-number="2">tail′ <span class="ot">{</span>i<span class="ot">}</span> xs <span class="ot">=</span> tail xs <span class="ot">{</span>i<span class="ot">}</span></a></code></pre></div>
 <p>For <code>&lt;*&gt;</code>, we want to show that its result can produce just as much values as its inputs can:</p>
@@ -206,7 +207,8 @@
 <section class="footnotes">
 <hr />
 <ol>
-<li id="fn1"><p>You might wonder why the definition of <code>tail</code> doesn’t have this signature to begin with. The reason is that our record type must be <em>parameterized</em> (not indexed) over its size (as it’s a record type), so we use a less-than proof instead.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn1"><p>Thanks to <a href="http://gelisam.blogspot.com/">gelisam</a> for pointing out the poor phrasing here. Updated on 2018/10/16<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>You might wonder why the definition of <code>tail</code> doesn’t have this signature to begin with. The reason is that our record type must be <em>parameterized</em> (not indexed) over its size (as it’s a record type), so we use a less-than proof instead.<a href="#fnref2" class="footnote-back">↩</a></p></li>
 </ol>
 </section>
 
