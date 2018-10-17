@@ -3,14 +3,14 @@
     xmlns:dc="http://purl.org/dc/elements/1.1/">
     <channel>
         <title>Donnacha Oisín Kidney's Blog</title>
-        <link>http://doisinkidney.com</link>
+        <link>https://doisinkidney.com</link>
         <description><![CDATA[Mainly writing about programming]]></description>
-        <atom:link href="http://doisinkidney.com/rss.xml" rel="self"
+        <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
         <lastBuildDate>Tue, 16 Oct 2018 00:00:00 UT</lastBuildDate>
         <item>
     <title>Total Combinations</title>
-    <link>http://doisinkidney.com/posts/2018-10-16-total-combinations.html</link>
+    <link>https://doisinkidney.com/posts/2018-10-16-total-combinations.html</link>
     <description><![CDATA[<div class="info">
     Posted on October 16, 2018
 </div>
@@ -201,12 +201,12 @@
 </section>
 ]]></description>
     <pubDate>Tue, 16 Oct 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-10-16-total-combinations.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-10-16-total-combinations.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Agda Beginner(-ish) Tips, Tricks, & Pitfalls</title>
-    <link>http://doisinkidney.com/posts/2018-09-20-agda-tips.html</link>
+    <link>https://doisinkidney.com/posts/2018-09-20-agda-tips.html</link>
     <description><![CDATA[<div class="info">
     Posted on September 20, 2018
 </div>
@@ -315,12 +315,12 @@
 <p>Once I’m finished the project, I’ll try write up a guide on how to do literate Agda files. There were a couple of weird nuances that I had to pick up on the way, mainly to do with getting unicode to work.</p>
 ]]></description>
     <pubDate>Thu, 20 Sep 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-09-20-agda-tips.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-09-20-agda-tips.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Verified AVL Trees in Haskell and Agda</title>
-    <link>http://doisinkidney.com/posts/2018-07-30-verified-avl.html</link>
+    <link>https://doisinkidney.com/posts/2018-07-30-verified-avl.html</link>
     <description><![CDATA[<div class="info">
     Posted on July 30, 2018
 </div>
@@ -814,12 +814,12 @@
 </section>
 ]]></description>
     <pubDate>Mon, 30 Jul 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-07-30-verified-avl.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-07-30-verified-avl.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Probabilistic Functional Programming</title>
-    <link>http://doisinkidney.com/posts/2018-07-17-probability-presentation.html</link>
+    <link>https://doisinkidney.com/posts/2018-07-17-probability-presentation.html</link>
     <description><![CDATA[<div class="info">
     Posted on July 17, 2018
 </div>
@@ -835,12 +835,12 @@
 <p><a href="/pdfs/prob-presentation.pdf">Here</a> are the slides for a short talk I gave to a reading group I’m in at Harvard today. The speaker notes are included in the pdf, code and the tex is available in the <a href="https://github.com/oisdk/prob-presentation">repository</a>.</p>
 ]]></description>
     <pubDate>Tue, 17 Jul 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-07-17-probability-presentation.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-07-17-probability-presentation.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Probability 5 Ways</title>
-    <link>http://doisinkidney.com/posts/2018-06-30-probability-5-ways.html</link>
+    <link>https://doisinkidney.com/posts/2018-06-30-probability-5-ways.html</link>
     <description><![CDATA[<div class="info">
     Posted on June 30, 2018
 </div>
@@ -1193,12 +1193,12 @@
 </section>
 ]]></description>
     <pubDate>Sat, 30 Jun 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-06-30-probability-5-ways.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-06-30-probability-5-ways.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Scheduling Effects</title>
-    <link>http://doisinkidney.com/posts/2018-06-23-scheduling-effects.html</link>
+    <link>https://doisinkidney.com/posts/2018-06-23-scheduling-effects.html</link>
     <description><![CDATA[<div class="info">
     Posted on June 23, 2018
 </div>
@@ -1517,12 +1517,12 @@
 </section>
 ]]></description>
     <pubDate>Sat, 23 Jun 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-06-23-scheduling-effects.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-06-23-scheduling-effects.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Breadth-First Traversals in Far Too Much Detail</title>
-    <link>http://doisinkidney.com/posts/2018-06-03-breadth-first-traversals-in-too-much-detail.html</link>
+    <link>https://doisinkidney.com/posts/2018-06-03-breadth-first-traversals-in-too-much-detail.html</link>
     <description><![CDATA[<div class="info">
     Posted on June  3, 2018
 </div>
@@ -1834,12 +1834,12 @@
 </div>
 ]]></description>
     <pubDate>Sun, 03 Jun 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-06-03-breadth-first-traversals-in-too-much-detail.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-06-03-breadth-first-traversals-in-too-much-detail.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Breadth-First Rose Trees: Traversals and the Cofree Comonad</title>
-    <link>http://doisinkidney.com/posts/2018-06-01-rose-trees-breadth-first-traversing.html</link>
+    <link>https://doisinkidney.com/posts/2018-06-01-rose-trees-breadth-first-traversing.html</link>
     <description><![CDATA[<div class="info">
     Posted on June  1, 2018
 </div>
@@ -1925,12 +1925,12 @@
 </div>
 ]]></description>
     <pubDate>Fri, 01 Jun 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-06-01-rose-trees-breadth-first-traversing.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-06-01-rose-trees-breadth-first-traversing.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Sorting Small Things in Haskell</title>
-    <link>http://doisinkidney.com/posts/2018-05-06-sorting-small.html</link>
+    <link>https://doisinkidney.com/posts/2018-05-06-sorting-small.html</link>
     <description><![CDATA[<div class="info">
     Posted on May  6, 2018
 </div>
@@ -2078,12 +2078,12 @@
 <p>In my benchmarks, these functions are indeed quicker than their counterparts in vector, but I’m not confident in my knowledge of Haskell performance to make much of a strong statement about them.</p>
 ]]></description>
     <pubDate>Sun, 06 May 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-05-06-sorting-small.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-05-06-sorting-small.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 <item>
     <title>Type-Level Induction in Haskell</title>
-    <link>http://doisinkidney.com/posts/2018-05-05-induction.html</link>
+    <link>https://doisinkidney.com/posts/2018-05-05-induction.html</link>
     <description><![CDATA[<div class="info">
     Posted on May  5, 2018
 </div>
@@ -2166,7 +2166,7 @@
 <p>Getting the above to work actually took a surprising amount of work: the crux is that the <code class="sourceCode haskell">∝</code> type family needs to be injective, so the “successor” proof can typecheck. Unfortunately, this means that every type can only have one notion of “size”. What I’d prefer is to be able to pass in a function indicating exactly <em>how</em> to get the size out of a type, that could change depending on the situation. So we could recurse on the first argument of a function, for instance, or just its second, or just the result. This would need either type-level lambdas (which would be cool), or <a href="https://ghc.haskell.org/trac/ghc/ticket/10832">generalized type family dependencies</a>.</p>
 ]]></description>
     <pubDate>Sat, 05 May 2018 00:00:00 UT</pubDate>
-    <guid>http://doisinkidney.com/posts/2018-05-05-induction.html</guid>
+    <guid>https://doisinkidney.com/posts/2018-05-05-induction.html</guid>
     <dc:creator>Donnacha Oisín Kidney</dc:creator>
 </item>
 
