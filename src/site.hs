@@ -207,7 +207,7 @@ feedConfiguration = FeedConfiguration
   , feedDescription = "Mainly writing about programming"
   , feedAuthorName = "Donnacha Oisín Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
-  , feedRoot = "http://doisinkidney.com"}
+  , feedRoot = "https://doisinkidney.com"}
 
 
 command :: String
