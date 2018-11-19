@@ -60,6 +60,58 @@ This article recovers the essence of these two type classes by extending monoids
   file = {/Users/doisinkidney/Zotero/storage/NNSJJDCD/Eisenberg - Dependent Types in Haskell Theory and Practice.pdf;/Users/doisinkidney/Zotero/storage/SMC3TBG8/Eisenberg - 2016 - Dependent Types in Haskell Theory and Practice.pdf;/Users/doisinkidney/Zotero/storage/M9UDD9JG/1610.html;/Users/doisinkidney/Zotero/storage/XTQICH4T/summary.html}
 }
 
+@article{gibbons_metamorphisms_2007,
+  title = {Metamorphisms: {{Streaming Representation}}-{{Changers}}},
+  volume = {65},
+  doi = {10.1016/j.scico.2006.01.006},
+  abstract = {Unfolds generate data structures, and folds consume them. A hylomorphism is a fold after an unfold, generating then consuming a virtual data structure. A metamorphism is the opposite composition, an unfold after a fold; typically, it will convert from one data representation to another. In general, metamorphisms are less interesting than hylomorphisms: there is no automatic fusion to deforest the intermediate virtual data structure. However, under certain conditions fusion is possible: some of the work of the unfold can be done before all of the work of the fold is complete. This permits streaming metamorphisms, and among other things allows conversion of infinite data representations. We present a theory of metamorphisms and outline some examples.},
+  language = {en},
+  number = {2},
+  journal = {Science of Computer Programming},
+  author = {Gibbons, Jeremy},
+  year = {2007},
+  pages = {108-139},
+  file = {/Users/doisinkidney/Zotero/storage/DXL5Y9FC/Gibbons - Metamorphisms Streaming Representation-Changers.pdf}
+}
+
+@article{mu_theory_2004,
+  series = {Mathematics of Program Construction (MPC 2002)},
+  title = {Theory and Applications of Inverting Functions as Folds},
+  volume = {51},
+  issn = {0167-6423},
+  doi = {10.1016/j.scico.2003.09.003},
+  abstract = {This paper is devoted to the proof, applications, and generalisation of a theorem, due to Bird and de Moor, that gave conditions under which a total function can be expressed as a relational fold. The theorem is illustrated with three problems, all dealing with constructing trees with various properties. It is then generalised to give conditions under which the inverse of a partial function can be expressed as a relational hylomorphism. Its proof makes use of Doornbos and Backhouse's theory on well-foundedness and reductivity. Possible applications of the generalised theorem is discussed.},
+  language = {en},
+  number = {1},
+  journal = {Science of Computer Programming},
+  author = {Mu, Shin-Cheng and Bird, Richard},
+  month = may,
+  year = {2004},
+  keywords = {Fold,Program derivation,Program inversion},
+  pages = {87-116},
+  file = {/Users/doisinkidney/Zotero/storage/3BIIK589/Mu and Bird - 2004 - Theory and applications of inverting functions as .pdf;/Users/doisinkidney/Zotero/storage/847R7SZS/Mu and Bird - 2004 - Theory and applications of inverting functions as .pdf;/Users/doisinkidney/Zotero/storage/2YTKFEZQ/S0167642304000140.html}
+}
+
+@inproceedings{goos_rebuilding_2003,
+  address = {Berlin, Heidelberg},
+  series = {Lecture Notes in Computer Science},
+  title = {Rebuilding a {{Tree}} from {{Its Traversals}}},
+  volume = {2895},
+  isbn = {978-3-540-20536-4 978-3-540-40018-9},
+  shorttitle = {Rebuilding a {{Tree}} from {{Its Traversals}}},
+  abstract = {Given the inorder and preorder traversal of a binary tree whose labels are all distinct, one can reconstruct the tree. This article examines two existing algorithms for rebuilding the tree in a functional framework, using existing theory on function inversion. We also present a new, although complicated, algorithm by trying another possibility not explored before.},
+  language = {en},
+  booktitle = {Programming {{Languages}} and {{Systems}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Mu, Shin-Cheng and Bird, Richard},
+  editor = {Goos, Gerhard and Hartmanis, Juris and {van Leeuwen}, Jan and Ohori, Atsushi},
+  year = {2003},
+  keywords = {Binary Tree,Function Inversion,Functional Inverse,Program Inversion,Spine Representation},
+  pages = {265-282},
+  file = {/Users/doisinkidney/Zotero/storage/KIH6JYTC/Mu and Bird - 2003 - Rebuilding a Tree from Its Traversals.pdf;/Users/doisinkidney/Zotero/storage/NBSEZER7/Mu and Bird - 2003 - Rebuilding a Tree from Its Traversals.pdf},
+  doi = {10.1007/978-3-540-40018-9_18}
+}
+
 @inproceedings{jones_call-pattern_2007,
   title = {Call-Pattern Specialisation for Haskell Programs},
   isbn = {978-1-59593-815-2},
@@ -609,39 +661,6 @@ This is very much work in progress, so expect major changes. In particular the p
   file = {/Users/doisinkidney/Zotero/storage/NRBJRYLX/Christiansen - Practical Reflection and Metaprogramming for Depen.pdf}
 }
 
-@article{mu_theory_2004-1,
-  title = {Theory and Applications of Inverting Functions as Folds},
-  volume = {51},
-  issn = {01676423},
-  doi = {10.1016/j.scico.2003.09.003},
-  abstract = {This paper is devoted to the proof, applications, and generalisation of a theorem, due to Bird and de Moor, that gave conditions under which a total function can be expressed as a relational fold. The theorem is illustrated with three problems, all dealing with constructing trees with various properties. It is then generalised to give conditions under which the inverse of a partial function can be expressed as a relational hylomorphism. Its proof makes use of Doornbos and Backhouse's theory on well-foundedness and reductivity. Possible applications of the generalised theorem is discussed.},
-  language = {en},
-  number = {1-2},
-  journal = {Science of Computer Programming},
-  author = {Mu, Shin-Cheng and Bird, Richard},
-  month = may,
-  year = {2004},
-  pages = {87-116},
-  file = {/Users/doisinkidney/Zotero/storage/847R7SZS/Mu and Bird - 2004 - Theory and applications of inverting functions as .pdf}
-}
-
-@inproceedings{mu_rebuilding_2003,
-  series = {Lecture Notes in Computer Science},
-  title = {Rebuilding a {{Tree}} from {{Its Traversals}}},
-  isbn = {978-3-540-40018-9},
-  shorttitle = {Rebuilding a {{Tree}} from {{Its Traversals}}},
-  abstract = {Given the inorder and preorder traversal of a binary tree whose labels are all distinct, one can reconstruct the tree. This article examines two existing algorithms for rebuilding the tree in a functional framework, using existing theory on function inversion. We also present a new, although complicated, algorithm by trying another possibility not explored before.},
-  language = {en},
-  booktitle = {Programming {{Languages}} and {{Systems}}},
-  publisher = {{Springer Berlin Heidelberg}},
-  author = {Mu, Shin-Cheng and Bird, Richard},
-  editor = {Ohori, Atsushi},
-  year = {2003},
-  keywords = {Binary Tree,Function Inversion,Functional Inverse,Program Inversion,Spine Representation},
-  pages = {265-282},
-  file = {/Users/doisinkidney/Zotero/storage/KIH6JYTC/Mu and Bird - 2003 - Rebuilding a Tree from Its Traversals.pdf}
-}
-
 @phdthesis{mu_calculational_2003-1,
   type = {Ph.{{D}}.},
   title = {A Calculational Approach to Program Inversion},
@@ -650,7 +669,7 @@ This is very much work in progress, so expect major changes. In particular the p
   author = {Mu, Shin-Cheng},
   month = jan,
   year = {2003},
-  file = {/Users/doisinkidney/Zotero/storage/LENLXK88/thesis.pdf;/Users/doisinkidney/Zotero/storage/X8F873MY/OrderDetails.html}
+  file = {/Users/doisinkidney/Zotero/storage/28FA7TKN/Mu - 2003 - A calculational approach to program inversion.pdf;/Users/doisinkidney/Zotero/storage/36Q9CI7P/Mu - 2003 - A calculational approach to program inversion.pdf;/Users/doisinkidney/Zotero/storage/4ZU2NBJK/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/BKUWKM3E/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/BS5W6V3A/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/DSZ23VZC/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/E54CP6N7/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/LENLXK88/thesis.pdf;/Users/doisinkidney/Zotero/storage/NRH5HGEB/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/VY4BY2SP/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/XCX94TJ3/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/XNJEQ9HW/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/ZLHTA8KC/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/PGMNKEZ7/OrderDetails.html;/Users/doisinkidney/Zotero/storage/X8F873MY/OrderDetails.html}
 }
 
 @misc{yang_well-founded_2010,
@@ -825,6 +844,17 @@ First I discuss the theoretical background of project: the principles of depende
   doi = {10.1007/978-3-642-54833-8_18}
 }
 
+@article{ko_programming_nodate,
+  title = {Programming {{Metamorphic Algorithms}} in {{Agda}} ({{Functional Pearl}})},
+  volume = {0},
+  language = {en},
+  number = {0},
+  journal = {Proceedings of the ACM on Programming Languages},
+  author = {Ko, Hsiang-Shang},
+  pages = {26},
+  file = {/Users/doisinkidney/Zotero/storage/8K25FUEB/Ko - Programming Metamorphic Algorithms in Agda (Functi.pdf;/Users/doisinkidney/Zotero/storage/8W52A5R5/Ko - Programming Metamorphic Algorithms in Agda (Functi.pdf}
+}
+
 @article{wadler_propositions_2015-1,
   title = {Propositions {{As Types}}},
   volume = {58},
@@ -838,15 +868,6 @@ First I discuss the theoretical background of project: the principles of depende
   year = {2015},
   pages = {75--84},
   file = {/Users/doisinkidney/Zotero/storage/6QXRH73L/propositions-as-types.pdf;/Users/doisinkidney/Zotero/storage/X6HFPXQN/propositions-as-types.pdf}
-}
-
-@article{gibbons_metamorphisms_nodate,
-  title = {Metamorphisms: {{Streaming Representation}}-{{Changers}}},
-  abstract = {Unfolds generate data structures, and folds consume them. A hylomorphism is a fold after an unfold, generating then consuming a virtual data structure. A metamorphism is the opposite composition, an unfold after a fold; typically, it will convert from one data representation to another. In general, metamorphisms are less interesting than hylomorphisms: there is no automatic fusion to deforest the intermediate virtual data structure. However, under certain conditions fusion is possible: some of the work of the unfold can be done before all of the work of the fold is complete. This permits streaming metamorphisms, and among other things allows conversion of infinite data representations. We present a theory of metamorphisms and outline some examples.},
-  language = {en},
-  author = {Gibbons, Jeremy},
-  pages = {51},
-  file = {/Users/doisinkidney/Zotero/storage/DXL5Y9FC/Gibbons - Metamorphisms Streaming Representation-Changers.pdf}
 }
 
 @article{coquand_equality_nodate,
@@ -919,17 +940,6 @@ MSC2010:
   file = {/Users/doisinkidney/Zotero/storage/ZJTJRIZC/Appel and Haken - 1977 - The Solution of the Four-Color-Map Problem.pdf}
 }
 
-@article{ko_programming_nodate-1,
-  title = {Programming {{Metamorphic Algorithms}} in {{Agda}} ({{Functional Pearl}})},
-  volume = {0},
-  language = {en},
-  number = {0},
-  journal = {Proceedings of the ACM on Programming Languages},
-  author = {Ko, Hsiang-Shang},
-  pages = {26},
-  file = {/Users/doisinkidney/Zotero/storage/8W52A5R5/Ko - Programming Metamorphic Algorithms in Agda (Functi.pdf}
-}
-
 @phdthesis{girard_interpretation_1972,
   type = {{PhD Thesis}},
   title = {{Interpr\'etation fonctionelle et \'elimination des coupures de l'arithm\'etique d'ordre sup\'erieur}},
@@ -940,7 +950,20 @@ MSC2010:
   file = {/Users/doisinkidney/Zotero/storage/QLIN2G73/Girard - Interprétation fonctionnelle et élimination des co.pdf}
 }
 
+@article{zach_hilberts_2005,
+  title = {Hilbert's {{Program Then}} and {{Now}}},
+  doi = {10.1016/B978-044451541-4/50014-2},
+  language = {en},
+  author = {Zach, Richard},
+  month = aug,
+  year = {2005},
+  file = {/Users/doisinkidney/Zotero/storage/UDKTVSPU/Zach - 2005 - Hilbert's Program Then and Now.pdf;/Users/doisinkidney/Zotero/storage/FGBXZSY7/0508572.html}
+}
+
 @article{breitner_ready_2018-1,
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1803.06960},
   title = {Ready, {{Set}}, {{Verify}}! {{Applying Hs}}-to-Coq to {{Real}}-World {{Haskell Code}} ({{Experience Report}})},
   volume = {2},
   issn = {2475-1421},
@@ -951,9 +974,9 @@ MSC2010:
   author = {Breitner, Joachim and {Spector-Zabusky}, Antal and Li, Yao and Rizkallah, Christine and Wiegley, John and Weirich, Stephanie},
   month = jul,
   year = {2018},
-  keywords = {Coq,Haskell,verification},
+  keywords = {Computer Science - Programming Languages,Coq,Haskell,verification},
   pages = {89:1--89:16},
-  file = {/Users/doisinkidney/Zotero/storage/JNAKLLCA/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf}
+  file = {/Users/doisinkidney/Zotero/storage/47CZT66A/Breitner et al. - 2018 - Ready, Set, Verify! Applying hs-to-coq to real-wor.pdf;/Users/doisinkidney/Zotero/storage/CVI5SUYL/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/JNAKLLCA/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/MQGZJBF3/Breitner et al. - 2018 - Ready, Set, Verify! Applying hs-to-coq to real-wor.pdf;/Users/doisinkidney/Zotero/storage/W3P8LJJX/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/3NXQ32D7/1803.html;/Users/doisinkidney/Zotero/storage/ERIANH6Y/1803.html}
 }
 
 
