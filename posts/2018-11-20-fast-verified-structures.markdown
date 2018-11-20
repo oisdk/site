@@ -5,7 +5,7 @@ bibliography: Agda.bib
 ---
 
 One of the favorite pastimes of both Haskell and Agda programmers alike is
-verifying data structures. Among those verified are Red-Black trees
+verifying data structures. Among my favorite examples are Red-Black trees
 [@might_missing_2015; @weirich_depending_2014, verified for balance], perfect
 binary trees [@hinze_perfect_1999], square matrices [@okasaki_fast_1999], search
 trees [@mcbride_how_2014, verified for balance and order], and binomial heaps
@@ -28,7 +28,7 @@ extra type system to Haskell tailor-made for verification. The added type system
 domain-specific built-ins (reasoning about sets, equations, etc.). I'd encourage
 anyone who hasn't used it to give it a try: especially if you're experienced
 writing any kind of proof in a language like Agda or Idris, LiquidHaskell proofs
-are *shockingly* simple and easy: it can make verification a joy.
+are *shockingly* simple and easy.
 
 What I'm going to focus on today, though, is writing *correct-by-construction*
 data structures, using Haskell and Agda's own type systems. In particular, I'm
@@ -42,7 +42,7 @@ worry about the time complexity of both the implementation *and the proofs*.
 In this post, I'm going to demonstrate some techniques to write proofs that
 stay within the complexity bounds of the algorithms they're verifying (without
 cheating!). Along the way I'm going to verify some data structures I haven't
-seen verified before.
+seen verified before (a skew-binary random-access list).
 
 # Technique 1: Start With an Unverified Implementation, then Index
 
@@ -221,58 +221,75 @@ handy later when we base data structures off of number systems.
 
 # Technique 2: Once you eliminate the impossible, whatever remains, no matter how improbable, must be the truth.
 
-Sometimes, we don't have the luxury of redefining the datatype we want to
-verify. Say we want to add an operation to an already-existing type, for
-instance. Here, we want to add two in one go: inversion, and conversion from a
-natural number.
-
-Inversion is where we would swap around the `space` and `val` in the unverified
-version. Since `space` is stored as a natural number, though, inversion can be
-defined in terms of it. Let's give it a go then.
+For this next trick, we'll add an extra operation to the flipper type above:
+conversion from a natural number. We want to be able to do it in
+$\mathcal{O}(n)$ time, and we won't allow ourselves to change the original type
+definition. Here's the type we're aiming for:
 
 ```agda
-fromNat : ∀ {m} (n : ℕ) → Mod m
-fromNat zero    = _ , m≥m
-fromNat (suc n) = ??? (fromNat n)
+fromNat : ∀ {m} (n : ℕ) → (m≥n : m ≥ n) → Flipper m
 ```
 
-The problem we run into is that our successor function doesn't know that there's
-space left. So we'd have to run the "flipping" version, which I don't want to do.
-
-So what do we do instead? We *assume* there's space left:
+We pass in a proof that the natural number we're converting from is indeed in
+range (it's marked irrelevant so we don't pay for it). Here's a non-answer:
 
 ```agda
-fromNat : ∀ {m} (n : ℕ) → Mod m
-fromNat zero    = _ , m≥m
-fromNat (suc n) with fromNat n
-... | suc space , n-1 = space , m≥p n-1
-... | zero      , n-1 = ???
+fromNat : ∀ {m} (n : ℕ) → {m≥n : m ≥ n} → Flipper m
+fromNat n {m≥n} = n , m≥n
 ```
 
-Now, all we have to do is prove that the second case is impossible.
+While this looks fine, it's actually the *inverse* of what we want. We defined
+the inductive structure to be indicated by the inequality proof itself. Let's
+make the desired output explicit:
 
-In contrast to proving the "happy path" is correct, this technique lets us carry
-out expensive proofs of the unhappy path *without* paying for them. Why? Because
-they'll never be executed! We can take as much time as we want in the unhappy
-path because we *know* that it won't exist at runtime.
+```agda
+toNat : ∀ {n m} → n ≥ m → ℕ
+toNat m≥m = zero
+toNat (m≥p n≥m) = suc (toNat n≥m)
 
-For the full function, we'll need to pass in `m ≥ n`, but it can be marked
-irrelevant, so we again don't have to pay for it.
+fromNat-≡ : ∀ {n} m
+          → .(n≥m : n ≥ m)
+          →  Σ[ n-m ∈ Flipper n ] toNat (proj₂ n-m) ≡ m
+```
+
+And finally we can try an implementation:
+
+```agda
+fromNat-≡ zero    _   = (_ , m≥m) , refl
+fromNat-≡ (suc m) n≥m = ??? (fromNat-≡ m (m≥p n≥m))
+```
+
+In the `???` there, we want some kind of successor function. The problem is that
+we would also need to prove that we *can* do a successor call. Except we don't
+want to do that: proving that there's space left is an expensive operation, and
+one we can avoid with another trick: first, we *assume* that there's space left.
+
+```agda
+fromNat-≡ zero    n≥m = ( _ , m≥m) , refl
+fromNat-≡ (suc n) n≥m with fromNat-≡ n (m≥p n≥m)
+... | (suc space , n-1), x≡m  = (space , m≥p n-1), cong suc x≡m
+... | (zero      , n-1), refl = ???
+```
+
+But what about the second case? Well, we have to prove this impossible. What if
+it's an extremely complex, expensive proof? It doesn't matter! It will never be
+run! In contrast to proving the "happy path" correct, if we can confine all of
+the ugly complex cases to the unhappy paths, we can spend as long as we want
+proving them impossible without having to worry about runtime cost. Here's the
+full function.
 
 <details>
 <summary>
 `fromNat` implementation
 </summary>
 ```agda
-toNat : ∀ {n m} → n ≥ m → ℕ
-toNat m≥m = zero
-toNat (m≥p n≥m) = suc (toNat n≥m)
-
-fromNat-≡ : ∀ {n} m → .(n≥m : n ≥ m) →  Σ[ n-m ∈ Mod n ] toNat (proj₂ n-m) ≡ m
-fromNat-≡ zero n≥m = (-, m≥m) , refl
-fromNat-≡ (suc m) n≥m with fromNat-≡ m (m≥p n≥m)
-... | (suc s , p  ) , x≡m  = (s , m≥p p), cong suc x≡m
-... | (zero  , n≥0) , refl = Irrel.⊥-elim (contra _ zero n≥0 n≥m)
+fromNat-≡ : ∀ {n} m
+          → .(n≥m : n ≥ m)
+          →  Σ[ n-m ∈ Flipper n ] toNat (proj₂ n-m) ≡ m
+fromNat-≡ zero    n≥m = ( _ , m≥m) , refl
+fromNat-≡ (suc n) n≥m with fromNat-≡ n (m≥p n≥m)
+... | (suc space , n-1), x≡m  = (space , m≥p n-1), cong suc x≡m
+... | (zero      , n≥0), refl = Irrel.⊥-elim (contra _ zero n≥0 n≥m)
   where
   import Data.Nat.Properties as Prop
 
@@ -282,10 +299,15 @@ fromNat-≡ (suc m) n≥m with fromNat-≡ m (m≥p n≥m)
   ... | ()
 
   contra : ∀ n m → (n≥m : n ≥ m) → n ≥ suc (m ℕ.+ toNat n≥m) → ⊥
-  contra n m m≥m n≥st = n≱sk+n n zero (cong suc (Prop.+-comm n 0)) n≥st
-  contra n m (m≥p n≥m) n≥st = contra n (suc m) n≥m (subst (λ x → n ≥ suc x) (Prop.+-suc m (toNat n≥m)) n≥st)
+  contra n m m≥m n≥st = n≱sk+n n zero (cong suc (Prop.+-identityʳ n)) n≥st
+  contra n m (m≥p n≥m) n≥st =
+    contra
+      n
+      (suc m)
+      n≥m
+      (subst (λ x → n ≥ suc x) (Prop.+-suc m (toNat n≥m)) n≥st)
 
-fromNat : ∀ {n} m → .(n≥m : n ≥ m) → Mod n
+fromNat : ∀ {n} m → .(n≥m : n ≥ m) → Flipper n
 fromNat m n≥m = proj₁ (fromNat-≡ m n≥m)
 ```
 </details>
@@ -400,10 +422,8 @@ data Seq ns a where
     Cons :: Nest n ns a -> Seq (n : ns) a
 ```
 
-Lovely! The other benefit of this is that the original *also* contained
-redundancy, whereas this doesn't. And, crucially for our `uncons`, we now know
-that any non-empty list of bits is a non-zero list of bits, so we can type
-"nonempty sequence" easily:
+Lovely! Crucially for our `uncons`, we now know that any non-empty list of bits
+is a non-zero list of bits, so we can type "nonempty sequence" easily:
 
 ```haskell
 type family Dec (n :: N) (ns :: [N]) = (r :: [N]) | r -> n ns where
@@ -467,9 +487,7 @@ suc n + m = suc (n + m)
 It's very simple, with only two equations. When someone sees the following
 error, then:
 
-```agda
-couldn't match type n with n + 0
-```
+> `couldn't match type n with n + 0`
 
 They might be tempted to add it as an equation to the function:
 
@@ -482,9 +500,7 @@ suc n + m    = suc (n + m)
 
 Similarly, when someone sees the other error commonly found with $+$:
 
-```agda
-couldn't match type S n + m with n + S m
-```
+> `couldn't match type S n + m with n + S m`
 
 They'll add that equation in too! In fact, that particular equation will provide
 a valid definition of $+$:
@@ -685,15 +701,11 @@ At first glance, we've lost the complexity bounds. That `gapr` operation is
 $\log n$ (or something), and we're performing it pretty frequently. We might
 keep the amortized bounds, but isn't that not really worthy in a pure setting?
 
-That would all be true, if it weren't for laziness. I haven't fully worked out
-the various proofs here yet, but `cons` distributes the work for `gapr` among
-the rest of the structure, only demanding it when it's called for. In this way,
-we get back the amortized bounds: in contrast to destructive updates, work done
-by evaluating a thunk *is* shared in a pure language, so you really do only pay
-for the worst-case once.
-
-We could eliminate the amortization with scheduling here, I think. I may return
-to it in the future.
+That would all be true, if it weren't for laziness. Because we *delay* the
+evaluation of `gapr`, we won't have to pay for it all in one big thunk. In fact,
+because it's basically a unary number, we only have to pay for one part of it at
+a time. I haven't yet fully worked out the proofs, but I'm pretty sure we're
+guaranteed $\mathcal{O}(1)$ worst-case time here too.
 
 # Technique 6: When All Else Fails, Prove it Later
 
@@ -758,7 +770,7 @@ and:
 > > `Decr x xs ~ y : ys`{.haskell}
 
 The thing is, all of those look pretty provable. So, for this technique, we
-first write in the proofs we need, and *assume* we have them. This means
+first figure out what proofs we need, and *assume* we have them. This means
 changing `minView` to the following:
 
 ```haskell
@@ -801,20 +813,21 @@ lemma2 = _
 We now need to provide the *implementations* for `lemma1` and `lemma2`. With
 this approach, even if we fail to do the next steps, we can cop out here and sub
 in `unsafeCoerce Refl` in place of the two proofs, maintaining the efficiency.
-We won't need to, though! 
+We won't need to, though!
 
-The next step is to look for things in the surrounding area which could act like
-singletons for the lemmas. They'll need to do pattern matching, and the types
-won't be around at runtime, so we'll need some structure which we can pattern
-match on which will tell us about the types. 
+Unlike in Agda, the types for those proofs won't be around at runtime, so we
+won't have anything to pattern match on. We'll need to look for things in the
+surrounding area which could act like singletons for the lemmas. 
 
 It turns out that the `xs` and `hs'` floating around can do exactly that: they
 tell us about the type-level `y` and `x`. So we just pass them to the lemmas
-(where they're needed). This changes the last 2 lines of `minView` to:
+(where they're needed). This changes the last 4 lines of `minView` to:
 
 ```haskell
-Empty -> gcastWith (lemma1 Refl xs) Cons (Even (Odd (mergeTree c t') Empty))
-Cons hs' -> gcastWith (lemma2 Refl xs hs') Cons (Even (carryOneNest (mergeTree c t') hs'))
+Empty -> gcastWith (lemma1 Refl xs)
+    Cons (Even (Odd (mergeTree c t') Empty))
+Cons hs' -> gcastWith (lemma2 Refl xs hs')
+    Cons (Even (carryOneNest (mergeTree c t') hs'))
 ```
 
 Now, we just have to fill in the lemmas! If we were lucky, they'd actually be
@@ -849,7 +862,7 @@ satisfied.
 There's another option, though, one that I picked up from Stephanie Weirich's
 talk [-@weirich_dependent_2017]: you thread the requirement through the
 function as an equality constraint. It won't always work, but when your
-function's call tree matches that of the proof, the constraint will indeed be
+function's call graph matches that of the proof, the constraint will indeed be
 satisfied, with no runtime cost. In this case, we can whittle down the proof
 obligation to the following:
 
@@ -891,7 +904,10 @@ be useless!
 Efficient proof-carrying code makes for an interesting puzzle, though, even if
 it is a bit of a hair shirt.
 
+# Code
 
+Fuller implementations of the structures here are in
+[this](https://github.com/oisdk/pure-arrays) git repository.
 
 # References
  
