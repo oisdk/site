@@ -1,5 +1,5 @@
 ---
-title: Keeping Verification in Bounds
+title: Keeping Formal Verification in Bounds
 tags: Haskell, Agda
 bibliography: Agda.bib
 ---
