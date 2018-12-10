@@ -118,89 +118,87 @@ moveUp    = compose(transpose, moveLeft, transpose)
 moveDown  = compose(transpose, moveRight, transpose)
 
 #-------------------------------curses-init------------------------------#
+try:
+    import curses
 
-import curses
-
-screen = curses.initscr()
-curses.noecho()           # Don't print pressed keys
-curses.cbreak()           # Don't wait for enter
-screen.keypad(True)
-curses.curs_set(False)    # Hide cursor
+    screen = curses.initscr()
+    curses.noecho()           # Don't print pressed keys
+    curses.cbreak()           # Don't wait for enter
+    screen.keypad(True)
+    curses.curs_set(False)    # Hide cursor
 
 #----------------------------------keymap--------------------------------#
 
-# A map from the arrow keys to the movement functions
+    # A map from the arrow keys to the movement functions
 
-moves = {curses.KEY_RIGHT: moveRight,
-         curses.KEY_LEFT : moveLeft ,
-         curses.KEY_UP   : moveUp   ,
-         curses.KEY_DOWN : moveDown }
+    moves = {curses.KEY_RIGHT: moveRight,
+            curses.KEY_LEFT : moveLeft ,
+            curses.KEY_UP   : moveUp   ,
+            curses.KEY_DOWN : moveDown }
 
 #----------------------------------color---------------------------------#
 
-curses.start_color()
-curses.use_default_colors()
-curses.init_pair(1, curses.COLOR_WHITE, -1) # Border color
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1) # Border color
 
-def colorfac():
+    def colorfac():
 
-  """Initializes a color pair and returns it (skips black)"""
+        """Initializes a color pair and returns it (skips black)"""
 
-  for i,c in zip(count(2),(c for c in count(1) if c!=curses.COLOR_BLACK)):
-    curses.init_pair(i, c, -1)
-    yield curses.color_pair(i)
+        for i,c in zip(count(2),(c for c in count(1) if c!=curses.COLOR_BLACK)):
+            curses.init_pair(i, c, -1)
+            yield curses.color_pair(i)
 
-colorgen = colorfac()
+    colorgen = colorfac()
 
-from collections import defaultdict
+    from collections import defaultdict
 
-# A cache of colors, with the keys corresponding to numbers on the board.
+    # A cache of colors, with the keys corresponding to numbers on the board.
 
-colors = defaultdict(lambda: next(colorgen))
+    colors = defaultdict(lambda: next(colorgen))
 
 #---------------------------printing-the-board---------------------------#
 
-size = max(11 - base*2, 3) # box width
+    size = max(11 - base*2, 3) # box width
 
-def printBoard(board):
+    def printBoard(board):
 
-  def line(b,c): return b + b.join([c*(size)]*len(board)) + b
-  border, gap = line("+","-"), line("|"," ")
-  pad = "\n" + "\n".join([gap]*((size-2)//4)) if size > 5 else ""
-  screen.addstr(0, 0, border, curses.color_pair(1))
-  for row in board:
-    screen.addstr(pad + "\n|", curses.color_pair(1))
-    for e in row:
-      if e: screen.addstr(str(e).center(size), colors[e])
-      else: screen.addstr(" " * size)
-      screen.addstr("|", curses.color_pair(1))
-    screen.addstr(pad + "\n" + border, curses.color_pair(1))
+        def line(b,c): return b + b.join([c*(size)]*len(board)) + b
+        border, gap = line("+","-"), line("|"," ")
+        pad = "\n" + "\n".join([gap]*((size-2)//4)) if size > 5 else ""
+        screen.addstr(0, 0, border, curses.color_pair(1))
+        for row in board:
+            screen.addstr(pad + "\n|", curses.color_pair(1))
+            for e in row:
+                if e: screen.addstr(str(e).center(size), colors[e])
+                else: screen.addstr(" " * size)
+                screen.addstr("|", curses.color_pair(1))
+            screen.addstr(pad + "\n" + border, curses.color_pair(1))
 
 #----------------------------------board---------------------------------#
 
-# The board is a list of n lists, each of length n, where n is the base
-# squared. Empty boxes are represented by None. The starting board has
-# one seed.
+    # The board is a list of n lists, each of length n, where n is the base
+    # squared. Empty boxes are represented by None. The starting board has
+    # one seed.
+    board = addn([[None for _ in range(base**2)] for _ in range(base**2)])
+    printBoard(board)
 
-board = addn([[None for _ in range(base**2)] for _ in range(base**2)])
-printBoard(board)
+#----------------------------------game-loop-----------------------------#
+    # The main game loop. Continues until there are not enough empty spaces
+    # on the board, or "q" is pressed.
 
-#--------------------------------game-loop-------------------------------#
-
-# The main game loop. Continues until there are not enough empty spaces
-# on the board, or "q" is pressed.
-
-for char in filter(moves.__contains__, iter(screen.getch, ord("q"))):
-  moved = moves[char](board)
-  if sum(not n for r in moved for n in r) < 2**(base-2): break
-  if moved != board: board = addn(moved)
-  printBoard(board)
+    for char in filter(moves.__contains__, iter(screen.getch, ord("q"))):
+        moved = moves[char](board)
+        if sum(not n for r in moved for n in r) < 2**(base-2): break
+        if moved != board: board = addn(moved)
+        printBoard(board)
 
 #--------------------------------clean-up--------------------------------#
-
-curses.nocbreak()     # Wait for enter
-screen.keypad(0)      # Stop arrow-key handling
-curses.echo()         # Print all keyboard input
-curses.curs_set(True) # Show cursor
-curses.endwin()       # Return to normal prompt
+finally:
+    curses.nocbreak()     # Wait for enter
+    screen.keypad(0)      # Stop arrow-key handling
+    curses.echo()         # Print all keyboard input
+    curses.curs_set(True) # Show cursor
+    curses.endwin()       # Return to normal prompt
 ```
