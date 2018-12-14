@@ -2,6 +2,7 @@
 title: A Very Simple Prime Sieve in Haskell
 tags: Haskell
 bibliography: Primes.bib
+series: Prime Sieves
 ---
 
 A few days ago, the [Computerphile YouTube
