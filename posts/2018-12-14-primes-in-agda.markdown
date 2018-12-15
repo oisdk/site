@@ -14,22 +14,26 @@ that in mind, let's try and write a (very slow, very basic) prime sieve in Agda.
 First, we can make an "array" of numbers that we cross off as we go.
 
 ```agda
-  primes : ∀ n → List (Fin n)
-  primes zero = []
-  primes (suc zero) = []
-  primes (suc (suc zero)) = []
-  primes (suc (suc (suc m))) = sieve (List.tabulate (just ∘ Fin.suc))
-    where
-    sieve : List (Maybe (Fin (2 + m))) → List (Fin (3 + m))
-    sieve [] = []
-    sieve (nothing ∷ xs) =         sieve xs
-    sieve (just x  ∷ xs) = suc x ∷ sieve (foldr remove (const []) xs x)
-      where
-      B = ∀ {i} → Fin i → List (Maybe (Fin (2 + m)))
+primes : ∀ n → List (Fin n)
+primes zero = []
+primes (suc zero) = []
+primes (suc (suc zero)) = []
+primes (suc (suc (suc m))) = sieve (tabulate (just ∘ Fin.suc))
+  where
+  cross-off : Fin _ → List (Maybe (Fin _)) → List (Maybe (Fin _))
 
-      remove : Maybe (Fin (2 + m)) → B → B
-      remove _ ys zero    = nothing ∷ ys x
-      remove y ys (suc z) = y ∷ ys z
+  sieve : List (Maybe (Fin _)) → List (Fin _)
+  sieve [] = []
+  sieve (nothing ∷ xs) =         sieve xs
+  sieve (just x  ∷ xs) = suc x ∷ sieve (cross-off x xs)
+
+  cross-off p fs = foldr f (const []) fs p
+    where
+    B = ∀ {i} → Fin i → List (Maybe (Fin (2 + m)))
+
+    f : Maybe (Fin (2 + m)) → B → B
+    f _ xs zero    = nothing ∷ xs p
+    f x xs (suc y) = x       ∷ xs y
 ```
 
 Very simple so far: we run through the list, filtering out the multiples of each
@@ -37,31 +41,65 @@ prime as we see it. Unfortunately, this won't pass the termination checker. This
 recursive call to `sieve` is the problem:
 
 ```agda
-sieve (just x  ∷ xs) = suc x ∷ sieve (foldr remove (const []) xs x)
+sieve (just x ∷ xs) = suc x ∷ sieve (cross-off x xs)
 ```
 
-Agda can't see that the argument is strictly smaller. We *could* write some
-complicated logic proving that `remove` maintains the size of the list, or we
-could just use vectors instead:
+Agda finds if a function is terminating by checking that at least one argument
+gets (structurally) smaller on every recursive call. `sieve` only takes one
+argument (the input list), so that's the one that needs to get smaller. In the
+line above, if we replaced it with the following:
+
+```agda
+sieve (just x ∷ xs) = suc x ∷ sieve xs
+```
+
+We'd be good to go: `xs` is definitely smaller than `(just x ∷ xs)`. `cross-off
+x xs`, though? The thing is, `cross-off` returns a list of the same length that
+it's given. But the function call is opaque: Agda can't automatically see the
+fact that the length stays the same. Reaching for a proof here is the wrong
+move, though: you can get all of the same benefit by switching out the list for
+a length-indexed vector.
 
 ```agda
 primes : ∀ n → List (Fin n)
 primes zero = []
 primes (suc zero) = []
 primes (suc (suc zero)) = []
-primes (suc (suc (suc m))) = sieve (Vec.tabulate (just ∘ Fin.suc))
+primes (suc (suc (suc m))) = sieve (tabulate (just ∘ Fin.suc))
   where
-  sieve : ∀ {n} → Vec (Maybe (Fin (2 + m))) n → List (Fin (3 + m))
+  cross-off : ∀ {n} → Fin _ → Vec (Maybe _) n → Vec (Maybe _) n
+
+  sieve : ∀ {n} →  Vec (Maybe (Fin (2 + m))) n → List (Fin (3 + m))
   sieve [] = []
   sieve (nothing ∷ xs) =         sieve xs
-  sieve (just x  ∷ xs) = suc x ∷ sieve (Vec.foldr B remove (const []) xs x)
+  sieve (just x  ∷ xs) = suc x ∷ sieve (cross-off x xs)
+
+  cross-off p fs = foldr B f (const []) fs p
     where
     B = λ n → ∀ {i} → Fin i → Vec (Maybe (Fin (2 + m))) n
 
-    remove : ∀ {n} → Maybe (Fin (2 + m)) → B n → B (suc n)
-    remove _ ys zero    = nothing ∷ ys x
-    remove y ys (suc z) = y       ∷ ys z
+    f : ∀ {n} → Maybe (Fin (2 + m)) → B n → B (suc n)
+    f _ xs zero    = nothing ∷ xs p
+    f x xs (suc y) = x       ∷ xs y
 ```
+
+Actually, my explanation above is a little bit of a lie. Often, the way I think
+about dependently-typed programs has a lot to do with my intuition for "proofs"
+and so on. But this leads you down the wrong path (and it's why writing a proof
+that `cross-off` returns a list of the same length is the wrong move).
+
+The actual termination checking algorithm is very simple, albeit strict: the
+argument passed recursively must be *structurally* smaller. That's it.
+Basically, the recursive argument has to be contained in one of the arguments
+passed. It has nothing to do with Agda "seeing" inside the function `cross-off`
+or anything like that. What we've done above (to make it terminate) is add
+another argument to the function: the length of the vector. The argument is
+implicit, but if we were to make it explicit in the recursive call:
+
+```agda
+sieve {suc n} (just x  ∷ xs) = suc x ∷ sieve {n} (cross-off x xs)
+```
+We can see that it does indeed get structurally smaller.
 
 # Adding the Squaring Optimization
 
@@ -82,18 +120,21 @@ primes (suc zero) = []
 primes (suc (suc zero)) = []
 primes (suc (suc (suc m))) = sieve 1 m (Vec.tabulate (just ∘ Fin.suc ∘ Fin.suc))
   where
+  cross-off : ∀ {n} → ℕ → Vec (Maybe _) n → Vec (Maybe _) n
+
   sieve : ∀ {n} → ℕ → ℕ → Vec (Maybe (Fin (3 + m))) n → List (Fin (3 + m))
   sieve _ zero = List.mapMaybe id ∘ Vec.toList
   sieve _ (suc _) [] = []
   sieve i (suc l) (nothing ∷ xs) =     sieve (suc i) (l ∸ i ∸ i) xs
-  sieve i (suc l) (just x  ∷ xs) = x ∷ sieve (suc i) (l ∸ i ∸ i)
-                                       (Vec.foldr B remove (const []) xs i)
-    where
-    B = λ n → ℕ → Vec (Maybe (Fin (3 + m))) n
+  sieve i (suc l) (just x  ∷ xs) = x ∷ sieve (suc i) (l ∸ i ∸ i) (cross-off i xs)
 
-    remove : ∀ {i} → Maybe (Fin (3 + m)) → B i → B (suc i)
-    remove _ ys zero    = nothing ∷ ys i
-    remove y ys (suc j) = y       ∷ ys j
+  cross-off p fs = Vec.foldr B f (const []) fs p
+    where
+      B = λ n → ℕ → Vec (Maybe (Fin (3 + m))) n
+
+      f : ∀ {i} → Maybe (Fin (3 + m)) → B i → B (suc i)
+      f _ xs zero    = nothing ∷ xs p
+      f x xs (suc y) = x       ∷ xs y
 ```
 
 # Finding Prime Factors
@@ -181,11 +222,12 @@ primeFactors (suc (suc (suc m))) = sqr (suc m) m suc sieve
 # Infinitude
 
 The above sieve aren't "true" in that each `remove` is linear, so the
-performance is $\mathcal{O}(n)$ overall. This is the same problem we ran into
+performance is $\mathcal{O}(n^2)$ overall. This is the same problem we ran into
 with the naive infinite sieve in Haskell.
 
-That raises the question: can *this* sieve be infinite? Agda supports a notion
-of infinite data, so it would seem like it:
+Since it bears such a similarity to the infinite sieve, we have to ask: can
+*this* sieve be infinite? Agda supports a notion of infinite data, so it would
+seem like it:
 
 ```agda
 infixr 5 _◂_
