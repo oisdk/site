@@ -59,7 +59,6 @@ instance. It has some extra nice properties: instead of nesting the types, we
 can just apply the combining function.
 
 ```agda
-
 mutual
   data Tree {a} (A : Set a) : Set a where
     2^_×_+_ : ℕ → A → Node A → Tree A
@@ -108,47 +107,55 @@ Using this, a proper and efficient merge sort is very straightforward:
 
 ```agda
 module Sorting
-  {a e l}
-  (strictTotalOrder : StrictTotalOrder a e l)
+  {a r}
+  {A : Set a}
+  {_≤_ : Rel A r}
+  (_≤?_ : Decidable _≤_)
   where
-  open StrictTotalOrder strictTotalOrder
-
-  merge : List Carrier → List Carrier → List Carrier
+  merge : List A → List A → List A
   merge [] ys = ys
   merge (x ∷ xs) ys = merge₁ x xs ys
     where
-    merge₁ : Carrier → List Carrier → List Carrier → List Carrier
-    merge₂ : ∀ x y
-           → Tri (x < y) (x ≈ y) (y < x)
-           → List Carrier
-           → List Carrier
-           → List Carrier
+    merge₁ : A → List A → List A → List A
+    merge₂ : ∀ x y → Dec (x ≤ y) → List A → List A → List A
 
     merge₁ x xs [] = x ∷ xs
-    merge₁ x xs (y ∷ ys) = merge₂ x y (compare x y) xs ys
+    merge₁ x xs (y ∷ ys) = merge₂ x y (x ≤? y) xs ys
 
-    merge₂ x y (tri< a ¬b ¬c) xs ys = x ∷ merge₁ y ys xs
-    merge₂ x y (tri≈ ¬a b ¬c) xs ys = x ∷ y ∷ merge xs ys
-    merge₂ x y (tri> ¬a ¬b c) xs ys = y ∷ merge₁ x xs ys
+    merge₂ x y (yes x≤y) xs ys = x ∷ merge₁ y ys xs
+    merge₂ x y (no  y<x) xs ys = y ∷ merge₁ x xs ys
 
   open TreeFold
 
-  sort : List Carrier → List Carrier
+  sort : List A → List A
   sort = ⦅ merge , [] ⦆ ∘ List.map List.[_]
 ```
 
 # Validity
 
 It would be nice if we could verify these optimizated versions of folds.
-Luckily, since they use `foldr` in their implementations, verification can rely
-on `foldr` fusion:
+Luckily, by writing them using `foldr`, we've stumbled into well-trodden ground:
+the *foldr fusion law*. It states that if you have some transformation $f$, and
+two binary operators $\oplus$ and $\otimes$, then: 
+
+\begin{align}
+   f (x \oplus y)                         &&=\;& x \otimes f y \\
+   \implies f \circ \text{foldr} \oplus e &&=\;& \text{foldr} \otimes (f e)
+\end{align}
+
+This fits right in with the function we used above. $f$ is `⟦_⟧↓`, $\oplus$ is
+`_⊛_`, and $\otimes$ is whatever combining function was passed in. Let's prove
+the foldr fusion law, then, before we go any further.
 
 ```agda
 module Proofs
   {a r}
   {A : Set a}
-  {_≈_ : Rel A r}
+  {R : Rel A r}
   where
+
+  infix 4 _≈_
+  _≈_ = R
 
   open import Algebra.FunctionProperties _≈_
 
@@ -164,13 +171,25 @@ module Proofs
 
   foldr-fusion : Transitive _≈_
                → Reflexive _≈_
-               → ∀ {b c} {B : Set b} {C : Set c} (h : C → A) {f : B → C → C} {g : B → A → A} (e : C)
-               → ∀[ g ⊢ Congruent₁ ]
-               → (∀ x y → h (f x y) ≈ g x (h y))
-               → ∀ xs → h (foldr f e xs) ≈ foldr g (h e) xs
+               → ∀ {b c} {B : Set b} {C : Set c} (f : C → A) {_⊕_ : B → C → C} {_⊗_ : B → A → A} e
+               → ∀[ _⊗_ ⊢ Congruent₁ ]
+               → (∀ x y → f (x ⊕ y) ≈ x ⊗ f y)
+               → ∀ xs → f (foldr _⊕_ e xs) ≈ foldr _⊗_ (f e) xs
   foldr-fusion _○_ ∎ h {f} {g} e g⟨_⟩ fuse =
     foldr-universal _○_ (h ∘ foldr f e) g (h e) g⟨_⟩ ∎ (λ x xs → fuse x (foldr f e xs))
+```
 
+We're not using the proofs in Agda's standard library because these are tied to
+propositional equality. In other words, instead of using an abstract binary
+relation, they prove things over *actual* equality. That's all well and good,
+but as you can see above, we don't need propositional equality: we don't even
+need the relation to be an equivalence, we just need transitivity and
+reflexivity.
+
+After that, we can state precisely what correspondence the tree fold has, and
+under what conditions it does the same things as a fold:
+
+```agda
   module _ {_*_ : A → A → A} where
     open TreeFold _*_
 
@@ -182,7 +201,7 @@ module Proofs
                 → ⦅ x , xs ⦆ ≈ foldr _*_ x xs
     treeFoldHom _○_ ∎ assoc *⟨_⟩ b = foldr-fusion _○_ ∎ ⟦_⟧↓ ⟦ b ⟧↑ *⟨_⟩ ⊛-hom
       where
-      ⊛-hom : ∀ x xs → ⟦ x ⊛ xs ⟧↓ ≈ (x * ⟦ xs ⟧↓)
+      ⊛-hom : ∀ x xs → ⟦ x ⊛ xs ⟧↓ ≈ x * ⟦ xs ⟧↓
       ⊛-hom x (2^ n × y  + ⟨⟩) = ∎
       ⊛-hom x (2^ n × y₁ + ⟨ 2^ zero  × y₂ + ⟨⟩     ⟩) = ∎
       ⊛-hom x (2^ n × y₁ + ⟨ 2^ zero  × y₂ + ⟨ ys ⟩ ⟩) = assoc x (y₁ * y₂) ⟦ ys ⟧↓ ○ *⟨ assoc y₁ y₂ ⟦ ys ⟧↓ ⟩
