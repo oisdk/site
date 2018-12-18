@@ -106,29 +106,41 @@ x ⊛ 2^ n × y₁ + ⟨ 2^ suc m × y₂ + ys ⟩ = 2^ 0 × x + ⟨ 2^ n × y�
 Using this, a proper and efficient merge sort is very straightforward:
 
 ```agda
-module Sorting
-  {a r}
-  {A : Set a}
-  {_≤_ : Rel A r}
-  (_≤?_ : Decidable _≤_)
-  where
-  merge : List A → List A → List A
+data Total {a r} {A : Set a} (_≤_ : A → A → Set r) (x y : A) : Set (a ⊔ r) where
+  x≤y : ⦃ _ : x ≤ y ⦄ → Total _≤_ x y
+  y≤x : ⦃ _ : y ≤ x ⦄ → Total _≤_ x y
+
+module Sorting {a r}
+               {A : Set a}
+               {_≤_ : A → A → Set r}
+               (_≤?_ : ∀ x y → Total _≤_ x y) where
+  data [∙] : Set a where
+    ⊥   : [∙]
+    [_] : A → [∙]
+
+  data _≥_ (x : A) : [∙] → Set (a ⊔ r) where
+    instance ⌈_⌉ : ∀ {y} → y ≤ x → x ≥ [ y ]
+    instance ⌊⊥⌋ : x ≥ ⊥
+
+  infixr 5 _∷_
+  data Ordered (b : [∙]) : Set (a ⊔ r) where
+    []  : Ordered b
+    _∷_ : ∀ x → ⦃ x≥b : x ≥ b ⦄ → (xs : Ordered [ x ]) → Ordered b
+
+  merge : ∀ {b} → Ordered b → Ordered b → Ordered b
   merge [] ys = ys
-  merge (x ∷ xs) ys = merge₁ x xs ys
+  merge (x ∷ xs) ys = merge′ x xs ys
     where
-    merge₁ : A → List A → List A → List A
-    merge₂ : ∀ x y → Dec (x ≤ y) → List A → List A → List A
-
-    merge₁ x xs [] = x ∷ xs
-    merge₁ x xs (y ∷ ys) = merge₂ x y (x ≤? y) xs ys
-
-    merge₂ x y (yes x≤y) xs ys = x ∷ merge₁ y ys xs
-    merge₂ x y (no  y<x) xs ys = y ∷ merge₁ x xs ys
+    merge′ : ∀ {b} x → ⦃ _ : x ≥ b ⦄ → Ordered [ x ] → Ordered b → Ordered b
+    merge′ x xs [] = x ∷ xs
+    merge′ x xs (y ∷ ys) with x ≤? y
+    ... | y≤x = y ∷ merge′ x xs ys
+    ... | x≤y = x ∷ merge′ y ys xs
 
   open TreeFold
 
-  sort : List A → List A
-  sort = ⦅ merge , [] ⦆ ∘ List.map List.[_]
+  sort : List A → Ordered ⊥
+  sort = ⦅ merge , [] ⦆ ∘ List.map λ x → x ∷ []
 ```
 
 # Validity
