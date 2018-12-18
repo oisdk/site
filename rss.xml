@@ -9,7 +9,7 @@
                    type="application/rss+xml" />
         <lastBuildDate>Tue, 18 Dec 2018 00:00:00 UT</lastBuildDate>
         <item>
-    <title>Breadth-First Traversals of Graphs</title>
+    <title>Pure & Lazy Breadth-First Traversals of Graphs in Haskell</title>
     <link>https://doisinkidney.com/posts/2018-12-18-traversing-graphs.html</link>
     <description><![CDATA[<div class="info">
     Posted on December 18, 2018
