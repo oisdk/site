@@ -1,5 +1,5 @@
 ---
-title: Breadth-First Traversals of Graphs
+title: Pure & Lazy Breadth-First Traversals of Graphs in Haskell
 series: Breadth-First Traversals
 bibliography: Graphs.bib
 tags: Haskell
