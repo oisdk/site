@@ -32,10 +32,12 @@ following function to merge two sorted lists:
 ```haskell
 merge :: Ord a => [a] -> [a] -> [a]
 merge [] ys = ys
-merge xs [] = xs
-merge xs@(x:xs') ys@(y:ys')
-  | x <= y    = x : merge xs' ys
-  | otherwise = y : merge xs ys'
+merge (x:xs) ys = go x xs ys
+  where
+    go x xs [] = x : xs
+    go x xs (y:ys)
+      | x <= y    = x : go y ys xs
+      | otherwise = y : go x xs ys
 ```
 
 Then `foldr merge [] . map pure` is insertion sort (and therefore
@@ -68,16 +70,12 @@ mutual
     ⟨_⟩ : Tree A → Node A
 
 module TreeFold {a} {A : Set a} (_*_ : A → A → A) where
-  infixr 5 _⊛_ 2^_×_⊛′_ 2^_×_⊛″_
+  infixr 5 _⊛_ 2^_×_⊛_
 
-  2^_×_⊛′_ : ℕ → A → Tree A → Tree A
-  2^_×_⊛″_ : ℕ → A → Node A → Tree A
-
-  2^ n × x ⊛′ 2^ 0     × y + ys = 2^ suc n × x * y ⊛″ ys
-  2^ n × x ⊛′ 2^ suc m × y + ys = 2^ n × x + ⟨ 2^ m × y + ys ⟩
-
-  2^ n × x ⊛″ ⟨⟩     = 2^ n × x + ⟨⟩
-  2^ n × x ⊛″ ⟨ xs ⟩ = 2^ n × x ⊛′ xs
+  2^_×_⊛_ : ℕ → A → Tree A → Tree A
+  2^ n × x ⊛ 2^ suc m × y + ys = 2^ n × x + ⟨ 2^ m × y + ys ⟩
+  2^ n × x ⊛ 2^ zero  × y + ⟨⟩ = 2^ suc n × (x * y) + ⟨⟩
+  2^ n × x ⊛ 2^ zero  × y + ⟨ ys ⟩ = 2^ suc n × (x * y) ⊛ ys
 
   _⊛_ : A → Tree A → Tree A
   _⊛_ = 2^ 0 ×_⊛′_
@@ -127,20 +125,31 @@ module Sorting {a r}
     []  : Ordered b
     _∷_ : ∀ x → ⦃ x≥b : x ≥ b ⦄ → (xs : Ordered [ x ]) → Ordered b
 
-  merge : ∀ {b} → Ordered b → Ordered b → Ordered b
-  merge [] ys = ys
-  merge (x ∷ xs) ys = merge′ x xs ys
+  _∪_ : ∀ {b} → Ordered b → Ordered b → Ordered b
+  [] ∪ ys = ys
+  (x ∷ xs) ∪ ys = ⟅ x ∹ xs ∪ ys ⟆
     where
-    merge′ : ∀ {b} x → ⦃ _ : x ≥ b ⦄ → Ordered [ x ] → Ordered b → Ordered b
-    merge′ x xs [] = x ∷ xs
-    merge′ x xs (y ∷ ys) with x ≤? y
-    ... | y≤x = y ∷ merge′ x xs ys
-    ... | x≤y = x ∷ merge′ y ys xs
+    ⟅_∹_∪_⟆ : ∀ {b} → ∀ x ⦃ _ : x ≥ b ⦄ → Ordered [ x ] → Ordered b → Ordered b
+    ⟅_∪_∹_⟆ : ∀ {b} → Ordered b → ∀ y ⦃ _ : y ≥ b ⦄ → Ordered [ y ] → Ordered b
+    merge : ∀ {b} x y ⦃ _ : x ≥ b ⦄ ⦃ _ : y ≥ b ⦄
+          → Total _≤_ x y
+          → Ordered [ x ]
+          → Ordered [ y ]
+          → Ordered b
+
+    ⟅ x ∹ xs ∪ [] ⟆ = x ∷ xs
+    ⟅ x ∹ xs ∪ y ∷ ys ⟆ = merge x y (x ≤? y) xs ys
+    ⟅ [] ∪ y ∹ ys ⟆ = y ∷ ys
+    ⟅ x ∷ xs ∪ y ∹ ys ⟆ = merge x y (x ≤? y) xs ys
+
+    merge x y x≤y xs ys = x ∷ ⟅ xs ∪ y ∹ ys ⟆
+    merge x y y≤x xs ys = y ∷ ⟅ x ∹ xs ∪ ys ⟆
+
 
   open TreeFold
 
   sort : List A → Ordered ⊥
-  sort = ⦅ merge , [] ⦆ ∘ List.map λ x → x ∷ []
+  sort = ⦅ _∪_ , [] ⦆ ∘ map (_∷ [])
 ```
 
 # Validity
@@ -202,21 +211,93 @@ After that, we can state precisely what correspondence the tree fold has, and
 under what conditions it does the same things as a fold:
 
 ```agda
-  module _ {_*_ : A → A → A} where
-    open TreeFold _*_
+module _ {_*_ : A → A → A} where
+  open TreeFold _*_
 
-    treeFoldHom : Transitive _≈_
-                → Reflexive _≈_
-                → Associative _*_
-                → RightCongruent _*_
-                → ∀ x xs
-                → ⦅ x , xs ⦆ ≈ foldr _*_ x xs
-    treeFoldHom _○_ ∎ assoc *⟨_⟩ b = foldr-fusion _○_ ∎ ⟦_⟧↓ ⟦ b ⟧↑ *⟨_⟩ ⊛-hom
-      where
-      ⊛-hom : ∀ x xs → ⟦ x ⊛ xs ⟧↓ ≈ x * ⟦ xs ⟧↓
-      ⊛-hom x (2^ n × y  + ⟨⟩) = ∎
-      ⊛-hom x (2^ n × y₁ + ⟨ 2^ zero  × y₂ + ⟨⟩     ⟩) = ∎
-      ⊛-hom x (2^ n × y₁ + ⟨ 2^ zero  × y₂ + ⟨ ys ⟩ ⟩) = assoc x (y₁ * y₂) ⟦ ys ⟧↓ ○ *⟨ assoc y₁ y₂ ⟦ ys ⟧↓ ⟩
-      ⊛-hom x (2^ n × y₁ + ⟨ 2^ suc m × y₂ + ⟨⟩     ⟩) = ∎
-      ⊛-hom x (2^ n × y₁ + ⟨ 2^ suc m × y₂ + ⟨ ys ⟩ ⟩) = ∎
+  treeFoldHom : Transitive _≈_
+              → Reflexive _≈_
+              → Associative _*_
+              → RightCongruent _*_
+              → ∀ x xs
+              → ⦅ x , xs ⦆ ≈ foldr _*_ x xs
+  treeFoldHom _○_ ∎ assoc *⟨_⟩ b = foldr-fusion _○_ ∎ ⟦_⟧↓ ⟦ b ⟧↑ *⟨_⟩ (⊛-hom zero)
+    where
+    ⊛-hom : ∀ n x xs → ⟦ 2^ n × x ⊛ xs ⟧↓ ≈ x * ⟦ xs ⟧↓
+    ⊛-hom n x (2^ suc m × y + ⟨⟩    ) = ∎
+    ⊛-hom n x (2^ suc m × y + ⟨ ys ⟩) = ∎
+    ⊛-hom n x (2^ zero  × y + ⟨⟩    ) = ∎
+    ⊛-hom n x (2^ zero  × y + ⟨ ys ⟩) = ⊛-hom (suc n) (x * y) ys ○ assoc x y ⟦ ys ⟧↓
 ```
+
+# "Implicit" Data Structures
+
+Consider the following implementation of the tree above in Haskell:
+
+```haskell
+type Tree a = [(Int,a)]
+
+cons :: (a -> a -> a) -> a -> Tree a -> Tree a
+cons (*) = cons' 0 
+  where
+    cons' n x [] = [(n,x)]
+    cons' n x ((0,y):ys) = cons' (n+1) (x * y) ys
+    cons' n x ((m,y):ys) = (n,x) : (m-1,y) : ys
+```
+
+The `cons` function "increments" that list as if it were the bits of a binary
+number. Now, consider using the `merge` function from above, in a pattern like
+this:
+
+```haskell
+f = foldr (cons merge . pure) []
+```
+
+What does `f` build? A list of lists, right?
+
+
+Kind of. That's what's built in terms of the observable, but what's actually
+stored in memory us a bunch of thunks. The shape of *those* is what I'm
+interested in. We can try and see what they look like by using a data structure
+that doesn't force on merge:
+
+```haskell
+data Tree a = Leaf a | Tree a :*: Tree a
+
+f = foldr (cons (:*:) . Leaf) []
+```
+
+Using a handy tree-drawing function, we can see what `f [1..13]` looks like:
+
+```
+[(0,*),(1,*),(0,*)]
+    └1    │ ┌2  │  ┌6
+          │┌┤   │ ┌┤
+          ││└3  │ │└7
+          └┤    │┌┤
+           │┌4  │││┌8
+           └┤   ││└┤
+            └5  ││ └9
+                └┤
+                 │ ┌10
+                 │┌┤
+                 ││└11
+                 └┤
+                  │┌12
+                  └┤
+                   └13
+```
+
+It's a binomial heap! It's a list of trees, each one contains $2^n$ elements.
+But they're not in heap order, you say? Well, as a matter of fact, they *are*.
+It just hasn't been evaluated yet. Once we force---say---the first element, the
+rest will shuffle themselves into a tree of thunks.
+
+The key thing here is that they will *stay* shuffled. For instance, if we run
+the heap, with `foldr merge []`, and then inspect the first element, it will
+only need to perform $\mathcal{O}(\log n)$ operations (as it will only inspect
+the first element of every tree). If we then went back and inspected the rest of
+the tree, though, those operations wouldn't be performed again---they get
+memoized. So, for the kind of problems were we want to combine some input with
+an associative binary operator, and repeatedly do that with new input until we
+hit our answer, this tree will turn an $\mathcal{O}(n^2)$ algorithm into an
+$\mathcal{O}(n \log n)$ one.
