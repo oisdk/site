@@ -1,6 +1,7 @@
 ---
 title: Balancing Scans
 tags: Haskell, Agda
+series: Balanced Folds
 ---
 
 [Previously](2017-10-30-balancing-folds.html) I tried to figure out a way to
@@ -78,7 +79,7 @@ module TreeFold {a} {A : Set a} (_*_ : A → A → A) where
   2^ n × x ⊛ 2^ zero  × y + ⟨ ys ⟩ = 2^ suc n × (x * y) ⊛ ys
 
   _⊛_ : A → Tree A → Tree A
-  _⊛_ = 2^ 0 ×_⊛′_
+  _⊛_ = 2^ 0 ×_⊛_
 
   ⟦_⟧↓ : Tree A → A
   ⟦ 2^ _ × x + ⟨⟩ ⟧↓ = x
@@ -292,12 +293,123 @@ But they're not in heap order, you say? Well, as a matter of fact, they *are*.
 It just hasn't been evaluated yet. Once we force---say---the first element, the
 rest will shuffle themselves into a tree of thunks.
 
-The key thing here is that they will *stay* shuffled. For instance, if we run
-the heap, with `foldr merge []`, and then inspect the first element, it will
-only need to perform $\mathcal{O}(\log n)$ operations (as it will only inspect
-the first element of every tree). If we then went back and inspected the rest of
-the tree, though, those operations wouldn't be performed again---they get
-memoized. So, for the kind of problems were we want to combine some input with
-an associative binary operator, and repeatedly do that with new input until we
-hit our answer, this tree will turn an $\mathcal{O}(n^2)$ algorithm into an
-$\mathcal{O}(n \log n)$ one.
+This illustrates a pretty interesting similarity between binomial heaps and
+merge sort. Performance-wise, though, there's another interesting property: the
+thunks *stay thunked*. In other words, if we do a merge sort via:
+
+```haskell
+sort = foldr (merge . snd) [] . foldr (cons merge . pure) []
+```
+
+We could instead freeze the fold, and look at it at every point:
+
+```haskell
+sortPrefixes = map (foldr (merge . snd) []) . scanl (flip (cons merge . pure)) []
+>>> [[],[1],[1,4],[1,2,4],[1,2,3,4],[1,2,3,4,5]]
+```
+
+And `sortPrefixes` is only $\mathcal{O}(n^2)$ (rather than $\mathcal{O}(n^2 \log
+n)$). I confess I don't know of a use for sorted prefixes, but it should
+illustrate the general idea: we get a pretty decent batching of operations, with
+the ability to freeze at any point in time. The other nice property (which I
+mentioned in the last post) is that any of the tree folds are extremely
+parallel.
+
+# Random Shuffles
+
+[There's a great article on shuffling in
+Haskell](http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle) which
+provides an $\mathcal{O}(n \log n)$ implementation of a perfect random shuffle.
+Unfortunately, the [Fisher-Yates
+shuffle](https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle) isn't
+applicable in a pure functional setting, so you have to be a little cleverer.
+
+The first implementation most people jump to (certainly the one I thought of) is
+to assign everything in the sequence a random number, and then sort according to
+that number. Perhaps surprisingly, this *isn't* perfectly random! It's a little
+weird, but the example in the article explains it well: basically, for $n$
+elements, your random numbers will have $n^n$ possible values, but the output of
+the sort will have $n!$ possible values. Since they don't divide into each other
+evenly, you're going to have some extra weight on some permutations, and less on
+others.
+
+Instead, we can generate a random
+[*factoradic*](https://en.wikipedia.org/wiki/Factorial_number_system) number. A
+factoradic number is one where the $n$th digit is in base $n$. Because of this,
+a factoradic number with $n$ digits has $n!$ possible values: exactly what we
+want.
+
+In the article, the digits of the number are used to pop values from a binary
+tree. Because the last digit will have $n$ possible values, and the second last
+$n-1$, and so on, you can keep popping without hitting an empty tree.
+
+This has the correct time complexity---$\mathcal{O}(n \log n)$---but there's a
+lot of overhead. Building the tree, then indexing into it, the rebuilding after
+each pop, etc.
+
+We'd *like* to just sort the list, according to the indices. The problem is that
+the indices are relative: if you want to `cons` something onto the list, you
+have to increment the rest of the indices, as they've all shifted right by one.
+
+What we'll do instead is use the indices as *gaps*. Our merge function looks
+like the following:
+
+```haskell
+merge [] ys = ys
+merge xs [] = xs
+merge ((x,i):xs) ((y,j):ys)
+  | i <= j    = (x,i) : merge xs ((y,j-i):ys)
+  | otherwise = (y,j) : merge ((x,i-j-1):xs) ys
+```
+
+With that, and the same `cons` as above, we get a very simple random shuffle
+algorithm:
+
+```haskell
+shuffle xs = map fst
+           . foldr (merge . snd) []
+           . foldr f (const []) xs
+  where
+    f x xs (i:is) = cons merge [(x,i)] (xs is)
+```
+
+The other interesting thing about this algorithm is that it can use Peano
+numbers with taking too much of a performance hit:
+
+```haskell
+merge : ∀ {a} {A : Set a} → List (A × ℕ) → List (A × ℕ) → List (A × ℕ)
+merge xs [] = xs
+merge {A = A} xs ((y , j) ∷ ys) = go-r xs y j ys
+  where
+  go-l : A → ℕ → List (A × ℕ) → List (A × ℕ) → List (A × ℕ)
+  go-r : List (A × ℕ) → A → ℕ → List (A × ℕ) → List (A × ℕ)
+  go : ℕ → ℕ → A → ℕ → List (A × ℕ) → A → ℕ → List (A × ℕ) → List (A × ℕ)
+
+  go i     zero   x i′ xs y j′ ys = (y , j′) ∷ go-l x i xs ys
+  go zero (suc j) x i′ xs y j′ ys = (x , i′) ∷ go-r xs y j ys
+  go (suc i) (suc j) = go i j
+
+  go-l x i xs [] = (x , i) ∷ xs
+  go-l x i xs ((y , j) ∷ ys) = go i j x i xs y j ys
+
+  go-r [] y j ys = (y , j) ∷ ys
+  go-r ((x , i) ∷ xs) y j ys = go i j x i xs y j ys
+
+shuffle : ∀ {a} {A : Set a} → List A → List ℕ → List A
+shuffle {a} {A} xs i = map proj₁ (⦅ [] , zip-inds xs i ⦆)
+  where
+  open TreeFold {a} {List (A × ℕ)} merge
+
+  zip-inds : List A → List ℕ → List (List (A × ℕ))
+  zip-inds [] inds = []
+  zip-inds (x ∷ xs) [] = ((x , 0) ∷ []) ∷ zip-inds xs []
+  zip-inds (x ∷ xs) (i ∷ inds) = ((x , i) ∷ []) ∷ zip-inds xs inds
+```
+
+I don't know exactly what the complexity of this is, but I *think* it should be
+better than the usual approach of popping from a vector.
+
+# Sharing Permutations
+
+
+

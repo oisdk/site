@@ -1,6 +1,7 @@
 ---
 title: Balancing Folds
 tags: Haskell, Folds
+series: Balanced Folds
 ---
 
 There are three main ways to fold things in Haskell: from the right, from the left, and from either side. Let's look at the left vs right variants first. `foldr`{.haskell} works from the right:
