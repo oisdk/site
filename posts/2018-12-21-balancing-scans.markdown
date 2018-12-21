@@ -2,6 +2,7 @@
 title: Balancing Scans
 tags: Haskell, Agda
 series: Balanced Folds
+bibliography: Tree Folds.bib
 ---
 
 [Previously](2017-10-30-balancing-folds.html) I tried to figure out a way to
@@ -21,7 +22,7 @@ treeFold f = go
     pairMap xs = xs
 ```
 
-# What's the use?
+# Magical Speedups
 
 The fold above is kind of magical: for a huge class of algorithms, it kind of
 "automatically" improves some factor of theirs from $\mathcal{O}(n)$ to
@@ -41,9 +42,13 @@ merge (x:xs) ys = go x xs ys
       | otherwise = y : go x xs ys
 ```
 
-Then `foldr merge [] . map pure` is insertion sort (and therefore
-$\mathcal{O}(n^2)$), whereas `treeFold merge [] . map pure` is merge sort, and
-therefore $\mathcal{O}(n \log n)$.
+We get either insertion sort ($\mathcal{O}(n^2)$) or merge sort ($\mathcal{O}(n
+\log n)$) just depending on which fold you use.
+
+```haskell
+foldr    merge [] . map pure -- n^2
+treeFold merge [] . map pure -- n log(n)
+```
 
 I'll give some more examples later, but effectively it gives us a better
 "divide" step in many divide and conquer algorithms.
@@ -409,7 +414,10 @@ shuffle {a} {A} xs i = map proj₁ (⦅ [] , zip-inds xs i ⦆)
 I don't know exactly what the complexity of this is, but I *think* it should be
 better than the usual approach of popping from a vector.
 
-# Sharing Permutations
+# Future Stuff
 
-
-
+This is just a collection of random thoughts for now, but I intend to work on
+using these folds to see if there are any other algorithms they can be useful
+for. In particular, I think I can write a version of Data.List.permutations
+which benefits from sharing. And I'm interested in using the implicit binomial
+heap for some search problems.
