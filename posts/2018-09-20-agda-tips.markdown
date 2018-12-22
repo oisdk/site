@@ -1,5 +1,5 @@
 ---
-title: Agda Beginner(-ish) Tips, Tricks, & Pitfalls
+title: Agda Beginner(-ish) Tips, Tricks, and Pitfalls
 tags: Agda
 ---
 
