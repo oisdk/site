@@ -116,7 +116,7 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
         route idRoute
         compile $ do
             let feedCtx = postCtx <> bodyField "description"
-            posts <- fmap (take 10) . recentFirst =<<
+            posts <- recentFirst =<<
                 loadAllSnapshots "posts/*" "content"
             renderRss feedConfiguration feedCtx posts
 
