@@ -32,24 +32,24 @@
 <a class="sourceLine" id="cb1-6" data-line-number="6"></a>
 <a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">module</span> <span class="dt">Apply</span> <span class="kw">where</span></a>
 <a class="sourceLine" id="cb1-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="kw">data</span> <span class="dt">Nat</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Nat</span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="kw">data</span> <span class="dt">N</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">N</span></a>
 <a class="sourceLine" id="cb1-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="kw">type</span> family <span class="dt">AppFunc</span> f (<span class="ot">n ::</span> <span class="dt">Nat</span>) arrows <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="dt">AppFunc</span> f <span class="ch">'Z a = f a</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">  <span class="dt">AppFunc</span> f (<span class="ch">'S n) (a -&gt; b) = f a -&gt; AppFunc f n b</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="kw">type</span> family <span class="dt">AppFunc</span> f n a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="dt">AppFunc</span> f <span class="dt">Z</span> a <span class="fu">=</span> f a</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">  <span class="dt">AppFunc</span> f (<span class="dt">S</span> n) (a <span class="ot">-&gt;</span> b) <span class="fu">=</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f n b</a>
 <a class="sourceLine" id="cb1-14" data-line-number="14"></a>
 <a class="sourceLine" id="cb1-15" data-line-number="15"><span class="kw">type</span> family <span class="dt">CountArgs</span> f <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">  <span class="dt">CountArgs</span> (a <span class="ot">-&gt;</span> b) <span class="fu">=</span> <span class="ch">'S (CountArgs b)</span></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">  <span class="dt">CountArgs</span> result <span class="fu">=</span> <span class="ch">'Z</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  <span class="dt">CountArgs</span> (_ <span class="ot">-&gt;</span> b) <span class="fu">=</span> <span class="dt">S</span> (<span class="dt">CountArgs</span> b)</a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">  <span class="dt">CountArgs</span> _ <span class="fu">=</span> <span class="dt">Z</span></a>
 <a class="sourceLine" id="cb1-18" data-line-number="18"></a>
 <a class="sourceLine" id="cb1-19" data-line-number="19"><span class="kw">class</span> (<span class="dt">CountArgs</span> a <span class="fu">~</span> n) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a n <span class="kw">where</span></a>
 <a class="sourceLine" id="cb1-20" data-line-number="20"><span class="ot">  apply ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f (<span class="dt">CountArgs</span> a) a</a>
 <a class="sourceLine" id="cb1-21" data-line-number="21"></a>
-<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="kw">instance</span> (<span class="dt">CountArgs</span> a <span class="fu">~</span> <span class="ch">'Z) =&gt; Applyable a '</span><span class="dt">Z</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="kw">instance</span> (<span class="dt">CountArgs</span> a <span class="fu">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a <span class="dt">Z</span> <span class="kw">where</span></a>
 <a class="sourceLine" id="cb1-23" data-line-number="23">  apply <span class="fu">=</span> id</a>
 <a class="sourceLine" id="cb1-24" data-line-number="24">  <span class="ot">{-# INLINE apply #-}</span></a>
 <a class="sourceLine" id="cb1-25" data-line-number="25"></a>
-<a class="sourceLine" id="cb1-26" data-line-number="26"><span class="kw">instance</span> <span class="dt">Applyable</span> b n <span class="ot">=&gt;</span> <span class="dt">Applyable</span> (a <span class="ot">-&gt;</span> b) (<span class="ch">'S n) where</span></a>
+<a class="sourceLine" id="cb1-26" data-line-number="26"><span class="kw">instance</span> <span class="dt">Applyable</span> b n <span class="ot">=&gt;</span> <span class="dt">Applyable</span> (a <span class="ot">-&gt;</span> b) (<span class="dt">S</span> n) <span class="kw">where</span></a>
 <a class="sourceLine" id="cb1-27" data-line-number="27">  apply f x <span class="fu">=</span> apply (f <span class="fu">&lt;*&gt;</span> x)</a>
 <a class="sourceLine" id="cb1-28" data-line-number="28">  <span class="ot">{-# INLINE apply #-}</span></a>
 <a class="sourceLine" id="cb1-29" data-line-number="29"></a>
