@@ -2,6 +2,9 @@
 title: liftAN
 ---
 
+This function is now available [on
+hackage](http://hackage.haskell.org/package/arity-generic-liftA).
+
 There's a family of functions in [Control.Applicative](https://hackage.haskell.org/package/base-4.11.0.0/docs/Control-Applicative.html) which follow the pattern `liftA2`{.haskell}, `liftA3`{.haskell}, etc. Using some tricks from Richard Eisenberg's thesis we can write them all at once.
 
 \begin{code}
