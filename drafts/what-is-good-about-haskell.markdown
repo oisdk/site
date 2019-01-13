@@ -28,6 +28,12 @@ unfair, as the example deliberately plays to Haskell's strengths (so I can show
 off the features I'm interested in): Haskell would come off pretty poorly if I
 wanted to demo some machine-learning concept.
 
+This post is not meant to say "Haskell is great, and your language sucks"! quite
+the opposite, actually: all of the features I'm going to talk about could be
+immediately lifted and added to whatever other language you care to think of.
+Some of them already exist in mainstream languages today, and most of them don't
+even (really) come from Haskell!
+
 # The Algorithm
 
 We'll be using a [skew heap](https://en.wikipedia.org/wiki/Skew_heap) to sort
@@ -420,5 +426,40 @@ of functions. In this case, the `sort` function is built out of two smaller
 ones: it's the *essence* of function composition.
 
 # Laziness
+
+Laziness is one of the most misunderstood and poorly taught elements of Haskell.
+I tend to think that people overstate how hard it makes reasoning about space:
+it actually follows pretty straightforward rules, which you can generally step
+through in yourself (compared to, for instance, rewrite rules, which are often
+black magic!)
+
+The other element of laziness is that, in modern programming, people will tend
+to use it anyway. Python is a great example: the
+[itertools](https://docs.python.org/3/library/itertools.html) library is almost
+entirely lazy. Actually making use of the laziness, though, is difficult and
+error-prone. Above, for instance, the `heapToList` function is lazy in Haskell,
+but strict in Python. Converting it to a lazy version is not the most difficult
+thing in the world:
+
+```python
+def heapToList(tree):
+  try:
+    while True:
+      yield popMin(tree)
+  except IndexError:
+    pass
+```
+
+But now, suddenly, the entire list API won't work. What's more, if we try and
+access the *first* element of the returned value, we mutate the whole thing:
+anyone else looking at the output of the generator will have it mutated out from
+under them!
+
+Haskell's list API handles all of this stuff *automatically*. If you want the
+first element in the list, it will calculate it. No-one else's list is mutated.
+If you ask for that same element again, it won't calculate it again! You get all
+the benefits of generators *with* the benefits of lists (except indexing, of
+course).
+
 # Testing
 # Benchmarking
