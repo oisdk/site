@@ -183,7 +183,7 @@ $\mathcal{O}(\log n)$ merge.
 
 # The Data Structure
 
-The urn structure itself is as follows:
+The urn structure itself is a pretty standard binomial heap:
 
 ```haskell
 data Tree a
@@ -197,9 +197,168 @@ data Node a
   | Branch (Tree a) (Node a)
 
 data Urn a
-  = Urn {-# UNPACK #-} !Word (Tree a) (List a)
-  
-data List a
   = Nil
-  | Cons {-# UNPACK #-} !(Urn a)
+  | Urn {-# UNPACK #-} !Word (Tree a) (Urn a)
 ```
+
+By avoiding the usual `Skip` constructors you often see in a binomial heap we
+save a huge amount of space. Instead, we store the "number of zeroes before this
+bit". Another thing to point out is that only left branches in the trees store
+their weight: the same optimization is made in the paper.
+
+Insertion is not much different from insertion for a usual binomial heap,
+although we don't need to do anything to merge the trees:
+
+```haskell
+insert :: Word -> a -> Urn a -> Urn a
+insert i' x' = go 0 (Tree i' (Leaf x'))
+  where
+    go !i x Nil = Urn i x Nil
+    go !i x (Urn 0 y ys) = go (i+1) (mergeTree x y) ys
+    go !i x (Urn j y ys) = Urn i x (Urn (j-1) y ys)
+   
+mergeTree :: Tree a -> Tree a -> Tree a
+mergeTree xs ys =
+    Tree
+      (weight xs + weight ys)
+      (Branch xs (branch ys))
+```
+
+We *could* potentially get insertion from amortized $\mathcal{O}(1)$ to
+worst-case $\mathcal{O}(1)$ by using skew binary instead of binary (in fact I am
+almost sure it's possible), but then we'd lose the efficient merge. I'll leave
+exploring that for another day.
+
+Sampling (with replacement) combines reservoir sampling and binary search:
+first, we use reservoir sampling to pick the correct tree from the top-level
+list, and then we drill down into that tree with binary search. 
+
+```haskell
+sample :: RandomGen g => Urn a -> g -> Maybe (a, g)
+sample Nil = const Nothing
+sample (Urn _ x' xs') = Just . go xs' (weight x' - 1) x'
+  where
+    go Nil _ x g = go' (weight x - 1) (branch x) g
+    go (Urn _ x xs) j y g = case randomR (0,k) g of
+        (q,g')
+          | q < i     -> go xs k x g'
+          | otherwise -> go xs k y g'
+      where
+        i = weight x
+        k = i + j
+    go' _ (Leaf x) g = (x, g)
+    go' i (Branch xs ys) g = case randomR (0,i) g of
+        (q,g')
+          | q < weight xs -> go' (weight xs - 1) (branch xs) g'
+          | otherwise -> go' (i - weight xs) ys g'
+```
+
+So we're off to a good start, but `remove` is a complex operation. We take the
+same route taken in the paper: first, we perform an "uncons"-like operation,
+which pops out the last inserted element. Then, we randomly choose a point in
+the tree (using the same logic as in `sample`), and replace it with the popped
+element. Finally, we decrement the counter on the newly (randomly) chosen
+element, and reinsert it if it's still bigger than 0[^extra-step].
+
+[^extra-step]: There's one extra step I haven't mentioned: we also must allow
+    the first element (the last inserted) to be chosen, so we run the
+    random-number generator once to check if that's the element we want to
+    choose.
+    
+```haskell
+remove :: RandomGen g => Urn a -> g -> Maybe ((a, Urn a), g)
+remove xs' g = case popFirst xs' of
+    Nothing -> Nothing
+    Just ((i,x),Nil) -> Just ((x,insertAvoidZero (i-1) x Nil), g)
+    Just (v,xs) -> case randomR (0,fst v + totWeight xs - 1) g of
+        (q,g')
+          | q < fst v -> Just ((snd v,insertAvoidZero (fst v - 1) (snd v) xs),g')
+          | otherwise -> case replace v xs g' of
+            (((i,x),xs'),g'') -> Just ((x, insertAvoidZero (i-1) x xs'), g'')
+  where            
+    popFirst xs = case popFirst' xs of
+        Just (Tree i (Leaf y),ys) -> Just ((i,y),ys)
+        Nothing -> Nothing
+        
+    popFirst' Nil = Nothing
+    popFirst' (Urn 0 x Nil) = Just (x, Nil)
+    popFirst' (Urn 0 x (Urn i y ys)) = Just  (x, Urn (i+1) y ys)
+    popFirst' (Urn i x xs) = case popFirst' (Urn (i-1) x xs) of
+      Just (Tree j (Branch y z), ys) -> Just (y, Urn 0 (Tree (j - weight y) z) ys)
+      
+    insertAvoidZero :: Word -> a -> Urn a -> Urn a
+    insertAvoidZero 0 _ x = x
+    insertAvoidZero i x xs = insert i x xs
+    
+    replace v (Urn i x' xs') = go (\t -> Urn i t xs') id xs' (weight x' - 1) x'
+      where
+        go c _ Nil i x g = case treeReplace v x g of
+            ((v',t'),g') -> ((v', c t'), g')
+        go c k (Urn o x xs) j y g = case randomR (0,w) g of
+            (q,g')
+              | q < i     -> go (\t -> k (Urn o t xs))  (k . Urn o x) xs w x g'
+              | otherwise -> go c (k . Urn o x) xs w y g'
+          where
+            i = weight x
+            w = i + j
+            
+    treeReplace (i,v) (Tree w (Leaf x)) g = (((w,x),Tree i (Leaf v)), g)
+    treeReplace v (Tree w (Branch xs ys)) g = case randomR (0,w-1) g of
+        (q,g')
+          | q < weight xs -> case treeReplace v xs g of
+              ((v',t'),g'') -> ((v',Tree (w + (weight t' - weight xs)) (Branch t' ys)),g'')
+          | otherwise -> case treeReplace v (Tree (w - weight xs) ys) g of
+              ((v',t'),g'') -> ((v',Tree (weight xs + weight t') (Branch xs (branch t'))),g'')
+
+    totWeight = go 0
+      where
+        go !i Nil = i
+        go !i (Urn j _ xs) = go (i+j) xs
+```
+
+Merge is the same as on binomial heaps:
+
+```haskell
+merge :: Urn a -> Urn a -> Urn a
+merge Nil ys = ys
+merge xs Nil = xs
+merge (Urn i x xs) (Urn j y ys) = merge' i x xs j y ys 
+  where
+    merge' i x xs j y ys = case compare i j of
+        LT -> Urn i x (mergel xs (j-i-1) y ys)
+        GT -> Urn j y (merger (i-j-1) x xs ys)
+        EQ -> merge'' (succ i) (mergeTree x y) xs ys
+    mergel Nil j y ys = Urn j y ys
+    mergel (Urn i x xs) j y ys = merge' i x xs j y ys
+    
+    merger i x xs Nil = Urn i x xs
+    merger i x xs (Urn j y ys) = merge' i x xs j y ys
+    
+    merge'' !i !t Nil ys = carryLonger i t ys
+    merge'' !i !t xs Nil = carryLonger i t xs
+    
+    merge'' !p !t (Urn 0 x xs) (Urn 0 y ys) = Urn p t (merge'' 0 (mergeTree x y) xs ys)
+    merge'' !p !t (Urn 0 x xs) (Urn j y ys) = merge'' (p+1) (mergeTree t x) xs (Urn (j-1) y ys)
+    merge'' !p !t (Urn i x xs) (Urn 0 y ys) = merge'' (p+1) (mergeTree t y) (Urn (i-1) x xs) ys
+    merge'' !p !t (Urn i x xs) (Urn j y ys) = Urn p t (merge (Urn (i-1) x xs) (Urn (j-1) y ys))
+    carryLonger i t Nil = Urn i t Nil
+    carryLonger i t (Urn 0 y ys) = carryLonger (succ i) (mergeTree t y) ys
+    carryLonger i t (Urn j y ys) = Urn i t (Urn (j-1) y ys)
+```
+
+# Uses and Further Work
+
+The efficient `merge` is intriguing: it means that `Urn` could conceivably be
+`Alternative`, `MonadPlus`, etc. I have yet to see a use for that, but it's
+interesting nonetheless! I'm constantly looking for a way to express something
+like Dijkstra's algorithm algebraicly, using the usual `Alternative`
+combinators; I don't know if this is related.
+
+The other interesting point is that, for this to be an instance of
+`Applicative`, it would need some analogue for multiplication for the weights.
+I'm not sure what that should be. Also, it's not obvious how to translate what
+we have into a min-heap version.
+
+Finally, it might be worth trying out different heaps (a pairing heap is very
+similar in structure to this). Also, we could rearrange the weights so that
+larger ones are higher in each tree: this might give a performance boost.
