@@ -139,7 +139,7 @@ data Tree a
   { weight :: {-# UNPACK #-} !Word
   , branch :: Node a
   }
-  
+
 data Node a
   = Leaf a
   | Branch (Tree a) (Node a)
@@ -148,11 +148,9 @@ data Heap a
   = Nil
   | Cons {-# UNPACK #-} !Word (Tree a) (Heap a)
   
-data Urn a
-  = Urn
-  { totWeight :: {-# UNPACK #-} !Word
-  , heap      :: !(Heap a)
-  }
+data Urn a =
+    Urn {-# UNPACK #-} !Word
+        !(Heap a)
 ```
 
 By avoiding the usual `Skip` constructors you often see in a binomial heap we
@@ -170,15 +168,15 @@ insertHeap i' x' = go 0 (Tree i' (Leaf x'))
     go !i x Nil = Cons i x Nil
     go !i x (Cons 0 y ys) = go (i+1) (mergeTree x y) ys
     go !i x (Cons j y ys) = Cons i x (Cons (j-1) y ys)
-    
-insert :: Word -> a -> Urn a -> Urn a
-insert i x (Urn w xs) = Urn (i+w) (insertHeap i x xs)
 
 mergeTree :: Tree a -> Tree a -> Tree a
 mergeTree xs ys =
-    Tree
-      (weight xs + weight ys)
-      (Branch xs (branch ys))
+  Tree
+    (weight xs + weight ys)
+    (Branch xs (branch ys))
+
+insert :: Word -> a -> Urn a -> Urn a
+insert i x (Urn w xs) = Urn (w+i) (insertHeap i x xs)
 ```
 
 We *could* potentially get insertion from amortized $\mathcal{O}(1)$ to
@@ -186,24 +184,38 @@ worst-case $\mathcal{O}(1)$ by using skew binary instead of binary (in fact I am
 almost sure it's possible), but then I think we'd lose the efficient merge. I'll
 leave exploring that for another day.
 
+To get randomness, we'll write a very simple class that encapsulates only what
+we need:
+
+```haskell
+class Sample m where
+    -- | Inclusive range
+    inRange :: Word -> Word -> m Word
+```
+
+You can later instantiate this to whatever random monad you end up using. (The
+same approach was taken in the paper)
+
 Sampling (with replacement) first randomly chooses a tree from the top-level
 list, and then we drill down into that tree with binary search.
 
 ```haskell
-sample :: RandomGen g => Urn a -> g -> Maybe (a, g)
-sample (Urn _ Nil) = const Nothing
-sample (Urn w' (Cons i' x' xs')) = Just . go (w' - 1) i' x' xs'
+sample :: (Monad m, Sample m) => Urn a -> Maybe (m a)
+sample (Urn _ Nil) = Nothing
+sample (Urn w' (Cons _ x' xs')) = Just (go (w' - 1) x' xs')
   where
-    go w i x Nil g = go' (weight x - 1) (branch x) g
-    go w i x (Cons j y ys) g = case randomR (0,w) g of
-        (q,g')
-          | q < weight x -> go' (weight x - 1) (branch x) g'
-          | otherwise    -> go  (w - weight x) j y ys g'
-    go' _ (Leaf x) g = (x, g)
-    go' i (Branch xs ys) g = case randomR (0,i) g of
-        (q,g')
-          | q < weight xs -> go' (weight xs - 1) (branch xs) g'
-          | otherwise     -> go' (i - weight xs) ys g'
+    go _ x Nil = go' (weight x - 1) (branch x)
+    go w x (Cons _ y ys) = do
+        q <- inRange 0 w
+        if q < weight x
+           then go' (weight x - 1) (branch x)
+           else go  (w - weight x) y ys
+    go' _ (Leaf x) = pure x
+    go' i (Branch xs ys) = do
+        q <- inRange 0 i
+        if q < weight xs
+            then go' (weight xs - 1) (branch xs)
+            else go' (i - weight xs) ys
 ```
 
 So we're off to a good start, but `remove` is a complex operation. We take the
@@ -219,83 +231,101 @@ element, and reinsert it if it's still bigger than 0[^extra-step].
     choose.
     
 ```haskell
-remove :: RandomGen g => Urn a -> g -> Maybe ((a, Urn a), g)
-remove (Urn w' xs') g = case popFirst xs' of
-    Nothing -> Nothing
-    Just (v@(Tree i (Leaf x)),Nil) -> Just ((x, Urn (w'-1) (insert' (i-1) x Nil)),g)
-    Just (v@(Tree i (Leaf x)), xs@(Cons j y ys)) -> case randomR (0,w' - 1) g of
-        (q,g')
-          | q < i -> Just ((x,Urn (w'-1) (insert' (i-1) x xs)), g')
-          | otherwise -> case replace i x j y ys g' of
-              (((k,z),zs),g'') -> Just ((z, Urn (w'-1) (insert' (k-1) z zs)), g'')
-  where        
-    popFirst Nil = Nothing
-    popFirst (Cons 0 x Nil) = Just (x, Nil)
-    popFirst (Cons 0 x (Cons i y ys)) = Just  (x, Cons (i+1) y ys)
-    popFirst (Cons i x xs) = case popFirst (Cons (i-1) x xs) of
-      Just (Tree j (Branch y z), ys) -> Just (y, Cons 0 (Tree (j - weight y) z) ys)
-      
-    insert' 0 _ x = x
+remove :: (Monad m, Sample m) => Urn a -> Maybe (m (a, Urn a))
+remove (Urn w hp) = fmap go (uninsert hp)
+  where
+    insert' 0 _ xs = xs
     insert' i x xs = insertHeap i x xs
-    
-    replace iv v i x' xs' = go (\t -> Cons i t xs') id xs' (weight x' - 1) x'
+
+    go (vw,v,Nil) = pure (v, Urn (w - 1) (insert' (vw - 1) v Nil))
+    go (vw,v,vs@(Cons i' x' xs')) = do
+        q <- inRange 0 (w - 1)
+        if q < vw
+            then pure (v, Urn (w - 1) (insert' (vw - 1) v vs))
+            else replace (w - 1 - vw) i' x' xs'
+              (\ys yw y -> (y, Urn (w - 1) (insert' (yw - 1) y ys)))
       where
-        go c _ Nil i x g = case replaceTree iv v x g of
-            ((v',t'),g') -> ((v', c t'), g')
-        go c k (Cons o x xs) j y g = case randomR (0,w) g of
-            (q,g')
-              | q < weight x -> go (\t -> k (Cons o t xs))  (k . Cons o x) xs w x g'
-              | otherwise    -> go c (k . Cons o x) xs w y g'
-          where
-            i = weight x
-            w = i + j
-            
-    replaceTree iv v (Tree w (Leaf x)) g = (((w,x),Tree iv (Leaf v)), g)
-    replaceTree iv v (Tree w (Branch xs ys)) g = case randomR (0,w-1) g of
-        (q,g')
-          | q < weight xs -> case replaceTree iv v xs g of
-              ((v',t'),g'') -> ((v',Tree (w + (weight t' - weight xs)) (Branch t' ys)),g'')
-          | otherwise -> case replaceTree iv v (Tree (w - weight xs) ys) g of
-              ((v',t'),g'') -> ((v',Tree (weight xs + weight t') (Branch xs (branch t'))),g'')
+        replace _ i x Nil k = replaceTree x (\t -> k (Cons i t Nil))
+        replace rw i x xs@(Cons j y ys) k = do
+            q <- inRange 0 rw
+            if q < weight x
+                then replaceTree x (\t -> k (Cons i t xs))
+                else replace (rw - weight x) j y ys (k . Cons i x)
+
+        replaceTree (Tree tw (Leaf x)) k = pure (k (Tree vw (Leaf v)) tw x)
+        replaceTree (Tree tw (Branch xs ys)) k = do
+            q <- inRange 0 (tw - 1)
+            if q < weight xs
+                then replaceTree xs
+                  (\t -> k (Tree (tw + (weight t - weight xs)) (Branch t ys)))
+                else replaceTree (Tree (tw - weight xs) ys)
+                  (\t -> k (Tree (weight xs + weight t) (Branch xs (branch t))))
 ```
+
+We make heavy use of continuation-passing style here to avoid any unnecessary
+`fmap`{.haskell}s.
 
 Merge is the same as on binomial heaps:
 
 ```haskell
-merge :: Urn a -> Urn a -> Urn a
-merge (Urn i' xs') (Urn j' ys') = Urn (i'+j') (go xs' ys')
+mergeHeap :: Heap a -> Heap a -> Heap a
+mergeHeap Nil = id
+mergeHeap (Cons i' x' xs') = merger i' x' xs'
   where
-    go Nil ys = ys
-    go (Cons i x xs) ys = merger i x xs ys
-
-    merge' i x xs j y ys = case compare i j of
-        LT -> Cons i x (mergel xs (j-i-1) y ys)
-        GT -> Cons j y (merger (i-j-1) x xs ys)
-        EQ -> merge'' (succ i) (mergeTree x y) xs ys
-
-    mergel Nil j y ys = Cons j y ys
-    mergel (Cons i x xs) j y ys = merge' i x xs j y ys
-    
     merger !i x xs Nil = Cons i x xs
     merger !i x xs (Cons j y ys) = merge' i x xs j y ys
-    
-    merge'' !i !t Nil ys = carryLonger i t ys
-    merge'' !i !t xs Nil = carryLonger i t xs
-    merge'' !p !t (Cons 0 x xs) (Cons 0 y ys) = Cons p t (merge'' 0 (mergeTree x y) xs ys)
-    merge'' !p !t (Cons 0 x xs) (Cons j y ys) = merge'' (p+1) (mergeTree t x) xs (Cons (j-1) y ys)
-    merge'' !p !t (Cons i x xs) (Cons 0 y ys) = merge'' (p+1) (mergeTree t y) (Cons (i-1) x xs) ys
-    merge'' !p !t (Cons i x xs) (Cons j y ys) = Cons p t (go (Cons (i-1) x xs) (Cons (j-1) y ys))
 
-    carryLonger !i t Nil = Cons i t Nil
-    carryLonger !i t (Cons 0 y ys) = carryLonger (succ i) (mergeTree t y) ys
-    carryLonger !i t (Cons j y ys) = Cons i t (Cons (j-1) y ys)    
+    merge' !i x xs !j y ys = case compare i j of
+        LT -> Cons i x (merger (j-i-1) y ys xs)
+        GT -> Cons j y (merger (i-j-1) x xs ys)
+        EQ -> mergec (succ i) (mergeTree x y) xs ys
+
+    mergec !p !t Nil = carryLonger p t
+    mergec !p !t (Cons i x xs) = mergecr p t i x xs
+
+    mergecr !p !t !i x xs Nil = carryLonger' p t i x xs
+    mergecr !p !t !i x xs (Cons j y ys) = mergec' p t i x xs j y ys
+
+    mergec' !p t !i x xs !j y ys = case compare i j of
+      LT -> mergecr'' p t i x xs (j-i-1) y ys
+      GT -> mergecr'' p t j y ys (i-j-1) x xs
+      EQ -> Cons p t (mergec i (mergeTree x y) xs ys)
+
+    mergecr'' !p !t  0 x xs !j y ys = mergecr (p+1) (mergeTree t x) j y ys xs
+    mergecr'' !p !t !i x xs !j y ys = Cons p t (Cons (i-1) x (merger j y ys xs))
+
+    carryLonger !i !t Nil = Cons i t Nil
+    carryLonger !i !t (Cons j y ys) = carryLonger' i t j y ys
+
+    carryLonger' !i !t  0 y ys = carryLonger (succ i) (mergeTree t y) ys
+    carryLonger' !i !t !j y ys = Cons i t (Cons (j-1) y ys)
+
+merge :: Urn a -> Urn a -> Urn a
+merge (Urn i xs) (Urn j ys) = Urn (i+j) (mergeHeap xs ys)   
 ```
+
+# Finger Trees
+
+Again, the cleverness of all the tree folds is that they intelligently batch
+summarizing operations, allowing you to efficiently so prefix-scan-like
+operations that exploit sharing.
+
+The bare-bones version just uses binary numbers: you can upgrade the `cons`
+operation to worst-case constant-time if you use *skew* binary. Are there other
+optimizations? Yes! What if we wanted to stick something on to the *other* end,
+for instance? What if we wanted to reverse?
+
+If you figure out a way to do *all* these optimizations, and put them into one
+big data structure, you get the mother-of-all "batching" data structures: the
+finger tree. This is the basis for Haskell's Data.Sequence, but it can also
+implement priority queues, urns (I'd imagine), fenwick-tree-like structures, and
+more.
 
 # Uses and Further Work
 
 First and foremost, I should test the above implementations! I'm pretty
-confident the asymptotics are correct, but I am pretty sure the implementations
-will have bugs.
+confident the asymptotics are correct, but I'm certain the implementations have
+bugs.
 
 The efficient `merge` is intriguing: it means that `Urn` could conceivably be
 `Alternative`, `MonadPlus`, etc. I have yet to see a use for that, but it's
