@@ -159,55 +159,44 @@
 <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Sample</span> m <span class="kw">where</span></a>
 <a class="sourceLine" id="cb6-2" data-line-number="2">    <span class="co">-- | Inclusive range</span></a>
 <a class="sourceLine" id="cb6-3" data-line-number="3"><span class="ot">    inRange ::</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> m <span class="dt">Word</span></a></code></pre></div>
-<p>You can later instantiate this to whatever random monad you end up using. (The same approach was taken in the paper)</p>
+<p>You can later instantiate this to whatever random monad you end up using. (The same approach was taken in the paper, although we only require <code>Functor</code> here, not <code>Monad</code>).</p>
 <p>Sampling (with replacement) first randomly chooses a tree from the top-level list, and then we drill down into that tree with binary search.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">sample ::</span> (<span class="dt">Monad</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m a)</a>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">sample ::</span> (<span class="dt">Functor</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m a)</a>
 <a class="sourceLine" id="cb7-2" data-line-number="2">sample (<span class="dt">Urn</span> _ <span class="dt">Nil</span>) <span class="fu">=</span> <span class="dt">Nothing</span></a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">sample (<span class="dt">Urn</span> w&#39; (<span class="dt">Cons</span> _ x&#39; xs&#39;)) <span class="fu">=</span> <span class="dt">Just</span> (go (w&#39; <span class="fu">-</span> <span class="dv">1</span>) x&#39; xs&#39;)</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">sample (<span class="dt">Urn</span> w&#39; (<span class="dt">Cons</span> _ x&#39; xs&#39;)) <span class="fu">=</span> <span class="dt">Just</span> (fmap (go x&#39; xs&#39;) (inRange <span class="dv">0</span> (w&#39; <span class="fu">-</span> <span class="dv">1</span>)))</a>
 <a class="sourceLine" id="cb7-4" data-line-number="4">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">    go _ x <span class="dt">Nil</span> <span class="fu">=</span> go&#39; (weight x <span class="fu">-</span> <span class="dv">1</span>) (branch x)</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6">    go w x (<span class="dt">Cons</span> _ y ys) <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb7-7" data-line-number="7">        q <span class="ot">&lt;-</span> inRange <span class="dv">0</span> w</a>
-<a class="sourceLine" id="cb7-8" data-line-number="8">        <span class="kw">if</span> q <span class="fu">&lt;</span> weight x</a>
-<a class="sourceLine" id="cb7-9" data-line-number="9">           <span class="kw">then</span> go&#39; (weight x <span class="fu">-</span> <span class="dv">1</span>) (branch x)</a>
-<a class="sourceLine" id="cb7-10" data-line-number="10">           <span class="kw">else</span> go  (w <span class="fu">-</span> weight x) y ys</a>
-<a class="sourceLine" id="cb7-11" data-line-number="11">    go&#39; _ (<span class="dt">Leaf</span> x) <span class="fu">=</span> pure x</a>
-<a class="sourceLine" id="cb7-12" data-line-number="12">    go&#39; i (<span class="dt">Branch</span> xs ys) <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb7-13" data-line-number="13">        q <span class="ot">&lt;-</span> inRange <span class="dv">0</span> i</a>
-<a class="sourceLine" id="cb7-14" data-line-number="14">        <span class="kw">if</span> q <span class="fu">&lt;</span> weight xs</a>
-<a class="sourceLine" id="cb7-15" data-line-number="15">            <span class="kw">then</span> go&#39; (weight xs <span class="fu">-</span> <span class="dv">1</span>) (branch xs)</a>
-<a class="sourceLine" id="cb7-16" data-line-number="16">            <span class="kw">else</span> go&#39; (i <span class="fu">-</span> weight xs) ys</a></code></pre></div>
-<p>So we’re off to a good start, but <code>remove</code> is a complex operation. We take the same route taken in the paper: first, we perform an “uncons”-like operation, which pops out the last inserted element. Then, we randomly choose a point in the tree (using the same logic as in <code>sample</code>), and replace it with the popped element. Finally, we decrement the counter on the newly (randomly) chosen element, and reinsert it if it’s still bigger than 0<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">remove ::</span> (<span class="dt">Monad</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m (a, <span class="dt">Urn</span> a))</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">remove (<span class="dt">Urn</span> w hp) <span class="fu">=</span> fmap go (uninsert hp)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    go x <span class="dt">Nil</span> <span class="fu">!</span>w <span class="fu">=</span> go&#39; w (branch x)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">    go x (<span class="dt">Cons</span> _ y ys) <span class="fu">!</span>w</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">      <span class="fu">|</span> w <span class="fu">&lt;</span> weight x <span class="fu">=</span> go&#39; w (branch x)</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">      <span class="fu">|</span> otherwise    <span class="fu">=</span> go y ys (w <span class="fu">-</span> weight x)</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">    go&#39; <span class="fu">!</span>_ (<span class="dt">Leaf</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">    go&#39; <span class="fu">!</span>i (<span class="dt">Branch</span> xs ys)</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">      <span class="fu">|</span> i <span class="fu">&lt;</span> weight xs <span class="fu">=</span> go&#39; i (branch xs)</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">      <span class="fu">|</span> otherwise <span class="fu">=</span> go&#39; (i <span class="fu">-</span> weight xs) ys</a></code></pre></div>
+<p>So we’re off to a good start, but <code>remove</code> is a complex operation. We take the same route taken in the paper: first, we perform an “uncons”-like operation, which pops out the last inserted element. Then, we randomly choose a point in the tree (using the same logic as in <code>sample</code>), and replace it with the popped element<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">remove ::</span> (<span class="dt">Functor</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m ((a, <span class="dt">Word</span>), <span class="dt">Urn</span> a))</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">remove (<span class="dt">Urn</span> w hp) <span class="fu">=</span> fmap go&#39; (Heap.uninsert hp)</a>
 <a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">    insert&#39; <span class="dv">0</span> _ xs <span class="fu">=</span> xs</a>
-<a class="sourceLine" id="cb8-5" data-line-number="5">    insert&#39; i x xs <span class="fu">=</span> insertHeap i x xs</a>
-<a class="sourceLine" id="cb8-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb8-7" data-line-number="7">    go (vw,v,<span class="dt">Nil</span>) <span class="fu">=</span> pure (v, <span class="dt">Urn</span> (w <span class="fu">-</span> <span class="dv">1</span>) (insert&#39; (vw <span class="fu">-</span> <span class="dv">1</span>) v <span class="dt">Nil</span>))</a>
-<a class="sourceLine" id="cb8-8" data-line-number="8">    go (vw,v,vs<span class="fu">@</span>(<span class="dt">Cons</span> i&#39; x&#39; xs&#39;)) <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb8-9" data-line-number="9">        q <span class="ot">&lt;-</span> inRange <span class="dv">0</span> (w <span class="fu">-</span> <span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb8-10" data-line-number="10">        <span class="kw">if</span> q <span class="fu">&lt;</span> vw</a>
-<a class="sourceLine" id="cb8-11" data-line-number="11">            <span class="kw">then</span> pure (v, <span class="dt">Urn</span> (w <span class="fu">-</span> <span class="dv">1</span>) (insert&#39; (vw <span class="fu">-</span> <span class="dv">1</span>) v vs))</a>
-<a class="sourceLine" id="cb8-12" data-line-number="12">            <span class="kw">else</span> replace (w <span class="fu">-</span> <span class="dv">1</span> <span class="fu">-</span> vw) i&#39; x&#39; xs&#39;</a>
-<a class="sourceLine" id="cb8-13" data-line-number="13">              (\ys yw y <span class="ot">-&gt;</span> (y, <span class="dt">Urn</span> (w <span class="fu">-</span> <span class="dv">1</span>) (insert&#39; (yw <span class="fu">-</span> <span class="dv">1</span>) y ys)))</a>
-<a class="sourceLine" id="cb8-14" data-line-number="14">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb8-15" data-line-number="15">        replace _ i x <span class="dt">Nil</span> k <span class="fu">=</span> replaceTree x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t <span class="dt">Nil</span>))</a>
-<a class="sourceLine" id="cb8-16" data-line-number="16">        replace rw i x xs<span class="fu">@</span>(<span class="dt">Cons</span> j y ys) k <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb8-17" data-line-number="17">            q <span class="ot">&lt;-</span> inRange <span class="dv">0</span> rw</a>
-<a class="sourceLine" id="cb8-18" data-line-number="18">            <span class="kw">if</span> q <span class="fu">&lt;</span> weight x</a>
-<a class="sourceLine" id="cb8-19" data-line-number="19">                <span class="kw">then</span> replaceTree x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t xs))</a>
-<a class="sourceLine" id="cb8-20" data-line-number="20">                <span class="kw">else</span> replace (rw <span class="fu">-</span> weight x) j y ys (k <span class="fu">.</span> <span class="dt">Cons</span> i x)</a>
-<a class="sourceLine" id="cb8-21" data-line-number="21"></a>
-<a class="sourceLine" id="cb8-22" data-line-number="22">        replaceTree (<span class="dt">Tree</span> tw (<span class="dt">Leaf</span> x)) k <span class="fu">=</span> pure (k (<span class="dt">Tree</span> vw (<span class="dt">Leaf</span> v)) tw x)</a>
-<a class="sourceLine" id="cb8-23" data-line-number="23">        replaceTree (<span class="dt">Tree</span> tw (<span class="dt">Branch</span> xs ys)) k <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb8-24" data-line-number="24">            q <span class="ot">&lt;-</span> inRange <span class="dv">0</span> (tw <span class="fu">-</span> <span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb8-25" data-line-number="25">            <span class="kw">if</span> q <span class="fu">&lt;</span> weight xs</a>
-<a class="sourceLine" id="cb8-26" data-line-number="26">                <span class="kw">then</span> replaceTree xs</a>
-<a class="sourceLine" id="cb8-27" data-line-number="27">                  (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (tw <span class="fu">+</span> (weight t <span class="fu">-</span> weight xs)) (<span class="dt">Branch</span> t ys)))</a>
-<a class="sourceLine" id="cb8-28" data-line-number="28">                <span class="kw">else</span> replaceTree (<span class="dt">Tree</span> (tw <span class="fu">-</span> weight xs) ys)</a>
-<a class="sourceLine" id="cb8-29" data-line-number="29">                  (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (weight xs <span class="fu">+</span> weight t) (<span class="dt">Branch</span> xs (branch t))))</a></code></pre></div>
-<p>We make heavy use of continuation-passing style here to avoid any unnecessary <code class="sourceCode haskell">fmap</code>s.</p>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    go&#39; (vw,v,hp&#39;) <span class="fu">=</span> fmap (<span class="ot">`go`</span> hp&#39;) (inRange <span class="dv">0</span> (w<span class="fu">-</span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">        go <span class="fu">!</span>_  <span class="dt">Nil</span> <span class="fu">=</span> ((v, vw), <span class="dt">Urn</span> <span class="dv">0</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">        go <span class="fu">!</span>rw vs<span class="fu">@</span>(<span class="dt">Cons</span> i&#39; x&#39; xs&#39;)</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">          <span class="fu">|</span> rw <span class="fu">&lt;</span> vw <span class="fu">=</span> ((v, vw), <span class="dt">Urn</span> (w <span class="fu">-</span> vw) vs)</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">          <span class="fu">|</span> otherwise <span class="fu">=</span> replace (rw <span class="fu">-</span> vw) i&#39; x&#39; xs&#39;</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">            (\ys yw y <span class="ot">-&gt;</span> ((y, yw), <span class="dt">Urn</span> (w <span class="fu">-</span> yw) ys))</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">        replace <span class="fu">!</span>rw i x <span class="dt">Nil</span> k <span class="fu">=</span> replaceTree rw x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t <span class="dt">Nil</span>))</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">        replace <span class="fu">!</span>rw i x xs<span class="fu">@</span>(<span class="dt">Cons</span> j y ys) k</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">          <span class="fu">|</span> rw <span class="fu">&lt;</span> weight x <span class="fu">=</span> replaceTree rw x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t xs))</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">          <span class="fu">|</span> otherwise <span class="fu">=</span> replace (rw <span class="fu">-</span> weight x) j y ys (k <span class="fu">.</span> <span class="dt">Cons</span> i x)</a>
+<a class="sourceLine" id="cb8-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">        replaceTree <span class="fu">!</span>_  (<span class="dt">Tree</span> tw (<span class="dt">Leaf</span> x)) k <span class="fu">=</span> k (<span class="dt">Tree</span> vw (<span class="dt">Leaf</span> v)) tw x</a>
+<a class="sourceLine" id="cb8-18" data-line-number="18">        replaceTree <span class="fu">!</span>rw (<span class="dt">Tree</span> tw (<span class="dt">Branch</span> xs ys)) k</a>
+<a class="sourceLine" id="cb8-19" data-line-number="19">          <span class="fu">|</span> rw <span class="fu">&lt;</span> weight xs <span class="fu">=</span> replaceTree rw xs</a>
+<a class="sourceLine" id="cb8-20" data-line-number="20">            (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (tw <span class="fu">+</span> (weight t <span class="fu">-</span> weight xs)) (<span class="dt">Branch</span> t ys)))</a>
+<a class="sourceLine" id="cb8-21" data-line-number="21">          <span class="fu">|</span> otherwise <span class="fu">=</span> replaceTree (rw <span class="fu">-</span> weight xs)</a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">            (<span class="dt">Tree</span> (tw <span class="fu">-</span> weight xs) ys)</a>
+<a class="sourceLine" id="cb8-23" data-line-number="23">            (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (weight xs <span class="fu">+</span> weight t) (<span class="dt">Branch</span> xs (branch t))))</a></code></pre></div>
 <p>Merge is the same as on binomial heaps:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">mergeHeap ::</span> <span class="dt">Heap</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a</a>
 <a class="sourceLine" id="cb9-2" data-line-number="2">mergeHeap <span class="dt">Nil</span> <span class="fu">=</span> id</a>
