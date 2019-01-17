@@ -194,36 +194,32 @@ class Sample m where
 ```
 
 You can later instantiate this to whatever random monad you end up using. (The
-same approach was taken in the paper)
+same approach was taken in the paper, although we only require `Functor` here,
+not `Monad`).
 
 Sampling (with replacement) first randomly chooses a tree from the top-level
 list, and then we drill down into that tree with binary search.
 
 ```haskell
-sample :: (Monad m, Sample m) => Urn a -> Maybe (m a)
+sample :: (Functor m, Sample m) => Urn a -> Maybe (m a)
 sample (Urn _ Nil) = Nothing
-sample (Urn w' (Cons _ x' xs')) = Just (go (w' - 1) x' xs')
+sample (Urn w' (Cons _ x' xs')) = Just (fmap (go x' xs') (inRange 0 (w' - 1)))
   where
-    go _ x Nil = go' (weight x - 1) (branch x)
-    go w x (Cons _ y ys) = do
-        q <- inRange 0 w
-        if q < weight x
-           then go' (weight x - 1) (branch x)
-           else go  (w - weight x) y ys
-    go' _ (Leaf x) = pure x
-    go' i (Branch xs ys) = do
-        q <- inRange 0 i
-        if q < weight xs
-            then go' (weight xs - 1) (branch xs)
-            else go' (i - weight xs) ys
+    go x Nil !w = go' w (branch x)
+    go x (Cons _ y ys) !w
+      | w < weight x = go' w (branch x)
+      | otherwise    = go y ys (w - weight x)
+    go' !_ (Leaf x) = x
+    go' !i (Branch xs ys)
+      | i < weight xs = go' i (branch xs)
+      | otherwise = go' (i - weight xs) ys
 ```
 
 So we're off to a good start, but `remove` is a complex operation. We take the
 same route taken in the paper: first, we perform an "uncons"-like operation,
 which pops out the last inserted element. Then, we randomly choose a point in
 the tree (using the same logic as in `sample`), and replace it with the popped
-element. Finally, we decrement the counter on the newly (randomly) chosen
-element, and reinsert it if it's still bigger than 0[^extra-step].
+element[^extra-step].
 
 [^extra-step]: There's one extra step I haven't mentioned: we also must allow
     the first element (the last inserted) to be chosen, so we run the
@@ -231,39 +227,30 @@ element, and reinsert it if it's still bigger than 0[^extra-step].
     choose.
     
 ```haskell
-remove :: (Monad m, Sample m) => Urn a -> Maybe (m (a, Urn a))
-remove (Urn w hp) = fmap go (uninsert hp)
+remove :: (Functor m, Sample m) => Urn a -> Maybe (m ((a, Word), Urn a))
+remove (Urn w hp) = fmap go' (Heap.uninsert hp)
   where
-    insert' 0 _ xs = xs
-    insert' i x xs = insertHeap i x xs
-
-    go (vw,v,Nil) = pure (v, Urn (w - 1) (insert' (vw - 1) v Nil))
-    go (vw,v,vs@(Cons i' x' xs')) = do
-        q <- inRange 0 (w - 1)
-        if q < vw
-            then pure (v, Urn (w - 1) (insert' (vw - 1) v vs))
-            else replace (w - 1 - vw) i' x' xs'
-              (\ys yw y -> (y, Urn (w - 1) (insert' (yw - 1) y ys)))
+    go' (vw,v,hp') = fmap (`go` hp') (inRange 0 (w-1))
       where
-        replace _ i x Nil k = replaceTree x (\t -> k (Cons i t Nil))
-        replace rw i x xs@(Cons j y ys) k = do
-            q <- inRange 0 rw
-            if q < weight x
-                then replaceTree x (\t -> k (Cons i t xs))
-                else replace (rw - weight x) j y ys (k . Cons i x)
+        go !_  Nil = ((v, vw), Urn 0 Nil)
+        go !rw vs@(Cons i' x' xs')
+          | rw < vw = ((v, vw), Urn (w - vw) vs)
+          | otherwise = replace (rw - vw) i' x' xs'
+            (\ys yw y -> ((y, yw), Urn (w - yw) ys))
 
-        replaceTree (Tree tw (Leaf x)) k = pure (k (Tree vw (Leaf v)) tw x)
-        replaceTree (Tree tw (Branch xs ys)) k = do
-            q <- inRange 0 (tw - 1)
-            if q < weight xs
-                then replaceTree xs
-                  (\t -> k (Tree (tw + (weight t - weight xs)) (Branch t ys)))
-                else replaceTree (Tree (tw - weight xs) ys)
-                  (\t -> k (Tree (weight xs + weight t) (Branch xs (branch t))))
+        replace !rw i x Nil k = replaceTree rw x (\t -> k (Cons i t Nil))
+        replace !rw i x xs@(Cons j y ys) k
+          | rw < weight x = replaceTree rw x (\t -> k (Cons i t xs))
+          | otherwise = replace (rw - weight x) j y ys (k . Cons i x)
+
+        replaceTree !_  (Tree tw (Leaf x)) k = k (Tree vw (Leaf v)) tw x
+        replaceTree !rw (Tree tw (Branch xs ys)) k
+          | rw < weight xs = replaceTree rw xs
+            (\t -> k (Tree (tw + (weight t - weight xs)) (Branch t ys)))
+          | otherwise = replaceTree (rw - weight xs)
+            (Tree (tw - weight xs) ys)
+            (\t -> k (Tree (weight xs + weight t) (Branch xs (branch t))))
 ```
-
-We make heavy use of continuation-passing style here to avoid any unnecessary
-`fmap`{.haskell}s.
 
 Merge is the same as on binomial heaps:
 
