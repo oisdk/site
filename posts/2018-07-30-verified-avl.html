@@ -79,9 +79,9 @@
 </div>
 </div>
 <p>Those unfamiliar with Agda might be a little intimidated by the mixfix operator in the balance definition: we’re using it here because the type can be seen of a proof that:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">max(x,y) = z</annotation></semantics></math></p>
-<p>Or, using the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>⊔</mo><annotation encoding="application/x-tex">\sqcup</annotation></semantics></math> operator:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>⊔</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">(x \sqcup y) = z</annotation></semantics></math></p>
+<p><span class="math display">\[max(x,y) = z\]</span></p>
+<p>Or, using the <span class="math inline">\(\sqcup\)</span> operator:</p>
+<p><span class="math display">\[(x \sqcup y) = z\]</span></p>
 <p>We’ll use this proof in the tree itself, as we’ll need to know the maximum of the height of a node’s two subtrees to find the height of the node. Before we do that, we’ll need a couple helper functions for manipulating the balance:</p>
 <div class="row">
 <div class="column">
@@ -116,7 +116,7 @@
 <a class="sourceLine" id="cb7-3" data-line-number="3"><span class="ot">  (&lt;)  ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></a></code></pre></div>
 </div>
 <div class="column">
-<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
+<span class="math display">\[***\]</span>
 </div>
 </div>
 <p>That <code class="sourceCode haskell"><span class="dt">Bool</span></code> throws away any information gained in the comparison, though: we want to supply a proof with the result of the comparison. First, equality:</p>
@@ -490,7 +490,7 @@
 </dl>
 <p>Now, the thing about a lot of these complaints/commendations (<em>especially</em> with regards to tooling and personal setups) is that people tend to be pretty bad about evaluating how difficult finicky tasks like editor setups are. Once you’ve gotten the hang of some of this stuff, you forget that you ever didn’t. Agda is the second dependently-typed language I’ve really gone for a deepish dive on, and I’ve been using spacemacs for a while, so YMMV.</p>
 <p>One area of the language itself that I would have liked to see more on was irrelevance. Looking back at the definition of the tree type, in the Haskell version there’s no singleton storing the height (the balance type stores all the information we need), which means that it definitely doesn’t exist at runtime. As I understand it, that implies that the type should be irrelevant in the equivalent Agda. However, when I actually mark it as irrelevant, everything works fine, except that missing cases warnings start showing up. I couldn’t figure out why: Haskell was able to infer full case coverage without the index, after all. Equality proof erasure, also: is it safe? Consistent?</p>
-<p>All in all, I’d encourage more Haskellers to give Agda a try. It’s fun, interesting, and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="script"><mi>𝒰</mi><mi>𝓃</mi><mi>𝒾</mi><mi>𝒸</mi><mi>ℴ</mi><mi>𝒹</mi><mi>ℯ</mi></mstyle><annotation encoding="application/x-tex">\mathcal{Unicode}</annotation></semantics></math>!</p>
+<p>All in all, I’d encourage more Haskellers to give Agda a try. It’s fun, interesting, and <span class="math inline">\(\mathcal{Unicode}\)</span>!</p>
 <h1 id="further-reading">Further Reading</h1>
 <p>No “deletion is left as an exercise to the reader” here, no sir! Fuller implementations of both the Haskell and Agda versions of the code here are available: first, a pdf of the Agda code with lovely colours is <a href="../pdfs/AVL.pdf">here</a>. The accompanying repository is <a href="https://github.com/oisdk/agda-avl">here</a>, and the equivalent for the Haskell code is <a href="https://github.com/oisdk/verified-avl">here</a>. Of course, if you would rather read something by someone who knows what they’re talking about, please see the</p>
 <h1 id="references" class="unnumbered">References</h1>

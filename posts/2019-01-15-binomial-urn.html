@@ -65,7 +65,7 @@
 <a class="sourceLine" id="cb3-9" data-line-number="9">    treeFold</a>
 <a class="sourceLine" id="cb3-10" data-line-number="10">        (\l r <span class="ot">-&gt;</span></a>
 <a class="sourceLine" id="cb3-11" data-line-number="11">              r <span class="ot">`parseq`</span> (l <span class="ot">`parseq`</span> f l r))</a></code></pre></div>
-<p>In the next post, we saw how we could make the fold incremental, by using binary number representations for data structures. This let us do 2 things: it meant the fold was structurally terminating, so it would pass the termination checker (efficiently) in languages like Agda or Idris, and it meant we could write <code>scanl</code> using the fold. The <code>scanl</code> was also efficient: you could run the fold at any point in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math> time, and work would be shared between subsequent runs. Effectively, this let us use it to solve greedy optimization problems. We also saw how it was effectively constructing an implicit binomial priority queue under the hood, and how it exploited laziness to get sharing.</p>
+<p>In the next post, we saw how we could make the fold incremental, by using binary number representations for data structures. This let us do 2 things: it meant the fold was structurally terminating, so it would pass the termination checker (efficiently) in languages like Agda or Idris, and it meant we could write <code>scanl</code> using the fold. The <code>scanl</code> was also efficient: you could run the fold at any point in <span class="math inline">\(\mathcal{O}(\log n)\)</span> time, and work would be shared between subsequent runs. Effectively, this let us use it to solve greedy optimization problems. We also saw how it was effectively constructing an implicit binomial priority queue under the hood, and how it exploited laziness to get sharing.</p>
 <p>I’ve gotten huge mileage out of this fold and the general ideas about it, and today I’m going to show one more use of it. We’re going to improve some of the asymptotics of the data structure presented in <span class="citation" data-cites="lampropoulos_ode_2017">Lampropoulos, Spector-Zabusky, and Foner (<a href="#ref-lampropoulos_ode_2017">2017</a>)</span>.</p>
 <h1 id="a-random-urn">A Random Urn</h1>
 <p>The paper opens with the problem:</p>
@@ -73,7 +73,7 @@
 <p>Suppose you have an urn containing two red balls, four green balls, and three blue balls. If you take three balls out of the urn, what is the probability that two of them are green?</p>
 </blockquote>
 <p>If you were to take just <em>one</em> ball out of the earn, calculating the associated probabilities would be easy. Once you get to the second, though, you have to update the previous probability <em>based on what ball was removed</em>. In other words, we need to be able to dynamically update the distribution.</p>
-<p>Using lists, this would obviously become an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> operation. In the paper, an almost-perfect binary tree is used. This turns the operation into one that’s <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math>. The rest of the operations have the following complexities:</p>
+<p>Using lists, this would obviously become an <span class="math inline">\(\mathcal{O}(n)\)</span> operation. In the paper, an almost-perfect binary tree is used. This turns the operation into one that’s <span class="math inline">\(\mathcal{O}(\log n)\)</span>. The rest of the operations have the following complexities:</p>
 <table>
 <thead>
 <tr class="header">
@@ -84,15 +84,15 @@
 <tbody>
 <tr class="odd">
 <td style="text-align: left;"><code>insert</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(\log n)\)</span></td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>remove</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(\log n)\)</span></td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>fromList</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(n)\)</span></td>
 </tr>
 </tbody>
 </table>
@@ -107,28 +107,28 @@
 <tbody>
 <tr class="odd">
 <td><code>insert</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(1)\)</span></td>
 </tr>
 <tr class="even">
 <td><code>remove</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(\log n)\)</span></td>
 </tr>
 <tr class="odd">
 <td><code>merge</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(\log n)\)</span></td>
 </tr>
 <tr class="even">
 <td><code>fromList</code></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
+<td><span class="math inline">\(\mathcal{O}(n)\)</span></td>
 </tr>
 </tbody>
 </table>
 <p>We add another operation (<code>merge</code>), which means that the new structure is viable as an instance of <code>Alternative</code>, <code>Monad</code>, and so on, making it an efficient monad for weighted backtracking search.</p>
 <h1 id="priority-queues">Priority Queues</h1>
 <p>The key thing to notice in the paper which will let us improve the structure is that what they’re designing is actually a <em>priority queue</em>. Well, a weird looking priority queue, but a priority queue nonetheless.</p>
-<p>Think about it like a max-priority queue (pop returns the largest element first), with a degree of “randomization”. In other words, when you go to do a pop, all of the comparisons between the ordering keys (the weights in this case) sprinkles some randomness into the equation, meaning that instead of <code>1 &lt; 2</code> returning <code>True</code>, it returns <code>True</code> <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math> of the time, and <code>False</code> the other <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{3}</annotation></semantics></math>.</p>
+<p>Think about it like a max-priority queue (pop returns the largest element first), with a degree of “randomization”. In other words, when you go to do a pop, all of the comparisons between the ordering keys (the weights in this case) sprinkles some randomness into the equation, meaning that instead of <code>1 &lt; 2</code> returning <code>True</code>, it returns <code>True</code> <span class="math inline">\(\frac{2}{3}\)</span> of the time, and <code>False</code> the other <span class="math inline">\(\frac{1}{3}\)</span>.</p>
 <p>This way of doing things means that not every priority queue is suitable: we want to run comparisons at <code>pop</code> time (not <code>insert</code>), so a binary heap (for instance) won’t do. At branches (non-leaves), the queue will only be allowed store <em>summaries</em> of the data, not the “max element”.</p>
-<p>The one presented in the paper is something like a Braun priority queue: the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> <code>fromList</code> implementation is reminiscent of the one in <span class="citation" data-cites="okasaki_three_1997">Okasaki (<a href="#ref-okasaki_three_1997">1997</a>)</span>.</p>
+<p>The one presented in the paper is something like a Braun priority queue: the <span class="math inline">\(\mathcal{O}(n)\)</span> <code>fromList</code> implementation is reminiscent of the one in <span class="citation" data-cites="okasaki_three_1997">Okasaki (<a href="#ref-okasaki_three_1997">1997</a>)</span>.</p>
 <p>So what priority queue can we choose to get us the desired efficiency? Why, a binomial one of course!</p>
 <h1 id="the-data-structure">The Data Structure</h1>
 <p>The urn structure itself looks a lot like a binomial heap:</p>
@@ -166,7 +166,7 @@
 <a class="sourceLine" id="cb5-13" data-line-number="13"></a>
 <a class="sourceLine" id="cb5-14" data-line-number="14"><span class="ot">insert ::</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a</a>
 <a class="sourceLine" id="cb5-15" data-line-number="15">insert i x (<span class="dt">Urn</span> w xs) <span class="fu">=</span> <span class="dt">Urn</span> (w<span class="fu">+</span>i) (insertHeap i x xs)</a></code></pre></div>
-<p>We <em>could</em> potentially get insertion from amortized <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> to worst-case <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> by using skew binary instead of binary (in fact I am almost sure it’s possible), but then I think we’d lose the efficient merge. I’ll leave exploring that for another day.</p>
+<p>We <em>could</em> potentially get insertion from amortized <span class="math inline">\(\mathcal{O}(1)\)</span> to worst-case <span class="math inline">\(\mathcal{O}(1)\)</span> by using skew binary instead of binary (in fact I am almost sure it’s possible), but then I think we’d lose the efficient merge. I’ll leave exploring that for another day.</p>
 <p>To get randomness, we’ll write a very simple class that encapsulates only what we need:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Sample</span> m <span class="kw">where</span></a>
 <a class="sourceLine" id="cb6-2" data-line-number="2">    <span class="co">-- | Inclusive range</span></a>
