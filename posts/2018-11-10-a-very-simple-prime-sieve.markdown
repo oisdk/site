@@ -17,29 +17,13 @@ primes = sieve [2..]
 sieve (p:ps) = p : sieve [ x | x <- ps, mod x p /= 0 ]
 ```
 
-Unfortunately, and contrary to what's stated in the video, this *isn't* a
-genuine [sieve of
-Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes). For one
-thing, it uses trial division where the sieve will only use addition and
-multiplication, and for another, every single new number is tested against every
-previous prime (until it finds a divisor).
-
-While obviously this isn't super important (no-one is using this algorithm to
-generate primes efficiently (I hope)), it still pops up from time to time on the
-internet as an example of "Haskell programmers overselling their language".
-What's more, people will then point to the famous *genuine* sieve of
-Eratosthenes in Haskell [@oneill_genuine_2009], and say something to the effect
-of "Haskell is so difficult a simple prime sieve took a journal paper to
-implement properly".
-
-I think this is mainly silly: the example implementation is meant to showcase
-how well Haskell does recursion, list processing, and lazy evaluation. What's
-more, the "genuine" prime sieve is difficult not because we're working in
-Haskell, but because we're working to generate *infinite primes*. The "simple"
-implementation of a prime sieve in something like Python will assume a fixed
-upper bound, and work with finite arrays and so on. Figuring out an efficient
-implementation for an infinite prime sieve there is even *more* difficult than
-it was in Haskell.
+This really demonstrates the elegance of list comprehensions coupled with lazy
+evaluation. If we're being totally pedantic, however, this *isn't* a genuine
+[sieve of Eratosthenes](https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes).
+And this makes sense: the "true" sieve of Eratosthenes [@oneill_genuine_2009] is
+probably too complex to demonstrate in a video meant to be an introduction to
+Haskell. This isn't because Haskell is bad at this particular problem, mind you:
+it's because a lazy, infinite sieve is something very hard to implement indeed.
 
 Anyway, I'm going to try today to show a very simple prime sieve that
 (hopefully) rivals the simplicity of the definition above.
