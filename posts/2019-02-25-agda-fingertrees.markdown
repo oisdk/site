@@ -4,6 +4,17 @@ tags: Agda
 bibliography: Finger Trees.bib
 ---
 
+---
+
+## [This Post is Available With Clickable Code
+Here](https://oisdk.github.io/agda-indexed-fingertree/Data.FingerTree.html)
+
+This whole post is written with clickable identifiers and ascii art at the above
+link. I also provide the normal version below in case there are any problems
+rendering.
+
+---
+
 As I have talked about [previously](/posts/2019-01-15-binomial-urn.html), a
 large class of divide-and conquer algorithms rely on "good" partitioning for the
 divide step. If you then want to make the algorithms incremental, you keep all
