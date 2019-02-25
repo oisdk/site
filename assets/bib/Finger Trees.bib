@@ -1,0 +1,100 @@
+
+@inproceedings{hinze_simple_2001,
+  title = {A {{Simple Implementation Technique}} for {{Priority Search Queues}}},
+  isbn = {978-1-58113-415-5},
+  doi = {10.1145/507635.507650},
+  abstract = {This paper presents a new implementation technique for priority search queues. This abstract data type is an amazing blend of finite maps and priority queues. Our implementation supports logarithmic access to a binding with a given key and constant access to a binding with the minimum value. Priority search queues can be used, for instance, to give a simple, purely functional implementation of Dijkstra's single-source shortest-paths algorithm.},
+  language = {en},
+  urldate = {2017-04-08},
+  booktitle = {Proceedings of the 2001 {{International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM Press}},
+  url = {https://www.cs.ox.ac.uk/people/ralf.hinze/publications/\#P14},
+  author = {Hinze, Ralf},
+  year = {2001},
+  pages = {110--121},
+  file = {/Users/doisinkidney/Zotero/storage/4FHG2T5R/HINZE - 2001 - A Simple Implementation Technique for Priority Sea.pdf;/Users/doisinkidney/Zotero/storage/6JNBSFKF/summary.html}
+}
+
+@article{Hinze-Paterson:FingerTree,
+  title = {Finger {{Trees}}: {{A Simple General}}-Purpose {{Data Structure}}},
+  volume = {16},
+  abstract = {We introduce 2-3 finger trees, a functional representation of persistent sequences supporting access to the ends in amortized constant time, and concatenation and splitting in time logarithmic in the size of the smaller piece. Representations achieving these bounds have appeared previously, but 2-3 finger trees are much simpler, as are the operations on them. Further, by defining the split operation in a general form, we obtain a general purpose data structure that can serve as a sequence, priority queue, search tree, priority search queue and more.},
+  language = {en},
+  number = {2},
+  journal = {Journal of Functional Programming},
+  url = {http://www.staff.city.ac.uk/~ross/papers/FingerTree.html},
+  author = {Hinze, Ralf and Paterson, Ross},
+  year = {2006},
+  pages = {197--217},
+  file = {/Users/doisinkidney/Zotero/storage/A5GHFDGK/HINZE - Finger trees a simple general-purpose data struct.pdf;/Users/doisinkidney/Zotero/storage/ZY9YJPT9/HINZE - Finger trees a simple general-purpose data struct.pdf}
+}
+
+@inproceedings{danielsson_lightweight_2008,
+  address = {New York, NY, USA},
+  series = {{{POPL}} '08},
+  title = {Lightweight {{Semiformal Time Complexity Analysis}} for {{Purely Functional Data Structures}}},
+  isbn = {978-1-59593-689-9},
+  doi = {10.1145/1328438.1328457},
+  abstract = {Okasaki and others have demonstrated how purely functional data structures that are efficient even in the presence of persistence can be constructed. To achieve good time bounds essential use is often made of laziness. The associated complexity analysis is frequently subtle, requiring careful attention to detail, and hence formalising it is valuable. This paper describes a simple library which can be used to make the analysis of a class of purely functional data structures and algorithms almost fully formal. The basic idea is to use the type system to annotate every function with the time required to compute its result. An annotated monad is used to combine time complexity annotations. The library has been used to analyse some existing data structures, for instance the deque operations of Hinze and Paterson's finger trees.},
+  language = {en},
+  urldate = {2018-06-20},
+  booktitle = {Proceedings of the 35th {{Annual ACM SIGPLAN}}-{{SIGACT Symposium}} on {{Principles}} of {{Programming Languages}}},
+  publisher = {{ACM}},
+  url = {http://www.cse.chalmers.se/~nad/publications/danielsson-popl2008.pdf},
+  author = {Danielsson, Nils Anders},
+  year = {2008},
+  keywords = {dependent types,lazy evaluation,purely functional data structures,amortised time complexity},
+  pages = {133--144},
+  file = {/Users/doisinkidney/Zotero/storage/8NI9UUMH/Danielsson - Lightweight Semiformal Time Complexity Analysis fo.pdf;/Users/doisinkidney/Zotero/storage/A9CNNCIR/Danielsson - Lightweight Semiformal Time Complexity Analysis fo.pdf}
+}
+
+@book{okasaki_purely_1999,
+  title = {Purely {{Functional Data Structures}}},
+  isbn = {978-0-521-66350-2},
+  abstract = {Most books on data structures assume an imperative language such as C or C++. However, data structures for these languages do not always translate well to functional languages such as Standard ML, Haskell, or Scheme. This book describes data structures from the point of view of functional languages, with examples, and presents design techniques that allow programmers to develop their own functional data structures. The author includes both classical data structures, such as red-black trees and binomial queues, and a host of new data structures developed exclusively for functional languages. All source code is given in Standard ML and Haskell, and most of the programs are easily adaptable to other functional languages. This handy reference for professional programmers working with functional languages can also be used as a tutorial or for self-study.},
+  language = {en},
+  publisher = {{Cambridge University Press}},
+  author = {Okasaki, Chris},
+  month = jun,
+  year = {1999},
+  keywords = {Computers / Databases / General,Computers / Programming Languages / General,Computers / Software Development \& Engineering / General}
+}
+
+@inproceedings{sozeau_program-ing_2007,
+  address = {New York, NY, USA},
+  series = {{{ICFP}} '07},
+  title = {Program-Ing {{Finger Trees}} in {{Coq}}},
+  isbn = {978-1-59593-815-2},
+  doi = {10.1145/1291151.1291156},
+  abstract = {Finger Trees (Hinze \& Paterson, 2006) are a general purpose persistent data structure with good performance. Their genericity permits developing a wealth of structures like ordered sequences or interval trees on top of a single implementation. However, the type systems used by current functional languages do not guarantee the coherent parameterization and specialization of Finger Trees, let alone the correctness of their implementation. We present a certified implementation of Finger Trees solving these problems using the Program extension of Coq. We not only implement the structure but also prove its invariants along the way, which permit building certified structures on top of Finger Trees in an elegant way.},
+  language = {en},
+  urldate = {2019-02-23},
+  booktitle = {Proceedings of the 12th {{ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  url = {https://www.irif.fr/~sozeau/research/publications/Program-ing_Finger_Trees_in_Coq.pdf},
+  author = {Sozeau, Matthieu},
+  year = {2007},
+  keywords = {dependent types,C<scp>oq</scp>,certification,finger trees},
+  pages = {13--24},
+  file = {/Users/doisinkidney/Zotero/storage/UCNWHJF9/Sozeau - Program-ing Finger Trees in Coq.pdf}
+}
+
+@inproceedings{mu_queueing_2016,
+  address = {New York, NY, USA},
+  series = {{{ICFP}} 2016},
+  title = {Queueing and {{Glueing}} for {{Optimal Partitioning}} ({{Functional Pearl}})},
+  isbn = {978-1-4503-4219-3},
+  doi = {10.1145/2951913.2951923},
+  abstract = {The queueing-glueing algorithm is the nickname we give to an algorithmic pattern that provides amortised linear time solutions to a number of optimal list partition problems that have a peculiar property: at various moments we know that two of three candidate solutions could be optimal. The algorithm works by keeping a queue of lists, glueing them from one end, while chopping from the other end, hence the name. We give a formal derivation of the algorithm, and demonstrate it with several non-trivial examples.},
+  urldate = {2019-02-25},
+  booktitle = {Proceedings of the 21st {{ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  url = {https://www.iis.sinica.edu.tw/~scm/pub/queueing-glueing.pdf},
+  author = {Mu, Shin-Cheng and Chiang, Yu-Hsi and Lyu, Yu-Han},
+  year = {2016},
+  keywords = {optimal partition,program derivation},
+  pages = {158--167},
+  file = {/Users/doisinkidney/Zotero/storage/FRFYM7Q3/Mu et al. - Queueing and Glueing for Optimal Partitioning.pdf}
+}
+
+
