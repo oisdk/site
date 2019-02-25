@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Monadic List Functions - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Monadic List Functions</h2>
+
+            <div class="info">
+    Posted on February 11, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Applicative.html">Applicative</a>
+    
+</div>
+
+<p>Here’s an old Haskell chestnut:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> filterM (\_ <span class="ot">-&gt;</span> [<span class="dt">False</span>, <span class="dt">True</span>]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">[[],[<span class="dv">3</span>],[<span class="dv">2</span>],[<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>],[<span class="dv">1</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</a></code></pre></div>
+<p><code class="sourceCode haskell">filterM (\_ <span class="ot">-&gt;</span> [<span class="dt">False</span>,<span class="dt">True</span>])</code> gives the power set of some input list. It’s one of the especially magical demonstrations of monads. From a high-level perspective, it makes sense: for each element in the list, we want it to be present in one output, and not present in another. It’s hard to see how it actually <em>works</em>, though. The (old<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>) <a href="https://hackage.haskell.org/package/base-4.7.0.0/docs/src/Control-Monad.html#filterM">source</a> for <code class="sourceCode haskell">filterM</code> doesn’t help hugely, either:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">filterM          ::</span> (<span class="dt">Monad</span> m) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m [a]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">filterM _ []     <span class="fu">=</span>  return []</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">filterM p (x<span class="fu">:</span>xs) <span class="fu">=</span>  <span class="kw">do</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">   flg <span class="ot">&lt;-</span> p x</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">   ys  <span class="ot">&lt;-</span> filterM p xs</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">   return (<span class="kw">if</span> flg <span class="kw">then</span> x<span class="fu">:</span>ys <span class="kw">else</span> ys)</a></code></pre></div>
+<p>Again, elegant and beautiful (aside from the three-space indent), but opaque. Despite not really getting how it works, I was encouraged by its simplicity to try my hand at some of the other functions from Data.List.</p>
+<h2 id="grouping">Grouping</h2>
+<p>Let’s start with the subject of my <a href="2018-01-07-groupBy.html">last post</a>. Here’s the implementation:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">groupBy p xs <span class="fu">=</span> build (\c n <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="kw">let</span> f x a q</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">        <span class="fu">|</span> q x <span class="fu">=</span> (x <span class="fu">:</span> ys, zs)</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">        <span class="fu">|</span> otherwise <span class="fu">=</span> ([], c (x <span class="fu">:</span> ys) zs)</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">        <span class="kw">where</span> (ys,zs) <span class="fu">=</span> a (p x)</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">  <span class="kw">in</span> snd (foldr f (const ([], n)) xs (const <span class="dt">False</span>)))</a></code></pre></div>
+<p>It translates over pretty readily:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">groupByM ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m [[a]]</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">groupByM p xs <span class="fu">=</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  fmap snd (foldr f (const (pure ([], []))) xs (const (pure (<span class="dt">False</span>))))</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">    f x a q <span class="fu">=</span> liftA2 st (q x) (a (p x)) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">      st b (ys,zs)</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">        <span class="fu">|</span> b <span class="fu">=</span> (x <span class="fu">:</span> ys, zs)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">        <span class="fu">|</span> otherwise <span class="fu">=</span> ([], (x<span class="fu">:</span>ys)<span class="fu">:</span>zs)</a></code></pre></div>
+<p>Let’s try it with a similar example to <code class="sourceCode haskell">filterM</code>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> groupByM (\_ _ <span class="ot">-&gt;</span> [<span class="dt">False</span>, <span class="dt">True</span>]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">[[[<span class="dv">1</span>],[<span class="dv">2</span>],[<span class="dv">3</span>]],[[<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">3</span>]],[[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">3</span>]],[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]]</a></code></pre></div>
+<p>It gives the partitions of the list!</p>
+<h2 id="sorting">Sorting</h2>
+<p>So these monadic generalisations have been discovered before, several times over. There’s even a <a href="https://hackage.haskell.org/package/monadlist-0.0.2">package</a> with monadic versions of the functions in Data.List. Exploring this idea with a little more formality is the paper “All Sorts of Permutations” <span class="citation" data-cites="christiansen_all_2016">(Christiansen, Danilenko, and Dylus <a href="#ref-christiansen_all_2016">2016</a>)</span>, and accompanying presentation <a href="https://www.youtube.com/watch?v=vV3jqTxJ9Wc">on YouTube</a>. They show that the monadic version of sort produces permutations of the input list, and examine the output from different sorting algorithms. Here’s a couple of their implementations, altered slightly:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">insertM ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m [a]</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">insertM _ x [] <span class="fu">=</span> pure [x]</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">insertM p x yys<span class="fu">@</span>(y<span class="fu">:</span>ys) <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">  lte <span class="ot">&lt;-</span> p x y</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  <span class="kw">if</span> lte</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">    <span class="kw">then</span> pure (x<span class="fu">:</span>yys)</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">    <span class="kw">else</span> fmap (y<span class="fu">:</span>) (insertM p x ys)</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9"><span class="ot">insertSortM ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m [a]</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">insertSortM p <span class="fu">=</span> foldrM (insertM p) []</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb6-12" data-line-number="12"><span class="ot">partitionM ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m ([a],[a])</a>
+<a class="sourceLine" id="cb6-13" data-line-number="13">partitionM p <span class="fu">=</span> foldr f (pure ([],[])) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-14" data-line-number="14">  f x <span class="fu">=</span> liftA2 ifStmt (p x) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-15" data-line-number="15">    ifStmt flg (tr,fl)</a>
+<a class="sourceLine" id="cb6-16" data-line-number="16">      <span class="fu">|</span> flg <span class="fu">=</span> (x<span class="fu">:</span>tr,fl)</a>
+<a class="sourceLine" id="cb6-17" data-line-number="17">      <span class="fu">|</span> otherwise <span class="fu">=</span> (tr,x<span class="fu">:</span>fl)</a>
+<a class="sourceLine" id="cb6-18" data-line-number="18">      </a>
+<a class="sourceLine" id="cb6-19" data-line-number="19"><span class="ot">quickSortM ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m [a]</a>
+<a class="sourceLine" id="cb6-20" data-line-number="20">quickSortM p [] <span class="fu">=</span> pure []</a>
+<a class="sourceLine" id="cb6-21" data-line-number="21">quickSortM p (x<span class="fu">:</span>xs) <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb6-22" data-line-number="22">  (gt,le) <span class="ot">&lt;-</span> partitionM (p x) xs</a>
+<a class="sourceLine" id="cb6-23" data-line-number="23">  ls <span class="ot">&lt;-</span> quickSortM p le</a>
+<a class="sourceLine" id="cb6-24" data-line-number="24">  gs <span class="ot">&lt;-</span> quickSortM p gt</a>
+<a class="sourceLine" id="cb6-25" data-line-number="25">  pure (ls <span class="fu">++</span> [x] <span class="fu">++</span> gs)</a>
+<a class="sourceLine" id="cb6-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb6-27" data-line-number="27"><span class="fu">&gt;&gt;&gt;</span> insertSortM (\_ _ <span class="ot">-&gt;</span> [<span class="dt">False</span>,<span class="dt">True</span>]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb6-28" data-line-number="28">[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">2</span>],[<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>],[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>],[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>]]</a>
+<a class="sourceLine" id="cb6-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb6-30" data-line-number="30"><span class="fu">&gt;&gt;&gt;</span> quickSortM (\_ _ <span class="ot">-&gt;</span> [<span class="dt">False</span>,<span class="dt">True</span>]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb6-31" data-line-number="31">[[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>],[<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">2</span>],[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</a></code></pre></div>
+<p>As it should be easy to see, they’re very concise and elegant, and strongly resemble the pure versions of the algorithms.</p>
+<h2 id="state">State</h2>
+<p>So the examples above are very interesting and cool, but they don’t necessarily have a place in real Haskell code. If you wanted to find the permutations, partitions, or power set of a list you’d probably use a more standard implementation. That’s not to say that these monadic functions have no uses, though: especially when coupled with <code class="sourceCode haskell"><span class="dt">State</span></code> they yield readable and fast implementations for certain tricky functions. <code class="sourceCode haskell">ordNub</code>, for instance:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">ordNub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">ordNub <span class="fu">=</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  flip evalState Set.empty <span class="fu">.</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  filterM</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    (\x <span class="ot">-&gt;</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">       flg <span class="ot">&lt;-</span> gets (Set.notMember x)</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">       when flg (modify (Set.insert x))</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">       pure flg)</a></code></pre></div>
+<p>Alternatively, using a monadic version of <code class="sourceCode haskell">maximumOn</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">maximumOnM ::</span> (<span class="dt">Applicative</span> m, <span class="dt">Ord</span> b) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> m (<span class="dt">Maybe</span> a)</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">maximumOnM p <span class="fu">=</span> (fmap <span class="fu">.</span> fmap) snd <span class="fu">.</span> foldl f (pure <span class="dt">Nothing</span>)</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    f a e <span class="fu">=</span> liftA2 g a (p e)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">        g <span class="dt">Nothing</span> q <span class="fu">=</span> <span class="dt">Just</span> (q, e)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">        g b<span class="fu">@</span>(<span class="dt">Just</span> (o, y)) q</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">          <span class="fu">|</span> o <span class="fu">&lt;</span> q <span class="fu">=</span> <span class="dt">Just</span> (q, e)</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">          <span class="fu">|</span> otherwise <span class="fu">=</span> b</a></code></pre></div>
+<p>You can write a one-pass <code class="sourceCode haskell">mostFrequent</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">mostFrequent ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">mostFrequent <span class="fu">=</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  flip evalState Map.empty <span class="fu">.</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  maximumOnM</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">    (\x <span class="ot">-&gt;</span> maybe <span class="dv">1</span> succ <span class="fu">&lt;$&gt;</span> state (Map.insertLookupWithKey (const (<span class="fu">+</span>)) x <span class="dv">1</span>))</a></code></pre></div>
+<h2 id="decision-trees">Decision Trees</h2>
+<p>One of the nicest things about the paper was the diagrams of decision trees provided for each sorting algorithm. I couldn’t find a library to do that for me, so I had a go at producing my own. First, we’ll need a data type to represent the tree itself:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">data</span> <span class="dt">DecTree</span> t a</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Pure</span> a</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  <span class="fu">|</span> <span class="dt">Choice</span> t (<span class="dt">DecTree</span> t a) (<span class="dt">DecTree</span> t a)</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">  <span class="kw">deriving</span> <span class="dt">Functor</span></a></code></pre></div>
+<p>We’ll say the left branch is “true” and the right “false”. Applicative and monad instances are relatively mechanical<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">DecTree</span> t) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">  pure <span class="fu">=</span> <span class="dt">Pure</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  <span class="dt">Pure</span> f <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> fmap f xs</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="dt">Choice</span> c ls rs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> <span class="dt">Choice</span> c (ls <span class="fu">&lt;*&gt;</span> xs) (rs <span class="fu">&lt;*&gt;</span> xs)</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">  </a>
+<a class="sourceLine" id="cb11-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Monad</span> (<span class="dt">DecTree</span> t) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">  <span class="dt">Pure</span> x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> f x</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">  <span class="dt">Choice</span> c ls rs <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> <span class="dt">Choice</span> c (ls <span class="fu">&gt;&gt;=</span> f) (rs <span class="fu">&gt;&gt;=</span> f)</a></code></pre></div>
+<p>We can now create a comparator function that constructs one of these trees, and remembers the values it was given:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">traceCompare ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">DecTree</span> (a,a) <span class="dt">Bool</span></a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">traceCompare x y <span class="fu">=</span> <span class="dt">Choice</span> (x,y) (<span class="dt">Pure</span> <span class="dt">True</span>) (<span class="dt">Pure</span> <span class="dt">False</span>)</a></code></pre></div>
+<p>Finally, to draw the tree, I’ll use a function from my <a href="https://github.com/oisdk/binary-tree">binary tree</a> library:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">printDecTree ::</span> (<span class="dt">Show</span> a, <span class="dt">Show</span> b) <span class="ot">=&gt;</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">DecTree</span> (a,a) b <span class="ot">-&gt;</span> <span class="dt">IO</span> ()</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">printDecTree rel t <span class="fu">=</span> putStr (drawTreeWith id (go t) <span class="st">&quot;&quot;</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">  go (<span class="dt">Pure</span> xs) <span class="fu">=</span> <span class="dt">Node</span> (show xs) <span class="dt">Leaf</span> <span class="dt">Leaf</span></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">  go (<span class="dt">Choice</span> (x,y) tr fl) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb13-5" data-line-number="5">    <span class="dt">Node</span> (show x <span class="fu">++</span> rel <span class="fu">++</span> show y) (go tr) (go fl)</a></code></pre></div>
+<p>And we get these really nice diagrams out:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (printDecTree <span class="st">&quot;&lt;=&quot;</span> <span class="fu">.</span> insertSortM traceCompare) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">         ┌[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">    ┌<span class="dv">1</span><span class="fu">&lt;=</span>2┤</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">    │    │    ┌[<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">    │    └<span class="dv">1</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">    │         └[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb14-8" data-line-number="8"><span class="dv">2</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">    │    ┌[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10">    └<span class="dv">1</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-11" data-line-number="11">         │    ┌[<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb14-12" data-line-number="12">         └<span class="dv">1</span><span class="fu">&lt;=</span>2┤</a>
+<a class="sourceLine" id="cb14-13" data-line-number="13">              └[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb14-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb14-15" data-line-number="15"><span class="fu">&gt;&gt;&gt;</span> (printDecTree <span class="st">&quot;&lt;=&quot;</span> <span class="fu">.</span> quickSortM traceCompare) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb14-17" data-line-number="17">              ┌[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-18" data-line-number="18">         ┌<span class="dv">2</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-19" data-line-number="19">         │    └[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb14-20" data-line-number="20">    ┌<span class="dv">1</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-21" data-line-number="21">    │    └[<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb14-22" data-line-number="22"><span class="dv">1</span><span class="fu">&lt;=</span>2┤</a>
+<a class="sourceLine" id="cb14-23" data-line-number="23">    │    ┌[<span class="dv">2</span>,<span class="dv">1</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb14-24" data-line-number="24">    └<span class="dv">1</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-25" data-line-number="25">         │    ┌[<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb14-26" data-line-number="26">         └<span class="dv">2</span><span class="fu">&lt;=</span>3┤</a>
+<a class="sourceLine" id="cb14-27" data-line-number="27">              └[<span class="dv">3</span>,<span class="dv">2</span>,<span class="dv">1</span>]</a></code></pre></div>
+<p>We can also try it out with the other monadic list functions:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (printDecTree <span class="st">&quot;=&quot;</span> <span class="fu">.</span> groupByM traceCompare) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">       ┌[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]]</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">   ┌<span class="dv">2</span><span class="fu">=</span>3┤</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">   │   └[[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">3</span>]]</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="dv">1</span><span class="fu">=</span>2┤</a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">   │   ┌[[<span class="dv">1</span>],[<span class="dv">2</span>,<span class="dv">3</span>]]</a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">   └<span class="dv">2</span><span class="fu">=</span>3┤</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9">       └[[<span class="dv">1</span>],[<span class="dv">2</span>],[<span class="dv">3</span>]]</a></code></pre></div>
+<h2 id="applicative">Applicative</h2>
+<p>You might notice that none of these “monadic” functions actually require a monad constraint: they’re all applicative. There’s a straightforward implementation that relies only on applicative for most of these functions, with a notable exception: sort. Getting <em>that</em> to work with just applicative is the subject of a future post.</p>
+<h3 id="references" class="unnumbered">References</h3>
+<div id="refs" class="references">
+<div id="ref-christiansen_all_2016">
+<p>Christiansen, Jan, Nikita Danilenko, and Sandra Dylus. 2016. “All Sorts of Permutations (Functional Pearl).” In <em>Proceedings of the 21st ACM SIGPLAN International Conference on Functional Programming</em>, 168–179. ICFP 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2951913.2951949">10.1145/2951913.2951949</a>. <a href="http://informatik.uni-kiel.de/~sad/icfp2016-preprint.pdf" class="uri">http://informatik.uni-kiel.de/~sad/icfp2016-preprint.pdf</a>.</p>
+</div>
+</div>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>The definition has since been <a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/src/Control.Monad.html#filterM">updated</a> to more modern Haskell: it now uses a fold, and only requires <code class="sourceCode haskell"><span class="dt">Applicative</span></code>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Part of the reason the instances are so mechanical is that this type strongly resembles the <a href="https://hackage.haskell.org/package/free-5/docs/Control-Monad-Free.html#t:Free">free monad</a>:</p>
+<p><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Free</span> f a <span class="fu">=</span> <span class="dt">Pure</span> a <span class="fu">|</span> <span class="dt">Free</span> (f (<span class="dt">Free</span> f a))</code></p>
+<p>In fact, the example given in the <code class="sourceCode haskell"><span class="dt">MonadFree</span></code> class is the following:</p>
+<p><code class="sourceCode haskell"><span class="kw">data</span> <span class="dt">Pair</span> a <span class="fu">=</span> <span class="dt">Pair</span> a a</code></p>
+<p><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">Tree</span> <span class="fu">=</span> <span class="dt">Free</span> <span class="dt">Pair</span></code></p>
+<p>The only difference with the above type and the decision tree is that the decision tree carries a tag with it.</p>
+<p>So what’s so interesting about this relationship? Well, <code class="sourceCode haskell"><span class="dt">Pair</span></code> is actually a <a href="https://hackage.haskell.org/package/adjunctions-4.4/docs/Data-Functor-Rep.html">representable functor</a>. Any representable functor <code class="sourceCode haskell">f a</code> can be converted to (and from) a function <code class="sourceCode haskell">key <span class="ot">-&gt;</span> a</code>, where <code class="sourceCode haskell">key</code> is the specific key for <code class="sourceCode haskell">f</code>. The key for <code class="sourceCode haskell"><span class="dt">Pair</span></code> is <code class="sourceCode haskell"><span class="dt">Bool</span></code>: the result of the function we passed in to the sorting functions!</p>
+<p>In general, you can make a “decision tree” for any function of type <code class="sourceCode haskell">a <span class="ot">-&gt;</span> b</code> like so:</p>
+<p><code class="sourceCode haskell"><span class="kw">type</span> <span class="dt">DecTree</span> a b r <span class="fu">=</span> <span class="dt">Rep</span> f <span class="fu">~</span> b <span class="ot">=&gt;</span> <span class="dt">Free</span> (<span class="dt">Compose</span> ((,) a) f) r</code></p>
+<p>But more on that in a later post.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

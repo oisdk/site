@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Type-Level Induction in Haskell - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Type-Level Induction in Haskell</h2>
+
+            <div class="info">
+    Posted on May  5, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Dependent%20Types.html">Dependent Types</a>
+    
+</div>
+
+<p>The code from this post is available as a <a href="https://gist.github.com/oisdk/23c430b807c788dd43dc4d986c5fdfdd">gist</a>.</p>
+<p>One of the most basic tools for use in type-level programming is the Peano definition of the natural numbers:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">data</span> ℕ</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Z</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">S</span> ℕ</a></code></pre></div>
+<p>Using the new <code class="sourceCode haskell"><span class="dt">TypeFamilyDependencies</span></code> extension, these numbers can be used to describe the “size” of some type. I’m going to use the proportion symbol here:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">type</span> family (t <span class="ot">∷</span> k) ∝ (n <span class="ot">∷</span> ℕ) <span class="fu">=</span> (a <span class="ot">∷</span> <span class="dt">Type</span>) <span class="fu">|</span> a <span class="ot">→</span> t n k</a></code></pre></div>
+<p>Using this type family we can describe induction on the natural numbers:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Finite</span> n <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">    induction <span class="ot">∷</span> t ∝ <span class="dt">Z</span> <span class="ot">→</span> (<span class="ot">∀</span> k<span class="fu">.</span> t ∝ k <span class="ot">→</span> t ∝ <span class="dt">S</span> k) <span class="ot">→</span> t ∝ n</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"><span class="kw">instance</span> <span class="dt">Finite</span> <span class="dt">Z</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">    induction z _ <span class="fu">=</span> z</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">    <span class="ot">{-# inline induction #-}</span></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span> <span class="dt">Finite</span> (<span class="dt">S</span> n) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">    induction z s <span class="fu">=</span> s (induction z s)</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">    <span class="ot">{-# inline induction #-}</span></a></code></pre></div>
+<p>The <code class="sourceCode haskell">induction</code> function reads as the standard mathematical definition of induction: given a proof (value) of the zero case, and a proof that any proof is true for its successor, we can give you a proof of the case for any finite number.</p>
+<p>An added bonus here is that the size of something can usually be resolved at compile-time, so any inductive function on it should also be resolved at compile time.</p>
+<p>We can use it to provide the standard instances for basic length-indexed lists:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="kw">data</span> <span class="dt">List</span> n a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">        <span class="dt">Nil</span>  <span class="ot">∷</span> <span class="dt">List</span> <span class="dt">Z</span> a</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">        (<span class="fu">:-</span>) <span class="ot">∷</span> a <span class="ot">→</span> <span class="dt">List</span> n a <span class="ot">→</span> <span class="dt">List</span> (<span class="dt">S</span> n) a</a></code></pre></div>
+<p>Some instances for those lists are easy:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">List</span> n) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">    fmap _ <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">    fmap f (x <span class="fu">:-</span> xs) <span class="fu">=</span> f x <span class="fu">:-</span> fmap f xs</a></code></pre></div>
+<p>However, for <code class="sourceCode haskell"><span class="dt">Applicative</span></code>, we need some way to recurse on the size of the list. This is where induction comes in.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">type</span> <span class="kw">instance</span> <span class="ch">'(List,a) ∝ n = List n a</span></a></code></pre></div>
+<p>This lets us write <code class="sourceCode haskell">pure</code> in a pleasingly simple way:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">         <span class="dt">Applicative</span> (<span class="dt">List</span> n) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">    pure x <span class="fu">=</span> induction <span class="dt">Nil</span> (x <span class="fu">:-</span>)</a></code></pre></div>
+<p>But can we also write <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> using induction? Yes! Because we’ve factored out the induction itself, we just need to describe the notion of a “sized” function:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">data</span> a ↦ b</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="kw">type</span> <span class="kw">instance</span> ((x <span class="ot">∷</span> a) ↦ (y <span class="ot">∷</span> b)) ∝ n <span class="fu">=</span> (x ∝ n) <span class="ot">→</span> (y ∝ n)</a></code></pre></div>
+<p>Then we can write <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> as so:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">         <span class="dt">Applicative</span> (<span class="dt">List</span> n) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">    pure x <span class="fu">=</span> induction <span class="dt">Nil</span> (x <span class="fu">:-</span>)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">    (<span class="fu">&lt;*&gt;</span>) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">        induction</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">            (\<span class="dt">Nil</span> <span class="dt">Nil</span> <span class="ot">→</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">            (\k (f <span class="fu">:-</span> fs) (x <span class="fu">:-</span> xs) <span class="ot">→</span> f x <span class="fu">:-</span> k fs xs)</a></code></pre></div>
+<p>What about the <code class="sourceCode haskell"><span class="dt">Monad</span></code> instance? For that, we need a little bit of plumbing: the type signature of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> is:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">(<span class="fu">&gt;&gt;=</span>) <span class="ot">∷</span> m a <span class="ot">→</span> (a <span class="ot">→</span> m b) <span class="ot">→</span> m b</a></code></pre></div>
+<p>One of the parameters (the second <code>a</code>) doesn’t have a size: we’ll need to work around that, with <code class="sourceCode haskell"><span class="dt">Const</span></code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">type</span> <span class="kw">instance</span> (<span class="dt">Const</span> a <span class="ot">∷</span> ℕ <span class="ot">→</span> <span class="dt">Type</span>) ∝ n <span class="fu">=</span> <span class="dt">Const</span> a n</a></code></pre></div>
+<p>Using this, we can write our <code class="sourceCode haskell"><span class="dt">Monad</span></code> instance:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1">head' <span class="ot">∷</span> <span class="dt">List</span> (<span class="dt">S</span> n) a <span class="ot">→</span> a</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">head' (x <span class="fu">:-</span> _) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">tail' <span class="ot">∷</span> <span class="dt">List</span> (<span class="dt">S</span> n) a <span class="ot">→</span> <span class="dt">List</span> n a</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">tail' (_ <span class="fu">:-</span> xs) <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7"><span class="kw">instance</span> <span class="dt">Finite</span> n <span class="ot">⇒</span></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">         <span class="dt">Monad</span> (<span class="dt">List</span> n) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">    xs <span class="fu">&gt;&gt;=</span> (f <span class="ot">∷</span> a <span class="ot">→</span> <span class="dt">List</span> n b) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb12-10" data-line-number="10">        induction</a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">            (\<span class="dt">Nil</span> _ <span class="ot">→</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb12-12" data-line-number="12">            (\k (y <span class="fu">:-</span> ys) fn <span class="ot">→</span> head' (fn (<span class="dt">Const</span> y)) <span class="fu">:-</span></a>
+<a class="sourceLine" id="cb12-13" data-line-number="13">                               k ys (tail' <span class="fu">.</span> fn <span class="fu">.</span> <span class="dt">Const</span> <span class="fu">.</span> getConst))</a>
+<a class="sourceLine" id="cb12-14" data-line-number="14">            xs</a>
+<a class="sourceLine" id="cb12-15" data-line-number="15">            (f <span class="fu">.</span> getConst <span class="ot">∷</span> <span class="dt">Const</span> a n <span class="ot">→</span> <span class="dt">List</span> n b)</a></code></pre></div>
+<h2 id="type-family-dependencies">Type Family Dependencies</h2>
+<p>Getting the above to work actually took a surprising amount of work: the crux is that the <code class="sourceCode haskell">∝</code> type family needs to be injective, so the “successor” proof can typecheck. Unfortunately, this means that every type can only have one notion of “size”. What I’d prefer is to be able to pass in a function indicating exactly <em>how</em> to get the size out of a type, that could change depending on the situation. So we could recurse on the first argument of a function, for instance, or just its second, or just the result. This would need either type-level lambdas (which would be cool), or <a href="https://ghc.haskell.org/trac/ghc/ticket/10832">generalized type family dependencies</a>.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
