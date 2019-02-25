@@ -14,7 +14,7 @@ Different ways of storing partitions favours different use cases: switch from a
 binomial heap to a skew binomial, for instance, and you get constant-time
 `cons`. 
 
-The standout data structure in this area is Hinze and Paterson's
+The standout data structure in this area is Hinze and Paterson's finger tree
 [@Hinze-Paterson:FingerTree]. It caches summaries in a pretty amazing way,
 allowing for (amortised) $\mathcal{O}(1)$ `cons` and `snoc` and
 $\mathcal{O}(\log n)$ `split` and `append`. These features allow it to be used
