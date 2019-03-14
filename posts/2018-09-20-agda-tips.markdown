@@ -1,6 +1,7 @@
 ---
 title: Agda Beginner(-ish) Tips, Tricks, and Pitfalls
 tags: Agda
+series: Agda Tips
 ---
 
 I'm in the middle of quite a large Agda project at the moment, and I've picked
