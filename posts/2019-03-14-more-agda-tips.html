@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>More Agda Tips - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>More Agda Tips</h2>
+
+            <div class="info">
+    Posted on March 14, 2019
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/Agda%20Tips.html">2-part series on Agda Tips</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Agda.html">Agda</a>
+    
+</div>
+
+<h1 id="literate-agda">Literate Agda</h1>
+<p>For including Agda code in LaTeX files, Agda’s built-in literate programming support is a great tool. It typesets code well, and ensures that it typechecks which can help avoid typos.</p>
+<h3 id="embedding-agda-code-in-latex">Embedding Agda Code in LaTeX</h3>
+<p>I write the LaTeX document in one file, and the Agda code in another <code>.lagda</code> file. Using the <a href="https://ctan.org/pkg/catchfilebetweentags?lang=en">catchfilebetweentags</a> LaTeX package, I can then embed snippets of the Agda code into the LaTeX document. For instance, in a file named <code>Lists.lagda</code> I can have the following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1">%&lt;*head-type&gt;</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">head <span class="ot">:</span> List A <span class="ot">→</span> Maybe A</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">%&lt;/head-type&gt;</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">head [] <span class="ot">=</span> nothing</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">head <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">=</span> just x</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></a></code></pre></div>
+<p>Then, after compiling the Agda file with <code>agda --latex --output-dir=. Lists.lagda</code>, I can embed the snippet <code>head : List A → Maybe A</code> into the TeX file like so:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode latex"><code class="sourceCode latex"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="fu">\ExecuteMetaData</span>[Lists.tex]{head-type}</a></code></pre></div>
+<h3 id="dealing-with-unicode">Dealing with Unicode</h3>
+<p>Most Agda source code will be Unicode-heavy, which doesn’t work well in LaTeX. There are a few different ways to deal with this: you could use XeTeX, which handles Unicode better, for instance. I found it easier to use the <a href="https://ctan.org/pkg/ucs?lang=en">ucs</a> package, and write a declaration for each Unicode character as I came across it. For the <code>∷</code> character above, for instance, you can write:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode latex"><code class="sourceCode latex"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="bu">\usepackage</span>{<span class="ex">ucs</span>}</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="fu">\DeclareUnicodeCharacter</span>{8759}{<span class="ss">\ensuremath{</span><span class="sc">\squaredots</span><span class="ss">}</span>}</a></code></pre></div>
+<h3 id="live-reloading">Live Reloading</h3>
+<p>For plain LaTeX code, I use <a href="http://spacemacs.org/">Spacemacs</a> and <a href="https://skim-app.sourceforge.io/">Skim</a> to get live reloading. When I save the LaTeX source code, the Skim window refreshes and jumps to the point my editing cursor is at. I use elisp code from <a href="https://mssun.me/blog/spacemacs-and-latex.html">this</a> blog post.</p>
+<p>For Agda code, live reloading gets a little trickier. If I edit an Agda source file, the LaTeX won’t automatically recompile it. However, based on <a href="https://tex.stackexchange.com/questions/142540/configuring-latexmk-to-use-a-preprocessor-lhs2tex">this</a> stack exchange answer, you can put the following <code>.latexmkrc</code> file in the same directory as your <code>.lagda</code> files and your <code>.tex</code> file:</p>
+<pre><code>add_cus_dep('lagda','tex',1,'lagda2tex');
+
+sub lagda2tex {
+    my $base = shift @_;
+    return system('agda', '--latex', '--latex-dir=.', &quot;$base.lagda&quot;);
+}</code></pre>
+<p>This will recompile the literate Agda files whenever they’re changed. Just make sure to run <code>agda --latex --output-dir=.</code> once for every literate Agda file when you initially set up the document. After that, latexmk will take over and do it automatically, but the <code>.tex</code> files need to be present initially for it to recognise the dependency.</p>
+<h1 id="flags-for-debugging">Flags for Debugging</h1>
+<p>There are a number of undocumented flags you can pass to Agda which are absolutely invaluable when it comes to debugging. One of them <a href="http://oleg.fi/gists/posts/2018-08-29-agda-termination-checker.html">can tell you more about termination checking</a>, another reports on type checking (<code>tc</code>), and so on. Set the verbosity level to (<code>agda -v 100</code>) to get more or less info.</p>
+<h1 id="type-checking-order">Type Checking Order</h1>
+<p>Agda does type checking from left to right. This isn’t always desired: as an example, if we want to annotate a value with its type, we can use the following function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb5-1" data-line-number="1">the <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">→</span> A <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">the <span class="ot">_</span> x <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">example <span class="ot">:</span> <span class="ot">_</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">example <span class="ot">=</span> the ℕ <span class="dv">3</span></a></code></pre></div>
+<p>Coming from Haskell, though, this is the wrong way around. We usually prefer to write something like <code>3 :: Int</code>. We can’t write that as a simple function in Agda, though, because its arguments are the wrong way around. Instead, we can use a syntax declaration:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">syntax</span> the ty x <span class="ot">=</span> x ∷ ty</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">example <span class="ot">:</span> <span class="ot">_</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">example <span class="ot">=</span> <span class="dv">3</span> ∷ ℕ</a></code></pre></div>
+<p>Changing the order of type checking can also <a href="https://github.com/agda/agda-stdlib/issues/622#issue-411010875">speed up typechecking in some cases</a>. There’s more information about syntax declarations in <a href="https://agda.readthedocs.io/en/latest/language/syntax-declarations.html">Agda’s documentation</a>.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
