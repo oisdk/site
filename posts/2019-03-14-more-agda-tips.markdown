@@ -88,7 +88,7 @@ There are a number of undocumented flags you can pass to Agda which are
 absolutely invaluable when it comes to debugging. One of them [can tell you more
 about termination
 checking](http://oleg.fi/gists/posts/2018-08-29-agda-termination-checker.html),
-another reports on type checking (`tc`), and so on. Set the verbosity level to
+another reports on type checking (`tc`), another for profiling (`profile`), and so on. Set the verbosity level
 (`agda -v 100`) to get more or less info.
 
 # Type Checking Order
@@ -107,7 +107,7 @@ example = the ℕ 3
 
 Coming from Haskell, though, this is the wrong way around. We usually prefer to
 write something like `3 :: Int`. We can't write that as a simple function in
-Agda, though, because its arguments are the wrong way around. Instead, we can
+Agda, though, so we instead
 use a syntax declaration:
 
 ```agda
