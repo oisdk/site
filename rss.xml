@@ -56,7 +56,7 @@ sub lagda2tex {
 }</code></pre>
 <p>This will recompile the literate Agda files whenever they’re changed. Just make sure to run <code>agda --latex --output-dir=.</code> once for every literate Agda file when you initially set up the document. After that, latexmk will take over and do it automatically, but the <code>.tex</code> files need to be present initially for it to recognise the dependency.</p>
 <h1 id="flags-for-debugging">Flags for Debugging</h1>
-<p>There are a number of undocumented flags you can pass to Agda which are absolutely invaluable when it comes to debugging. One of them <a href="http://oleg.fi/gists/posts/2018-08-29-agda-termination-checker.html">can tell you more about termination checking</a>, another reports on type checking (<code>tc</code>), and so on. Set the verbosity level to (<code>agda -v 100</code>) to get more or less info.</p>
+<p>There are a number of undocumented flags you can pass to Agda which are absolutely invaluable when it comes to debugging. One of them <a href="http://oleg.fi/gists/posts/2018-08-29-agda-termination-checker.html">can tell you more about termination checking</a>, another reports on type checking (<code>tc</code>), another for profiling (<code>profile</code>), and so on. Set the verbosity level (<code>agda -v 100</code>) to get more or less info.</p>
 <h1 id="type-checking-order">Type Checking Order</h1>
 <p>Agda does type checking from left to right. This isn’t always desired: as an example, if we want to annotate a value with its type, we can use the following function:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb5-1" data-line-number="1">the <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">→</span> A <span class="ot">→</span> A</a>
@@ -64,7 +64,7 @@ sub lagda2tex {
 <a class="sourceLine" id="cb5-3" data-line-number="3"></a>
 <a class="sourceLine" id="cb5-4" data-line-number="4">example <span class="ot">:</span> <span class="ot">_</span></a>
 <a class="sourceLine" id="cb5-5" data-line-number="5">example <span class="ot">=</span> the ℕ <span class="dv">3</span></a></code></pre></div>
-<p>Coming from Haskell, though, this is the wrong way around. We usually prefer to write something like <code>3 :: Int</code>. We can’t write that as a simple function in Agda, though, because its arguments are the wrong way around. Instead, we can use a syntax declaration:</p>
+<p>Coming from Haskell, though, this is the wrong way around. We usually prefer to write something like <code>3 :: Int</code>. We can’t write that as a simple function in Agda, though, so we instead use a syntax declaration:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">syntax</span> the ty x <span class="ot">=</span> x ∷ ty</a>
 <a class="sourceLine" id="cb6-2" data-line-number="2"></a>
 <a class="sourceLine" id="cb6-3" data-line-number="3">example <span class="ot">:</span> <span class="ot">_</span></a>
