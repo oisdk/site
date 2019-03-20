@@ -5,7 +5,7 @@
   doi = {10.1017/S0956796809990086},
   number = {6},
   journal = {J. Funct. Program.},
-  url = {http://dx.doi.org/10.1017/S0956796809990086},
+  url = {https://pdfs.semanticscholar.org/e2fa/cc67d3ef80cc64398faab0075fb91a956f27.pdf},
   author = {Schrijvers, Tom and Stuckey, Peter J. and Wadler, Philip},
   year = {2009},
   pages = {663--697},
@@ -1885,7 +1885,7 @@ MSC2010:
   language = {en},
   author = {Wadler, Philip},
   pages = {18},
-  file = {/Users/doisinkidney/Zotero/storage/KYHSNBQ8/Wadler - Programming Language Foundations in Agda.pdf}
+  file = {/Users/doisinkidney/Zotero/storage/9JWDH3DW/Wadler - Programming Language Foundations in Agda.pdf;/Users/doisinkidney/Zotero/storage/KYHSNBQ8/Wadler - Programming Language Foundations in Agda.pdf}
 }
 
 @incollection{hinze_turing-completeness_2015,
@@ -2205,15 +2205,6 @@ Theorems in the list which have not been formalized yet are in italics. Formaliz
   year = {2003},
   keywords = {Haskell (Computer program language)},
   note = {OCLC: ocm51271691}
-}
-
-@article{wadler_programming_nodate-1,
-  title = {Programming {{Language Foundations}} in {{Agda}}},
-  abstract = {One of the leading textbooks for formal methods is Software Foundations (SF), written by Benjamin Pierce in collaboration with others, and based on Coq. After five years using SF in the classroom, I have come to the conclusion that Coq is not the best vehicle for this purpose, as too much of the course needs to focus on learning tactics for proof derivation, to the cost of learning programming language theory. Accordingly, I have written a new textbook, Programming Language Foundations in Agda (PLFA). PLFA covers much of the same ground as SF, although it is not a slavish imitation.},
-  language = {en},
-  author = {Wadler, Philip},
-  pages = {18},
-  file = {/Users/doisinkidney/Zotero/storage/9JWDH3DW/Wadler - Programming Language Foundations in Agda.pdf}
 }
 
 @article{swierstra_verifying_2011,
@@ -2578,6 +2569,868 @@ The list is of course as arbitrary as the movie and book list, but the theorems 
   year = {2018},
   keywords = {Computer Science - Programming Languages},
   file = {/Users/doisinkidney/Zotero/storage/DRLGGEHA/Alvarez-Picallo et al. - 2018 - Fixing Incremental Computation Derivatives of Fix.pdf;/Users/doisinkidney/Zotero/storage/HZVQ5KSF/1811.html}
+}
+
+@inproceedings{magalhaes_hierarchy_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Hierarchy in {{Generic Programming Libraries}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Generic programming (GP) is a form of abstraction in programming languages that serves to reduce code duplication by exploiting the regular structure of algebraic datatypes. Several different approaches to GP in Haskell have surfaced, giving rise to the problem of code duplication across GP libraries. Given the original goals of GP, this is a rather unfortunate turn of events. Fortunately, we can convert between the different representations of each approach, which allows us to ``borrow'' generic functions from different approaches, avoiding the need to reimplement every generic function in every single GP library.In previous work we have shown how existing GP libraries relate to each other. In this paper we go one step further and advocate ``hierarchical GP'': through proper design of different GP approaches, each library can fit neatly in a hierarchy, greatly minimizing the amount of supporting infrastructure necessary for each approach, and allowing each library to be specific and concise, while eliminating code duplication overall. We introduce a new library for GP in Haskell intended to sit at the top of the ``GP hierarchy''. This library contains a lot of structural information, and is not intended to be used directly. Instead, it is a good starting point for generating generic representations for other libraries. This approach is also suitable for being the only library with native compiler support; all other approaches can be obtained from this one by simple conversion of representations in plain Haskell code.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Magalh\~aes, Jos\'e Pedro and L\"oh, Andres},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Constructor Argument,Generic Programming,Structure Library,Test Data Generation,Type Family},
+  pages = {93-112},
+  file = {/Users/doisinkidney/Zotero/storage/QWIB8FAB/Magalhães and Löh - 2015 - Hierarchy in Generic Programming Libraries.pdf}
+}
+
+@inproceedings{fischer_clear_2015-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Clear Picture}} of {{Lens Laws}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {A lens is an optical device which refracts light. Properly adjusted, it can be used to project sharp images of objects onto a screen\textemdash{}a principle underlying photography as well as human vision. Striving for clarity, we shift our focus to lenses as abstractions for bidirectional programming. By means of standard mathematical terminology as well as intuitive properties of bidirectional programs, we observe different ways to characterize lenses and show exactly how their laws interact. Like proper adjustment of optical lenses is essential for taking clear pictures, proper organization of lens laws is essential for forming a clear picture of different lens classes. Incidentally, the process of understanding bidirectional lenses clearly is quite similar to the process of taking a good picture.By showing that it is exactly the backward computation which defines lenses of a certain standard class, we provide an unusual perspective, as contemporary research tends to focus on the forward computation.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Fischer, Sebastian and Hu, Zhenjiang and Pacheco, Hugo},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Asymmetric Type,Equational Reasoning,Forward Computation,Injectivity Property,Post Editing},
+  pages = {215-223},
+  file = {/Users/doisinkidney/Zotero/storage/I2NLRPNX/Fischer et al. - 2015 - A Clear Picture of Lens Laws.pdf}
+}
+
+@inproceedings{salamanca_regular_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Regular {{Varieties}} of {{Automata}} and {{Coequations}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {In this paper we use a duality result between equations and coequations for automata, proved by Ballester-Bolinches, Cosme-Ll\'opez, and Rutten to characterize nonempty classes of deterministic automata that are closed under products, subautomata, homomorphic images, and sums. One characterization is as classes of automata defined by regular equations and the second one is as classes of automata satisfying sets of coequations called varieties of languages. We show how our results are related to Birkhoff's theorem for regular varieties.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Salamanca, J. and {Ballester-Bolinches}, A. and Bonsangue, M. M. and {Cosme-Ll\'opez}, E. and Rutten, J. J. M. M.},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  pages = {224-237},
+  file = {/Users/doisinkidney/Zotero/storage/T6TSLEHP/Salamanca et al. - 2015 - Regular Varieties of Automata and Coequations.pdf}
+}
+
+@inproceedings{mcbride_turing-completeness_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Turing-{{Completeness Totally Free}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {In this paper, I show that general recursive definitions can be represented in the free monad which supports the `effect' of making a recursive call, without saying how these calls should be executed. Diverse semantics can be given within a total framework by suitable monad morphisms. The Bove-Capretta construction of the domain of a general recursive function can be presented datatype-generically as an instance of this technique. The paper is literate Agda, but its key ideas are more broadly transferable.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {McBride, Conor},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {False Confession,General Recursion,Recursive Call,Recursive Definition,Strong Bisimulation},
+  pages = {257-275},
+  file = {/Users/doisinkidney/Zotero/storage/BZZTWWIB/McBride - 2015 - Turing-Completeness Totally Free.pdf}
+}
+
+@inproceedings{kokke_auto_2015-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Auto in {{Agda}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {As proofs in type theory become increasingly complex, there is a growing need to provide better proof automation. This paper shows how to implement a Prolog-style resolution procedure in the dependently typed programming language Agda. Connecting this resolution procedure to Agda's reflection mechanism provides a first-class proof search tactic for first-order Agda terms. As a result, writing proof automation tactics need not be different from writing any other program.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Kokke, Pepijn and Swierstra, Wouter},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Abstract Syntax Tree,Goal Type,Implicit Argument,Proof Search,Unification Algorithm},
+  pages = {276-301},
+  file = {/Users/doisinkidney/Zotero/storage/XU258KUR/Kokke and Swierstra - 2015 - Auto in Agda.pdf}
+}
+
+@inproceedings{dongol_program_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Program Construction}} and {{Verification Tool}} for {{Separation Logic}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {An algebraic approach to the design of program construction and verification tools is applied to separation logic. The control-flow level is modelled by power series with convolution as separating conjunction. A generic construction lifts resource monoids to assertion and predicate transformer quantales. The data domain is captured by concrete store-heap models. These are linked to the separation algebra by soundness proofs. Verification conditions and transformation or refinement laws are derived by equational reasoning within the predicate transformer quantale. This separation of concerns makes an implementation in the Isabelle/HOL proof assistant simple and highly automatic. The resulting tool is itself correct by construction; it is explained on three simple examples.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Dongol, Brijesh and Gomes, Victor B. F. and Struth, Georg},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Predicate Transformer,Program Construction,Proof Assistant,Separation Logic,Verification Condition},
+  pages = {137-158},
+  file = {/Users/doisinkidney/Zotero/storage/BT4CVJFP/Dongol et al. - 2015 - A Program Construction and Verification Tool for S.pdf}
+}
+
+@inproceedings{wu_fusion_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Fusion for {{Free}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Algebraic effect handlers are a recently popular approach for modelling side-effects that separates the syntax and semantics of effectful operations. The shape of syntax is captured by functors, and free monads over these functors denote syntax trees. The semantics is captured by algebras, and effect handlers pass these over the syntax trees to interpret them into a semantic domain.This approach is inherently modular: different functors can be composed to make trees with richer structure. Such trees are interpreted by applying several handlers in sequence, each removing the syntactic constructs it recognizes. Unfortunately, the construction and traversal of intermediate trees is painfully inefficient and has hindered the adoption of the handler approach.This paper explains how a sequence of handlers can be fused into one, so that multiple tree traversals can be reduced to a single one and no intermediate trees need to be allocated. At the heart of this optimization is keeping the notion of a free monad abstract, thus enabling a change of representation that opens up the possibility of fusion. We demonstrate how the ensuing code can be inlined at compile time to produce efficient handlers.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Wu, Nicolas and Schrijvers, Tom},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Abstract Syntax Tree,Effect Handler,Intermediate Tree,Syntax Tree,Term Algebra},
+  pages = {302-322},
+  file = {/Users/doisinkidney/Zotero/storage/JD4GT9T3/Wu and Schrijvers - 2015 - Fusion for Free.pdf}
+}
+
+@inproceedings{van_staden_rely-guarantee_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {On {{Rely}}-{{Guarantee Reasoning}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Many semantic models of rely-guarantee have been proposed in the literature. This paper proposes a new classification of the approaches into two groups based on their treatment of guarantee conditions. To allow a meaningful comparison, it constructs an abstract model for each group in a unified setting. The first model uses a weaker judgement and supports more general rules for atomic commands and disjunction. However, the stronger judgement of the second model permits the elegant separation of the rely from the guarantee due to Hayes et al. and allows refinement-style reasoning. The generalisation to models that use binary relations for postconditions is also investigated. An operational semantics is derived and both models are shown to be sound with respect to execution. All proofs have been checked with Isabelle/HOL and are available online.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {{van Staden}, Stephan},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Concurrency,Rely-guarantee,Semantics,Soundness},
+  pages = {30-49},
+  file = {/Users/doisinkidney/Zotero/storage/WWT8PYP8/van Staden - 2015 - On Rely-Guarantee Reasoning.pdf}
+}
+
+@inproceedings{berghammer_relation-algebraic_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Relation}}-{{Algebraic Approach}} to {{Multirelations}} and {{Predicate Transformers}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {The correspondence between up-closed multirelations and isotone predicate transformers is well known. Less known is that multirelations have also been used for modelling topological contact, not only computations. We investigate how properties from these two lines of research translate to predicate transformers. To this end, we express the correspondence of multirelations and predicate transformers using relation algebras. It turns out to be similar to the correspondence between contact relations and closure operations. Many results generalise from up-closed to arbitrary multirelations.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Berghammer, Rudolf and Guttmann, Walter},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  pages = {50-70},
+  file = {/Users/doisinkidney/Zotero/storage/NX6T9DSD/Berghammer and Guttmann - 2015 - A Relation-Algebraic Approach to Multirelations an.pdf}
+}
+
+@inproceedings{roocks_preference_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Preference {{Decomposition}} and the {{Expressiveness}} of {{Preference Query Languages}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Preferences in the scope of relational databases allow modeling user wishes by queries with soft constraints. There are different frameworks for database preferences including commercially available systems. They slightly vary in semantics and expressiveness but have in common that preferences induce strict partial orders on a given data set. In the present paper we study the expressiveness of preference operators in the available implementations. Particularly, we search for decompositions of strict partial orders into fundamental preference constructs. We study which preference operators and operands are necessary to express any strict partial order. Finally, we present two decomposition algorithms and show their correctness.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Roocks, Patrick},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Expressiveness,Preferences,Query languages,Relational algebra},
+  pages = {71-92},
+  file = {/Users/doisinkidney/Zotero/storage/GK5EZ4L2/Roocks - 2015 - Preference Decomposition and the Expressiveness of.pdf}
+}
+
+@inproceedings{berghammer_column-wise_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Column-{{Wise Extendible Vector Expressions}} and the {{Relational Computation}} of {{Sets}} of {{Sets}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {We present a technique for the relational computation of sets of sets. It is based on specific vector expressions, which form the syntactical counterparts of B. Kehden's vector predicates. Compared with the technique that directly solves a posed problem by the development of a vector expression of type \textbackslash{}(\{2\^X\}\textbackslash,\textbackslash{}leftrightarrow \textbackslash,\{\textbackslash{}mathbf\{1\}\textbackslash{}!\textbackslash{}!\textbackslash{}!\textbackslash{}mathbf\{1\}\}\textbackslash{}) from a formal logical problem description, we reduce the solution to the development of inclusions between vector expressions of type \textbackslash{}(\{X\}\textbackslash,\textbackslash{}leftrightarrow \textbackslash,\{\textbackslash{}mathbf\{1\}\textbackslash{}!\textbackslash{}!\textbackslash{}!\textbackslash{}mathbf\{1\}\}\textbackslash{}). Frequently, this is a lot simpler. The transition from the inclusions to the desired vector expression of type \textbackslash{}(\{2\^X\}\textbackslash,\textbackslash{}leftrightarrow \textbackslash,\{\textbackslash{}mathbf\{1\}\textbackslash{}!\textbackslash{}!\textbackslash{}!\textbackslash{}mathbf\{1\}\}\textbackslash{}) is then immediately possible by means of a general result. We apply the technique to some examples from different areas and show how the solutions behave with regard to running time if implemented and evaluated by the Kiel RelView tool.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Berghammer, Rudolf},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  pages = {238-256},
+  file = {/Users/doisinkidney/Zotero/storage/YNPZZ7QA/Berghammer - 2015 - Column-Wise Extendible Vector Expressions and the .pdf}
+}
+
+@inproceedings{bahr_calculating_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Calculating {{Certified Compilers}} for {{Non}}-Deterministic {{Languages}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Reasoning about programming languages with non-deterministic semantics entails many difficulties. For instance, to prove correctness of a compiler for such a language, one typically has to split the correctness property into a soundness and a completeness part, and then prove these two parts separately. In this paper, we present a set of proof rules to prove compiler correctness by a single proof in calculational style. The key observation that led to our proof rules is the fact that the soundness and completeness proof follow a similar pattern with only small differences. We condensed these differences into a single side condition for one of our proof rules. This side condition, however, is easily discharged automatically by a very simple form of proof search. We implemented this calculation framework in the Coq proof assistant. Apart from verifying a given compiler, our proof technique can also be used to formally derive \textendash{} from the semantics of the source language \textendash{} a compiler that is correct by construction. For such a derivation to succeed it is crucial that the underlying correctness argument proceeds as a single calculation, as opposed to separate calculations of the two directions of the correctness property. We demonstrate our technique by deriving a compiler for a simple language with interrupts.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Bahr, Patrick},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Induction Hypothesis,Proof Obligation,Side Condition,Target Language,Virtual Machine},
+  pages = {159-186},
+  file = {/Users/doisinkidney/Zotero/storage/STHEZK54/Bahr - 2015 - Calculating Certified Compilers for Non-determinis.pdf}
+}
+
+@inproceedings{piponi_polynomial_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Polynomial {{Functors Constrained}} by {{Regular Expressions}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {We show that every regular language, via some DFA which accepts it, gives rise to a homomorphism from the semiring of polynomial functors to the semiring of \textbackslash{}(n \textbackslash{}times n\textbackslash{}) matrices over polynomial functors. Given some polynomial functor and a regular language, this homomorphism can be used to automatically derive a functor whose values have the same shape as those of the original functor, but whose sequences of leaf types correspond to strings in the language.The primary interest of this result lies in the fact that certain regular languages correspond to previously studied derivative-like operations on polynomial functors, which have proven useful in program construction. For example, the regular language \textbackslash{}(a\^*ha\^*\textbackslash{}) yields the derivative of a polynomial functor, and \textbackslash{}(b\^*ha\^*\textbackslash{}) its dissection. Using our framework, we are able to unify and lend new perspective on this previous work. For example, it turns out that dissection of polynomial functors corresponds to taking divided differences of real or complex functions, and, guided by this parallel, we show how to generalize binary dissection to \textbackslash{}(n\textbackslash{})-ary dissection.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Piponi, Dan and Yorgey, Brent A.},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Differentiation,Dissection,Functors,Polynomial,Regular expressions},
+  pages = {113-136},
+  file = {/Users/doisinkidney/Zotero/storage/53JY7SI2/Piponi and Yorgey - 2015 - Polynomial Functors Constrained by Regular Express.pdf}
+}
+
+@inproceedings{abou-saleh_notions_2015-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Notions of {{Bidirectional Computation}} and~{{Entangled~State Monads}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Bidirectional transformations (bx) support principled consistency maintenance between data sources. Each data source corresponds to one perspective on a composite system, manifested by operations to `get' and `set' a view of the whole from that particular perspective. Bx are important in a wide range of settings, including databases, interactive applications, and model-driven development. We show that bx are naturally modelled in terms of mutable state; in particular, the `set' operations are stateful functions. This leads naturally to considering bx that exploit other computational effects too, such as I/O, nondeterminism, and failure, all largely ignored in the bx literature to date. We present a semantic foundation for symmetric bidirectional transformations with effects. We build on the mature theory of monadic encapsulation of effects in functional programming, develop the equational theory and important combinators for effectful bx, and provide a prototype implementation in Haskell along with several illustrative examples.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {{Abou-Saleh}, Faris and Cheney, James and Gibbons, Jeremy and McKinna, James and Stevens, Perdita},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Bidirectional Transformation,Effectful Computation,Entangle State,Equational Theory,Label Transition System},
+  pages = {187-214},
+  file = {/Users/doisinkidney/Zotero/storage/TP44YZCC/Abou-Saleh et al. - 2015 - Notions of Bidirectional Computation and Entangled.pdf}
+}
+
+@inproceedings{moller_exploring_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Exploring an {{Interface Model}} for {{CKA}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {Concurrent Kleene Algebras (CKAs) serve to describe general concurrent systems in a unified way at an abstract algebraic level. Recently, a graph-based model for CKA has been defined in which the incoming and outgoing edges of a graph define its input/output interface. The present paper provides a simplification and a significant extension of the original model to cover notions of states, predicates and assertions in the vein of algebraic treatments using modal semirings. Moreover, it uses the extension to set up a variant of the temporal logic \textbackslash{}(\textbackslash{}mathsf \{CTL\}\^*\textbackslash{}) for the interface model.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {M\"oller, Bernhard and Hoare, Tony},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Algebra,Concurrency,Formal methods,Temporal logic},
+  pages = {1-29},
+  file = {/Users/doisinkidney/Zotero/storage/SFEZXTCJ/Möller and Hoare - 2015 - Exploring an Interface Model for CKA.pdf}
+}
+
+@inproceedings{ghica_geometry_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {The {{Geometry}} of {{Synthesis}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {High-level synthesis or ``hardware compilation'' is a behavioural synthesis method in which circuits are specified using conventional programming languages. Such languages are generally recognised as more accessible than hardware description languages, and it is expected that their use would significantly increase design productivity. The Geometry of Synthesis is a new hardware compilation technique which achieves this goal in a semantic-directed fashion, by noting that functional programming languages and diagrammatic descriptions of hardware share a common mathematical structure, and by using the game-semantic model of the programming language to reduce all computational effects to signal-like message passing. As a consequence, this technique has mature support for higher-order functions [1], local (assignable) state [2], concurrency [3] and (affine) recursion [4]. Moreover, the compiler can support features such as separate compilation, libraries and a foreign-function interface [5]. The programming language of GoS, Verity, is an ``Algol-like'' language [6] extended with concurrency features [7]. The interplay between the call-by-name function mechanism and local effects, an approach specific to Algol, is the key ingredient which makes it possible for a large class of programs in this language to have finitely representable semantic models which can be synthesised as stand-alone static circuits. The compiler is available as an open-source download.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Ghica, Dan R.},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Conventional Programming,Hardware Description Language,Note Theor,Programming Language,Type Inference},
+  pages = {23-24},
+  file = {/Users/doisinkidney/Zotero/storage/2ELVRESV/Ghica - 2012 - The Geometry of Synthesis.pdf}
+}
+
+@inproceedings{sergey_calculating_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Calculating {{Graph Algorithms}} for {{Dominance}} and {{Shortest Path}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {We calculate two iterative, polynomial-time graph algorithms from the literature: a dominance algorithm and an algorithm for the single-source shortest path problem. Both algorithms are calculated directly from the definition of the properties by fixed-point fusion of (1) a least fixed point expressing all finite paths through a directed graph and (2) Galois connections that capture dominance and path length.The approach illustrates that reasoning in the style of fixed-point calculus extends gracefully to the domain of graph algorithms. We thereby bridge common practice from the school of program calculation with common practice from the school of static program analysis, and build a novel view on iterative graph algorithms as instances of abstract interpretation.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Sergey, Ilya and Midtgaard, Jan and Clarke, Dave},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {dominance,fixed-point calculus,fixed-point fusion,Galois connections,graph algorithms,shortest path algorithm},
+  pages = {132-156},
+  file = {/Users/doisinkidney/Zotero/storage/U26TRXX8/Sergey et al. - 2012 - Calculating Graph Algorithms for Dominance and Sho.pdf}
+}
+
+@inproceedings{moller_algebraic_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {An {{Algebraic Calculus}} of {{Database Preferences}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Preference algebra, an extension of the algebra of database relations, is a well-studied field in the area of personalized databases. It allows modelling user wishes by preference terms; they represent strict partial orders telling which database objects the user prefers over other ones. There are a number of constructors that allow combining simple preferences into quite complex, nested ones. A preference term is then used as a database query, and the results are the maximal objects according to the order it denotes. Depending on the size of the database, this can be computationally expensive. For optimisation, preference queries and the corresponding terms are transformed using a number of algebraic laws. So far, the correctness proofs for such laws have been performed by hand and in a point-wise fashion. We enrich the standard theory of relational databases to an algebraic framework that allows completely point-free reasoning about complex preferences. This black-box view is amenable to a treatment in first-order logic and hence to fully automated proofs using off-the-shelf verification tools. We exemplify the use of the calculus with some non-trivial laws, notably concerning so-called preference prefilters which perform a preselection to speed up the computation of the maximal objects proper.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {M\"oller, Bernhard and Roocks, Patrick and Endres, Markus},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {preference algebra,preferences,prefilter,relational algebra},
+  pages = {241-262},
+  file = {/Users/doisinkidney/Zotero/storage/MN66Q2D8/Möller et al. - 2012 - An Algebraic Calculus of Database Preferences.pdf}
+}
+
+@inproceedings{backhouse_first-past--post_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {First-{{Past}}-the-{{Post Games}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Informally, a first-past-the-post game is a (probabilistic) game where the winner is the person who predicts the event that occurs first among a set of events. Examples of first-past-the-post games include so-called block and hidden patterns and the Penney-Ante game invented by Walter Penney. We formalise the abstract notion of a first-past-the-post game, and the process of extending a probability distribution on symbols of an alphabet to the plays of a game.Analysis of first-past-the-post games depends on a collection of simultaneous (non-linear) equations in languages. Essentially, the equations are due to Guibas and Odlyzko but they did not formulate them as equations in languages but as equations in generating functions detailing lengths of words.Penney-Ante games are two-player games characterised by a collection of regular, prefix-free languages. For such two-player games, we show how to use the equations in languages to calculate the probability of winning. The formula generalises a formula due to John H. Conway for the original Penney-Ante game. At no point in our analysis do we use generating functions. Even so, we are able to calculate probabilities and expected values. Generating functions do appear to become necessary when higher-order cumulatives (for example, the standard deviation) are also required.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Backhouse, Roland},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {algorithmic problem solving,block pattern,generating function,hidden pattern,Penney-Ante,probabilistic game,regular language},
+  pages = {157-176},
+  file = {/Users/doisinkidney/Zotero/storage/PUSQ84MK/Backhouse - 2012 - First-Past-the-Post Games.pdf}
+}
+
+@inproceedings{paterson_constructing_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Constructing {{Applicative Functors}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Applicative functors define an interface to computation that is more general, and correspondingly weaker, than that of monads. First used in parser libraries, they are now seeing a wide range of applications. This paper sets out to explore the space of non-monadic applicative functors useful in programming. We work with a generalization, lax monoidal functors, and consider several methods of constructing useful functors of this type, just as transformers are used to construct computational monads. For example, coends, familiar to functional programmers as existential types, yield a range of useful applicative functors, including left Kan extensions. Other constructions are final fixed points, a limited sum construction, and a generalization of the semi-direct product of monoids. Implementations in Haskell are included where possible.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Paterson, Ross},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Applicative Functor,Monoidal Category,Monoidal Structure,Natural Transformation,Type Constructor},
+  pages = {300-323},
+  file = {/Users/doisinkidney/Zotero/storage/ZQQYIAWZ/Paterson - 2012 - Constructing Applicative Functors.pdf}
+}
+
+@inproceedings{barthe_probabilistic_2012-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Probabilistic {{Relational Hoare Logics}} for {{Computer}}-{{Aided Security Proofs}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Provable security. The goal of provable security is to verify rigorously the security of cryptographic systems. A provable security argument proceeds in three steps: 1 Define a security goal and an adversarial model; 2 Define the cryptographic system and the security assumptions upon which the security of the system hinges; 3 Show by reduction that any attack against the cryptographic system can be used to build an efficient algorithm that breaks a security assumption.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Barthe, Gilles and Gr\'egoire, Benjamin and Zanella B\'eguelin, Santiago},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Adversarial Model,Cryptographic System,Initial Memory,Provable Security,Security Goal},
+  pages = {1-6},
+  file = {/Users/doisinkidney/Zotero/storage/CAMJI7M3/Barthe et al. - 2012 - Probabilistic Relational Hoare Logics for Computer.pdf}
+}
+
+@inproceedings{bahr_modular_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Modular {{Tree Automata}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Tree automata are traditionally used to study properties of tree languages and tree transformations. In this paper, we consider tree automata as the basis for modular and extensible recursion schemes. We show, using well-known techniques, how to derive from standard tree automata highly modular recursion schemes. Functions that are defined in terms of these recursion schemes can be combined, reused and transformed in many ways. This flexibility facilitates the specification of complex transformations in a concise manner, which is illustrated with a number of examples.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Bahr, Patrick},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Function Symbol,Recursion Scheme,Successor State,Tree Automaton,Type Term},
+  pages = {263-299},
+  file = {/Users/doisinkidney/Zotero/storage/Q5C5UKQ3/Bahr - 2012 - Modular Tree Automata.pdf}
+}
+
+@inproceedings{armstrong_dependently_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Dependently {{Typed Programming Based}} on {{Automated Theorem Proving}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Mella is a minimalistic dependently typed programming language and interactive theorem prover implemented in Haskell. Its main purpose is to investigate the effective integration of automated theorem provers in this pure and simple setting. Such integrations are essential for supporting program development in dependently typed languages. We integrate the equational theorem prover Waldmeister and test it on more than 800 proof goals from the TPTP library. In contrast to previous approaches, the reconstruction of Waldmeister proofs within Mella is quite robust and does not generate a significant overhead to proof search. Mella thus yields a template for integrating more expressive theorem provers in more sophisticated languages.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Armstrong, Alasdair and Foster, Simon and Struth, Georg},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Automate Theorem,Automate Theorem Prove,Proof Search,Proof Term,Type Check},
+  pages = {220-240},
+  file = {/Users/doisinkidney/Zotero/storage/NWS4J3BS/Armstrong et al. - 2012 - Dependently Typed Programming Based on Automated T.pdf}
+}
+
+@inproceedings{morgan_elementary_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Elementary {{Probability Theory}} in the {{Eindhoven Style}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {We extend the Eindhoven quantifier notation to elementary probability theory by adding ``distribution comprehensions'' to it.Even elementary theories can be used in complicated ways, and this occurs especially when reasoning about computer programs: an instance of this is the multi-level probabilistic structures that arise in probabilistic semantics for security.Our exemplary case study in this article is therefore the probabilistic reasoning associated with a quantitative noninterference semantics based on Hidden Markov Models of computation. But we believe the proposal here will be more generally applicable than that, and so we also revisit a number of popular puzzles, to illustrate the new notation's wider utility.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Morgan, Carroll},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Conditional Distribution,Conditional Expectation,Discrete Distribution,Hide Markov Model,Sample Space},
+  pages = {48-73},
+  file = {/Users/doisinkidney/Zotero/storage/BCSRKVMZ/Morgan - 2012 - Elementary Probability Theory in the Eindhoven Sty.pdf}
+}
+
+@inproceedings{mandel_scheduling_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Scheduling and {{Buffer Sizing}} of N-{{Synchronous Systems}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Lucy-n is a language for programming networks of processes communicating through bounded buffers. A dedicated type system, termed a clock calculus, automatically computes static schedules of the processes and the sizes of the buffers between them.In this article, we present a new algorithm which solves the subtyping constraints generated by the clock calculus. The advantage of this algorithm is that it finds schedules for tightly coupled systems. Moreover, it does not overestimate the buffer sizes needed and it provides a way to favor either system throughput or buffer size minimization.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Mandel, Louis and Plateau, Florence},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Constraint System,Periodic Pattern,Precedence Constraint,System Throughput,Unknown Word},
+  pages = {74-101},
+  file = {/Users/doisinkidney/Zotero/storage/4VXDM8IF/Mandel and Plateau - 2012 - Scheduling and Buffer Sizing of n-Synchronous Syst.pdf}
+}
+
+@inproceedings{dongol_deriving_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Deriving {{Real}}-{{Time Action Systems Controllers}} from {{Multiscale System Specifications}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {This paper develops a method for deriving controllers for real-time systems in which the components of the system operate at different time granularities. To this end, we incorporate the theory of time bands into action systems, which allows one to structure a system into multiple abstractions of time. The framework includes a logic that facilitates reasoning about different types of sampling errors and transient properties (i.e., properties that only hold for a brief amount of time), and we develop theorems for simplifying proofs of hardware/software interaction. We formalise true concurrency and define refinement for the parallel composition of action systems. Our method of derivation builds on the verify-while-develop paradigm, where the action system code is developed side-by-side with its proof.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Dongol, Brijesh and Hayes, Ian J.},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Action System,Parallel Composition,State Predicate,Time Band,Water Level},
+  pages = {102-131},
+  file = {/Users/doisinkidney/Zotero/storage/YGCIQ652/Dongol and Hayes - 2012 - Deriving Real-Time Action Systems Controllers from.pdf}
+}
+
+@inproceedings{dang_reverse_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Reverse {{Exchange}} for {{Concurrency}} and {{Local Reasoning}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Recent research has pointed out the importance of the inequational exchange law (P*Q) ; (R*S) {$\leq$} (P ; R)*(Q ; S) for concurrent processes. In particular, it has been shown that this law is equivalent to validity of the concurrency rule for Hoare triples. Unfortunately, the law does not hold in the relationally based setting of algebraic separation logic. However, we show that under mild conditions the reverse inequation (P ; R)*(Q ; S) {$\leq$} (P*Q) ; (R*S) still holds there. Separating conjunction * in that calculus can be interpreted as true concurrency on disjointly accessed resources. From the reverse exchange law we derive slightly restricted but still reasonably useful variants of the concurrency rule. Moreover, using a corresponding definition of locality, we obtain also a variant of the frame rule. By this, the relational setting can also be applied for modular and concurrency reasoning. Finally, we present several variations of the approach to further interpret the results.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Dang, Han-Hing and M\"oller, Bernhard},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {concurrent separation logic,frame rule,Hoare logic,locality,relational semantics,True concurrency},
+  pages = {177-197},
+  file = {/Users/doisinkidney/Zotero/storage/F9EEYRTD/Dang and Möller - 2012 - Reverse Exchange for Concurrency and Local Reasoni.pdf}
+}
+
+@inproceedings{guttmann_unifying_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Unifying {{Correctness Statements}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {Partial, total and general correctness and further models of sequential computations differ in their treatment of finite, infinite and aborting executions. Algebras structure this diversity of models to avoid the repeated development of similar theories and to clarify their range of application. We introduce algebras that uniformly describe correctness statements, correctness calculi, pre-post specifications and loop refinement rules in five kinds of computation models. This extends previous work that unifies iteration, recursion and program transformations for some of these models. Our new description includes a relativised domain operation, which ignores parts of a computation, and represents bound functions for claims of termination by sequences of tests. We verify all results in Isabelle heavily using its automated theorem provers.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Guttmann, Walter},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Correctness Statement,General Correctness,Partial Correctness,Relative Domain,Total Correctness},
+  pages = {198-219},
+  file = {/Users/doisinkidney/Zotero/storage/H7KA8QCS/Guttmann - 2012 - Unifying Correctness Statements.pdf}
+}
+
+@inproceedings{hoare_laws_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {The {{Laws}} of {{Programming Unify Process Calculi}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {We survey the well-known algebraic laws of sequential programming, and propose some less familiar laws for concurrent programming. On the basis of these laws, we derive the rules of a number of classical programming and process calculi, for example, those due to Hoare, Milner, and Kahn. The algebra is simpler than each of the calculi derived from it, and stronger than all the calculi put together. We end with a section describing the role of unification in Science and Engineering.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Hoare, Tony and {van Staden}, Stephan},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  pages = {7-22},
+  file = {/Users/doisinkidney/Zotero/storage/FFNW43AE/Hoare and van Staden - 2012 - The Laws of Programming Unify Process Calculi.pdf}
+}
+
+@inproceedings{hinze_kan_2012-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Kan {{Extensions}} for {{Program Optimisation Or}}: {{Art}} and {{Dan Explain}} an {{Old Trick}}},
+  isbn = {978-3-642-31113-0},
+  shorttitle = {Kan {{Extensions}} for {{Program Optimisation Or}}},
+  abstract = {Many program optimisations involve transforming a program in direct style to an equivalent program in continuation-passing style. This paper investigates the theoretical underpinnings of this transformation in the categorical setting of monads. We argue that so-called absolute Kan Extensions underlie this program optimisation. It is known that every Kan extension gives rise to a monad, the codensity monad, and furthermore that every monad is isomorphic to a codensity monad. The end formula for Kan extensions then induces an implementation of the monad, which can be seen as the categorical counterpart of continuation-passing style. We show that several optimisations are instances of this scheme: Church representations and implementation of backtracking using success and failure continuations, among others. Furthermore, we develop the calculational properties of Kan extensions, powers and ends. In particular, we propose a two-dimensional notation based on string diagrams that aims to support effective reasoning with Kan extensions.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Hinze, Ralf},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {adjunction,backtracking,Church representation,codensity monad,CPS,end,Haskell,Kan extension,power,string diagram},
+  pages = {324-362},
+  file = {/Users/doisinkidney/Zotero/storage/WMDNAZEF/Hinze - 2012 - Kan Extensions for Program Optimisation Or Art an.pdf}
+}
+
+@inproceedings{lux_scheduler-independent_2012,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Scheduler-{{Independent Declassification}}},
+  isbn = {978-3-642-31113-0},
+  abstract = {The controlled declassification of secrets has received much attention in research on information-flow security, though mostly for sequential programming languages. In this article, we aim at guaranteeing the security of concurrent programs. We propose the novel security property WHAT\&WHERE that allows one to limit what information may be declassified where in a program. We show that our property provides adequate security guarantees independent of the scheduling algorithm (which is non-trivial due to the refinement paradox) and present a security type system that reliably enforces the property. In a second scheduler-independence result, we show that an earlier proposed security condition is adequate for the same range of schedulers. These are the first scheduler-independence results in the presence of declassification.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Lux, Alexander and Mantel, Heiko and Perner, Matthias},
+  editor = {Gibbons, Jeremy and Nogueira, Pablo},
+  year = {2012},
+  keywords = {Label Transition System,Memory State,Program Point,Security Condition,Security Property},
+  pages = {25-47},
+  file = {/Users/doisinkidney/Zotero/storage/CXGT4LAJ/Lux et al. - 2012 - Scheduler-Independent Declassification.pdf}
+}
+
+@inproceedings{backhouse_recounting_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Recounting the {{Rationals}}: {{Twice}}!},
+  isbn = {978-3-540-70594-9},
+  shorttitle = {Recounting the {{Rationals}}},
+  abstract = {We derive an algorithm that enables the rationals to be efficiently enumerated in two different ways. One way is known and is credited to Moshe Newman; it corresponds to a deforestation of the so-called Calkin-Wilf tree of rationals. The second is new and corresponds to a deforestation of the Stern-Brocot tree of rationals. We show that both enumerations stem from the same simple algorithm. In this way, we construct a Stern-Brocot enumeration algorithm with the same time and space complexity as Newman's algorithm.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Backhouse, Roland and Ferreira, Jo\~ao F.},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {algorithm derivation,Calkin-Wilf tree,enumeration algorithm,rational numbers,Stern-Brocot tree},
+  pages = {79-91},
+  file = {/Users/doisinkidney/Zotero/storage/5VS352D7/Backhouse and Ferreira - 2008 - Recounting the Rationals Twice!.pdf}
+}
+
+@inproceedings{bird_zippy_2008-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Zippy {{Tabulations}} of {{Recursive Functions}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {This paper is devoted to the statement and proof of a theorem showing how recursive definitions whose associated call graphs satisfy certain shape conditions can be converted systematically into efficient bottom-up tabulation schemes. The increase in efficiency can be dramatic, typically transforming an exponential time algorithm into one that takes only quadratic time. The proof of the theorem relies heavily on the theory of zips developed by Roland Backhouse and Paul Hoogendijk.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Bird, Richard S.},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Binomial Tree,Boolean Lattice,Call Graph,Decomposition Function,Recursive Function},
+  pages = {92-109},
+  file = {/Users/doisinkidney/Zotero/storage/GFGND65P/Bird - 2008 - Zippy Tabulations of Recursive Functions.pdf}
+}
+
+@inproceedings{morrisett_programming_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Programming with {{Effects}} in {{Coq}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Next-generation programming languages will move beyond simple type systems to include support for formal specifications and mechanically- checked proofs of adherence to those requirements. Already, in the imperative world, languages such as ESC/Java and Spec\# integrate Hoare- style pre- and post-conditions into the underlying type system. However, we argue that neither the program logics used in these systems, nor the decision procedures used to discharge verification conditions, are sufficient for establishing deep properties of modular software.In contrast, the Coq proof development environment provides a powerful program logic (CiC) coupled with an extensible, interactive environment that can combine deep insights from humans with automation to discharge deep proof obligations. Unfortunately, the language at the core of Coq is limited to purely functional programming.In the Ynot project, we are attempting to address this problem by extending Coq with a new type constructor (the Hoare-triple type), and a few carefully chosen axioms that can be used to build imperative programs in a style quite close to Haskell. I will report on our progress thus far, both in using Ynot to construct modular, extensible libraries for imperative programs, as well as our new compiler infrastructure for generating efficient code from Ynot programs.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Morrisett, Greg},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {28-28},
+  file = {/Users/doisinkidney/Zotero/storage/VW8TJFA8/Morrisett - 2008 - Programming with Effects in Coq.pdf}
+}
+
+@inproceedings{lammel_expression_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {The {{Expression Lemma}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Algebraic data types and catamorphisms (folds) play a central role in functional programming as they allow programmers to define recursive data structures and operations on them uniformly by structural recursion. Likewise, in object-oriented (OO) programming, recursive hierarchies of object types with virtual methods play a central role for the same reason. There is a semantical correspondence between these two situations which we reveal and formalize categorically. To this end, we assume a coalgebraic model of OO programming with functional objects. The development may be helpful in deriving refactorings that turn sufficiently disciplined functional programs into OO programs of a designated shape and vice versa.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {L\"ammel, Ralf and Rypacek, Ondrej},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {program calculation,catamorphism,cofree comonad,distributive law,expression lemma,expression problem,fold,free monad,functional object,the composite design pattern},
+  pages = {193-219},
+  file = {/Users/doisinkidney/Zotero/storage/VSRCJGA2/Lämmel and Rypacek - 2008 - The Expression Lemma.pdf}
+}
+
+@inproceedings{witzel_symmetric_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Symmetric and {{Synchronous Communication}} in {{Peer}}-to-{{Peer Networks}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Motivated by distributed implementations of game-theoretical algorithms, we study symmetric process systems and the problem of attaining common knowledge between processes. We formalize our setting by defining a notion of peer-to-peer networks and appropriate symmetry concepts in the context of Communicating Sequential Processes (CSP) [1]. We then prove that CSP with input and output guards makes common knowledge in symmetric peer-to-peer networks possible, but not the restricted version which disallows output statements in guards and is commonly implemented. Our results extend [2].An extended version is available at http://arxiv.org/abs/0710.2284 .},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Witzel, Andreas},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Boolean Expression,Common Knowledge,Communication Statement,Electoral System,Original Network},
+  pages = {404-421},
+  file = {/Users/doisinkidney/Zotero/storage/PULDEAAL/Witzel - 2008 - Symmetric and Synchronous Communication in Peer-to.pdf}
+}
+
+@inproceedings{meinicke_probabilistic_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Probabilistic {{Choice}} in {{Refinement Algebra}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {The term refinement algebra refers to a set of abstract algebras, similar to Kleene algebra with tests, that are suitable for reasoning about programs in a total-correctness framework. Abstract algebraic reasoning also works well when probabilistic programs are concerned, and a general refinement algebra that is suitable for such programs has been defined previously. That refinement algebra does not contain features that are specific to probabilistic programs. For instance, it does not include a probabilistic choice operator, or probabilistic assertions and guards (tests), which may be used to represent correctness properties for probabilistic programs. In this paper we investigate how these features may be included in a refinement algebra. That is, we propose a new refinement algebra in which probabilistic choice, and probabilistic guards and assertions may be expressed. Two operators for modelling probabilistic enabledness and termination are also introduced.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Meinicke, Larissa and Hayes, Ian J.},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {243-267},
+  file = {/Users/doisinkidney/Zotero/storage/AT4ZM4BN/Meinicke and Hayes - 2008 - Probabilistic Choice in Refinement Algebra.pdf}
+}
+
+@inproceedings{voigtlander_asymptotic_2008-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Asymptotic {{Improvement}} of {{Computations}} over {{Free Monads}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {We present a low-effort program transformation to improve the efficiency of computations over free monads in Haskell. The development is calculational and carried out in a generic setting, thus applying to a variety of datatypes. An important aspect of our approach is the utilisation of type class mechanisms to make the transformation as transparent as possible, requiring no restructuring of code at all. There is also no extra support necessary from the compiler (apart from an up-to-date type checker). Despite this simplicity of use, our technique is able to achieve true asymptotic runtime improvements. We demonstrate this by examples for which the complexity is reduced from quadratic to linear.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Voigtl\"ander, Janis},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Functional Programming,Type Constructor,Fusion Rule,Program Transformation,Type Checker},
+  pages = {388-403},
+  file = {/Users/doisinkidney/Zotero/storage/92LILNR6/Voigtländer - 2008 - Asymptotic Improvement of Computations over Free M.pdf}
+}
+
+@inproceedings{kozen_bohmjacopini_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {The {{B\"ohm}}\textendash{{Jacopini Theorem Is False}}, {{Propositionally}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {The B\"ohm\textendash{}Jacopini theorem (B\"ohm and Jacopini, 1966) is a classical result of program schematology. It states that any deterministic flowchart program is equivalent to a while program. The theorem is usually formulated at the first-order interpreted or first-order uninterpreted (schematic) level, because the construction requires the introduction of auxiliary variables. Ashcroft and Manna (1972) and Kosaraju (1973) showed that this is unavoidable. As observed by a number of authors, a slightly more powerful structured programming construct, namely loop programs with multi-level breaks, is sufficient to represent all deterministic flowcharts without introducing auxiliary variables. Kosaraju (1973) established a strict hierarchy determined by the maximum depth of nesting allowed. In this paper we give a purely propositional account of these results. We reformulate the problems at the propositional level in terms of automata on guarded strings, the automata-theoretic counterpart to Kleene algebra with tests. Whereas the classical approaches do not distinguish between first-order and propositional levels of abstraction, we find that the purely propositional formulation allows a more streamlined mathematical treatment, using algebraic and topological concepts such as bisimulation and coinduction. Using these tools, we can give more mathematically rigorous formulations and simpler and more revealing proofs.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Kozen, Dexter and Tseng, Wei-Lung Dustin},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {177-192},
+  file = {/Users/doisinkidney/Zotero/storage/XSXPJZZP/Kozen and Tseng - 2008 - The Böhm–Jacopini Theorem Is False, Propositionall.pdf}
+}
+
+@inproceedings{gluck_circulations_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Circulations, {{Fuzzy Relations}} and {{Semirings}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Circulations are similar to flows in capacity-constrained networks, with the difference that they also observe lower bounds and, unlike flows, are not directed from a source to a sink. We give a new description of circulations in networks using a technique introduced by Kawahara; he applied the same methods to network flows. We show the power and flexibility of his approach in a new application, refining it at the same time by introducing the concept of test relations. Furthermore we will give algebraic formulations of a generic algorithm for computing a flow in a network with lower bounds and a sufficient and necessary criterion for the existence of a circulation.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Gl\"uck, Roland and M\"oller, Bernhard},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Capacity Constraint,Inverse Semigroup,Lower Bound,Network Flow,Scalar Multiplication},
+  pages = {134-152},
+  file = {/Users/doisinkidney/Zotero/storage/FATCHRUL/Glück and Möller - 2008 - Circulations, Fuzzy Relations and Semirings.pdf}
+}
+
+@inproceedings{jay_scrap_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Scrap {{Your Type Applications}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {System F is ubiquitous in logic, theorem proving, language meta-theory, compiler intermediate languages, and elsewhere. Along with its type abstractions come type applications, but these often appear redundant. This redundancy is both distracting and costly for type-directed compilers.We introduce System IF, for implicit System F, in which many type applications can be made implicit. It supports decidable type checking and strong normalisation. Experiments with Haskell suggest that it could be used to reduce the amount of intermediate code in compilers that employ System F.System IF constitutes a first foray into a new area in the design space of typed lambda calculi, that is interesting in its own right and may prove useful in practice.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Jay, Barry and Peyton Jones, Simon},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Functional Programming,Type Inference,Critical Pair,Reduction Rule,Type Application},
+  pages = {2-27},
+  file = {/Users/doisinkidney/Zotero/storage/RWNYFKP4/Jay and Peyton Jones - 2008 - Scrap Your Type Applications.pdf}
+}
+
+@inproceedings{hinze_exploiting_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Exploiting {{Unique Fixed Points}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Functional programmers happily use equational reasoning and induction to prove properties of recursive programs. To show properties of corecursive programs they employ coinduction, per perhaps less enthusiastically. Coinduction is often considered as a rather low-level proof method, especially, as it seems to depart rather radically from equational reasoning. In this talk we introduce an alternative proof technique based on unique fixed points. To make the idea concrete, consider the simplest example of a coinductive type: the type of streams, where a stream is an infinite sequence of elements. In a lazy functional language, such as Haskell, streams are easy to define and many textbooks on Haskell reproduce the folklore examples of Fibonacci or Hamming numbers defined by recursion equations over streams. One has to be a bit careful in formulating a recursion equation basically avoiding that the sequence defined swallows its own tail. However, if this care is exercised, the equation even possesses a unique solution, a fact that is not very widely appreciated. Uniqueness can be exploited to prove that two streams are equal: if they satisfy the same recursion equation, then they are! We will use this proof technique to infer some intriguing facts about particular streams and to develop the basics of finite calculus. Quite attractively, the resulting proofs have a strong equational flavour. In a nutshell, the proof method brings equational reasoning to the coworld. Of course, it is by no means restricted to streams and can be used equally well to prove properties of infinite trees or the observational equivalence of instances of an abstract datatype.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Hinze, Ralf},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {1-1},
+  file = {/Users/doisinkidney/Zotero/storage/DJ2RZ582/Hinze - 2008 - Exploiting Unique Fixed Points.pdf}
+}
+
+@inproceedings{abel_verifying_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Verifying a {{Semantic}} {$B\eta$}-{{Conversion Test}} for {{Martin}}-{{L\"of Type Theory}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Type-checking algorithms for dependent type theories often rely on the interpretation of terms in some semantic domain of values when checking equalities. Here we analyze a version of Coquand's algorithm for checking the {$\beta\eta$}-equality of such semantic values in a theory with a predicative universe hierarchy and large elimination rules. Although this algorithm does not rely on normalization by evaluation explicitly, we show that similar ideas can be employed for its verification. In particular, our proof uses the new notions of contextual reification and strong semantic equality.The algorithm is part of a bi-directional type checking algorithm which checks whether a normal term has a certain semantic type, a technique used in the proof assistants Agda and Epigram. We work with an abstract notion of semantic domain in order to accommodate a variety of possible implementation techniques, such as normal forms, weak head normal forms, closures, and compiled code. Our aim is to get closer than previous work to verifying the type-checking algorithms which are actually used in practice.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Abel, Andreas and Coquand, Thierry and Dybjer, Peter},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Type Theory,Inference Rule,Kripke Model,Neutral Type,Normal Form},
+  pages = {29-56},
+  file = {/Users/doisinkidney/Zotero/storage/TG8WXKZ2/Abel et al. - 2008 - Verifying a Semantic βη-Conversion Test for Martin.pdf}
+}
+
+@inproceedings{mu_algebra_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Algebra of {{Programming Using Dependent Types}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Dependent type theory is rich enough to express that a program satisfies an input/output relational specification, but it could be hard to construct the proof term. On the other hand, squiggolists know very well how to show that one relation is included in another by algebraic reasoning. We demonstrate how to encode functional and relational derivations in a dependently typed programming language. A program is coupled with an algebraic derivation from a specification, whose correctness is guaranteed by the type system.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Mu, Shin-Cheng and Ko, Hsiang-Shang and Jansson, Patrik},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Dependent Type,Proof Term,Algebraic Reasoning,Functional Fold,Implicit Parameter},
+  pages = {268-283},
+  file = {/Users/doisinkidney/Zotero/storage/57EQ9UCL/Mu et al. - 2008 - Algebra of Programming Using Dependent Types.pdf}
+}
+
+@inproceedings{matthes_nested_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Nested {{Datatypes}} with {{Generalized Mendler Iteration}}: {{Map Fusion}} and the {{Example}} of the {{Representation}} of {{Untyped Lambda Calculus}} with {{Explicit Flattening}}},
+  isbn = {978-3-540-70594-9},
+  shorttitle = {Nested {{Datatypes}} with {{Generalized Mendler Iteration}}},
+  abstract = {Nested datatypes are families of datatypes that are indexed over all types such that the constructors may relate different family members. Moreover, the argument types of the constructors refer to indices given by expressions where the family name may occur. Especially in this case of true nesting, there is no direct support by theorem provers to guarantee termination of functions that traverse these data structures.A joint article with A. Abel and T. Uustalu (TCS 333(1\textendash{}2), pp. 3\textendash{}66, 2005) proposes iteration schemes that guarantee termination not by structural requirements but just by polymorphic typing. They are generic in the sense that no specific syntactic form of the underlying datatype ``functor'' is required. In subsequent work (accepted for the Journal of Functional Programming), the author introduced an induction principle for the verification of programs obtained from Mendler-style iteration of rank 2, which is one of those schemes, and justified it in the Calculus of Inductive Constructions through an implementation in the theorem prover Coq.The new contribution is an extension of this work to generalized Mendler iteration (introduced in Abel et al, cited above), leading to a map fusion theorem for the obtained iterative functions. The results and their implementation in Coq are used for a case study on a representation of untyped lambda calculus with explicit flattening. Substitution is proven to fulfill two of the three monad laws, the third only for ``hereditarily canonical'' terms, but this is rectified by a relativisation of the whole construction to those terms.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Matthes, Ralph},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {220-242},
+  file = {/Users/doisinkidney/Zotero/storage/JF9WR47W/Matthes - 2008 - Nested Datatypes with Generalized Mendler Iteratio.pdf}
+}
+
+@inproceedings{sintzoff_synthesis_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Synthesis of {{Optimal Control Policies}} for {{Some Infinite}}-{{State Transition Systems}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {We develop a symbolic, logic-based technique for constructing optimal control policies in some transition systems where state spaces are large or infinite. These systems are presented as iterations of finite sets of guarded assignments which have costs. The optimality objective is to minimize the total costs of system executions reaching the set characterized by a given target predicate. Guards are predicates and control policies are expressed by tuples of guards. The optimal control policy refines the control policy of the given system. It is generated from the target predicate by an iteration based on backwards induction. This iterative procedure amounts to a variant of the symbolic algorithm generating the reachability precondition; the latter characterizes the states from which some system execution reaches the target set. The main difference is the introduction of greedy and cost-dependent iteration steps.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Sintzoff, Michel},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Action Program,Control Policy,Optimal Policy,Symbolic Generator,Transition System},
+  pages = {336-359},
+  file = {/Users/doisinkidney/Zotero/storage/WB8364MJ/Sintzoff - 2008 - Synthesis of Optimal Control Policies for Some Inf.pdf}
+}
+
+@inproceedings{harrison_asynchronous_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Asynchronous {{Exceptions}} as an {{Effect}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {Asynchronous interrupts abound in computing systems, yet they remain a thorny concept for both programming and verification practice. The ubiquity of interrupts underscores the importance of developing programming models to aid the development and verification of interrupt-driven programs. The research reported here recognizes asynchronous interrupts as a computational effect and encapsulates them as a building block in modular monadic semantics. The resulting modular semantic model can serve as both a guide for functional programming with interrupts and as a formal basis for reasoning about interrupt-driven computation as well.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Harrison, William L. and Allwein, Gerard and Gill, Andy and Procter, Adam},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Functional Programming,Asynchronous Behavior,Interrupt Service Routine,Left Unit,Natural Semantic},
+  pages = {153-176},
+  file = {/Users/doisinkidney/Zotero/storage/PCPN73GB/Harrison et al. - 2008 - Asynchronous Exceptions as an Effect.pdf}
+}
+
+@inproceedings{backhouse_capacity-c_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {The {{Capacity}}-{{C Torch Problem}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {The torch problem (also known as the bridge problem or the flashlight problem) is about getting a number of people across a bridge as quickly as possible under certain constraints. Although a very simply stated problem, the solution is surprisingly non-trivial. The case in which there are just four people and the capacity of the bridge is two is a well-known puzzle, widely publicised on the internet. We consider the general problem where the number of people, their individual crossing times and the capacity of the bridge are all input parameters. We present an algorithm that determines the shortest total crossing time; the number of primitive computations executed by the algorithm (i.e. the worst-case time complexity of the algorithm) is proportional to the square of the number of people.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Backhouse, Roland},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {dynamic programming,algorithmic problem solving,algorithm derivation,shortest path},
+  pages = {57-78},
+  file = {/Users/doisinkidney/Zotero/storage/TVQJAL4T/Backhouse - 2008 - The Capacity-C Torch Problem.pdf}
+}
+
+@inproceedings{nishimura_safe_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Safe {{Modification}} of {{Pointer Programs}} in {{Refinement Calculus}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {This paper discusses stepwise refinement of pointer programs in the framework of refinement calculus. We augment the underlying logic with formulas of separation logic and then introduce a pair of new predicate transformers, called separating assertion and separating assumption. The new predicate transformers are derived from separating conjunction and separating implication, which are fundamental logical connectives in separation logic. They represent primitive forms of heap allocation/deallocation operators and the basic pointer statements can be specified by means of them. We derive several refinement laws that are useful for stepwise refinement and demonstrate the use of the laws in the context of correctness preserving transformations that are intended for improved memory usage.The formal development is carried out in the framework of higher-order logic and is based on Back and Preoteasa's axiomatization of state space and its extension to the heap storage [BP05, Pre06]. All the results have been implemented and verified in the theorem prover PVS.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Nishimura, Susumu},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Predicate Transformer,Separation Logic,Local Scope,Pointer Program,Refinement Calculus},
+  pages = {284-304},
+  file = {/Users/doisinkidney/Zotero/storage/W4JPRF3A/Nishimura - 2008 - Safe Modification of Pointer Programs in Refinemen.pdf}
+}
+
+@inproceedings{regis-gianas_hoare_2008,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Hoare Logic}} for {{Call}}-by-{{Value Functional Programs}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {We present a Hoare logic for a call-by-value programming language equipped with recursive, higher-order functions, algebraic data types, and a polymorphic type system in the style of Hindley and Milner. It is the theoretical basis for a tool that extracts proof obligations out of programs annotated with logical assertions. These proof obligations, expressed in a typed, higher-order logic, are discharged using off-the-shelf automated or interactive theorem provers. Although the technical apparatus that we exploit is by now standard, its application to call-by-value functional programming languages appears to be new, and (we claim) deserves attention. As a sample application, we check the partial correctness of a balanced binary search tree implementation.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {{R\'egis-Gianas}, Yann and Pottier, Fran{\c c}ois},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Binary Search Tree,Proof Obligation,Hoare Logic,Interactive Theorem Prover,Logical Level},
+  pages = {305-335},
+  file = {/Users/doisinkidney/Zotero/storage/KEHJE3B3/Régis-Gianas and Pottier - 2008 - A Hoare Logic for Call-by-Value Functional Program.pdf}
+}
+
+@inproceedings{gibbons_unfolding_2008-1,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Unfolding {{Abstract Datatypes}}},
+  isbn = {978-3-540-70594-9},
+  abstract = {We argue that abstract datatypes \textemdash{} with public interfaces hiding private implementations \textemdash{} represent a form of codata rather than ordinary data, and hence that proof methods for corecursive programs are the appropriate techniques to use for reasoning with them. In particular, we show that the universal properties of unfold operators are perfectly suited for the task. We illustrate with solutions to two problems the solution to a problem in the recent literature.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Gibbons, Jeremy},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  keywords = {Pattern Match,Abstract Data Type,Proof Method,Recursive Type,Universal Property},
+  pages = {110-133},
+  file = {/Users/doisinkidney/Zotero/storage/B3WPZB2C/Gibbons - 2008 - Unfolding Abstract Datatypes.pdf}
+}
+
+@techreport{Hanus16Curry,
+  title = {Curry: {{An Integrated Functional Logic Language}} ({{Vers}}. 0.9.0)},
+  number = {0.9.0},
+  url = {https://www-ps.informatik.uni-kiel.de/currywiki/},
+  author = {Hanus (ed.), M.},
+  month = jan,
+  year = {2016},
+  file = {/Users/doisinkidney/Zotero/storage/ULIG3AX7/Hanus (ed.) - 2016 - Curry An Integrated Functional Logic Language (Ve.pdf},
+  howpublished = {Available at http://www.curry-language.org}
+}
+
+@misc{peebles_simple_2012,
+  title = {Simple Seemingly Impossible {{Agda}}},
+  abstract = {Simple seemingly impossible Agda. GitHub Gist: instantly share code, notes, and snippets.},
+  urldate = {2019-03-20},
+  url = {https://gist.github.com/copumpkin/1562804},
+  author = {Peebles, Dan},
+  month = jan,
+  year = {2012},
+  file = {/Users/doisinkidney/Zotero/storage/BBU9AUB2/1562804.html}
+}
+
+@misc{escardo_seemingly_2014,
+  title = {Seemingly Impossible Constructive Proofs | {{Mathematics}} and {{Computation}}},
+  language = {en-US},
+  urldate = {2019-03-20},
+  journal = {Mathematics and Computation},
+  url = {http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/},
+  author = {Escardo, Martin},
+  month = may,
+  year = {2014},
+  file = {/Users/doisinkidney/Zotero/storage/HL86FSMI/seemingly-impossible-proofs.html}
+}
+
+@article{escardo_infinite_2013-1,
+  title = {Infinite Sets That {{Satisfy}} the {{Principle}} of {{Omniscience}} in Any {{Variety}} of {{Constructive Mathematics}}},
+  volume = {78},
+  issn = {0022-4812, 1943-5886},
+  doi = {10.2178/jsl.7803040},
+  abstract = {We show that there are plenty of infinite sets that satisfy the omniscience principle, in a minimalistic setting for constructive mathematics that is compatible with classical mathematics. A first example of an omniscient set is the one-point compactification of the natural numbers, also known as the generic convergent sequence. We relate this to Grilliot's and Ishihara's Tricks. We generalize this example to many infinite subsets of the Cantor space. These subsets turn out to be ordinals in a constructive sense, with respect to the lexicographic order, satisfying both a well-foundedness condition with respect to decidable subsets, and transfinite induction restricted to decidable predicates. The use of simple types allows us to reach any ordinal below {$\epsilon$}Q, and richer type systems allow us to get higher.},
+  language = {en},
+  number = {3},
+  urldate = {2019-03-20},
+  journal = {The Journal of Symbolic Logic},
+  url = {https://www.cambridge.org/core/journals/journal-of-symbolic-logic/article/infinite-sets-that-satisfy-the-principle-of-omniscience-in-any-variety-of-constructive-mathematics/0D204ADE629B703578B848B8573FC83D},
+  author = {Escard\'o, Mart\'in H.},
+  month = sep,
+  year = {2013},
+  pages = {764-784},
+  file = {/Users/doisinkidney/Zotero/storage/CKLD89PY/Escardó - 2013 - Infinite sets that Satisfy the Principle of Omnisc.pdf;/Users/doisinkidney/Zotero/storage/PTKCLWTC/0D204ADE629B703578B848B8573FC83D.html}
 }
 
 
