@@ -4,8 +4,6 @@ tags: Agda, Haskell
 bibliography: Agda.bib
 ---
 
-# Number Representations
-
 When working with numbers in Agda, we usually use the following definition:
 
 <style>
@@ -48,6 +46,14 @@ suc x * y = y + (x * y)
 ```
 </div>
 </div>
+<div class="row">
+<div class="column">
+Haskell
+</div>
+<div class="column">
+Agda
+</div>
+</div>
 
 In Haskell it's less common, for obvious reasons:
 
@@ -56,10 +62,14 @@ In Haskell it's less common, for obvious reasons:
 | $n + m$      | $\mathcal{O}(n)$  |
 | $n \times m$ | $\mathcal{O}(nm)$ |
 
-Why not use built-in integers, then? Two reasons. First, Peano numbers have
-magical properties with regards to *laziness*. In both Haskell and Agda, this
-means they tend to be more "defined", or, in other words, they can produce some
-sensible output without ever looking at their input.
+Why use them at all, then? Well, in Agda, we need them so we can *prove* things
+about the natural numbers. Machine-level Integers are fast, but they're opaque:
+their implementation isn't written in Agda, and therefore it's not available for
+the compiler to reason about.
+
+In Haskell, they occasionally they occasionally find uses due to their
+*laziness*. This can help in Agda as well. By lazy here I mean that operations
+on them don't have to inspect the full structure before giving some output.
 
 <div class="row">
 <div class="column">
@@ -80,7 +90,7 @@ In Haskell, as we can see, this lets us run computations without scrutinising
 some arguments. Agda benefits similarly: here it lets the compiler see more
 "obvious" facts that it may have missed otherwise.
 
-It could be better, though.
+It's not *completely* lazy, though. In particular, it tends to be left-biased:
 
 <div class="row">
 <div class="column">
@@ -98,15 +108,23 @@ It could be better, though.
 </div>
 </div>
 
-It tends to be left-biased, examining the first argument in its entirety before
-looking at the second.
+Like Boolean short-circuiting operators, operations on Peano numbers will
+usually have to scrutinise the left-hand-side argument quite a bit before giving
+an output.
 
-Is there a way, then, to get the laziness and proof-theoretic benefits of a lazy
-number system, but in a more efficient way? Of course!
+So, Peano numbers are good because:
+
+#. We can prove things about them.
+#. They're lazy.
+
+In this post, I'm going to look at some other number representations that
+maintain these two desirable properties, while improving on the efficiency
+somewhat. 
 
 # List-of-Bits-Binary
 
-The first representation is the simplest:
+The first option for an improved representation is binary numbers. We can
+represent binary numbers as a list of bits:
 
 <div class="row">
 <div class="column">
@@ -126,25 +144,71 @@ data Bit : Set where O I : Bit
 </div>
 </div>
 
-It might seem strange to implement binary numbers with a singly-linked list, but
-it actually does the job pretty well. The time complexities make a dramatic
-improvement:
+As we're using these to represent natural numbers, we'll need to define a way to
+convert between them:
 
-| Operation    | Complexity                    |
-|--------------|-------------------------------|
-| $n + m$      | $\mathcal{O}(\log_2 n)$       |
-| $n \times m$ | $\mathcal{O}(\log_2 (n + m))$ |
+<div class="row">
+<div class="column">
+```haskell
+eval :: B -> N
+eval = foldr f Z
+  where
+    f O xs = xs + xs
+    f I xs = S (xs + xs)
 
-For use in proofs, though, it has a fatal flaw: trailing zeroes. This means that
-the same number can be represented by multiple lists, making any proofs
-significantly more complex. On to our next option:
+inc :: B -> B
+inc [] = [I]
+inc (O:xs) = I : xs
+inc (I:xs) = O : inc xs
+
+fromN :: N -> B
+fromN Z = []
+fromN (S n) = inc (fromN n)
+```
+</div>
+<div class="column">
+```agda
+⟦_⇓⟧ : 𝔹 → ℕ
+⟦_⇓⟧ = foldr (λ { O xs → xs + xs
+                ; I xs → suc (xs + xs) })
+             zero
+
+inc : 𝔹 → 𝔹
+inc [] = I ∷ []
+inc (O ∷ xs) = I ∷ xs
+inc (I ∷ xs) = O ∷ inc xs
+
+⟦_⇑⟧ : ℕ → 𝔹
+⟦ zero  ⇑⟧ = []
+⟦ suc n ⇑⟧ = inc ⟦ n ⇑⟧
+```
+</div>
+</div>
+
+And here we run into our first problem: redundancy. There are multiple ways to
+represent the same number according to the semantics defined above. We can
+actually prove this in Agda:
+
+```agda
+redundant : ∃₂ λ x y → x ≢ y × ⟦ x ⇓⟧ ≡ ⟦ y ⇓⟧
+redundant = [] , O ∷ [] , (λ ()) , refl
+```
+
+In English: "There are two binary numbers which are not the same, but which do
+evaluate to the same natural number". 
+(This proof was actually automatically filled in for me after writing the
+signature)
+
+This represents a huge problem for proofs. It means that even simple things like
+$x \times 0 = 0$ aren't true, depending on how multiplication is implemented. On
+to our next option:
 
 # List-of-Gaps-Binary
 
 Instead of looking at the bits directly, let's think about a binary number as a
-list of chunks of 0s, each followed by a 1. in this way, we simply *can't* have
-trailing zeroes, because the definition implies that every number other than 0
-ends in 1.
+list of chunks of 0s, each followed by a 1. 
+In this way, we simply *can't* have trailing zeroes, because the definition
+implies that every number other than 0 ends in 1.
 
 <div class="row">
 <div class="column">
@@ -161,10 +225,20 @@ type B = [Gap]
 </div>
 </div>
 
-This guarantees a unique representation, and has the same improved time
-complexity as before. Unfortunately, both of these
-representations---list-of-bits and list-of-gaps---have one important operation
-that is actually *slower* than on Peano numbers: increment.
+This guarantees a unique representation.
+As in the representation above, it has much improved time complexities for the
+familiar operations:
+
+| Operation    | Complexity                    |
+|--------------|-------------------------------|
+| $n + m$      | $\mathcal{O}(\log_2 n)$       |
+| $n \times m$ | $\mathcal{O}(\log_2 (n + m))$ |
+
+Encoding the zeroes as gaps also makes multiplication much faster in certain
+cases: multiplying by a high power of 2 is a constant-time operation, for
+instance.
+
+It does have one disadvantage, and it's to do with the increment function:
 
 <div class="row">
 <div class="column">
@@ -199,9 +273,10 @@ inc = uncurry _∷_ ∘ inc′
 </div>
 </div>
 
-On average, we do indeed get $\mathcal{O}(1)$ time: the worst-case can be
-$\mathcal{O}(\log_2 n)$, however. There are number of ways to get back that
-$\mathcal{O}(1)$ increment, the most famous of which being:
+With all of their problems, Peano numbers performed this operation in constant
+time. The above implementation is only *amortised* constant-time, though, with a
+worst case of $\mathcal{O}(\log_2 n)$.
+There are a number of ways to remedy this, the most famous being:
 
 # Skew Binary
 
@@ -239,7 +314,7 @@ Unfortunately, though, we've lost the other efficiencies! Addition and
 multiplication have no easy or direct encoding in this system, so we have to
 convert back and forth between this and regular binary to perform them.
 
-# List-of-Segments
+# List-of-Segments-Binary
 
 The key problem with incrementing in the normal binary system is that it can
 cascade: when we hit a long string of 1s, all the 1s become 0 followed by a
@@ -289,8 +364,46 @@ inc : 𝔹 → 𝔹
 inc x = 0< inc⁺ x
 ```
 
-The addition implementation is pretty complex, but it does indeed keep the
-complexity bounds as required.
+Perfect! Increments are obviously $\mathcal{O}(1)$, and we've guaranteed a
+unique representation.
+
+I've been working on this type for a couple of days, and you can see my code
+[here](https://github.com/oisdk/agda-binary/).
+So far, I've done the following:
+
+Defined `inc`, addition, and multiplication
+
+:   These were a little tricky to get right ([addition is particularly
+    hairy](https://github.com/oisdk/agda-binary/blob/master/Data/Binary/Operations/Addition.agda#L9)),
+    but they're all there, and maximally lazy.
+   
+Proved Homomorphism
+
+:   For each one of the functions, you want them to correspond precisely to the
+    equivalent functions on Peano numbers. Proving that fact amounts to filling
+    in definitions for the following:
+    
+    ```agda
+    inc-homo : ∀ x → ⟦ inc x ⇓⟧ ≡ suc ⟦ x ⇓⟧
+    +-homo : ∀ x y → ⟦ x + y ⇓⟧ ≡ ⟦ x ⇓⟧ + ⟦ y ⇓⟧
+    *-homo : ∀ x y → ⟦ x * y ⇓⟧ ≡ ⟦ x ⇓⟧ * ⟦ y ⇓⟧
+    ```
+     
+Proved Bijection
+
+:   As we went to so much trouble, it's important to prove that these numbers
+    form a one-to-one correspondence with the Peano numbers. As well as that,
+    once done, we can use it to prove facts about the homomorphic functions
+    above, by reusing any proofs about the same functions on Peano numbers. For
+    instance, here is a proof of commutativity of addition:
+
+    ```agda
+    +-comm : ∀ x y → x + y ≡ y + x
+    +-comm x y = injective (+-homo x y ⟨ trans ⟩
+                            ℕ.+-comm ⟦ x ⇓⟧ ⟦ y ⇓⟧ ⟨ trans ⟩
+                            sym (+-homo y x))
+    ```
+
 
 # Data Structures
 
