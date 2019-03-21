@@ -1,8 +1,10 @@
 ---
-title: Lazy Numbers and Infinite Search
+title: Lazy Binary Numbers
 tags: Agda, Haskell
 bibliography: Agda.bib
 ---
+
+# Number Representations
 
 When working with numbers in Agda, we usually use the following definition:
 
@@ -121,7 +123,7 @@ In this post, I'm going to look at some other number representations that
 maintain these two desirable properties, while improving on the efficiency
 somewhat. 
 
-# List-of-Bits-Binary
+## List-of-Bits-Binary
 
 The first option for an improved representation is binary numbers. We can
 represent binary numbers as a list of bits:
@@ -203,7 +205,7 @@ This represents a huge problem for proofs. It means that even simple things like
 $x \times 0 = 0$ aren't true, depending on how multiplication is implemented. On
 to our next option:
 
-# List-of-Gaps-Binary
+## List-of-Gaps-Binary
 
 Instead of looking at the bits directly, let's think about a binary number as a
 list of chunks of 0s, each followed by a 1. 
@@ -275,10 +277,11 @@ inc = uncurry _∷_ ∘ inc′
 
 With all of their problems, Peano numbers performed this operation in constant
 time. The above implementation is only *amortised* constant-time, though, with a
-worst case of $\mathcal{O}(\log_2 n)$.
+worst case of $\mathcal{O}(\log_2 n)$ 
+(same as the list-of-bits version).
 There are a number of ways to remedy this, the most famous being:
 
-# Skew Binary
+## Skew Binary
 
 This encoding has three digits: 0, 1, and 2. To guarantee a unique
 representation, we add the condition that there can be at most one 2 in the
@@ -314,7 +317,7 @@ Unfortunately, though, we've lost the other efficiencies! Addition and
 multiplication have no easy or direct encoding in this system, so we have to
 convert back and forth between this and regular binary to perform them.
 
-# List-of-Segments-Binary
+## List-of-Segments-Binary
 
 The key problem with incrementing in the normal binary system is that it can
 cascade: when we hit a long string of 1s, all the 1s become 0 followed by a
@@ -404,47 +407,110 @@ Proved Bijection
                             sym (+-homo y x))
     ```
 
+# Applications
 
-# Data Structures
+So now that we have our nice number representation, what can we do with it?
+One use is as a general-purpose number type in Agda: it represents a good
+balance between speed and "proofiness", and Coq uses a similar type in its
+standard library.
 
-All of these systems are described in Okasaki [-@okasaki_purely_1999, chapter
-9.2], where they're used as the basis of data structures. The segmented
-representation is the only one which isn't explored in detail: apparently it
-works less well as a data structure.
+There are other, more unusual uses of such a type, though.
 
-# Logic Programming
+## Data Structures
 
-Logic programming languages like Prolog allows us to write programs in a truly
-declarative way: we say what we want, and the language tries to give it to us.
-In a sense, Haskell already has a built-in bare-bones logic language: the list
-monad. 
+It's a well-known technique to build a data structure out of some number
+representation [@hinze_numerical_1998]: in fact, all of the representations
+above are explored in Okasaki [-@okasaki_purely_1999, chapter 9.2].
+
+## Logic Programming
+
+Logic programming languages like Prolog let us write programs in a backwards
+kind of way. We say what the output looks like, and the unifier will figure out
+the set of inputs that generates it.
+
+In Haskell, we have a very rough approximation of a similar system: the list
+monad.
 
 ```haskell
 pyth :: [(Int,Int,Int)]
 pyth = do
-  x <- [1..]
-  y <- [1..]
-  z <- [1..]
+  x <- [1..10]
+  y <- [1..10]
+  z <- [1..10]
   guard (x*x + y*y == z*z)
   return (x,y,z)
 ```
 
-Unfortunately, it's *really* bare-bones: the example above won't even produce an
-output. The problem is that we're performing depth-first search: because the
-first list is infinite, we'll never get to the next value for `y`, and never
-find a solution.
+There are tons of inefficiencies in the above code: for us, though, we can look
+at one: the number representation. In the equation:
 
-Even if we fix things by using a different monad instance for `[]`, there are
-still areas we can improve, especially with laziness in mind.
+$$x^2 + y^2 = z^2$$
 
-Looking again at the triples above:
+If we know that $x$ and $y$ are both odd, then $z$ must be even. If the
+calculation of the equation is expensive, this is precisely the kind of shortcut
+we'd want to take advantage of. Luckily, our binary numbers do just that: it is
+enough to scrutinise just the first bits of $x$ and $y$ in order to determine
+the first bit of the output.
 
-$$ x^2 + y^2 = z^2 $$
+After seeing that example, you may be thinking that lazy evaluation is a perfect
+fit for logic programming.
+You're not alone! Curry [@Hanus16Curry] is a lazy, functional logic programming
+language, with a similar syntax to Haskell. It also uses lazy binary numbers to
+optimise testing.
 
-We can notice, for instance, that if $x$ and $y$ are odd, then $z$ must be even.
-In other words, we can skip the squaring and addition steps if we first
-recognise 
+## Lazy Predicates
 
-# Lazy Arithmetic, P-Adic Arithmetic Coding, etc
-# Curry
-# Hilbert
+In order for queries to be performed efficiently on binary numbers, we will also
+need a way to describe lazy *predicates* on them. A lot of these predicates are
+more easily expressible on the list-of-bits representation above, so we'll be
+working with that representation for this bit. Not to worry, though: we can
+convert from the segmented representation into the list-of-bits, and [we can
+prove that the conversion is
+injective](https://github.com/oisdk/agda-binary/blob/fb89ba5ae3b2aa0cb95301da42c8dbf27048181b/Data/Binary/Bits.agda#L52):
+
+```agda
+toBits-injective : ∀ xs ys → toBits xs ≡ toBits ys → xs ≡ ys
+```
+
+Here's the curious problem: since our binary numbers are expressed
+least-significant-bit-first, we have to go to the end before knowing which is
+bigger. Luckily, we can use one of my favourite Haskell tricks, involving the
+ordering monoid:
+
+```agda
+data Ordering : Set where
+  lt eq gt : Ordering
+
+_∙_ : Ordering → Ordering → Ordering
+lt ∙ y = lt
+eq ∙ y = y
+gt ∙ y = gt
+
+cmpBit : Bit → Bit → Ordering
+cmpBit O O = eq
+cmpBit O I = lt
+cmpBit I O = gt
+cmpBit I I = eq
+
+compare : Bits → Bits → Ordering
+compare [] [] = eq
+compare [] (_ ∷ _) = lt
+compare (_ ∷ _) [] = gt
+compare (x ∷ xs) (y ∷ ys) = compare xs ys ∙ cmpBit x y
+```
+
+Thanks to laziness, this function first compares the length of the lists, and
+then does a lexicographical comparison in reverse only if the lengths are the
+same. This is exactly what we want for our numbers.
+
+# Future Posts
+
+That's all I have for now, but I'm interested to formalise the laziness of these
+numbers in Agda. Usually that's done with coinduction: I would also like to see
+the relationship with exact real arithmetic.
+
+I wonder if it can be combined with @oconnor_applications_2016 to get some
+efficient proof search algorithms, or with @escardo_seemingly_2014 to get more
+efficient exhaustive search.
+
+# References
