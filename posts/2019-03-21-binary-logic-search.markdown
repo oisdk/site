@@ -65,11 +65,11 @@ In Haskell it's less common, for obvious reasons:
 | $n \times m$ | $\mathcal{O}(nm)$ |
 
 Why use them at all, then? Well, in Agda, we need them so we can *prove* things
-about the natural numbers. Machine-level Integers are fast, but they're opaque:
+about the natural numbers. Machine-level integers are fast, but they're opaque:
 their implementation isn't written in Agda, and therefore it's not available for
 the compiler to reason about.
 
-In Haskell, they occasionally they occasionally find uses due to their
+In Haskell, they occasionally find uses due to their
 *laziness*. This can help in Agda as well. By lazy here I mean that operations
 on them don't have to inspect the full structure before giving some output.
 
