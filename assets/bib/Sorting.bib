@@ -1,18 +1,54 @@
 
 @article{brown_building_2014,
-	title = {Building a {Balanced} k-d {Tree} in {O}(kn log n) {Time}},
-	volume = {4},
-	url = {http://arxiv.org/abs/1410.5420},
-	abstract = {The original description of the k-d tree recognized that rebalancing techniques, such as are used to build an AVL tree or a red-black tree, are not applicable to a k-d tree. Hence, in order to build a balanced k-d tree, it is necessary to find the median of the data for each recursive subdivision of those data. The sort or selection that is used to find the median for each subdivision strongly influences the computational complexity of building a k-d tree. This paper discusses an alternative algorithm that builds a balanced k-d tree by presorting the data in each of k dimensions prior to building the tree. It then preserves the order of these k sorts during tree construction and thereby avoids the requirement for any further sorting. Moreover, this algorithm is amenable to parallel execution via multiple threads. Compared to an algorithm that finds the median for each recursive subdivision, this presorting algorithm has equivalent performance for four dimensions and better performance for three or fewer dimensions.},
-	language = {en},
-	number = {1},
-	urldate = {2018-04-18},
-	journal = {arXiv:1410.5420 [cs]},
-	author = {Brown, Russell A.},
-	month = oct,
-	year = {2014},
-	note = {arXiv: 1410.5420},
-	keywords = {Computer Science - Data Structures and Algorithms},
-	pages = {19},
-	file = {arXiv\:1410.5420 PDF:files/3929/Brown - 2014 - Building a Balanced k-d Tree in O(kn log n) Time.pdf:application/pdf;arXiv.org Snapshot:files/3930/1410.html:text/html;Brown - 2015 - Building a Balanced k-d Tree in O(kn log n) Time.pdf:files/3998/Brown - 2015 - Building a Balanced k-d Tree in O(kn log n) Time.pdf:application/pdf}
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1410.5420},
+  primaryClass = {cs},
+  title = {Building a {{Balanced}} K-d {{Tree}} in {{O}}(Kn Log n) {{Time}}},
+  volume = {4},
+  abstract = {The original description of the k-d tree recognized that rebalancing techniques, such as are used to build an AVL tree or a red-black tree, are not applicable to a k-d tree. Hence, in order to build a balanced k-d tree, it is necessary to find the median of the data for each recursive subdivision of those data. The sort or selection that is used to find the median for each subdivision strongly influences the computational complexity of building a k-d tree. This paper discusses an alternative algorithm that builds a balanced k-d tree by presorting the data in each of k dimensions prior to building the tree. It then preserves the order of these k sorts during tree construction and thereby avoids the requirement for any further sorting. Moreover, this algorithm is amenable to parallel execution via multiple threads. Compared to an algorithm that finds the median for each recursive subdivision, this presorting algorithm has equivalent performance for four dimensions and better performance for three or fewer dimensions.},
+  language = {en},
+  number = {1},
+  journal = {arXiv:1410.5420 [cs]},
+  note = {\url{http://arxiv.org/abs/1410.5420}},
+  author = {Brown, Russell A.},
+  month = oct,
+  year = {2014},
+  keywords = {Computer Science - Data Structures and Algorithms},
+  pages = {19},
+  file = {/Users/doisinkidney/Zotero/storage/8DUXYIUX/Brown - 2014 - Building a Balanced k-d Tree in O(kn log n) Time.pdf;/Users/doisinkidney/Zotero/storage/SPSN744B/Brown - 2015 - Building a Balanced k-d Tree in O(kn log n) Time.pdf;/Users/doisinkidney/Zotero/storage/LYJ89Z5V/1410.html}
 }
+
+@incollection{hinze_duality_2013,
+  address = {Berlin, Heidelberg},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Duality}} of {{Sorts}}},
+  isbn = {978-3-642-40355-2},
+  abstract = {Sorting algorithms are one of the key pedagogical foundations of computer science, and their properties have been studied heavily. Perhaps less well known, however, is the fact that many of the basic sorting algorithms exist as a pair, and that these pairs arise naturally out of the duality between folds and unfolds. In this paper, we make this duality explicit, by showing how to define common sorting algorithms as folds of unfolds, or, dually, as unfolds of folds. This duality is preserved even when considering optimised sorting algorithms that require more exotic variations of folds and unfolds, and intermediary data structures. While all this material arises naturally from a categorical modelling of these recursion schemes, we endeavour to keep this presentation accessible to those not versed in abstract nonsense.},
+  language = {en},
+  booktitle = {The {{Beauty}} of {{Functional Code}}: {{Essays Dedicated}} to {{Rinus Plasmeijer}} on the {{Occasion}} of {{His}} 61st {{Birthday}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  note = {\url{https://doi.org/10.1007/978-3-642-40355-2_11}},
+  author = {Hinze, Ralf and Magalh\~aes, Jos\'e Pedro and Wu, Nicolas},
+  editor = {Achten, Peter and Koopman, Pieter},
+  year = {2013},
+  keywords = {Empty List,Functional Programming,Input List,Recursion Scheme,Sorting Algorithm},
+  pages = {151-167},
+  file = {/Users/doisinkidney/Zotero/storage/3UL5VLKK/Hinze et al. - 2013 - A Duality of Sorts.pdf},
+  doi = {10.1007/978-3-642-40355-2_11}
+}
+
+@misc{kiselyov_provably_2002,
+  title = {Provably Perfect Random Shuffling and Its Pure Functional Implementations},
+  abstract = {We show two purely functional programs that perfectly, randomly and uniformly shuffle a sequence of arbitrary elements. We prove that the algorithms are correct. We also show why a commonly used sort-based shuffling algorithm is not perfect.
+
+The article first formally defines the perfect random shuffle, outlines the algorithm, and discusses the well-known imperative shuffler that swaps elements in the array. We present and analyze two purely functional implementations. The naive one runs in O(n\^2) time. A more sophisticated code has the O(n*logn) time complexity. The article contains the full code to arrange a sequence in a complete binary tree and to extract an arbitrary element from the tree maintaining the completeness of the remaining tree.},
+  journal = {http://okmij.org},
+  howpublished = {\url{http://okmij.org/ftp/Haskell/AlgorithmsH.html\#perfect-shuffle}},
+  author = {Kiselyov, Oleg},
+  month = jul,
+  year = {2002},
+  file = {/Users/doisinkidney/Zotero/storage/IRVM2D46/AlgorithmsH.html}
+}
+
+
