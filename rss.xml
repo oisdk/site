@@ -7,8 +7,167 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Thu, 21 Mar 2019 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sun, 24 Mar 2019 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Permutations By Sorting</title>
+    <link>https://doisinkidney.com/posts/2019-03-24-permutations-by-sorting.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on March 24, 2019
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>, <a href="/tags/Agda.html">Agda</a>
+    
+</div>
+
+<p>A naive—and wrong—way to shuffle a list is to assign each element in the list a random number, and then sort it. It might not be immediately obvious why: <span class="citation" data-cites="kiselyov_provably_2002">Kiselyov (<a href="#ref-kiselyov_provably_2002">2002</a>)</span> has a good explanation as to the problem. One way to think about it is like this: choosing <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> random numbers each in the range <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">[0,n)</annotation></semantics></math> has <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>n</mi><mi>n</mi></msup><annotation encoding="application/x-tex">n^n</annotation></semantics></math> possible outcomes, whereas there are <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math> permutations: these don’t necessarily divide evenly into each other, so you’re going to have some bias.</p>
+<h1 id="factorial-numbers">Factorial Numbers</h1>
+<p>The first part of the fix is to figure out a way to get some random data that has only <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math> possible values. The trick here will be to mimic the structure of a factorial itself: taking <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>, the previous technique would have yielded:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>=</mo><msup><mn>5</mn><mn>5</mn></msup></mrow><annotation encoding="application/x-tex">5 \times 5 \times 5 \times 5 \times 5 = 5^5</annotation></semantics></math></p>
+<p>possible values. But we want:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo>×</mo><mn>4</mn><mo>×</mo><mn>3</mn><mo>×</mo><mn>2</mn><mo>×</mo><mn>1</mn><mo>=</mo><mn>5</mn><mi>!</mi></mrow><annotation encoding="application/x-tex">5 \times 4 \times 3 \times 2 \times 1 = 5!</annotation></semantics></math></p>
+<p>The solution is simple, then! Simply decrement the range by one for each position in the output list. In Haskell:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">nums ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Int</span>]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">nums <span class="dv">0</span> <span class="fu">=</span> pure []</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">nums n <span class="fu">=</span> (<span class="fu">:</span>) <span class="fu">&lt;$&gt;</span> randomR (<span class="dv">0</span>,n) <span class="fu">&lt;*&gt;</span> nums (n<span class="fu">-</span><span class="dv">1</span>)</a></code></pre></div>
+<p>As an aside, what we’ve done here is constructed a list of digits in the <a href="https://en.wikipedia.org/wiki/Factorial_number_system">factorial number system</a>.</p>
+<h1 id="sorts">Sorts</h1>
+<p>Unfortunately, while we’ve figured out a way to get properly distributed random data, we can’t yet sort it to shuffle our list. If we look at the 6 factorial numbers generated for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>, we can see the problem:</p>
+<pre><code>000
+010
+100
+110
+200
+210</code></pre>
+<p>Different values in the list will produce the same sort: <code>100</code> and <code>200</code>, for instance.</p>
+<h1 id="lehmer-codes">Lehmer Codes</h1>
+<p>We need a way to map the numbers above to a particular permutations: that’s precisely the problem solved by <a href="https://en.wikipedia.org/wiki/Lehmer_code">Lehmer codes</a>. For the numbers <code>110</code>, we can think of each digit as the relative position to put that item from the string into. Some Haskell code might make it clear:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">insert ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">insert <span class="dv">0</span> x xs <span class="fu">=</span> x <span class="fu">:</span> xs</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">insert i x (y<span class="fu">:</span>ys) <span class="fu">=</span> y <span class="fu">:</span> insert (i<span class="fu">-</span><span class="dv">1</span>) x ys</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">shuffle xs ys <span class="fu">=</span> foldr (uncurry insert) [] (zip ys xs)</a></code></pre></div>
+<p>And we can step through its execution:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">shuffle <span class="st">&quot;abc&quot;</span> [<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>]</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">foldr (uncurry insert) [] [(<span class="dv">1</span>,<span class="ch">&#39;a&#39;</span>),(<span class="dv">1</span>,<span class="ch">&#39;b&#39;</span>),(<span class="dv">0</span>,<span class="ch">&#39;c&#39;</span>)]</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">insert <span class="dv">1</span> <span class="ch">&#39;a&#39;</span> (insert <span class="dv">1</span> <span class="ch">&#39;b&#39;</span> (insert <span class="dv">0</span> <span class="ch">&#39;c&#39;</span> []))</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">insert <span class="dv">1</span> <span class="ch">&#39;a&#39;</span> (insert <span class="dv">1</span> <span class="ch">&#39;b&#39;</span> <span class="st">&quot;c&quot;</span>)</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">insert <span class="dv">1</span> <span class="ch">&#39;a&#39;</span> <span class="st">&quot;cb&quot;</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="ch">&#39;c&#39;</span> <span class="fu">:</span> insert <span class="dv">0</span> <span class="ch">&#39;a&#39;</span> <span class="st">&quot;b&quot;</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="st">&quot;cab&quot;</span></a></code></pre></div>
+<h1 id="dualities-of-sorts">Dualities of Sorts</h1>
+<p>Notice the similarity of the function above to a standard insertion sort:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">insert x [] <span class="fu">=</span> x <span class="fu">:</span> xs</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">insert x (y<span class="fu">:</span>ys)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"> <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> x <span class="fu">:</span> y <span class="fu">:</span> ys</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"> <span class="fu">|</span> otherwise <span class="fu">=</span> y <span class="fu">:</span> insert x ys</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="ot">insertSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">insertSort <span class="fu">=</span> foldr insert []</a></code></pre></div>
+<p>The “comparison” is a little strange—we have to take into account relative position—but the shape is almost identical. Once I spot something like that, my first thought is to see if the relationship extends to a better <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math> sort, but there’s something else I’d like to look at first.</p>
+<p>“A Duality of Sorts” <span class="citation" data-cites="hinze_duality_2013">(Hinze, Magalhães, and Wu <a href="#ref-hinze_duality_2013">2013</a>)</span> is a paper based on the interesting symmetry between insertion sort and selection sort <span class="citation" data-cites="haran_sorting_2016">(There’s also a video of Graham Hutton explaining the idea; Haran <a href="#ref-haran_sorting_2016">2016</a>)</span>.</p>
+<p>With that paper in mind, can we rewrite <code>shuffle</code> as a selection-based algorithm? We can indeed!</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">pop ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [(<span class="dt">Int</span>,a)])</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">pop [] <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">pop ((<span class="dv">0</span>,x)<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">Just</span> (x, xs)</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">pop ((i,x)<span class="fu">:</span>xs) <span class="fu">=</span> (fmap<span class="fu">.</span>fmap) ((i<span class="fu">-</span><span class="dv">1</span>,x)<span class="fu">:</span>) (pop xs)</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">shuffle xs ys <span class="fu">=</span> unfoldr pop (zip ys xs)</a></code></pre></div>
+<p>While the symmetry is pleasing, the paper details how to make the relationship explicit, using the same function for both selection and insertion sort:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1">swop <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">swop (<span class="dt">Cons</span> a (x , <span class="dt">Nil</span>)) <span class="fu">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">swop (<span class="dt">Cons</span> a (x , <span class="dt">Cons</span> b x&#39;))</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  <span class="fu">|</span> fst a <span class="fu">==</span> <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  <span class="fu">|</span> otherwise  <span class="fu">=</span> <span class="dt">Cons</span> b (<span class="dt">Right</span> (<span class="dt">Cons</span> (first pred a) x&#39;))</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">  </a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="ot">ishuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">ishuffle <span class="fu">=</span> cata (apo (swop <span class="fu">.</span> fmap (id <span class="fu">&amp;&amp;&amp;</span> project)))</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"><span class="ot">sshuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">sshuffle <span class="fu">=</span> ana (para (fmap (id <span class="fu">|||</span> embed) <span class="fu">.</span> swop))</a></code></pre></div>
+<h1 id="improved-efficiency">Improved Efficiency</h1>
+<p>So now we have to upgrade our sorts: in the paper, merge sort is the more efficient sort chosen, similarly to what I chose <a href="2018-12-21-balancing-scans.html#random-shuffles">previously</a>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">merge [] ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">merge xs [] <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">merge ((x,i)<span class="fu">:</span>xs) ((y,j)<span class="fu">:</span>ys)</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">  <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> (x,i) <span class="fu">:</span> merge xs ((y,j<span class="fu">-</span>i)<span class="fu">:</span>ys)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">  <span class="fu">|</span> otherwise <span class="fu">=</span> (y,j) <span class="fu">:</span> merge ((x,i<span class="fu">-</span>j<span class="fu">-</span><span class="dv">1</span>)<span class="fu">:</span>xs) ys</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">  </a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">treeFold f <span class="fu">=</span> go</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">    go x [] <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">    go a (b<span class="fu">:</span>l) <span class="fu">=</span> go (f a b) (pairMap l)</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">    pairMap (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap rest</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">    pairMap xs <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">    </a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">shuffle xs inds <span class="fu">=</span> map fst <span class="fu">$</span> treeFold merge [] <span class="fu">$</span> map pure <span class="fu">$</span> zip xs inds</a></code></pre></div>
+<p>However, I feel like merge sort is an upgrade of <em>insertion</em> sort, not selection sort. Indeed, if you do the “split” step of merge sort badly, i.e. by splitting very unevenly, merge sort in fact <em>becomes</em> insertion sort!</p>
+<p>So there’s a missing bit of this table:</p>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: center;">Insertion</th>
+<th style="text-align: center;">Selection</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math></td>
+<td style="text-align: center;">Insertion sort</td>
+<td style="text-align: center;">Selection sort</td>
+</tr>
+<tr class="even">
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math></td>
+<td style="text-align: center;">Merge sort</td>
+<td style="text-align: center;">???</td>
+</tr>
+</tbody>
+</table>
+<p>I think it’s clear that quicksort is the algorithm that fits in there: again, done badly it degrades to selection sort (if you intentionally pick the pivot to be the worst element possible, i.e. the smallest element).</p>
+<p>There are more symmetries: merge sort splits the lists using their structure, and merges them using the ordering of the elements. Quicksort is the opposite, merging by concatenation, but splitting using order. Finally, in merge sort adjacent elements are in the correct order after the recursive call, but the two sides of the split are not. Again, quicksort is precisely the opposite: adjacent elements have not been compared (<em>before</em> the recursive call), but the two sides of the split are correctly ordered.</p>
+<p>Anyway, I haven’t yet formalised this duality (and I don’t know if I can), but we <em>can</em> use it to produce a quicksort-based shuffle algorithm:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1">partition <span class="fu">=</span> foldr f (const ([],[]))</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">    f (y,j) ys i</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">      <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> fmap  ((y,j<span class="fu">-</span>i)<span class="fu">:</span>) (ys i)</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">      <span class="fu">|</span> otherwise <span class="fu">=</span> first ((y,j)<span class="fu">:</span>) (ys (i<span class="fu">-</span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">      </a>
+<a class="sourceLine" id="cb9-7" data-line-number="7"><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">shuffle xs ys <span class="fu">=</span> go (zip xs ys)</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">    go [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">    go ((x,i)<span class="fu">:</span>xs) <span class="fu">=</span> <span class="kw">case</span> partition xs i <span class="kw">of</span></a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">        (ls,rs) <span class="ot">-&gt;</span> go ls <span class="fu">++</span> [x] <span class="fu">++</span> go rs</a></code></pre></div>
+<p>That’s all for this post! The algorithms can all be translated into Agda or Idris: I’m currently working on a way to represent permutations that isn’t <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math> using them. If I figure out a way to properly dualise quicksort and merge sort I’ll do a small write up as well <span class="citation" data-cites="hinze_sorting_2012">(I’m currently working my way through Hinze et al. <a href="#ref-hinze_sorting_2012">2012</a> for ideas)</span>. Finally, I’d like to explore some other sorting algorithms as permutation algorithms: sorting networks seem especially related to “permutations by swapping”.</p>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-haran_sorting_2016">
+<p>Haran, Brady. 2016. “Sorting Secret.” <a href="https://www.youtube.com/watch?v=pcJHkWwjNl4" class="uri">https://www.youtube.com/watch?v=pcJHkWwjNl4</a>.</p>
+</div>
+<div id="ref-hinze_sorting_2012">
+<p>Hinze, Ralf, Daniel W.H. James, Thomas Harper, Nicolas Wu, and José Pedro Magalhães. 2012. “Sorting with bialgebras and distributive laws.” In <em>Proceedings of the 8th ACM SIGPLAN workshop on Generic programming - WGP ’12</em>, 69. Copenhagen, Denmark: ACM Press. doi:<a href="https://doi.org/10.1145/2364394.2364405">10.1145/2364394.2364405</a>.</p>
+</div>
+<div id="ref-hinze_duality_2013">
+<p>Hinze, Ralf, José Pedro Magalhães, and Nicolas Wu. 2013. “A Duality of Sorts.” In <em>The Beauty of Functional Code: Essays Dedicated to Rinus Plasmeijer on the Occasion of His 61st Birthday</em>, ed by. Peter Achten and Pieter Koopman, 151–167. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer Berlin Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-40355-2_11">10.1007/978-3-642-40355-2_11</a>.</p>
+</div>
+<div id="ref-kiselyov_provably_2002">
+<p>Kiselyov, Oleg. 2002. “Provably perfect random shuffling and its pure functional implementations.” <em>http://okmij.org</em>. <a href="http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle" class="uri">http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle</a>.</p>
+</div>
+</div>
+]]></description>
+    <pubDate>Sun, 24 Mar 2019 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2019-03-24-permutations-by-sorting.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Lazy Binary Numbers</title>
     <link>https://doisinkidney.com/posts/2019-03-21-binary-logic-search.html</link>
     <description><![CDATA[<div class="info">
@@ -368,13 +527,13 @@
 <p>Escardo, Martin. 2014. “Seemingly impossible constructive proofs | Mathematics and Computation.” <em>Mathematics and Computation</em>. <a href="http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/" class="uri">http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/</a>.</p>
 </div>
 <div id="ref-Hanus16Curry">
-<p>Hanus (ed.), M. 2016. <em>Curry: An Integrated Functional Logic Language (Vers. 0.9.0)</em>. Available at http://www.curry-language.org. <a href="https://www-ps.informatik.uni-kiel.de/currywiki/" class="uri">https://www-ps.informatik.uni-kiel.de/currywiki/</a>.</p>
+<p>Hanus (ed.), M. 2016. <em>Curry: An Integrated Functional Logic Language (Vers. 0.9.0)</em>. Available at http://www.curry-language.org.</p>
 </div>
 <div id="ref-hinze_numerical_1998">
-<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5" class="uri">http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5</a>.</p>
+<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn.</p>
 </div>
 <div id="ref-oconnor_applications_2016">
-<p>O’Connor, Liam. 2016. “Applications of Applicative Proof Search.” In <em>Proceedings of the 1st International Workshop on Type-Driven Development</em>, 43–55. TyDe 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2976022.2976030">10.1145/2976022.2976030</a>. <a href="http://doi.acm.org/10.1145/2976022.2976030" class="uri">http://doi.acm.org/10.1145/2976022.2976030</a>.</p>
+<p>O’Connor, Liam. 2016. “Applications of Applicative Proof Search.” In <em>Proceedings of the 1st International Workshop on Type-Driven Development</em>, 43–55. TyDe 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2976022.2976030">10.1145/2976022.2976030</a>.</p>
 </div>
 <div id="ref-okasaki_purely_1999">
 <p>Okasaki, Chris. 1999. <em>Purely Functional Data Structures</em>. Cambridge University Press.</p>
@@ -551,19 +710,19 @@ sub lagda2tex {
 <p>It tells us where the size of the bound variable will end up in the outer expression.</p>
 <div id="refs" class="references">
 <div id="ref-danielsson_lightweight_2008">
-<p>Danielsson, Nils Anders. 2008. “Lightweight Semiformal Time Complexity Analysis for Purely Functional Data Structures.” In <em>Proceedings of the 35th Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages</em>, 133–144. POPL ’08. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1328438.1328457">10.1145/1328438.1328457</a>. <a href="http://www.cse.chalmers.se/~nad/publications/danielsson-popl2008.pdf" class="uri">http://www.cse.chalmers.se/~nad/publications/danielsson-popl2008.pdf</a>.</p>
+<p>Danielsson, Nils Anders. 2008. “Lightweight Semiformal Time Complexity Analysis for Purely Functional Data Structures.” In <em>Proceedings of the 35th Annual ACM SIGPLAN-SIGACT Symposium on Principles of Programming Languages</em>, 133–144. POPL ’08. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1328438.1328457">10.1145/1328438.1328457</a>.</p>
 </div>
 <div id="ref-hinze_simple_2001">
-<p>Hinze, Ralf. 2001. “A Simple Implementation Technique for Priority Search Queues.” In <em>Proceedings of the 2001 International Conference on Functional Programming</em>, 110–121. ACM Press. doi:<a href="https://doi.org/10.1145/507635.507650">10.1145/507635.507650</a>. <a href="https://www.cs.ox.ac.uk/people/ralf.hinze/publications/\#P14" class="uri">https://www.cs.ox.ac.uk/people/ralf.hinze/publications/\#P14</a>.</p>
+<p>Hinze, Ralf. 2001. “A Simple Implementation Technique for Priority Search Queues.” In <em>Proceedings of the 2001 International Conference on Functional Programming</em>, 110–121. ACM Press. doi:<a href="https://doi.org/10.1145/507635.507650">10.1145/507635.507650</a>.</p>
 </div>
 <div id="ref-Hinze-Paterson:FingerTree">
-<p>Hinze, Ralf, and Ross Paterson. 2006. “Finger Trees: A Simple General-purpose Data Structure.” <em>Journal of Functional Programming</em> 16 (2): 197–217. <a href="http://www.staff.city.ac.uk/~ross/papers/FingerTree.html" class="uri">http://www.staff.city.ac.uk/~ross/papers/FingerTree.html</a>.</p>
+<p>Hinze, Ralf, and Ross Paterson. 2006. “Finger Trees: A Simple General-purpose Data Structure.” <em>Journal of Functional Programming</em> 16 (2): 197–217.</p>
 </div>
 <div id="ref-mu_queueing_2016">
-<p>Mu, Shin-Cheng, Yu-Hsi Chiang, and Yu-Han Lyu. 2016. “Queueing and Glueing for Optimal Partitioning (Functional Pearl).” In <em>Proceedings of the 21st ACM SIGPLAN International Conference on Functional Programming</em>, 158–167. ICFP 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2951913.2951923">10.1145/2951913.2951923</a>. <a href="https://www.iis.sinica.edu.tw/~scm/pub/queueing-glueing.pdf" class="uri">https://www.iis.sinica.edu.tw/~scm/pub/queueing-glueing.pdf</a>.</p>
+<p>Mu, Shin-Cheng, Yu-Hsi Chiang, and Yu-Han Lyu. 2016. “Queueing and Glueing for Optimal Partitioning (Functional Pearl).” In <em>Proceedings of the 21st ACM SIGPLAN International Conference on Functional Programming</em>, 158–167. ICFP 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2951913.2951923">10.1145/2951913.2951923</a>.</p>
 </div>
 <div id="ref-sozeau_program-ing_2007">
-<p>Sozeau, Matthieu. 2007. “Program-ing Finger Trees in Coq.” In <em>Proceedings of the 12th ACM SIGPLAN International Conference on Functional Programming</em>, 13–24. ICFP ’07. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1291151.1291156">10.1145/1291151.1291156</a>. <a href="https://www.irif.fr/~sozeau/research/publications/Program-ing_Finger_Trees_in_Coq.pdf" class="uri">https://www.irif.fr/~sozeau/research/publications/Program-ing_Finger_Trees_in_Coq.pdf</a>.</p>
+<p>Sozeau, Matthieu. 2007. “Program-ing Finger Trees in Coq.” In <em>Proceedings of the 12th ACM SIGPLAN International Conference on Functional Programming</em>, 13–24. ICFP ’07. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1291151.1291156">10.1145/1291151.1291156</a>.</p>
 </div>
 </div>
 ]]></description>
@@ -829,10 +988,10 @@ sub lagda2tex {
 <p>Finally, it might be worth trying out different priority queues (a pairing heap is very similar in structure to this). Also, we could rearrange the weights so that larger ones are higher in each tree: this might give a performance boost.</p>
 <div id="refs" class="references">
 <div id="ref-lampropoulos_ode_2017">
-<p>Lampropoulos, Leonidas, Antal Spector-Zabusky, and Kenneth Foner. 2017. “Ode on a random urn (functional pearl).” In, 26–37. ACM Press. doi:<a href="https://doi.org/10.1145/3122955.3122959">10.1145/3122955.3122959</a>. <a href="https://www.cis.upenn.edu/~llamp/pdf/urns.pdf" class="uri">https://www.cis.upenn.edu/~llamp/pdf/urns.pdf</a>.</p>
+<p>Lampropoulos, Leonidas, Antal Spector-Zabusky, and Kenneth Foner. 2017. “Ode on a random urn (functional pearl).” In, 26–37. ACM Press. doi:<a href="https://doi.org/10.1145/3122955.3122959">10.1145/3122955.3122959</a>.</p>
 </div>
 <div id="ref-okasaki_three_1997">
-<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf" class="uri">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
+<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>.</p>
 </div>
 </div>
 <section class="footnotes">
@@ -1264,19 +1423,19 @@ sub lagda2tex {
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-allison_circular_2006">
-<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/" class="uri">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
+<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>.</p>
 </div>
 <div id="ref-kiselyov_pure-functional_2002">
-<p>Kiselyov, Oleg. 2002. “Pure-functional transformations of cyclic graphs and the Credit Card Transform.” <a href="http://okmij.org/ftp/Haskell/AlgorithmsH.html\#ccard-transform" class="uri">http://okmij.org/ftp/Haskell/AlgorithmsH.html\#ccard-transform</a>.</p>
+<p>Kiselyov, Oleg. 2002. “Pure-functional transformations of cyclic graphs and the Credit Card Transform.” <a href="http://okmij.org/ftp/Haskell/AlgorithmsH.html#ccard-transform" class="uri">http://okmij.org/ftp/Haskell/AlgorithmsH.html#ccard-transform</a>.</p>
 </div>
 <div id="ref-mokhov_algebraic_2017">
-<p>Mokhov, Andrey. 2017. “Algebraic Graphs with Class (Functional Pearl).” In <em>Proceedings of the 10th ACM SIGPLAN International Symposium on Haskell</em>, 2–13. Haskell 2017. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/3122955.3122956">10.1145/3122955.3122956</a>. <a href="http://doi.acm.org/10.1145/3122955.3122956" class="uri">http://doi.acm.org/10.1145/3122955.3122956</a>.</p>
+<p>Mokhov, Andrey. 2017. “Algebraic Graphs with Class (Functional Pearl).” In <em>Proceedings of the 10th ACM SIGPLAN International Symposium on Haskell</em>, 2–13. Haskell 2017. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/3122955.3122956">10.1145/3122955.3122956</a>.</p>
 </div>
 <div id="ref-okasaki_breadth-first_2000">
-<p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>. <a href="https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf" class="uri">https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf</a>.</p>
+<p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>.</p>
 </div>
 <div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf" class="uri">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28.</p>
 </div>
 </div>
 ]]></description>
@@ -1971,16 +2130,16 @@ sub lagda2tex {
 <h1 id="references" class="unnumbered">References</h1>
 <div id="refs" class="references">
 <div id="ref-bakst_liquidhaskell_2018">
-<p>Bakst, Alexander, Ranjit Jhala, Ming Kawaguchi, Patrick Rondon, Eric Seidel, Michael Smith, Anish Tondwalkar, Chris Tetreault, and Niki Vazou. 2018. “LiquidHaskell: Liquid Types For Haskell.” ucsd-progsys. <a href="https://github.com/ucsd-progsys/liquidhaskell" class="uri">https://github.com/ucsd-progsys/liquidhaskell</a>.</p>
+<p>Bakst, Alexander, Ranjit Jhala, Ming Kawaguchi, Patrick Rondon, Eric Seidel, Michael Smith, Anish Tondwalkar, Chris Tetreault, and Niki Vazou. 2018. “LiquidHaskell: Liquid Types For Haskell.” ucsd-progsys.</p>
 </div>
 <div id="ref-ben-amram_pointers_1992">
-<p>Ben-Amram, Amir M., and Zvi Galil. 1992. “On Pointers Versus Addresses.” <em>J. ACM</em> 39 (3) (July): 617–648. doi:<a href="https://doi.org/10.1145/146637.146666">10.1145/146637.146666</a>. <a href="http://doi.acm.org/10.1145/146637.146666" class="uri">http://doi.acm.org/10.1145/146637.146666</a>.</p>
+<p>Ben-Amram, Amir M., and Zvi Galil. 1992. “On Pointers Versus Addresses.” <em>J. ACM</em> 39 (3) (July): 617–648. doi:<a href="https://doi.org/10.1145/146637.146666">10.1145/146637.146666</a>.</p>
 </div>
 <div id="ref-breitner_ready_2018-1">
-<p>Breitner, Joachim, Antal Spector-Zabusky, Yao Li, Christine Rizkallah, John Wiegley, and Stephanie Weirich. 2018. “Ready, Set, Verify! Applying Hs-to-coq to Real-world Haskell Code (Experience Report).” <em>Proc. ACM Program. Lang.</em> 2 (ICFP) (July): 89:1–89:16. doi:<a href="https://doi.org/10.1145/3236784">10.1145/3236784</a>. <a href="http://doi.acm.org/10.1145/3236784" class="uri">http://doi.acm.org/10.1145/3236784</a>.</p>
+<p>Breitner, Joachim, Antal Spector-Zabusky, Yao Li, Christine Rizkallah, John Wiegley, and Stephanie Weirich. 2018. “Ready, Set, Verify! Applying Hs-to-coq to Real-world Haskell Code (Experience Report).” <em>Proc. ACM Program. Lang.</em> 2 (ICFP) (July): 89:1–89:16. doi:<a href="https://doi.org/10.1145/3236784">10.1145/3236784</a>. <a href="http://arxiv.org/abs/1803.06960" class="uri">http://arxiv.org/abs/1803.06960</a>.</p>
 </div>
 <div id="ref-hinze_numerical_1998">
-<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5" class="uri">http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5</a>.</p>
+<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn.</p>
 </div>
 <div id="ref-hinze_perfect_1999">
 <p>———. 1999. <em>Perfect Trees and Bit-reversal Permutations</em>.</p>
@@ -1989,22 +2148,22 @@ sub lagda2tex {
 <p>Komuves, Balazs, and Peter Divianszky. 2016. “Nested-sequence: List-like data structures with O(Log(n)) random access.” <a href="http://hackage.haskell.org/package/nested-sequence" class="uri">http://hackage.haskell.org/package/nested-sequence</a>.</p>
 </div>
 <div id="ref-mcbride_how_2014">
-<p>McBride, Conor Thomas. 2014. “How to Keep Your Neighbours in Order.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 297–309. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>. <a href="https://personal.cis.strath.ac.uk/conor.mcbride/pub/Pivotal.pdf" class="uri">https://personal.cis.strath.ac.uk/conor.mcbride/pub/Pivotal.pdf</a>.</p>
+<p>McBride, Conor Thomas. 2014. “How to Keep Your Neighbours in Order.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 297–309. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>.</p>
 </div>
 <div id="ref-might_missing_2015">
 <p>Might, Matthew. 2015. “Missing method: How to delete from Okasaki’s red-black trees.” <em>matt.might.net</em>. <a href="http://matt.might.net/articles/red-black-delete/" class="uri">http://matt.might.net/articles/red-black-delete/</a>.</p>
 </div>
 <div id="ref-okasaki_fast_1999">
-<p>Okasaki, Chris. 1999a. “From Fast Exponentiation to Square Matrices: An Adventure in Types.” In <em>Proceedings of the ACM SIGPLAN International Conference on Functional Programming (ICFP’99), Paris, France, September 27-29, 1999</em>, 34:28. ACM. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.456.357\&amp;rep=rep1\&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.456.357\&amp;rep=rep1\&amp;type=pdf</a>.</p>
+<p>Okasaki, Chris. 1999a. “From Fast Exponentiation to Square Matrices: An Adventure in Types.” In <em>Proceedings of the ACM SIGPLAN International Conference on Functional Programming (ICFP’99), Paris, France, September 27-29, 1999</em>, 34:28. ACM.</p>
 </div>
 <div id="ref-okasaki_purely_1999">
 <p>———. 1999b. <em>Purely Functional Data Structures</em>. Cambridge University Press.</p>
 </div>
 <div id="ref-weirich_depending_2014">
-<p>Weirich, Stephanie. 2014. “Depending on Types.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 241–241. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>. <a href="https://www.cis.upenn.edu/~sweirich/talks/icfp14.pdf" class="uri">https://www.cis.upenn.edu/~sweirich/talks/icfp14.pdf</a>.</p>
+<p>Weirich, Stephanie. 2014. “Depending on Types.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 241–241. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>.</p>
 </div>
 <div id="ref-weirich_dependent_2017">
-<p>———. 2017. “Dependent Types in Haskell.” St. Louis, MO, USA. <a href="https://www.youtube.com/watch?v=wNa3MMbhwS4" class="uri">https://www.youtube.com/watch?v=wNa3MMbhwS4</a>.</p>
+<p>———. 2017. “Dependent Types in Haskell.” St. Louis, MO, USA: <a href="https://www.youtube.com/watch?v=wNa3MMbhwS4" class="uri">https://www.youtube.com/watch?v=wNa3MMbhwS4</a>.</p>
 </div>
 </div>
 ]]></description>
@@ -2137,10 +2296,10 @@ sub lagda2tex {
 <p>I haven’t tried a huge amount to optimize the function, but it might be worth looking in to how to add back the wheels. I noticed that for no wheels, the queue contains only two elements per key; for one (the 2 wheel), we needed 3. I wonder if this pattern continues: possibly we could represent wheels as finite lists at each key in the queue. Maybe in a later post.</p>
 <div id="refs" class="references">
 <div id="ref-haran_infinity_2018">
-<p>Haran, Brady. 2018. “To Infinity &amp; Beyond - Computerphile.” <a href="https://www.youtube.com/watch?v=bnRNiE_OVWA\&amp;feature=youtu.be" class="uri">https://www.youtube.com/watch?v=bnRNiE_OVWA\&amp;feature=youtu.be</a>.</p>
+<p>Haran, Brady. 2018. “To Infinity &amp; Beyond - Computerphile.” <a href="https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be" class="uri">https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be</a>.</p>
 </div>
 <div id="ref-oneill_genuine_2009">
-<p>O’Neill, Melissa E. 2009. “The Genuine Sieve of Eratosthenes.” <em>Journal of Functional Programming</em> 19 (01) (January): 95. doi:<a href="https://doi.org/10.1017/S0956796808007004">10.1017/S0956796808007004</a>. <a href="https://pdfs.semanticscholar.org/b7d6/7986e54f852de25e2d803472f31fb53184d5.pdf" class="uri">https://pdfs.semanticscholar.org/b7d6/7986e54f852de25e2d803472f31fb53184d5.pdf</a>.</p>
+<p>O’Neill, Melissa E. 2009. “The Genuine Sieve of Eratosthenes.” <em>Journal of Functional Programming</em> 19 (01) (January): 95. doi:<a href="https://doi.org/10.1017/S0956796808007004">10.1017/S0956796808007004</a>.</p>
 </div>
 </div>
 ]]></description>
