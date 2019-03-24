@@ -10,8 +10,8 @@ It might not be immediately obvious why: @kiselyov_provably_2002 has a good
 explanation as to the problem.
 One way to think about it is like this: choosing $n$ random numbers each in the
 range $[0,n)$ has $n^n$
-possible outcomes, whereas there are $n!$ permutations: these don't necessarily
-divide evenly into each other, so you're going to have some bias.
+possible outcomes, whereas there are $n!$ permutations. Since these don't necessarily
+divide evenly into each other, you're going to have some bias.
 
 # Factorial Numbers
 
