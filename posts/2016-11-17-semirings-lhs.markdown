@@ -488,7 +488,8 @@ data FreeF f a b
 type FreeNearSemiring f = FreeT f []
 ```
 
-These definitions all lend themselves to combinatorial search [@spivey_algebras_2009, @fischer_reinventing_2009, @piponi_monad_2009], with one extra operation needed: `wrap`{.haskell}.
+These definitions all lend themselves to combinatorial search
+[@spivey_algebras_2009; @fischer_reinventing_2009; @piponi_monad_2009], with one extra operation needed: `wrap`{.haskell}.
 
 ## Odds
 

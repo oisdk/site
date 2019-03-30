@@ -1,6 +1,7 @@
 ---
 title: Lazy Binary Numbers
 tags: Agda, Haskell
+series: Binary Numbers
 bibliography: Agda.bib
 ---
 
