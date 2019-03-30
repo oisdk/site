@@ -347,7 +347,7 @@
 <a class="sourceLine" id="cb38-6" data-line-number="6">  <span class="fu">|</span> <span class="dt">Free</span> (f b)</a>
 <a class="sourceLine" id="cb38-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb38-8" data-line-number="8"><span class="kw">type</span> <span class="dt">FreeNearSemiring</span> f <span class="fu">=</span> <span class="dt">FreeT</span> f []</a></code></pre></div>
-<p>These definitions all lend themselves to combinatorial search <span class="citation" data-cites="spivey_algebras_2009">(Spivey <a href="#ref-spivey_algebras_2009">2009</a>, <span class="citation" data-cites="fischer_reinventing_2009">@fischer_reinventing_2009</span>, <span class="citation" data-cites="piponi_monad_2009">@piponi_monad_2009</span>)</span>, with one extra operation needed: <code class="sourceCode haskell">wrap</code>.</p>
+<p>These definitions all lend themselves to combinatorial search <span class="citation" data-cites="spivey_algebras_2009 fischer_reinventing_2009 piponi_monad_2009">(Spivey <a href="#ref-spivey_algebras_2009">2009</a>; Fischer <a href="#ref-fischer_reinventing_2009">2009</a>; Piponi <a href="#ref-piponi_monad_2009">2009</a>)</span>, with one extra operation needed: <code class="sourceCode haskell">wrap</code>.</p>
 <h2 id="odds">Odds</h2>
 <p>Does the <a href="../posts/2016-09-27-odds-lhs.html">odds monad</a> fit in to any of this?</p>
 <p>While <code class="sourceCode haskell"><span class="dt">WriterT</span> (<span class="dt">Product</span> <span class="dt">Rational</span>) []</code> is a valid definition of the traditional probability monad, it’s <em>not</em> the same as the odds monad. If you take the odds monad, and parameterize it over the weight of the tail, you get this:</p>
