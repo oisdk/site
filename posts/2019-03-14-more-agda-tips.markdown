@@ -67,8 +67,8 @@ file, the LaTeX won't automatically recompile it. However, based on
 stack exchange answer, you can put the following `.latexmkrc` file in the same
 directory as your `.lagda` files and your `.tex` file:
 
-```
-add_cus_dep('lagda','tex',1,'lagda2tex');
+```perl
+add_cus_dep('lagda','tex',0,'lagda2tex');
 
 sub lagda2tex {
     my $base = shift @_;
@@ -76,11 +76,38 @@ sub lagda2tex {
 }
 ```
 
-This will recompile the literate Agda files whenever they're changed. Just make
-sure to run `agda --latex --output-dir=.` once for every literate Agda file when
-you initially set up the document. After that, latexmk will take over and do it
-automatically, but the `.tex` files need to be present initially for it to
-recognise the dependency.
+This will recompile the literate Agda files whenever they're changed.
+Unfortunately, it doesn't automate it the *first* time you do it: it needs to
+see the `.tex` files to see the dependency.
+You can fix this yourself, by running `agda --latex --output-dir=.` when you add
+a new `.lagda` file (just once, after that the automation will take over), or
+you can use a script like the following:
+
+```bash
+#!/bin/bash
+find . -type f -name '*.lagda' | while read -r code ; do
+    dir=$(dirname "$code")
+    file=$(basename "$code" .lagda).tex
+    if [ ! -e "$dir/$file" ]
+    then
+        agda --latex --latex-dir=. "$code"
+    fi
+done
+```
+
+This will compile any `.lagda` file it finds that *doesn't* have a corresponding
+`.tex` file (so it won't slow things down). 
+Then call that script on the first line of your `.latexmkrc`, like so:
+
+```perl
+system("bash ./init-missing-lagda.sh");
+add_cus_dep('lagda','tex',0,'lagda2tex');
+
+sub lagda2tex {
+    my $base = shift @_;
+    return system('agda', '--latex', '--latex-dir=.', "$base.lagda");
+}
+```
 
 # Flags for Debugging
 
