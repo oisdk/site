@@ -1,0 +1,283 @@
+---
+title: Agda Beginner(-ish) Tips, Tricks, and Pitfalls
+tags: Agda
+series: Agda Tips
+---
+
+I'm in the middle of quite a large Agda project at the moment, and I've picked
+up a few tips and tricks in the past few weeks. I'd imagine a lot of these are
+quite obvious once you get to grips with Agda, so I'm writing them down before I
+forget that they were once confusing stumbling blocks. Hopefully this helps
+other people trying to learn the language!
+
+# Parameterized Modules Strangeness
+
+Agda lets you parameterize modules, just as you can datatypes, with types,
+values, etc. It's extremely handy for those situations where you want to be
+generic over some type, but that type won't change inside the generic code. The
+keys to dictionaries is a good example: you can start the module with:
+
+```agda
+module Map (Key : Set) (Ordering : Ord Key) where
+```
+
+And now, where in Haskell you'd have to write something like `Ord a => Map a`...
+in pretty much any function signature, you can just refer to `Key`, and you're
+good to go. It's kind of like a dynamic type synonym, in that way.
+
+Here's the strangeness, though: what if you don't supply one of the arguments?
+
+```agda
+import Map
+```
+
+This won't give you a type error, strange as it may seem. This will perform
+*lambda lifting*, meaning that now, every function exported by the module will
+have the type signature:
+
+```agda
+(Key : Set) (Ordering : Ord Key) ...
+```
+
+Preceding its normal signature. In other words, it changes it into what you
+would have had to write in Haskell.
+
+This is a powerful feature, but it can also give you some confusing errors if
+you don't know about it (especially if the module has implicit arguments).
+
+# Auto
+
+If you've got a hole in your program, you can put the cursor in it and press
+`SPC-m-a` (in spacemacs), and Agda will try and find the automatic solution to
+the problem. For a while, I didn't think much of this feature, as rare was the
+program which Agda could figure out. Turns out I was just using it wrong! Into
+the hole you should type the options for the proof search: enabling
+case-splitting (`-c`), enabling the use of available definitions (`-r`), and
+listing possible solutions (`-l`).
+
+# Well-Founded Recursion
+
+Often, a program will not be obviously terminating (according to Agda's
+termination checker). The first piece of advice is this: *don't* use
+well-founded recursion. It's a huge hammer, and often you can get away with
+fiddling with the function (try inlining definitions, rewriting generic
+functions to monomorphic versions, or replacing with-blocks with helper
+functions), or using one of the [more lightweight
+techniques](https://gallais.github.io/blog/termination-tricks.html) out there.
+
+However, sometimes it really is the best option, so you have to grit your teeth
+and use it. What I expected (and what I used originally) was a recursion
+combinator, with a type something like:
+
+```agda
+wf-rec : ∀ {a b} {A : Set a} {B : Set b}
+       → ((x : A) → ((y : A) → y < x → B) → B)
+       → A → B
+```
+
+So we're trying to generate a function of type `A → B`, but there's a hairy
+recursive call in there somewhere. Instead we use this function, and pass it a
+version of our function that uses the supplied function rather than making a
+recursive call:
+
+```agda
+terminating : A → B
+terminating = wf-rec (λ x recursive-call → ...)
+```
+
+In other words, instead of calling the function itself, you call
+`recursive-call` above. Along with the argument, you supply a proof that it's
+smaller than the outer argument (`y < x`; assume for now that the definition of
+`<` is just some relation like [`_<_` in
+Data.Nat](https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L31)).
+
+But wait! You don't have to use it! Instead of all that, you can just  pass the
+`Acc _<_ x` type as a parameter to your function. In other words, if you have a
+dangerous function:
+
+```agda
+f : A → B
+```
+
+Instead write:
+
+```agda
+f-step : (x : A) → Acc _<_ x → B
+f-step = ...
+
+f : A → B
+f x = f-step x ...
+```
+
+Once you pattern match on the accessibility relation, the termination checker is
+satisfied. This is much easier to understand (for me anyway), and made it *much*
+easier to write proofs about it.
+
+Thanks to [Oleg Grenrus (phadej)](http://oleg.fi) on irc for helping me out with
+this! Funnily enough, he actually recommended the `Acc` approach, and I instead
+originally went with the recursion combinator. Would have saved a couple hours
+if I'd just listened! Also worth mentioning is the approach recommended by
+[Guillaume Allais (gallais)](https://gallais.github.io), detailed
+[here](https://gallais.github.io/agdarsec/Induction.Nat.Strong.html). Haven't
+had time to figure it out, so this article may be updated to recommend it
+instead in the future.
+
+# Don't Touch The Green Slime!
+
+This one is really important. If I hadn't read the exact explanation
+[here](https://twitter.com/pigworker/status/1013535783234473984) I think I may
+have given up with Agda (or at the very least the project I'm working on) out of
+frustration.
+
+Basically the problem arises like this. Say you're writing a function to split a
+vector in two. You can specify the type pretty precisely:
+
+```agda
+split : ∀ {a n m} {A : Set a} → Vec A (n + m) → Vec A n × Vec A m
+split xs = {!!}
+```
+
+Try to pattern-match on `xs`, though, and you'll get the following error:
+
+```agda
+I'm not sure if there should be a case for the constructor [],
+because I get stuck when trying to solve the following unification
+problems (inferred index ≟ expected index):
+  zero ≟ n + m
+when checking that the expression ? has type Vec .A .n × Vec .A .m
+```
+
+What?! That's weird. Anyway, you fiddle around with the function, end up pattern
+matching on the `n` instead, and continue on with your life.
+
+What about this, though: you want to write a type for proofs that one number is
+less than or equal to another. You go with something like this:
+
+```agda
+infix 4 _≤_
+data _≤_ (n : ℕ) : ℕ → Set where
+  proof : ∀ k → n ≤ n + k
+```
+
+And you want to use it in a proof. Here's the example we'll be using: if two
+numbers are less than some limit `u`, then their maximum is also less than that
+limit:
+
+```agda
+max : ℕ → ℕ → ℕ
+max zero m = m
+max (suc n) zero = suc n
+max (suc n) (suc m) = suc (max n m)
+
+max-≤ : ∀ n m {u} → n ≤ u → m ≤ u → max n m ≤ u
+max-≤ n m (proof k) m≤u = {!!}
+```
+
+It won't let you match on `m≤u`! Here's the error:
+
+```agda
+I'm not sure if there should be a case for the constructor proof,
+because I get stuck when trying to solve the following unification
+problems (inferred index ≟ expected index):
+  m₁ + k₂ ≟ n₁ + k₁
+when checking that the expression ? has type max n m ≤ n + k
+```
+
+What do you *mean* you're not sure if there's a case for the constructor
+`proof`: it's the *only* case!
+
+The problem is that Agda is trying to *unify* two types who both have calls to
+user-defined functions in them, which is a hard problem. As phrased by Conor
+McBride:
+
+> When combining prescriptive and descriptive indices, ensure both are in
+> constructor form. Exclude defined functions which yield difficult
+> unification problems.
+
+So if you ever get the "I'm not sure if..." error, try either to:
+
+#. Redefine the indices so they use constructors, not functions.
+#. Remove the index, instead having a proof inside the type of equality. What
+does that mean? Basically, transform the definition of `≤` above into [the one
+in
+Data.Nat](https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L72-L76).
+
+# Inspect
+
+The use-case I had for this is a little long, I'm afraid (too long to include
+here), but it *did* come in handy. Basically, if you're trying to prove
+something about a function, you may well want to *run* that function and pattern
+match on the result.
+
+```agda
+f-is-the-same-as-g : ∀ x → f x ≡ g x
+f-is-the-same-as-g x with f x
+f-is-the-same-as-g x | y = {!!}
+```
+
+This is a little different from the normal way of doing things, where you'd
+pattern match on the argument. It is a pattern you'll sometimes need to write,
+though. And here's the issue: that `y` has nothing to do with `f x`, as far as
+Agda is concerned. All you've done is introduced a new variable, and that's
+that.
+
+This is exactly the problem
+[`inspect`](https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Relation/Binary/PropositionalEquality.agda#L111-L113)
+solves: it runs your function, giving you a result, but *also* giving you a
+proof that the result is equal to running the function. You use it like this:
+
+```agda
+f-is-the-same-as-g : ∀ x → f x ≡ g x
+f-is-the-same-as-g x with f x | inspect f x
+f-is-the-same-as-g x | y | [ fx≡y ] = {!!}
+```
+
+# SPC-G-G
+
+Because the Agda standard library is a big fan of type synonyms (`Op₂ A` instead
+of `A → A → A` for example), it's handy to know that pressing `SPC-G-G` (in
+spacemacs) over any identifier will bring you to the definition. Also, you can
+normalize a type with `SPC-m-n`.
+
+# Irrelevance
+
+This one is a little confusing, because Agda's notion of "irrelevance" is
+different from Idris', or Haskell's. In all three languages, irrelevance is used
+for performance: it means that a value doesn't need to be around at runtime, so
+the compiler can elide it.
+
+That's where the similarities stop though. In Haskell, *all* types are
+irrelevant: they're figments of the typechecker's imagination. You can't get a
+type at runtime full stop.
+
+In dependently typed languages, this isn't a distinction we can rely on. The
+line between runtime entities and compile-time entities is drawn elsewhere, so
+quite often types *need* to exist at runtime. As you might guess, though, they
+don't always need to. The length of a length-indexed vector, for instance, is
+completely determined by the structure of the vector: why would you bother
+storing all of that information at runtime? This is what Idris recognizes, and
+what it tries to remedy: it analyses code for these kinds of opportunities for
+elision, and does so when it can. Kind of like Haskell's fusion, though, it's an
+invisible optimization, and there's no way to make Idris throw a type error when
+it can't elide something you want it to elide.
+
+Agda is totally different. Something is irrelevant in Agda if it's *unique*. Or,
+rather, it's irrelevant if all you rely on is its existence. It's used for
+proofs that you carry around with you: in a rational number type, you might use
+it to say that the numerator and denominator have no common factors. The only
+information you want from this proof is whether it holds or not, so it's the
+perfect candidate for irrelevance.
+
+Weirdly, this means it's useless for the length-indexed vector kind of stuff
+mentioned above. In fact, it doe exactly the opposite of what you might expect:
+if the length parameter is marked as irrelevant, the the types `Vec A n` and
+`Vec A (suc n)` are the same!
+
+The way you *can* use it is to pattern-match if it's impossible. Again, it's
+designed for eliding proofs that you may carry with you otherwise.
+
+# Future Tips
+
+Once I'm finished the project, I'll try write up a guide on how to do literate
+Agda files. There were a couple of weird nuances that I had to pick up on the
+way, mainly to do with getting unicode to work.

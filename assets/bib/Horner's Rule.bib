@@ -1,0 +1,1224 @@
+
+@inproceedings{brady_inductive_2004,
+  series = {{{LNCS}}},
+  title = {Inductive {{Families Need Not Store Their Indices}}},
+  volume = {3085},
+  booktitle = {Types for {{Proofs}} and {{Programs}}, {{Torino}}, 2003},
+  publisher = {{Springer-Verlag}},
+  author = {Brady, Edwin and McBride, Conor and McKinna, James},
+  editor = {Berardi, Stefano and Coppo, Mario and Damiani, Ferrucio},
+  year = {2004},
+  keywords = {Alternative Implementation,Dependent Type,Elimination Rule,Functional Language,Type Theory},
+  pages = {115-129},
+  file = {/Users/doisinkidney/Zotero/storage/9Y2NHXFZ/Brady et al. - 2004 - Inductive Families Need Not Store Their Indices.pdf}
+}
+
+@inproceedings{rivas_monoids_2015,
+  title = {From Monoids to Near-Semirings: The Essence of {{MonadPlus}} and {{Alternative}}},
+  isbn = {978-1-4503-3516-4},
+  shorttitle = {From Monoids to Near-Semirings},
+  doi = {10.1145/2790449.2790514},
+  abstract = {It is well-known that monads are monoids in the category of endo-functors, and in fact so are applicative functors. Unfortunately, the benefits of this unified view are lost when the additional non-determinism structure of |MonadPlus| or |Alternative| is required.
+
+This article recovers the essence of these two type classes by extending monoids to near-semirings with both additive and multiplicative structure. This unified algebraic view enables us to generically define the free construction as well as a novel double Cayley representation that optimises both left-nested sums and left-nested products.},
+  language = {en},
+  booktitle = {Proceedings of the 17th {{International Symposium}} on {{Principles}} and {{Practice}} of {{Declarative Programming}}},
+  publisher = {{ACM}},
+  author = {Rivas, Exequiel and Jaskelioff, Mauro and Schrijvers, Tom},
+  year = {2015},
+  pages = {196-207},
+  file = {/Users/doisinkidney/Zotero/storage/TQ2SUXE7/Rivas et al. - From monoids to near-semirings the essence of Mon.pdf}
+}
+
+@article{brady_idris_2013,
+  title = {Idris, a General-Purpose Dependently Typed Programming Language: {{Design}} and Implementation},
+  volume = {23},
+  issn = {1469-7653},
+  doi = {10.1017/S095679681300018X},
+  number = {05},
+  journal = {Journal of Functional Programming},
+  author = {Brady, Edwin},
+  month = sep,
+  year = {2013},
+  pages = {552--593},
+  file = {/Users/doisinkidney/Zotero/storage/AJNPHXQQ/impldtp.pdf}
+}
+
+@phdthesis{eisenberg_dependent_2016,
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1610.07978},
+  title = {Dependent {{Types}} in {{Haskell}}: {{Theory}} and {{Practice}}},
+  shorttitle = {Dependent {{Types}} in {{Haskell}}},
+  abstract = {Haskell, as implemented in the Glasgow Haskell Compiler (GHC), has been adding new type-level programming features for some time. Many of these features---chiefly: generalized algebraic datatypes (GADTs), type families, kind polymorphism, and promoted datatypes---have brought Haskell to the doorstep of dependent types. Many dependently typed programs can even currently be encoded, but often the constructions are painful. In this dissertation, I describe Dependent Haskell, which supports full dependent types via a backward-compatible extension to today's Haskell. An important contribution of this work is an implementation, in GHC, of a portion of Dependent Haskell, with the rest to follow. The features I have implemented are already released, in GHC 8.0. This dissertation contains several practical examples of Dependent Haskell code, a full description of the differences between Dependent Haskell and today's Haskell, a novel type-safe dependently typed lambda-calculus (called Pico) suitable for use as an intermediate language for compiling Dependent Haskell, and a type inference and elaboration algorithm, Bake, that translates Dependent Haskell to type-correct Pico.},
+  language = {en},
+  school = {University of Pennsylvania},
+  author = {Eisenberg, Richard A.},
+  month = oct,
+  year = {2016},
+  keywords = {Computer Science - Programming Languages},
+  file = {/Users/doisinkidney/Zotero/storage/NNSJJDCD/Eisenberg - Dependent Types in Haskell Theory and Practice.pdf;/Users/doisinkidney/Zotero/storage/SMC3TBG8/Eisenberg - 2016 - Dependent Types in Haskell Theory and Practice.pdf;/Users/doisinkidney/Zotero/storage/M9UDD9JG/1610.html;/Users/doisinkidney/Zotero/storage/XTQICH4T/summary.html}
+}
+
+@article{gibbons_metamorphisms_2007,
+  title = {Metamorphisms: {{Streaming Representation}}-{{Changers}}},
+  volume = {65},
+  doi = {10.1016/j.scico.2006.01.006},
+  abstract = {Unfolds generate data structures, and folds consume them. A hylomorphism is a fold after an unfold, generating then consuming a virtual data structure. A metamorphism is the opposite composition, an unfold after a fold; typically, it will convert from one data representation to another. In general, metamorphisms are less interesting than hylomorphisms: there is no automatic fusion to deforest the intermediate virtual data structure. However, under certain conditions fusion is possible: some of the work of the unfold can be done before all of the work of the fold is complete. This permits streaming metamorphisms, and among other things allows conversion of infinite data representations. We present a theory of metamorphisms and outline some examples.},
+  language = {en},
+  number = {2},
+  journal = {Science of Computer Programming},
+  author = {Gibbons, Jeremy},
+  year = {2007},
+  pages = {108-139},
+  file = {/Users/doisinkidney/Zotero/storage/DXL5Y9FC/Gibbons - Metamorphisms Streaming Representation-Changers.pdf}
+}
+
+@article{claessen_quickcheck_2011,
+  title = {{{QuickCheck}}: {{A Lightweight Tool}} for {{Random Testing}} of {{Haskell Programs}}},
+  volume = {46},
+  issn = {0362-1340},
+  shorttitle = {{{QuickCheck}}},
+  doi = {10.1145/1988042.1988046},
+  abstract = {QuickCheck is a tool which aids the Haskell programmer in formulating and testing properties of programs. Properties are discribed as Haskell functions, and can be automatically tested on random input, but it is also possible to define custom test data generators. We present a number of case studies, in which the tool was successfully used, and also point out some pitfalls to avoid. Random testing is especially suitable for functional programs because properties can be stated at a fine grain. When a function is built from separately tested components, then random testing suffuces to obtain good coverage of the definition under test.},
+  number = {4},
+  journal = {SIGPLAN Not.},
+  author = {Claessen, Koen and Hughes, John},
+  month = may,
+  year = {2011},
+  pages = {53--64},
+  file = {/Users/doisinkidney/Zotero/storage/2CXEEKFA/f613080f69d4d3e005f0133c64d44a5bb902.pdf}
+}
+
+@article{mu_theory_2004,
+  series = {Mathematics of {{Program Construction}} ({{MPC}} 2002)},
+  title = {Theory and Applications of Inverting Functions as Folds},
+  volume = {51},
+  issn = {0167-6423},
+  doi = {10.1016/j.scico.2003.09.003},
+  abstract = {This paper is devoted to the proof, applications, and generalisation of a theorem, due to Bird and de Moor, that gave conditions under which a total function can be expressed as a relational fold. The theorem is illustrated with three problems, all dealing with constructing trees with various properties. It is then generalised to give conditions under which the inverse of a partial function can be expressed as a relational hylomorphism. Its proof makes use of Doornbos and Backhouse's theory on well-foundedness and reductivity. Possible applications of the generalised theorem is discussed.},
+  language = {en},
+  number = {1},
+  journal = {Science of Computer Programming},
+  author = {Mu, Shin-Cheng and Bird, Richard},
+  month = may,
+  year = {2004},
+  keywords = {Fold,Program derivation,Program inversion},
+  pages = {87-116},
+  file = {/Users/doisinkidney/Zotero/storage/3BIIK589/Mu and Bird - 2004 - Theory and applications of inverting functions as .pdf;/Users/doisinkidney/Zotero/storage/847R7SZS/Mu and Bird - 2004 - Theory and applications of inverting functions as .pdf;/Users/doisinkidney/Zotero/storage/2YTKFEZQ/S0167642304000140.html}
+}
+
+@misc{bakst_liquidhaskell_2018,
+  title = {{{LiquidHaskell}}: {{Liquid Types For Haskell}}},
+  shorttitle = {{{LiquidHaskell}}},
+  howpublished = {ucsd-progsys},
+  author = {Bakst, Alexander and Jhala, Ranjit and Kawaguchi, Ming and Rondon, Patrick and Seidel, Eric and Smith, Michael and Tondwalkar, Anish and Tetreault, Chris and Vazou, Niki},
+  month = feb,
+  year = {2018}
+}
+
+@inproceedings{goos_rebuilding_2003,
+  address = {Berlin, Heidelberg},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Rebuilding a {{Tree}} from {{Its Traversals}}},
+  volume = {2895},
+  isbn = {978-3-540-20536-4 978-3-540-40018-9},
+  shorttitle = {Rebuilding a {{Tree}} from {{Its Traversals}}},
+  abstract = {Given the inorder and preorder traversal of a binary tree whose labels are all distinct, one can reconstruct the tree. This article examines two existing algorithms for rebuilding the tree in a functional framework, using existing theory on function inversion. We also present a new, although complicated, algorithm by trying another possibility not explored before.},
+  language = {en},
+  booktitle = {Programming {{Languages}} and {{Systems}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Mu, Shin-Cheng and Bird, Richard},
+  editor = {Goos, Gerhard and Hartmanis, Juris and {van Leeuwen}, Jan and Ohori, Atsushi},
+  year = {2003},
+  keywords = {Binary Tree,Function Inversion,Functional Inverse,Program Inversion,Spine Representation},
+  pages = {265-282},
+  file = {/Users/doisinkidney/Zotero/storage/KIH6JYTC/Mu and Bird - 2003 - Rebuilding a Tree from Its Traversals.pdf;/Users/doisinkidney/Zotero/storage/NBSEZER7/Mu and Bird - 2003 - Rebuilding a Tree from Its Traversals.pdf},
+  doi = {10.1007/978-3-540-40018-9_18}
+}
+
+@inproceedings{jones_call-pattern_2007,
+  title = {Call-Pattern Specialisation for Haskell Programs},
+  isbn = {978-1-59593-815-2},
+  doi = {10.1145/1291151.1291200},
+  abstract = {User-defined data types, pattern-matching, and recursion are ubiquitous features of Haskell programs. Sometimes a function is called with arguments that are statically known to be in constructor form, so that the work of pattern-matching is wasted. Even worse, the argument is sometimes freshly-allocated, only to be immediately decomposed by the function.},
+  language = {en},
+  publisher = {{ACM Press}},
+  author = {Jones, Simon Peyton},
+  year = {2007},
+  pages = {327},
+  file = {/Users/doisinkidney/Zotero/storage/JMQ9HUQK/Jones - 2007 - Call-pattern specialisation for haskell programs.pdf;/Users/doisinkidney/Zotero/storage/MBT8QXM2/Jones - 2007 - Call-pattern specialisation for Haskell programs.pdf;/Users/doisinkidney/Zotero/storage/U38CF3T4/system-f-with-type-equality-coercions-2.html}
+}
+
+@article{mcbride_ornamental_2010,
+  title = {Ornamental {{Algebras}}, {{Algebraic Ornaments}}},
+  abstract = {This paper re-examines the presentation of datatypes in dependently typed languages, addressing in particular the issue of what it means for one datatype to be in various ways more informative than another. Informal human observations like `lists are natural numbers with extra labels' and `vectors are lists indexed by length' are expressed in a first class language of ornaments\textemdash{}presentations of fancy new types based on plain old ones.},
+  language = {en},
+  author = {McBride, Conor},
+  year = {2010},
+  pages = {8},
+  file = {/Users/doisinkidney/Zotero/storage/34NGW93J/McBRIDE - 2010 - Ornamental Algebras, Algebraic Ornaments.pdf;/Users/doisinkidney/Zotero/storage/ZGWGNNDW/McBRIDE - 2011 - Ornamental Algebras, Algebraic Ornaments.pdf}
+}
+
+@article{mcbride_polynomial_nodate,
+  title = {A Polynomial Testing Principle},
+  abstract = {Two polynomial functions of degree at most n agree on all inputs if they agree on n + 1 different inputs, e.g., on \{0, 1, 2, . . . , n\}. This fact gives us a simple procedure for testing equivalence in a language of polynomial expressions. Moreover, we may readily extend this language to include a summation operator and test standard results which are usually established inductively.},
+  language = {en},
+  author = {McBride, Conor},
+  pages = {14},
+  file = {/Users/doisinkidney/Zotero/storage/TJY6RASV/McBride - A polynomial testing principle.pdf}
+}
+
+@article{norell_dependently_2008,
+  title = {Dependently {{Typed Programming}} in {{Agda}}},
+  language = {en},
+  author = {Norell, Ulf and Chapman, James},
+  year = {2008},
+  file = {/Users/doisinkidney/Zotero/storage/N2JXRX7J/Norell and Chapman - Dependently Typed Programming in Agda.pdf}
+}
+
+@misc{danielsson_agda_2018,
+  title = {The {{Agda}} Standard Library},
+  author = {Danielsson, Nils Anders},
+  collaborator = {Abel, Andreas and Andjelkovic, Stevan and Bernardy, Jean-Philippe and Berry, Peter and Hardy, Bradley and Breitner, Joachim and Bronson, Samuel and Brown, Daniel and Chapman, James and Chen, Liang-Ting and Daggitt, Matthew and Devriese, Dominique and Doel, Dan and Gerg{\H o}, \'Erdi and Grohne, Helmut and Foster, Simon and Hu, Liyang and Hu, Jason and Jansson, Patrik and Jeffrey, Alan and Kokke, Wen and Kotelnikov, Evgeny and Meshveliani, Sergei and Mertens, Eric and Morrison, Darin and Moulin, Guilhem and Mu, Shin-Cheng and Norell, Ulf and Ohkawa, Noriyuki and Pouillard, Nicolas and {Sicard-Ram\'irez}, Andr\'es and Zeilberger, Noam},
+  month = jun,
+  year = {2018}
+}
+
+@inproceedings{cheng_functional_2018,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Functional {{Pearl}}: {{Folding Polynomials}} of {{Polynomials}}},
+  isbn = {978-3-319-90685-0 978-3-319-90686-7},
+  shorttitle = {Functional {{Pearl}}},
+  doi = {10.1007/978-3-319-90686-7_5},
+  abstract = {Polynomials are a central concept to many branches in mathematics and computer science. In particular, manipulation of polynomial expressions can be used to model a wide variety of computation. In this paper, we consider a simple recursive construction of multivariate polynomials over a base ring such as the integers or a (finite) field. We show that this construction allows inductive implementation of polynomial operations such as arithmetic, evaluation, substitution, etc. Furthermore, we can transform a polynomial expression into in a sequence of arithmetic expressions in the base ring and prove the correctness of this transformation in Agda. Combined with our recursive construction, this allows for compiling polynomial expressions over a tower of extension fields into scalar expressions over the ground field, for example. Such a technique is not only interesting in its own right but also finds plentiful application in research areas such as cryptography.},
+  language = {en},
+  booktitle = {Functional and {{Logic Programming}}},
+  publisher = {{Springer, Cham}},
+  author = {Cheng, Chen-Mou and Hsu, Ruey-Lin and Mu, Shin-Cheng},
+  month = may,
+  year = {2018},
+  pages = {68-83},
+  file = {/Users/doisinkidney/Zotero/storage/D8GT5G46/Cheng et al. - 2018 - Functional Pearl Folding Polynomials of Polynomia.pdf;/Users/doisinkidney/Zotero/storage/CYZ5CHC3/978-3-319-90686-7_5.html}
+}
+
+@inproceedings{gregoire_proving_2005,
+  address = {Berlin, Heidelberg},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Proving {{Equalities}} in a {{Commutative Ring Done Right}} in {{Coq}}},
+  volume = {3603},
+  isbn = {978-3-540-28372-0 978-3-540-31820-0},
+  doi = {10.1007/11541868_7},
+  abstract = {We present a new implementation of a reflexive tactic which solves equalities in a ring structure inside the Coq system. The efficiency is improved to a point that we can now prove equalities that were previously beyond reach. A special care has been taken to implement efficient algorithms while keeping the complexity of the correctness proofs low. This leads to a single tool, with a single implementation, which can be addressed for a ring or for a semi-ring, abstract or not, using the Leibniz equality or a setoid equality. This example shows that such reflective methods can be effectively used in symbolic computation.},
+  language = {en},
+  booktitle = {Theorem {{Proving}} in {{Higher Order Logics}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Gr\'egoire, Benjamin and Mahboubi, Assia},
+  year = {2005},
+  pages = {98-113},
+  file = {/Users/doisinkidney/Zotero/storage/GTPFHWSU/Grégoire and Mahboubi - 2005 - Proving Equalities in a Commutative Ring Done Righ.pdf;/Users/doisinkidney/Zotero/storage/KK2HQB4Z/11541868_7.html}
+}
+
+@article{johnson_sparse_1974,
+  title = {Sparse Polynomial Arithmetic},
+  volume = {8},
+  issn = {01635824},
+  doi = {10.1145/1086837.1086847},
+  abstract = {Sparse polynomial representations are used in a number of algebraic manipulation systems, including Aitran. This paper discusses the arithmetic operations with sparsely represented polynomials; we give particular attention to multiplication and division\textbullet{} We give new algorithms for multiplying two polynomials, with n and m terms, in time mnlogm; these algorithms have the property that, in the usual univariate dense case, the algorithm is bounded by ran. Division algorithms are discussed which run in comparable time.},
+  language = {en},
+  number = {3},
+  journal = {ACM SIGSAM Bulletin},
+  author = {Johnson, Stephen C.},
+  month = aug,
+  year = {1974},
+  pages = {63-71},
+  file = {/Users/doisinkidney/Zotero/storage/N574968I/Johnson - 1974 - Sparse polynomial arithmetic.pdf}
+}
+
+@article{meshveliani_dependent_2017,
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1709.01810},
+  primaryClass = {cs},
+  title = {On Dependent Types and Intuitionism in Programming Mathematics},
+  abstract = {It is discussed a practical possibility of a provable programming of mathematics basing on intuitionism and the dependent types feature of a programming language.The principles of constructive mathematics and provable programming are illustrated with examples taken from algebra. The discourse follows the experience in designing in Agda a computer algebra library DoCon-A, which deals with generic algebraic structures and also provides the needed machine-checked proofs. This paper is a revised translation of a certain paper published in Russian in 2014.},
+  journal = {arXiv:1709.01810 [cs]},
+  author = {Meshveliani, Sergei D.},
+  month = sep,
+  year = {2017},
+  keywords = {Computer Science - Logic in Computer Science},
+  file = {/Users/doisinkidney/Zotero/storage/B6BMMMVS/Meshveliani - 2017 - On dependent types and intuitionism in programming.pdf;/Users/doisinkidney/Zotero/storage/H6SGLFYG/Meshveliani - 2017 - On dependent types and intuitionism in programming.pdf;/Users/doisinkidney/Zotero/storage/CMU37WUY/1709.html;/Users/doisinkidney/Zotero/storage/HFMYLAK9/1709.html}
+}
+
+@techreport{meshveliani_dependent_2013,
+  address = {Pereslavl-Zalessky, Russia},
+  title = {Dependent {{Types}} for an {{Adequate Programming}} of {{Algebra}}},
+  abstract = {This research compares the author's experience in programming algebra in Haskell and in Agda (currently the former experience is large, and the latter is small). There are discussed certain hopes and doubts related to the dependently typed and verified programming of symbolic computation. This concerns the 1) author's experience history, 2) algebraic class hierarchy design, 3) proof cost overhead in evaluation and in coding, 4) other subjects. Various examples are considered.},
+  language = {en},
+  institution = {{Program Systems Institute of Russian Academy of sciences}},
+  author = {Meshveliani, Sergei D},
+  year = {2013},
+  pages = {15},
+  file = {/Users/doisinkidney/Zotero/storage/SESGEH6A/Meshveliani - Dependent Types for an Adequate Programming of Alg.pdf}
+}
+
+@phdthesis{zalakain_evidence-providing_2017,
+  address = {Strathclyde},
+  type = {Submitted for the {{Degree}} of {{B}}.{{Sc}}. in {{Computer Science}}},
+  title = {Evidence-Providing Problem Solvers in {{Agda}}},
+  abstract = {The Curry-Howard correspondence draws a direct link between logic and computation: propositions are modelled as types and proofs as programs; to prove a proposition is to con- struct a program inhabiting its corresponding type. Several computer-assisted theorem provers have been developed under this idea. They are not just used to verify human reasoning: they are also often capable of generating proofs automatically.
+This project considers the development of such automated theorem provers in Agda, a de- pendently typed programming language. As a warm-up, I present a verified solver for equations on monoids. Then, I comment on the solver for commutative rings included in Agda's stan- dard library. Finally, I develop a verified decision procedure for Presburger arithmetic \textemdash{} a decidable first-order predicate logic.},
+  language = {en},
+  school = {University of Strathclyde},
+  author = {Zalakain, Uma},
+  year = {2017},
+  file = {/Users/doisinkidney/Zotero/storage/HK3IVT32/report.pdf}
+}
+
+@incollection{geuvers_automatically_2017,
+  address = {Cham},
+  title = {Automatically {{Proving Equivalence}} by {{Type}}-{{Safe Reflection}}},
+  volume = {10383},
+  isbn = {978-3-319-62074-9 978-3-319-62075-6},
+  abstract = {One difficulty with reasoning and programming with dependent types is that proof obligations arise naturally once programs become even moderately sized. For example, implementing an adder for binary numbers indexed over their natural number equivalents naturally leads to proof obligations for equalities of expressions over natural numbers. The need for these equality proofs comes, in intensional type theories, from the fact that the propositional equality enables us to prove as equal terms that are not judgementally equal, which means that the typechecker can't always obtain equalities by reduction. As far as possible, we would like to solve such proof obligations automatically. In this paper, we show one way to automate these proofs by reflection in the dependently typed programming language Idris. We show how defining reflected terms indexed by the original Idris expression allows us to construct and manipulate proofs. We build a hierarchy of tactics for proving equivalences in semigroups, monoids, commutative monoids, groups, commutative groups, semi-rings and rings. We also show how each tactic reuses those from simpler structures, thus avoiding duplication of code and proofs.},
+  language = {en},
+  booktitle = {Intelligent {{Computer Mathematics}}},
+  publisher = {{Springer International Publishing}},
+  author = {Slama, Franck and Brady, Edwin},
+  editor = {Geuvers, Herman and England, Matthew and Hasan, Osman and Rabe, Florian and Teschke, Olaf},
+  year = {2017},
+  pages = {40-55},
+  file = {/Users/doisinkidney/Zotero/storage/PDB7LZPW/Slama and Brady - 2017 - Automatically Proving Equivalence by Type-Safe Ref.pdf},
+  doi = {10.1007/978-3-319-62075-6_4}
+}
+
+@article{mu_algebra_2009,
+  title = {Algebra of Programming in {{Agda}}: {{Dependent}} Types for Relational Program Derivation},
+  volume = {19},
+  issn = {1469-7653, 0956-7968},
+  shorttitle = {Algebra of Programming in {{Agda}}},
+  doi = {10.1017/S0956796809007345},
+  abstract = {Relational program derivation is the technique of stepwise refining a relational specification to a program by algebraic rules. The program thus obtained is correct by construction. Meanwhile, dependent type theory is rich enough to express various correctness properties to be verified by the type checker. We have developed a library, AoPA (Algebra of Programming in Agda), to encode relational derivations in the dependently typed programming language Agda. A program is coupled with an algebraic derivation whose correctness is guaranteed by the type system. Two non-trivial examples are presented: an optimisation problem and a derivation of quicksort in which well-founded recursion is used to model terminating hylomorphisms in a language with inductive types.},
+  language = {en},
+  number = {5},
+  journal = {Journal of Functional Programming},
+  author = {Mu, Shin-Cheng and Ko, Hsiang-Shang and Jansson, Patrik},
+  month = sep,
+  year = {2009},
+  pages = {545-579},
+  file = {/Users/doisinkidney/Zotero/storage/D7UWNTJ4/Mu et al. - 2009 - Algebra of programming in Agda Dependent types fo.pdf;/Users/doisinkidney/Zotero/storage/D8FNYT4X/Mu et al. - 2009 - Algebra of programming in Agda Dependent types fo.pdf;/Users/doisinkidney/Zotero/storage/5D6VGKJQ/ACA0C08F29621A892FB0C0B745254D15.html}
+}
+
+@article{mu_programming_2012,
+  series = {12th {{International Conference}} on {{Relational}} and {{Algebraic Methods}} in {{Computer Science}} ({{RAMiCS}} 2011)},
+  title = {Programming from {{Galois}} Connections},
+  volume = {81},
+  issn = {1567-8326},
+  doi = {10.1016/j.jlap.2012.05.003},
+  abstract = {Problem statements often resort to superlatives such as in e.g. ``\ldots{} the smallest such number'', ``\ldots{} the best approximation'', ``\ldots{} the longest such list'' which lead to specifications made of two parts: one defining a broad class of solutions (the easy part) and the other requesting one particular such solution, optimal in some sense (the hard part). This article introduces a binary relational combinator which mirrors this linguistic structure and exploits its potential for calculating programs by optimization. This applies in particular to specifications written in the form of Galois connections, in which one of the adjoints delivers the optimal solution. The framework encompasses re-factoring of results previously developed by Bird and de Moor for greedy and dynamic programming, in a way which makes them less technically involved and therefore easier to understand and play with.},
+  number = {6},
+  journal = {The Journal of Logic and Algebraic Programming},
+  author = {Mu, Shin-Cheng and Oliveira, Jos\'e Nuno},
+  month = aug,
+  year = {2012},
+  keywords = {Program derivation,Algebra of programming,Galois connection},
+  pages = {680-704},
+  file = {/Users/doisinkidney/Zotero/storage/9CVSDF8W/Mua and Oliveirab - Programming from Galois Connections.pdf;/Users/doisinkidney/Zotero/storage/BSN7ZWTQ/Mua and Oliveirab - Programming from Galois Connections.pdf;/Users/doisinkidney/Zotero/storage/C3VP3FGT/Mua and Oliveirab - Programming from Galois Connections.pdf;/Users/doisinkidney/Zotero/storage/DH8S72BQ/Mu and Oliveira - 2012 - Programming from Galois connections.pdf;/Users/doisinkidney/Zotero/storage/KP24NNPC/Mua and Oliveirab - Programming from Galois Connections.pdf;/Users/doisinkidney/Zotero/storage/TMNESM34/Mua and Oliveirab - Programming from Galois Connections.pdf;/Users/doisinkidney/Zotero/storage/VJG783ZD/Mu and Oliveira - 2012 - Programming from Galois connections.pdf;/Users/doisinkidney/Zotero/storage/3FES9GDK/S1567832612000525.html;/Users/doisinkidney/Zotero/storage/5PW4E5QS/24608.html;/Users/doisinkidney/Zotero/storage/DFIVUJSJ/bwmeta1.element.html;/Users/doisinkidney/Zotero/storage/F5RRMDCZ/S1567832612000525.html;/Users/doisinkidney/Zotero/storage/FMY882Y9/S1567832612000525.html}
+}
+
+@article{chiang_formal_2016,
+  series = {Articles Dedicated to {{Prof}}. {{J}}. {{N}}. {{Oliveira}} on the Occasion of His 60th Birthday},
+  title = {Formal Derivation of {{Greedy}} Algorithms from Relational Specifications: {{A}} Tutorial},
+  volume = {85},
+  issn = {2352-2208},
+  shorttitle = {Formal Derivation of {{Greedy}} Algorithms from Relational Specifications},
+  doi = {10.1016/j.jlamp.2015.12.003},
+  abstract = {Many programming tasks can be specified as optimisation problems in which a relation is used to generate all possible solutions, from which we wish to choose an optimal one. A relational operator ``shrink'', developed by Jos\'e N. Oliveira, is particularly suitable for constructing greedy algorithms from such specifications. Meanwhile, it has become standard in many sub-fields in programming language that proofs must be machine-verified. This tutorial leads the readers through the development of algebraic derivations of three greedy algorithms, one fold-based and two unfold-based, using AoPA, a library designed for machine-verified relational program calculation.},
+  number = {5, Part 2},
+  journal = {Journal of Logical and Algebraic Methods in Programming},
+  author = {Chiang, Yu-Hsi and Mu, Shin-Cheng},
+  month = aug,
+  year = {2016},
+  keywords = {Program derivation,Algebra of programming,Galois connection,Dependent type,Machine-aided theorem proving},
+  pages = {879-905},
+  file = {/Users/doisinkidney/Zotero/storage/ELC6ARTN/1-s2.0-S2352220815001492-main.pdf;/Users/doisinkidney/Zotero/storage/KWCCV77B/Chiang and Mu - 2016 - Formal derivation of Greedy algorithms from relati.pdf;/Users/doisinkidney/Zotero/storage/8JPBXYJD/S2352220815001492.html;/Users/doisinkidney/Zotero/storage/VD8GZPYV/S2352220815001492.html}
+}
+
+@inproceedings{audebaud_algebra_2008,
+  address = {Berlin, Heidelberg},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Algebra of {{Programming Using Dependent Types}}},
+  volume = {5133},
+  isbn = {978-3-540-70593-2 978-3-540-70594-9},
+  doi = {10.1007/978-3-540-70594-9_15},
+  abstract = {Dependent type theory is rich enough to express that a program satisfies an input/output relational specification, but it could be hard to construct the proof term. On the other hand, squiggolists know very well how to show that one relation is included in another by algebraic reasoning. We demonstrate how to encode functional and relational derivations in a dependently typed programming language. A program is coupled with an algebraic derivation from a specification, whose correctness is guaranteed by the type system.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Mu, Shin-Cheng and Ko, Hsiang-Shang and Jansson, Patrik},
+  editor = {Audebaud, Philippe and {Paulin-Mohring}, Christine},
+  year = {2008},
+  pages = {268-283},
+  file = {/Users/doisinkidney/Zotero/storage/ASKFWFTU/Mu et al. - Algebra of Programming Using Dependent Types.pdf;/Users/doisinkidney/Zotero/storage/5VKT7DWK/10.html}
+}
+
+@book{bird_algebra_1997,
+  address = {London ; New York},
+  series = {Prentice-{{Hall}} International Series in Computer Science},
+  title = {Algebra of Programming},
+  isbn = {978-0-13-507245-5},
+  lccn = {QA76.6 .B567 1997},
+  publisher = {{Prentice Hall}},
+  author = {Bird, Richard and de Moor, Oege},
+  year = {1997},
+  keywords = {Computer algorithms,Computer programming,Programming (Mathematics)},
+  file = {/Users/doisinkidney/Zotero/storage/X3N7TDKM/The-Algebra-of-Programming.pdf}
+}
+
+@misc{gibbons_horners_2011,
+  title = {Horner's {{Rule}}},
+  abstract = {This post is about my all-time favourite calculation, of a linear-time algorithm for the maximum segment sum problem, based on Horner's Rule. The problem was popularized in Jon Bentley'\ldots{}},
+  language = {en},
+  journal = {Patterns in Functional Programming},
+  author = {Gibbons, Jeremy},
+  month = may,
+  year = {2011},
+  file = {/Users/doisinkidney/Zotero/storage/WRD6S87U/horners-rule.html}
+}
+
+@misc{gibbons_distributivity_2011,
+  title = {Distributivity in {{Horner}}'s {{Rule}}},
+  abstract = {This is a continuation of my previous post on Horner's Rule, and in particular, of the discussion there about distributivity in the datatype-generic version of the Maximum Segment Sum problem\ldots{}},
+  language = {en},
+  journal = {Patterns in Functional Programming},
+  author = {Gibbons, Jeremy},
+  month = may,
+  year = {2011},
+  file = {/Users/doisinkidney/Zotero/storage/QSZZFG3P/distributivity-in-horners-rule.html}
+}
+
+@article{mcbride_view_2004,
+  title = {The {{View}} from the {{Left}}},
+  volume = {14},
+  issn = {0956-7968},
+  doi = {10.1017/S0956796803004829},
+  abstract = {Pattern matching has proved an extremely powerful and durable notion in functional programming. This paper contributes a new programming notation for type theory which elaborates the notion in various ways. First, as is by now quite well-known in the type theory community, definition by pattern matching becomes a more discriminating tool in the presence of dependent types, since it refines the explanation of types as well as values. This becomes all the more true in the presence of the rich class of datatypes known as inductive families (Dybjer, 1991). Secondly, as proposed by Peyton Jones (1997) for Haskell, and independently rediscovered by us, subsidiary case analyses on the results of intermediate computations, which commonly take place on the right-hand side of definitions by pattern matching, should rather be handled on the left. In simply-typed languages, this subsumes the trivial case of Boolean guards; in our setting it becomes yet more powerful. Thirdly, elementary pattern matching decompositions have a well-defined interface given by a dependent type; they correspond to the statement of an induction principle for the datatype. More general, user-definable decompositions may be defined which also have types of the same general form. Elementary pattern matching may therefore be recast in abstract form, with a semantics given by translation. Such abstract decompositions of data generalize Wadler's (1987) notion of `view'. The programmer wishing to introduce a new view of a type \$\textbackslash{}mathit\{T\}\$, and exploit it directly in pattern matching, may do so via a standard programming idiom. The type theorist, looking through the Curry\textendash{}Howard lens, may see this as proving a theorem, one which establishes the validity of a new induction principle for \$\textbackslash{}mathit\{T\}\$. We develop enough syntax and semantics to account for this high-level style of programming in dependent type theory. We close with the development of a typechecker for the simply-typed lambda calculus, which furnishes a view of raw terms as either being well-typed, or containing an error. The implementation of this view is ipso facto a proof that typechecking is decidable.},
+  number = {1},
+  journal = {J. Funct. Program.},
+  author = {McBride, Conor and McKinna, James},
+  month = jan,
+  year = {2004},
+  pages = {69--111},
+  file = {/Users/doisinkidney/Zotero/storage/JPF2T4CC/McBride and McKinna - 2004 - The View from the Left.pdf}
+}
+
+@techreport{russino_polynomial_2017,
+  title = {Polynomial {{Terms}} and {{Sparse Horner Normal Form}}},
+  language = {en},
+  author = {Russinoff, David M},
+  month = jul,
+  year = {2017},
+  pages = {8},
+  file = {/Users/doisinkidney/Zotero/storage/XGCQCLFR/Russinoﬀ - Polynomial Terms and Sparse Horner Normal Form.pdf}
+}
+
+@misc{mcbride_polynomial_2018,
+  type = {Tweet},
+  title = {A {{Polynomial Testing Principle}}},
+  abstract = {A polynomial testing principle gives a machine-checked proof that, under suitably controlled circumstances, in a small but familiar domain, testing can reveal the absence of bugs.},
+  language = {en},
+  journal = {Conor McBride's Twitter Feed},
+  author = {McBride, Conor},
+  month = jul,
+  year = {2018},
+  file = {/Users/doisinkidney/Zotero/storage/DB4NV3DI/1013535783234473984.html}
+}
+
+@inproceedings{kiselyov_extensible_2013-2,
+  address = {New York, NY, USA},
+  series = {Haskell '13},
+  title = {Extensible {{Effects}}: {{An Alternative}} to {{Monad Transformers}}},
+  isbn = {978-1-4503-2383-3},
+  shorttitle = {Extensible {{Effects}}},
+  doi = {10.1145/2503778.2503791},
+  abstract = {We design and implement a library that solves the long-standing problem of combining effects without imposing restrictions on their interactions (such as static ordering). Effects arise from interactions between a client and an effect handler (interpreter); interactions may vary throughout the program and dynamically adapt to execution conditions. Existing code that relies on monad transformers may be used with our library with minor changes, gaining efficiency over long monad stacks. In addition, our library has greater expressiveness, allowing for practical idioms that are inefficient, cumbersome, or outright impossible with monad transformers. Our alternative to a monad transformer stack is a single monad, for the coroutine-like communication of a client with its handler. Its type reflects possible requests, i.e., possible effects of a computation. To support arbitrary effects and their combinations, requests are values of an extensible union type, which allows adding and, notably, subtracting summands. Extending and, upon handling, shrinking of the union of possible requests is reflected in its type, yielding a type-and-effect system for Haskell. The library is lightweight, generalizing the extensible exception handling to other effects and accurately tracking them in types.},
+  language = {en},
+  booktitle = {Proceedings of the 2013 {{ACM SIGPLAN Symposium}} on {{Haskell}}},
+  publisher = {{ACM}},
+  author = {Kiselyov, Oleg and Sabry, Amr and Swords, Cameron},
+  year = {2013},
+  keywords = {Effects,Haskell,coroutine,effect handler,effect interaction,monad,monad transformer,open union,type and effect system},
+  pages = {59--70},
+  file = {/Users/doisinkidney/Zotero/storage/PDUC9QH6/exteff.pdf;/Users/doisinkidney/Zotero/storage/XTZHSAEH/Kiselyov et al. - 2013 - Extensible Effects An Alternative to Monad Transf.pdf}
+}
+
+@misc{meshveliani_docon-provable_2018,
+  address = {Pereslavl - Zalessky},
+  title = {{{DoCon}}-{{A}} a {{Provable Algebraic Domain Constructor}}},
+  author = {Meshveliani, Sergei D.},
+  month = apr,
+  year = {2018},
+  file = {/Users/doisinkidney/Zotero/storage/KJL3PGNM/manual.pdf}
+}
+
+@article{coquand_isomorphism_2013,
+  title = {Isomorphism Is Equality},
+  volume = {24},
+  issn = {00193577},
+  doi = {10.1016/j.indag.2013.09.002},
+  abstract = {The setting of this work is dependent type theory extended with the univalence axiom. We prove that, for a large class of algebraic structures, isomorphic instances of a structure are equal\textemdash{}in fact, isomorphism is in bijective correspondence with equality. The class of structures includes monoids whose underlying types are ``sets'', and also posets where the underlying types are sets and the ordering relations are pointwise ``propositional''. For monoids on sets equality coincides with the usual notion of isomorphism from universal algebra, and for posets of the kind mentioned above equality coincides with order isomorphism.},
+  language = {en},
+  number = {4},
+  journal = {Indagationes Mathematicae},
+  author = {Coquand, Thierry and Danielsson, Nils Anders},
+  month = nov,
+  year = {2013},
+  pages = {1105-1120},
+  file = {/Users/doisinkidney/Zotero/storage/8X25PWGE/Coquand and Danielsson - 2013 - Isomorphism is equality.pdf}
+}
+
+@phdthesis{lioubartsev_constructing_2016,
+  address = {Stockholm, Sweden},
+  title = {Constructing a {{Computer Algebra System Capable}} of {{Generating Pedagogical Step}}-by-{{Step Solutions}}},
+  abstract = {For the problem of producing pedagogical step-by-step so- lutions to mathematical problems in education, standard methods and algorithms used in construction of computer algebra systems are often not suitable. A method of us- ing rules to manipulate mathematical expressions in small steps is suggested and implemented. The problem of creat- ing a step-by-step solution by choosing which rule to apply and when to do it is redefined as a graph search problem and variations of the A* algorithm are used to solve it. It is all put together into one prototype solver that was evalu- ated in a study. The study was a questionnaire distributed among high school students. The results showed that while the solutions were not as good as human-made ones, they were competent. Further improvements of the method are suggested that would probably lead to better solutions.},
+  school = {KTH Royal Institue of Technology},
+  author = {Lioubartsev, Dmitrij},
+  year = {2016},
+  file = {/Users/doisinkidney/Zotero/storage/2Z62FSZP/FULLTEXT01.pdf}
+}
+
+@article{wood_translation_2009,
+  title = {A {{Translation Method}} for {{Finding Combinatorial Bijections}}},
+  volume = {13},
+  issn = {0219-3094},
+  doi = {10.1007/s00026-009-0024-y},
+  abstract = {Consider a combinatorial identity that can be proved by induction. In this paper, we describe a general method for translating the inductive proof into a recursive bijection. Furthermore, we will demonstrate that the resulting recursive bijection can often be defined in a direct, non-recursive way. Thus, the translation method often results in a bijective proof of the identity that helps illuminate the underlying combinatorial structures. This paper has two main parts: First, we describe the translation method and the accompanying Maple code; and second, we give a few examples of how the method has been used to discover new bijections.},
+  language = {en},
+  number = {3},
+  journal = {Annals of Combinatorics},
+  author = {Wood, Philip Matchett and Zeilberger, Doron},
+  month = oct,
+  year = {2009},
+  keywords = {05A19,bijection,bijective proof,combinatorial identity},
+  pages = {383},
+  file = {/Users/doisinkidney/Zotero/storage/6UJ9BBPT/Wood and Zeilberger - 2009 - A Translation Method for Finding Combinatorial Bij.pdf}
+}
+
+@phdthesis{van_der_walt_reflection_2012,
+  type = {Master's {{Thesis}}},
+  title = {Reflection in {{Agda}}},
+  abstract = {This project explores the recent addition to Agda enabling reflection, in the style of Lisp, MetaML, and Template Haskell. It illustrates several possible applications of reflection that arise in dependently typed programming, and details the limitations of the current implementation of reflection. Examples of type-safe metaprograms are given that illustrate the power of reflection coupled with a dependently typed language. Among other things the limitations inherent in having quote and unquote implemented as keywords are highlighted. The fact that lambda terms are returned without typing information is discussed, and a solution is presented. Also provided is a detailed users' guide to the reflection API and a library of working code examples to illustrate how various common tasks can be performed, along with suggestions for an updated reflection API in a future version of Agda.},
+  language = {en},
+  school = {Universiteit of Utrecht},
+  author = {{van der Walt}, P. D.},
+  month = oct,
+  year = {2012},
+  file = {/Users/doisinkidney/Zotero/storage/X358AMNW/van der Walt - 2012 - Reflection in Agda.pdf;/Users/doisinkidney/Zotero/storage/8ZQY4FCH/256628.html}
+}
+
+@inproceedings{lindley_hasochism_2013,
+  address = {New York, NY, USA},
+  series = {Haskell '13},
+  title = {Hasochism: {{The Pleasure}} and {{Pain}} of {{Dependently Typed Haskell Programming}}},
+  isbn = {978-1-4503-2383-3},
+  shorttitle = {Hasochism},
+  doi = {10.1145/2503778.2503786},
+  abstract = {Haskell's type system has outgrown its Hindley-Milner roots to the extent that it now stretches to the basics of dependently typed programming. In this paper, we collate and classify techniques for programming with dependent types in Haskell, and contribute some new ones. In particular, through extended examples---merge-sort and rectangular tilings---we show how to exploit Haskell's constraint solver as a theorem prover, delivering code which, as Agda programmers, we envy. We explore the compromises involved in simulating variations on the theme of the dependent function space in an attempt to help programmers put dependent types to work, and to inform the evolving language design both of Haskell and of dependently typed languages more broadly.},
+  booktitle = {Proceedings of the 2013 {{ACM SIGPLAN Symposium}} on {{Haskell}}},
+  publisher = {{ACM}},
+  author = {Lindley, Sam and McBride, Conor},
+  year = {2013},
+  keywords = {dependent types,singletons,data type promotion,invariants,proof search},
+  pages = {81--92},
+  file = {/Users/doisinkidney/Zotero/storage/U7CFKDH5/Lindley and McBride - 2013 - Hasochism The Pleasure and Pain of Dependently Ty.pdf}
+}
+
+@book{martin-lof_intuitionistic_1980,
+  address = {Padua},
+  title = {Intuitionistic {{Type Theory}}},
+  author = {{Martin-L\"of}, Per},
+  month = jun,
+  year = {1980},
+  file = {/Users/doisinkidney/Zotero/storage/IQS3729C/MartinLöf1984.pdf}
+}
+
+@misc{the_coq_development_team_2018_1219885,
+  title = {The {{Coq Proof Assistant}}, Version 8.8.0},
+  author = {Team, The Coq Development},
+  month = apr,
+  year = {2018}
+}
+
+@misc{escardo_libraries_2018,
+  title = {Libraries for {{Bin}}},
+  language = {en},
+  author = {Escardo, Martin},
+  month = jul,
+  year = {2018}
+}
+
+@misc{meshveliani_binary-4_2018,
+  title = {Binary-4 \textendash{} a {{Pure Binary Natural Number Arithmetic}} Library for {{Agda}}},
+  shorttitle = {Binary-4},
+  abstract = {Binary-4 is a pure, regular-performance, complete, and certified binary arithmetic for natural numbers written in Agda.},
+  author = {Meshveliani, Sergei},
+  year = {21-Aug-2018}
+}
+
+@inproceedings{kokke_auto_2015,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Auto in {{Agda}}},
+  isbn = {978-3-319-19797-5},
+  abstract = {As proofs in type theory become increasingly complex, there is a growing need to provide better proof automation. This paper shows how to implement a Prolog-style resolution procedure in the dependently typed programming language Agda. Connecting this resolution procedure to Agda's reflection mechanism provides a first-class proof search tactic for first-order Agda terms. As a result, writing proof automation tactics need not be different from writing any other program.},
+  language = {en},
+  booktitle = {Mathematics of {{Program Construction}}},
+  publisher = {{Springer International Publishing}},
+  author = {Kokke, Pepijn and Swierstra, Wouter},
+  editor = {Hinze, Ralf and Voigtl\"ander, Janis},
+  year = {2015},
+  keywords = {Abstract Syntax Tree,Goal Type,Implicit Argument,Proof Search,Unification Algorithm},
+  pages = {276-301},
+  file = {/Users/doisinkidney/Zotero/storage/8E57HAPM/Kokke and Swierstra - 2015 - Auto in Agda.pdf;/Users/doisinkidney/Zotero/storage/HPTCKCL2/Kokke and Swierstra - Programming proof search using reﬂection.pdf;/Users/doisinkidney/Zotero/storage/XU258KUR/Kokke and Swierstra - 2015 - Auto in Agda.pdf}
+}
+
+@incollection{thiemann_extensible_2016,
+  address = {Berlin, Heidelberg},
+  title = {Extensible and {{Efficient Automation Through Reflective Tactics}}},
+  volume = {9632},
+  isbn = {978-3-662-49497-4 978-3-662-49498-1},
+  abstract = {Foundational proof assistants simultaneously offer both expressive logics and strong guarantees. The price they pay for this flexibility is often the need to build and check explicit proof objects which can be expensive. In this work we develop a collection of techniques for building reflective automation, where proofs are witnessed by verified decision procedures rather than verbose proof objects. Our techniques center around a verified domain specific language for proving, Rtac, written in Gallina, Coq's logic. The design of tactics makes it easy to combine them into higher-level automation that can be proved sound in a mostly automated way. Furthermore, unlike traditional uses of reflection, Rtac tactics are independent of the underlying problem domain. This allows them to be re-tasked to automate new problems with very little effort. We demonstrate the usability of Rtac through several case studies demonstrating orders of magnitude speedups for relatively little engineering work.},
+  language = {en},
+  booktitle = {Programming {{Languages}} and {{Systems}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Malecha, Gregory and Bengtson, Jesper},
+  editor = {Thiemann, Peter},
+  year = {2016},
+  pages = {532-559},
+  file = {/Users/doisinkidney/Zotero/storage/DG5QW9GB/Malecha and Bengtson - 2016 - Extensible and Efficient Automation Through Reflec.pdf},
+  doi = {10.1007/978-3-662-49498-1_21}
+}
+
+@incollection{bobaru_integrating_2011,
+  address = {Berlin, Heidelberg},
+  title = {Integrating an {{Automated Theorem Prover}} into {{Agda}}},
+  volume = {6617},
+  isbn = {978-3-642-20397-8 978-3-642-20398-5},
+  abstract = {Agda is a dependently typed functional programming language and a proof assistant in which developing programs and proving their correctness is one activity. We show how this process can be enhanced by integrating external automated theorem provers, provide a prototypical integration of the equational theorem prover Waldmeister, and give examples of how this proof automation works in practice.},
+  language = {en},
+  booktitle = {{{NASA Formal Methods}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Foster, Simon and Struth, Georg},
+  editor = {Bobaru, Mihaela and Havelund, Klaus and Holzmann, Gerard J. and Joshi, Rajeev},
+  year = {2011},
+  pages = {116-130},
+  file = {/Users/doisinkidney/Zotero/storage/KURGY5CK/Foster and Struth - 2011 - Integrating an Automated Theorem Prover into Agda.pdf},
+  doi = {10.1007/978-3-642-20398-5_10}
+}
+
+@incollection{hinze_engineering_2013,
+  address = {Berlin, Heidelberg},
+  title = {Engineering {{Proof}} by {{Reflection}} in {{Agda}}},
+  volume = {8241},
+  isbn = {978-3-642-41581-4 978-3-642-41582-1},
+  abstract = {This paper explores the recent addition to Agda enabling reflection, in the style of Lisp and Template Haskell. It gives a brief introduction to using reflection, and details the complexities encountered when automating certain proofs with proof by reflection. It presents a library that can be used for automatically quoting a class of concrete Agda terms to a non-dependent, user-defined inductive data type, alleviating some of the burden a programmer faces when using reflection in a practical setting.},
+  language = {en},
+  booktitle = {Implementation and {{Application}} of {{Functional Languages}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {{van der Walt}, Paul and Swierstra, Wouter},
+  editor = {Hinze, Ralf},
+  year = {2013},
+  pages = {157-173},
+  file = {/Users/doisinkidney/Zotero/storage/66IQWHX3/van der Walt and Swierstra - 2013 - Engineering Proof by Reflection in Agda.pdf},
+  doi = {10.1007/978-3-642-41582-1_10}
+}
+
+@misc{allais_three_2016,
+  title = {Three {{Tricks}} to Make {{Termination Obvious}}},
+  abstract = {Two weeks ago I spent some time implementing Wadler's "Prettier Printer". The implementation is fairly straightforward except for three functions that are not seen as terminating. Here are the three tricks that made them go through.},
+  journal = {gallais' blog},
+  author = {Allais, Guillaume},
+  month = nov,
+  year = {2016},
+  file = {/Users/doisinkidney/Zotero/storage/ITLVNI2H/termination-tricks.html}
+}
+
+@inproceedings{abel_miniagda_2010,
+  title = {{{MiniAgda}}: {{Integrating}} Sized and Dependent Types},
+  shorttitle = {Miniagda},
+  abstract = {Sized types are a modular and theoretically well-understood tool for checking termination of recursive and productivity of corecursive definitions. The essential idea is to track structural descent and guardedness in the type system to make termination checking robust and suitable for strong abstractions like higher-order functions and polymorphism. To study the application of sized types to proof assistants and programming languages based on dependent type theory, we have implemented a core language, MiniAgda, with explicit handling of sizes. New considerations were necessary to soundly integrate sized types with dependencies and pattern matching, which was made possible by modern concepts such as inaccessible patterns and parametric function spaces. This paper provides an introduction to MiniAgda by example and informal explanations of the underlying principles. 1},
+  language = {en},
+  booktitle = {{{PAR}}, Volume 43 of {{EPTCS}}},
+  author = {Abel, Andreas},
+  year = {2010},
+  pages = {14--28},
+  file = {/Users/doisinkidney/Zotero/storage/C8SGX7MN/Abel - 2010 - Miniagda Integrating sized and dependent types.pdf;/Users/doisinkidney/Zotero/storage/KP266WFQ/Abel - MiniAgda Integrating Sized and Dependent Types.pdf;/Users/doisinkidney/Zotero/storage/LCKS32ZV/summary\;jsessionid=11EAC1E0ADB87A0CC4E950303BE9DB40.html}
+}
+
+@misc{jedynak_simple_2018,
+  title = {A Simple Demonstration of the {{Agda Reflection API}}.},
+  author = {Jedynak, Wojciech},
+  month = sep,
+  year = {2018}
+}
+
+@misc{norell_agda-prelude_2018,
+  title = {Agda-Prelude: {{Programming}} Library for {{Agda}}},
+  copyright = {MIT},
+  shorttitle = {Agda-Prelude},
+  abstract = {This is an alternative to the Agda standard library that focuses more on programming and type checking time performance.
+
+Notable features:
+
+Makes heavy use of instance arguments.
+
+Efficient decision procedures for natural number arithmetic (Tactic.Nat).
+
+Evidence-producing and efficient gcd and primality testing (Data.Nat.GCD and Data.Nat.Prime).
+
+This is very much work in progress, so expect major changes. In particular the proof-side of things is very much unstructured.},
+  author = {Norell, Ulf},
+  month = aug,
+  year = {2018}
+}
+
+@phdthesis{christiansen_practical_2015,
+  title = {Practical {{Reflection}} and {{Metaprogramming}} for {{Dependent Types}}},
+  abstract = {Embedded domain-specific languages are special-purpose programming languages that are implemented within existing generalpurpose programming languages. Dependent type systems allow strong invariants to be encoded in representations of domain-specific languages, but it can also make it difficult to program in these embedded languages. Interpreters and compilers must always take these invariants into account at each stage, and authors of embedded languages must work hard to relieve users of the burden of proving these properties.},
+  language = {en},
+  school = {IT University of Copenhagen},
+  author = {Christiansen, David Raymond},
+  month = nov,
+  year = {2015},
+  file = {/Users/doisinkidney/Zotero/storage/NRBJRYLX/Christiansen - Practical Reflection and Metaprogramming for Depen.pdf}
+}
+
+@phdthesis{mu_calculational_2003-1,
+  type = {Ph.{{D}}.},
+  title = {A Calculational Approach to Program Inversion},
+  language = {eng},
+  school = {University of Oxford},
+  author = {Mu, Shin-Cheng},
+  month = jan,
+  year = {2003},
+  file = {/Users/doisinkidney/Zotero/storage/28FA7TKN/Mu - 2003 - A calculational approach to program inversion.pdf;/Users/doisinkidney/Zotero/storage/36Q9CI7P/Mu - 2003 - A calculational approach to program inversion.pdf;/Users/doisinkidney/Zotero/storage/4ZU2NBJK/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/BKUWKM3E/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/BS5W6V3A/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/DSZ23VZC/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/E54CP6N7/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/LENLXK88/thesis.pdf;/Users/doisinkidney/Zotero/storage/NRH5HGEB/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/VY4BY2SP/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/XCX94TJ3/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/XNJEQ9HW/Mu - A CALCULATIONAL APPROACH TO PROGRAM INVERSION.pdf;/Users/doisinkidney/Zotero/storage/ZLHTA8KC/Mu - 2003 - A Calculational Approach to Program Inversion.pdf;/Users/doisinkidney/Zotero/storage/PGMNKEZ7/OrderDetails.html;/Users/doisinkidney/Zotero/storage/X8F873MY/OrderDetails.html}
+}
+
+@misc{yang_well-founded_2010,
+  title = {Well-Founded Recursion in {{Agda}}},
+  shorttitle = {Well-Founded Recursion in {{Agda}}},
+  language = {en-US},
+  journal = {Inside 245-5D},
+  author = {Yang, Edward Z.},
+  month = jun,
+  year = {2010},
+  file = {/Users/doisinkidney/Zotero/storage/IPAIWHEA/well-founded-recursion-in-agda.html}
+}
+
+@misc{diatchki_introducing_2010,
+  title = {Introducing {{Well}}-{{Founded Recursion}}},
+  shorttitle = {Galois \guilsinglright{} {{Blog}} \guilsinglright{} {{Blog}} \guillemotright{} {{Tech Talk}}},
+  journal = {Galois {$>$} Blog},
+  author = {Diatchki, Iavor S.},
+  month = jun,
+  year = {2010},
+  file = {/Users/doisinkidney/Zotero/storage/29UCZ6R2/tech-talk-introducing-well-founded-recursion.html}
+}
+
+@article{bove_modelling_2005,
+  title = {Modelling General Recursion in Type Theory},
+  volume = {15},
+  issn = {0960-1295, 1469-8072},
+  doi = {10.1017/S0960129505004822},
+  language = {en},
+  number = {4},
+  journal = {Mathematical Structures in Computer Science},
+  author = {Bove, Ana and Capretta, Venanzio},
+  month = jul,
+  year = {2005},
+  pages = {671-708},
+  file = {/Users/doisinkidney/Zotero/storage/XJH42CYY/Bove and Capretta - 2005 - Modelling general recursion in type theory.pdf}
+}
+
+@article{nordstrom_terminating_1987,
+  title = {Terminating General Recursion},
+  volume = {28},
+  issn = {0006-3835, 1572-9125},
+  doi = {10.1007/BF01941137},
+  abstract = {In Martin-Lof's type theory, general recursion is not available. The only iterating constructs are primitive recursion over natural numbers and other inductive sets. The paper describes a way to allow a general recursion operator in type theory (extended with propositions). A proof rule for the new operator is presented. The addition of the new operator will not distroy the property that all well-typed programs terminate. An advantage of the new program construct is that it is possible to separate the termination proof of the program from the proof of other properties.},
+  language = {en},
+  number = {3},
+  journal = {BIT},
+  author = {Nordstr\"om, Bengt},
+  month = sep,
+  year = {1987},
+  pages = {605-619},
+  file = {/Users/doisinkidney/Zotero/storage/UKPV6PBD/Nordström - 1988 - Terminating general recursion.pdf}
+}
+
+@article{abel_wellfounded_2013,
+  title = {Wellfounded {{Recursion}} with {{Copatterns}}},
+  abstract = {In this paper, we study strong normalization of a core language based on System F{$\omega$} which supports programming with finite and infinite structures. Building on our prior work, finite data such as finite lists and trees are defined via constructors and manipulated via pattern matching, while infinite data such as streams and infinite trees is defined by observations and synthesized via copattern matching. In this work, we take a type-based approach to strong normalization by tracking size information about finite and infinite data in the type. This guarantees compositionality. More importantly, the duality of pattern and copatterns provide a unifying semantic concept which allows us for the first time to elegantly and uniformly support both well-founded induction and coinduction by mere rewriting. The strong normalization proof is structured around Girard's reducibility candidates. As such our system allows for non-determinism and does not rely on coverage. Since System F{$\omega$} is general enough that it can be the target of compilation for the Calculus of Constructions, this work is a significant step towards representing observation-centric infinite data in proof assistants such as Coq and Agda.},
+  language = {en},
+  author = {Abel, Andreas and Pientka, Brigitte},
+  month = jun,
+  year = {2013},
+  pages = {25},
+  file = {/Users/doisinkidney/Zotero/storage/27CYWC4L/Abel and Pientka - Wellfounded Recursion with Copatterns.pdf}
+}
+
+@misc{mertens_introducing_2010,
+  address = {Galois Inc. 421 SW 6th Ave. Suite 300, Portland, OR, USA},
+  title = {Introducing {{Well}}-Founded {{Recursion}}},
+  abstract = {Implementing recursive functions can be tricky when you want to be certain that they eventually terminate. This talk introduces the concept of well-founded recursion as a tool for implementing recursive functions. It implements these concepts in the Agda programming language and demonstrates the technique by implementing a simple version of Quicksort.},
+  language = {en},
+  author = {Mertens, Eric},
+  month = jun,
+  year = {2010},
+  file = {/Users/doisinkidney/Zotero/storage/AYDUTTXY/Mertens - Introducing Well-founded Recursion.pdf}
+}
+
+@misc{paulson2016future,
+  title = {The {{Future}} of {{Formalised Mathematics}}},
+  abstract = {Recent years have witnessed tremendous achievements in formalised mathe- matics, including the completion of the Flyspeck project (a machine-checked proof of the Kepler Conjecture) and the formalisation of the odd order theorem, the central limit the- orem and G\"odel's second incompleteness theorem. Formalised mathematics has started to attract the attention of mainstream mathematicians such as Harvey Friedman, Tim Gow- ers and Tom Hales. Nevertheless, there is much disagreement on the details of formalisms (constructive or classical, typed or typeless), proof languages (linear or structured) and automation (minimal, heuristic or algorithmic). The recent translation of the HOL Light multivariate analysis library to Isabelle highlights some of these di􏰀erences. The speaker will address these issues, referencing recent developments in the formalisation of real alge- braic geometry.},
+  language = {en},
+  author = {Paulson, Lawrence C},
+  year = {2016},
+  file = {/Users/doisinkidney/Zotero/storage/R9S6SV6Y/Paulson - The Future of Formalised Mathematics.pdf}
+}
+
+@book{abel_foetus_1998,
+  title = {Foetus \textendash{} {{Termination Checker}} for {{Simple Functional Programs}}},
+  abstract = {We introduce a simple functional language foetus (lambda calculus with tuples, constructors and pattern matching) supplied with a termination checker. This checker tries to find a well-founded structural order on the parameters on the given function to prove termination. The components of the check algorithm are: function call extraction out of the program text, call graph completion and finding a lexical order for the function parameters. The HTML version of this paper contains many ready-to-run Web-based examples.},
+  author = {Abel, Andreas},
+  year = {1998},
+  file = {/Users/doisinkidney/Zotero/storage/6RRBVHKX/Abel - 1998 - foetus – Termination Checker for Simple Functional.pdf;/Users/doisinkidney/Zotero/storage/K7PV9HSB/summary.html}
+}
+
+@inproceedings{atkey_syntax_2018,
+  address = {Oxford, United Kingdom},
+  title = {Syntax and {{Semantics}} of {{Quantitative Type Theory}}},
+  isbn = {978-1-4503-5583-4},
+  doi = {10.1145/3209108.3209189},
+  abstract = {We present Quantitative Type Theory, a Type Theory that records usage information for each variable in a judgement, based on a previous system by McBride. The usage information is used to give a realizability semantics using a variant of Linear Combinatory Algebras, refining the usual realizability semantics of Type Theory by accurately tracking resource behaviour. We define the semantics in terms of Quantitative Categories with Families, a novel extension of Categories with Families for modelling resource sensitive type theories.},
+  language = {en},
+  booktitle = {Proceedings of the 33rd {{Annual ACM}}/{{IEEE Symposium}} on {{Logic}} in {{Computer Science}}  - {{LICS}} '18},
+  publisher = {{ACM Press}},
+  author = {Atkey, Robert},
+  year = {2018},
+  pages = {56-65},
+  file = {/Users/doisinkidney/Zotero/storage/3XYITYUB/Atkey - 2018 - Syntax and Semantics of Quantitative Type Theory.pdf}
+}
+
+@article{abel_resourceful_nodate,
+  title = {Resourceful {{Dependent Types}}},
+  language = {en},
+  author = {Abel, Andreas},
+  pages = {2},
+  file = {/Users/doisinkidney/Zotero/storage/VQE7K7YK/Abel - Resourceful Dependent Types.pdf}
+}
+
+@article{shulman_type_nodate,
+  title = {Type Theory and Category Theory},
+  language = {en},
+  author = {Shulman, Michael},
+  pages = {126},
+  file = {/Users/doisinkidney/Zotero/storage/UYEH5SND/Shulman - Type theory and category theory.pdf}
+}
+
+@article{isaza_category_2014,
+  title = {Category {{Theory Applied}} to {{Functional Programming}}},
+  language = {en},
+  author = {Isaza, Juan Pedro Villa},
+  year = {2014},
+  pages = {131},
+  file = {/Users/doisinkidney/Zotero/storage/ZEA9EU2W/Isaza - 2014 - Category Theory Applied to Functional Programming.pdf}
+}
+
+@phdthesis{blaguszewski_implementing_2010,
+  address = {G\"oteborg, Sweden},
+  type = {Master of {{Science Thesis}} in the {{Program CSALL}}},
+  title = {Implementing and {{Optimizing}} a {{Simple}}, {{Dependently}}-{{Typed Language}}},
+  abstract = {This thesis presents a compiler for the simple functional programming language LambdaPi, which includes dependent types. The compiler is written in Haskell and uses LLVM, a framework for building optimizing compiler backends. It can compile the complete standard library provided by LambdaPi's authors into native machine code. It is not much of an optimizing compiler, but several obvious opportunities for improvement exist.
+First I discuss the theoretical background of project: the principles of dependent types and the languages which include them. I also give a brief overview of the LLVM system and of related work. The second section describes the process of implementation, which was done in stages from a trivial calculator language up to full LambdaPi. And finally we consider opportunities for optimization. Some of these stem from Edwin Brady's [2005] analysis of Epigram, while others are lower-level and can be performed for us by LLVM.},
+  language = {en},
+  school = {Chalmers University of Technology},
+  author = {Blaguszewski, Michael},
+  month = apr,
+  year = {2010},
+  file = {/Users/doisinkidney/Zotero/storage/PBMHDGYH/124826.pdf},
+  note = {https://archives.haskell.org/code.haskell.org/LambdaPiC/}
+}
+
+@article{harper_foundations_nodate,
+  title = {Foundations and {{Applications}} of {{Higher}}-{{Dimensional Directed Type Theory}}},
+  language = {en},
+  author = {Harper, Robert and Licata, Daniel R},
+  year = {http://www.cs.cmu.edu/afs/.cs.cmu.edu/Web/People/drl/pubs/lh102dttnsf/lh102dttnsf.pdf},
+  pages = {19},
+  file = {/Users/doisinkidney/Zotero/storage/QYIZ3T43/Harper and Licata - Foundations and Applications of Higher-Dimensional.pdf}
+}
+
+@incollection{hutchison_bounded_2014,
+  address = {Berlin, Heidelberg},
+  title = {Bounded {{Linear Types}} in a {{Resource Semiring}}},
+  volume = {8410},
+  isbn = {978-3-642-54832-1 978-3-642-54833-8},
+  abstract = {Bounded linear types have proved to be useful for automated resource analysis and control in functional programming languages. In this paper we introduce a bounded linear typing discipline on a general notion of resource which can be modeled in a semiring. For this type system we provide both a general type-inference procedure, parameterized by the decision procedure of the semiring equational theory, and a (coherent) categorical semantics. This could be a useful type-theoretic and denotational framework for resource-sensitive compilation, and it represents a generalization of several existing type systems. As a nontrivial instance, motivated by hardware compilation, we present a complex new application to calculating and controlling timing of execution in a (recursion-free) higher-order functional programming language with local store.},
+  language = {en},
+  booktitle = {Programming {{Languages}} and {{Systems}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Ghica, Dan R. and Smith, Alex I.},
+  editor = {Hutchison, David and Kanade, Takeo and Kittler, Josef and Kleinberg, Jon M. and Mattern, Friedemann and Mitchell, John C. and Naor, Moni and Nierstrasz, Oscar and Pandu Rangan, C. and Steffen, Bernhard and Sudan, Madhu and Terzopoulos, Demetri and Tygar, Doug and Vardi, Moshe Y. and Weikum, Gerhard and Shao, Zhong},
+  year = {2014},
+  pages = {331-350},
+  file = {/Users/doisinkidney/Zotero/storage/I5EDLGEL/Ghica and Smith - 2014 - Bounded Linear Types in a Resource Semiring.pdf},
+  doi = {10.1007/978-3-642-54833-8_18}
+}
+
+@article{ko_programming_nodate,
+  title = {Programming {{Metamorphic Algorithms}} in {{Agda}} ({{Functional Pearl}})},
+  volume = {0},
+  language = {en},
+  number = {0},
+  journal = {Proceedings of the ACM on Programming Languages},
+  author = {Ko, Hsiang-Shang},
+  pages = {26},
+  file = {/Users/doisinkidney/Zotero/storage/8K25FUEB/Ko - Programming Metamorphic Algorithms in Agda (Functi.pdf;/Users/doisinkidney/Zotero/storage/8W52A5R5/Ko - Programming Metamorphic Algorithms in Agda (Functi.pdf}
+}
+
+@article{wadler_propositions_2015-1,
+  title = {Propositions {{As Types}}},
+  volume = {58},
+  issn = {0001-0782},
+  doi = {10.1145/2699407},
+  abstract = {Connecting mathematical logic and computation, it ensures that some aspects of programming are absolute.},
+  number = {12},
+  journal = {Commun. ACM},
+  author = {Wadler, Philip},
+  month = nov,
+  year = {2015},
+  pages = {75--84},
+  file = {/Users/doisinkidney/Zotero/storage/6QXRH73L/propositions-as-types.pdf;/Users/doisinkidney/Zotero/storage/X6HFPXQN/propositions-as-types.pdf}
+}
+
+@article{coquand_equality_nodate,
+  title = {Equality and Dependent Type Theory},
+  language = {en},
+  author = {Coquand, Thierry},
+  pages = {59},
+  file = {/Users/doisinkidney/Zotero/storage/HY4TXI2B/Coquand - Equality and dependent type theory.pdf}
+}
+
+@article{chapman_biased_nodate,
+  title = {A Biased History of Equality in Type Theory},
+  language = {en},
+  author = {Chapman, James},
+  pages = {22},
+  file = {/Users/doisinkidney/Zotero/storage/LY5XPTFM/Chapman - A biased history of equality in type theory.pdf}
+}
+
+@book{whitehead_principia_1910,
+  title = {Principia {{Mathematica}}. {{Vol}}. {{I}}},
+  language = {English},
+  author = {Whitehead, A. N. and Russell, B.},
+  year = {1910},
+  file = {/Users/doisinkidney/Zotero/storage/CQPMGYHN/zbmath.org.html}
+}
+
+@book{whitehead_principia_1913,
+  title = {Principia Mathematica. {{Vol}}. {{III}}},
+  language = {English},
+  author = {Whitehead, A. N. and Russell, B.},
+  year = {1913},
+  file = {/Users/doisinkidney/Zotero/storage/8KS6FPTF/zbmath.org.html},
+  note = {Published: Cambridge: University Press. X u. 491 S. \$8\^\textbackslash{}circ\$ (1913).}
+}
+
+@book{whitehead_principia_1912,
+  title = {Principia {{Mathematica}}. {{Vol}}. {{II}}},
+  language = {English},
+  author = {Whitehead, A. N. and Russell, B.},
+  year = {1912},
+  file = {/Users/doisinkidney/Zotero/storage/YCYKF384/zbmath.org.html},
+  note = {Published: Cambridge: University Press. xxxiv, 772 S. \$8\^\textbackslash{}circ\$ (1912).
+MSC2010: 
+                                                03-02
+                                             = 
+                                                Research monographs (mathematical logic)}
+}
+
+@article{gonthier_formal_2008,
+  title = {Formal {{Proof}}\textemdash{{The Four}}-{{Color Theorem}}},
+  volume = {55},
+  language = {en},
+  number = {11},
+  journal = {Notices of the AMS},
+  author = {Gonthier, Georges},
+  year = {2008},
+  pages = {12},
+  file = {/Users/doisinkidney/Zotero/storage/254L4UBG/Gonthier - 2008 - Formal Proof—The Four- Color Theorem.pdf;/Users/doisinkidney/Zotero/storage/JNKRWD79/Gonthier - 2008 - Formal Proof—The Four- Color Theorem.pdf}
+}
+
+@article{appel_solution_1977,
+  title = {The {{Solution}} of the {{Four}}-{{Color}}-{{Map Problem}}},
+  volume = {237},
+  issn = {0036-8733},
+  number = {4},
+  journal = {Scientific American},
+  author = {Appel, Kenneth and Haken, Wolfgang},
+  year = {1977},
+  pages = {108-121},
+  file = {/Users/doisinkidney/Zotero/storage/ZJTJRIZC/Appel and Haken - 1977 - The Solution of the Four-Color-Map Problem.pdf}
+}
+
+@phdthesis{girard_interpretation_1972,
+  type = {{PhD Thesis}},
+  title = {{Interpr\'etation fonctionelle et \'elimination des coupures de l'arithm\'etique d'ordre sup\'erieur}},
+  language = {fr},
+  school = {PhD thesis, Universit\'e Paris VII},
+  author = {Girard, Jean-Yves},
+  year = {1972},
+  file = {/Users/doisinkidney/Zotero/storage/QLIN2G73/Girard - Interprétation fonctionnelle et élimination des co.pdf}
+}
+
+@article{zach_hilberts_2005,
+  title = {Hilbert's {{Program Then}} and {{Now}}},
+  doi = {10.1016/B978-044451541-4/50014-2},
+  language = {en},
+  author = {Zach, Richard},
+  month = aug,
+  year = {2005},
+  file = {/Users/doisinkidney/Zotero/storage/UDKTVSPU/Zach - 2005 - Hilbert's Program Then and Now.pdf;/Users/doisinkidney/Zotero/storage/FGBXZSY7/0508572.html}
+}
+
+@article{breitner_ready_2018-1,
+  archivePrefix = {arXiv},
+  eprinttype = {arxiv},
+  eprint = {1803.06960},
+  title = {Ready, {{Set}}, {{Verify}}! {{Applying Hs}}-to-Coq to {{Real}}-World {{Haskell Code}} ({{Experience Report}})},
+  volume = {2},
+  issn = {2475-1421},
+  doi = {10.1145/3236784},
+  abstract = {Good tools can bring mechanical verification to programs written in mainstream functional languages. We use hs-to-coq to translate significant portions of Haskell's containers library into Coq, and verify it against specifications that we derive from a variety of sources including type class laws, the library's test suite, and interfaces from Coq's standard library. Our work shows that it is feasible to verify mature, widely-used, highly optimized, and unmodified Haskell code. We also learn more about the theory of weight-balanced trees, extend hs-to-coq to handle partiality, and \textendash{} since we found no bugs \textendash{} attest to the superb quality of well-tested functional code.},
+  number = {ICFP},
+  journal = {Proc. ACM Program. Lang.},
+  author = {Breitner, Joachim and {Spector-Zabusky}, Antal and Li, Yao and Rizkallah, Christine and Wiegley, John and Weirich, Stephanie},
+  month = jul,
+  year = {2018},
+  keywords = {Computer Science - Programming Languages,Coq,Haskell,verification},
+  pages = {89:1--89:16},
+  file = {/Users/doisinkidney/Zotero/storage/47CZT66A/Breitner et al. - 2018 - Ready, Set, Verify! Applying hs-to-coq to real-wor.pdf;/Users/doisinkidney/Zotero/storage/CVI5SUYL/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/JNAKLLCA/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/MQGZJBF3/Breitner et al. - 2018 - Ready, Set, Verify! Applying hs-to-coq to real-wor.pdf;/Users/doisinkidney/Zotero/storage/W3P8LJJX/Breitner et al. - 2018 - Ready, Set, Verify! Applying Hs-to-coq to Real-wor.pdf;/Users/doisinkidney/Zotero/storage/3NXQ32D7/1803.html;/Users/doisinkidney/Zotero/storage/ERIANH6Y/1803.html}
+}
+
+@inproceedings{otwani_thoralf_2018,
+  address = {New York, NY, USA},
+  series = {Haskell 2018},
+  title = {The {{Thoralf Plugin}}: {{For Your Fancy Type Needs}}},
+  isbn = {978-1-4503-5835-4},
+  shorttitle = {The {{Thoralf Plugin}}},
+  doi = {10.1145/3242744.3242754},
+  abstract = {Many fancy types (e.g., generalized algebraic data types, type families) require a type checker plugin. These fancy types have a type index (e.g., type level natural numbers) with an equality relation that is difficult or impossible to represent using GHC's built-in type equality. The most practical way to represent these equality relations is through a plugin that asserts equality constraints. However, such plugins are difficult to write and reason about.   In this paper, we (1) present a formal theory of reasoning about the correctness of type checker plugins for type indices, and, (2) apply this theory in creating Thoralf, a generic and extensible plugin for type indices that translates GHC constraint problems to queries to an external SMT solver. By "generic and extensible", we mean the restrictions on extending Thoralf are slight, and, if some type index could be encoded as an SMT sort, then a programmer could extend Thoralf by providing this encoding function.},
+  booktitle = {Proceedings of the 11th {{ACM SIGPLAN International Symposium}} on {{Haskell}}},
+  publisher = {{ACM}},
+  author = {Otwani, Divesh and Eisenberg, Richard A.},
+  year = {2018},
+  keywords = {SMT,GHC,constraint solver,type checker plugin},
+  pages = {106--118}
+}
+
+@misc{wiedijk_formalizing_2018,
+  title = {Formalizing 100 {{Theorems}}},
+  abstract = {There used to exist a "top 100" of mathematical theorems on the web, which is a rather arbitrary list (and most of the theorems seem rather elementary), but still is nice to look at. On the current page I will keep track of which theorems from this list have been formalized. Currently the fraction that already has been formalized seems to be
+93\%
+
+The page does not keep track of all formalizations of these theorems. It just shows formalizations in systems that have formalized a significant number of theorems, or that have formalized a theorem that none of the others have done. The systems that this page refers to are (in order of the number of theorems that have been formalized, so the more interesting systems for mathematics are near the top):
+HOL Light 	86
+Isabelle 	80
+Coq 	69
+Mizar 	69
+Metamath 	69
+ProofPower 	43
+nqthm/ACL2 	18
+PVS 	16
+NuPRL/MetaPRL 	8
+
+Theorems in the list which have not been formalized yet are in italics. Formalizations of constructive proofs are in italics too. The difficult proofs in the list (according to John all the others are not a serious challenge "given a week or two") have been underlined. The formalizations under a theorem are in the order of the list of systems, and not in chronological order.},
+  howpublished = {http://www.cs.ru.nl/\textasciitilde{}freek/100/},
+  author = {Wiedijk, Freek},
+  month = oct,
+  year = {2018},
+  file = {/Users/doisinkidney/Zotero/storage/9H2EFAFC/100.html}
+}
+
+@book{megill_metamath_2007,
+  address = {Morrisville},
+  title = {Metamath: A Computer Language for Pure Mathematics},
+  isbn = {978-1-4116-3724-5},
+  shorttitle = {Metamath},
+  language = {en},
+  publisher = {{Lulu Press}},
+  author = {Megill, Norman},
+  year = {2007},
+  file = {/Users/doisinkidney/Zotero/storage/PRRBLF3A/Megill - 2007 - Metamath a computer language for pure mathematics.pdf},
+  note = {OCLC: 924789462}
+}
+
+@inproceedings{boutin_using_1997,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {Using Reflection to Build Efficient and Certified Decision Procedures},
+  isbn = {978-3-540-69530-1},
+  abstract = {In this paper we explain how computational reflection can help build efficient certified decision procedure in reduction systems. We have developed a decision procedure on abelian rings in the Coq system but the approach we describe applies to all reduction systems that allow the definition of concrete types (or datatypes). We show that computational reflection is more efficient than an LCF-like approach to implement decision procedures in a reduction system. We discuss the concept of total reflection, which we have investigated in Coq using two facts: the extraction process available in Coq and the fact that the implementation language of the Coq system can be considered as a sublanguage of Coq. Total reflection is not yet implemented in Coq but we can test its performance as the extraction process is effective. Both reflection and total reflection are conservative extensions of the reduction system in which they are used. We also discuss performance and related approaches. In the paper,we assume basic knowledges of ML and proof-checkers.},
+  language = {en},
+  booktitle = {Theoretical {{Aspects}} of {{Computer Software}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Boutin, Samuel},
+  editor = {Abadi, Mart\'in and Ito, Takayasu},
+  year = {1997},
+  keywords = {Computer Algebra System,Decision Procedure,Object Language,Order Theory,Reduction System},
+  pages = {515-529},
+  file = {/Users/doisinkidney/Zotero/storage/F9JMVUGU/Boutin - 1997 - Using reflection to build efficient and certified .pdf}
+}
+
+@book{Coq:manual,
+  title = {The {{Coq Proof Assistant Reference Manual}}, Version 7.2},
+  author = {Coq Development Team, The},
+  year = {2002}
+}
+
+@book{peyton_jones_haskell_2003,
+  address = {Cambridge, U.K. ; New York},
+  title = {Haskell 98 Language and Libraries: The Revised Report},
+  isbn = {978-0-521-82614-3},
+  lccn = {QA76.73.H37 H37 2003},
+  shorttitle = {Haskell 98 Language and Libraries},
+  publisher = {{Cambridge University Press}},
+  editor = {Peyton Jones, Simon L.},
+  year = {2003},
+  keywords = {Haskell (Computer program language)},
+  note = {OCLC: ocm51271691}
+}
+
+@article{dagand_essence_2017,
+  title = {The Essence of Ornaments},
+  volume = {27},
+  issn = {0956-7968, 1469-7653},
+  doi = {10.1017/S0956796816000356},
+  abstract = {Functional programmers from all horizons strive to use, and sometimes abuse, their favorite type system in order to capture the invariants of their programs. A widely used tool in that trade consists in defining finely indexed datatypes. Operationally, these types classify the programmer's data, following the ML tradition. Logically, these types enforce the program invariants in a novel manner. This new programming pattern, by which one programs over inductive definitions to account for some invariants, lead to the development of a theory of ornaments (McBride, 2011 Ornamental Algebras, Algebraic Ornaments. Unpublished). However, ornaments originate as a dependently-typed object and may thus appear rather daunting to a functional programmer of the non-dependent kind. This article aims at presenting ornaments from first-principles and, in particular, to declutter their presentation from syntactic considerations. To do so, we shall give a sufficiently abstract model of indexed datatypes by means of many-sorted signatures. In this process, we formalize our intuition that an indexed datatype is the combination of a data-structure and a data-logic. Over this abstraction of datatypes, we shall recast the definition of ornaments, effectively giving a model of ornaments. Benefiting both from the operational and abstract nature of many-sorted signatures, ornaments should appear applicable and, one hopes, of interest beyond the type-theoretic circles, case in point being languages with generalized abstract datatypes or refinement types.},
+  language = {en},
+  journal = {Journal of Functional Programming},
+  author = {Dagand, Pierre-Evariste},
+  year = {2017/ed},
+  file = {/Users/doisinkidney/Zotero/storage/TLH8A8K7/4D2DF6F4FE23599C8C1FEA6C921A3748.html}
+}
+
+@misc{the_development_team_step-by-step_2009,
+  title = {Step-by-{{Step Math}}},
+  language = {en},
+  journal = {Wolfram|Alpha Blog},
+  author = {{The Development Team}},
+  month = dec,
+  year = {2009},
+  file = {/Users/doisinkidney/Zotero/storage/AJUGXPVM/step-by-step-math.html}
+}
+
+@misc{wolfram_research_inc._wolframalpha_2019,
+  title = {Wolfram|{{Alpha}}},
+  howpublished = {Wolfram Research, Inc.},
+  author = {{Wolfram Research, Inc.}},
+  year = {2019}
+}
+
+@misc{kahl_hundred_2004,
+  title = {The {{Hundred Greatest Theorems}}},
+  abstract = {The millenium seemed to spur a lot of people to compile "Top 100" or "Best 100" lists of many things, including movies (by the American Film Institute) and books (by the Modern Library). Mathematicians were not immune, and at a mathematics conference in July, 1999, Paul and Jack Abad presented their list of "The Hundred Greatest Theorems." Their ranking is based on the following criteria: "the place the theorem holds in the literature, the quality of the proof, and the unexpectedness of the result."
+
+The list is of course as arbitrary as the movie and book list, but the theorems here are all certainly worthy results. I hope to over time include links to the proofs of them all; for now, you'll have to content yourself with the list itself and the biographies of the principals.},
+  howpublished = {http://web.archive.org/web/20080105074243/http://personal.stevens.edu/\textasciitilde{}nkahl/Top100Theorems.html},
+  author = {Kahl, Nathan W.},
+  year = {2004},
+  file = {/Users/doisinkidney/Zotero/storage/44SQ7P3J/Top100Theorems.html}
+}
+
+@inproceedings{lindblad_tool_2006,
+  address = {Berlin, Heidelberg},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  title = {A {{Tool}} for {{Automated Theorem Proving}} in {{Agda}}},
+  volume = {3839},
+  isbn = {978-3-540-31429-5},
+  abstract = {We present a tool for automated theorem proving in Agda, an implementation of Martin-L\"of's intuitionistic type theory. The tool is intended to facilitate interactive proving by relieving the user from filling in simple but tedious parts of a proof. The proof search is conducted directly in type theory and produces proof terms. Any proof term is verified by the Agda type-checker, which ensures soundness of the tool. Some effort has been spent on trying to produce human readable results, which allows the user to examine the generated proofs. We have tested the tool on examples mainly in the area of (functional) program verification. Most examples we have considered contain induction, and some contain generalisation. The contribution of this work outside the Agda community is to extend the experience of automated proof for intuitionistic type theory.},
+  language = {en},
+  booktitle = {Types for {{Proofs}} and {{Programs}}},
+  publisher = {{Springer Berlin Heidelberg}},
+  author = {Lindblad, Fredrik and Benke, Marcin},
+  editor = {Filli\^atre, Jean-Christophe and {Paulin-Mohring}, Christine and Werner, Benjamin},
+  year = {2006},
+  keywords = {Elimination Rule,Type Theory,Logical Framework,Meta Variable,Proof Assistant},
+  pages = {154-169},
+  file = {/Users/doisinkidney/Zotero/storage/BNCI9EYW/Lindblad and Benke - 2006 - A Tool for Automated Theorem Proving in Agda.pdf},
+  doi = {10.1007/11617990_10}
+}
+
+@unpublished{allais_deciding_2011,
+  title = {Deciding {{Presburger}} Arithmetic Using Reflection},
+  abstract = {The need to prove or disprove a formula of Presburger arithmetic is quite frequent in certified software development (constraints generated automatically) or when working on higher arithmetic (number theory). The fact that this theory is decidable and that Agda is now mature enough to be able to implement such a solver pushed us to try to tackle this problem.},
+  language = {en},
+  author = {Allais, G},
+  month = may,
+  year = {2011},
+  file = {/Users/doisinkidney/Zotero/storage/564IKBT9/Allais - Deciding Presburger arithmetic using reﬂection.pdf}
+}
+
+@book{jones_scipy_2001,
+  title = {{{SciPy}}: {{Open}} Source Scientific Tools for {{Python}}},
+  author = {Jones, Eric and Oliphant, Travis and Peterson, Pearu and others},
+  year = {2001}
+}
+
+@book{r_core_team_r_2013,
+  address = {Vienna, Austria},
+  title = {R: {{A Language}} and {{Environment}} for {{Statistical Computing}}},
+  publisher = {{R Foundation for Statistical Computing}},
+  author = {{R Core Team}},
+  year = {2013}
+}
+
+@article{mahboubi_machine-checked_2016,
+  title = {Machine-Checked Mathematics},
+  volume = {5/17},
+  abstract = {In this article she gives an overview about machine-checked mathematics.},
+  language = {en},
+  number = {3},
+  journal = {Nieuw Archief voor Wiskunde},
+  author = {Mahboubi, Assia},
+  month = sep,
+  year = {2016},
+  pages = {5},
+  file = {/Users/doisinkidney/Zotero/storage/K4YFJJ3Y/Mahboubi - 2016 - Machine-checked mathematics.pdf;/Users/doisinkidney/Zotero/storage/33SI4PH7/hal-01363284.html}
+}
+
+@inproceedings{mahboubi_canonical_2013,
+  title = {Canonical {{Structures}} for the Working {{Coq}} User},
+  volume = {7998},
+  doi = {10.1007/978-3-642-39634-2_5},
+  abstract = {This paper provides a gentle introduction to the art of programming type inference with the mechanism of Canonical Structures. Programmable type inference has been one of the key ingredients for the successful formalization of the Odd Order Theorem using the Coq proof assistant. The paper concludes comparing the language of Canonical Structures to the one of Type Classes and Unification Hints.},
+  language = {en},
+  booktitle = {{{ITP}} 2013, 4th {{Conference}} on {{Interactive Theorem Proving}}},
+  publisher = {{Springer}},
+  author = {Mahboubi, Assia and Tassi, Enrico},
+  month = jul,
+  year = {2013},
+  pages = {19-34},
+  file = {/Users/doisinkidney/Zotero/storage/3NBZE3DT/Mahboubi and Tassi - 2013 - Canonical Structures for the working Coq user.pdf;/Users/doisinkidney/Zotero/storage/R7NZ7LRQ/hal-00816703v2.html}
+}
+
+@article{hudson_certified_2015,
+  title = {Certified {{Cost Bounds}} in {{Agda}}: {{A Step Towards Automated Complexity Analysis}}},
+  shorttitle = {Certified {{Cost Bounds}} in {{Agda}}},
+  journal = {Honors Theses - All},
+  author = {Hudson, Bowornmet},
+  month = apr,
+  year = {2015},
+  file = {/Users/doisinkidney/Zotero/storage/66ZL8F5E/1484.html}
+}
+
+
