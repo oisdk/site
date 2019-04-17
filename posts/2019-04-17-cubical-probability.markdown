@@ -274,8 +274,11 @@ _=<< : (A → 𝒫 B) → [ A ↦ 𝒫 B ]
 [ f =<< ] p & x ∷ xs = [ cond p ]↓ (f x) ∪ xs
 [ f =<< ][] = []
 [ f =<< ]-set = trunc
-[ f =<< ]-dup p q x xs = ⟦ ∪-assoc ([ cond q ]↓ (f x)) xs ⟧⇓ ([ cond p ]↓ (f x)) ∙ cong (_∪ xs) (⟦ cond-distrib p q ⟧⇓ (f x) )
 [ f =<< ]-del x xs = cong (_∪ xs) (⟦ cond-0 ⟧⇓ (f x))
+[ f =<< ]-dup p q x xs =
+  [ cond p ]↓ (f x) ∪ [ cond q ]↓ (f x) ∪ xs   ≡⟨ ⟦ ∪-assoc ([ cond q ]↓ (f x)) xs ⟧⇓ ([ cond p ]↓ (f x))⟩
+  ([ cond p ]↓ (f x) ∪ [ cond q ]↓ (f x)) ∪ xs ≡⟨ cong (_∪ xs) (⟦ cond-distrib p q ⟧⇓ (f x) ) ⟩
+  [ cond (p + q) ]↓ (f x) ∪ xs ∎
 [ f =<< ]-com p x q y xs =
   [ cond p ]↓ (f x) ∪ [ cond q ]↓ (f y) ∪ xs   ≡⟨ ⟦ ∪-assoc ([ cond q ]↓ (f y)) xs ⟧⇓ ([ cond p ]↓ (f x)) ⟩
   ([ cond p ]↓ (f x) ∪ [ cond q ]↓ (f y)) ∪ xs ≡⟨ cong (_∪ xs) (⟦ ∪-comm ([ cond q ]↓ (f y)) ⟧⇓ ([ cond p ]↓ (f x))) ⟩
@@ -285,3 +288,13 @@ _=<< : (A → 𝒫 B) → [ A ↦ 𝒫 B ]
 _>>=_ : 𝒫 A → (A → 𝒫 B) → 𝒫 B
 xs >>= f = [ f =<< ]↓ xs
 ```
+
+# Conclusion
+
+I've really enjoyed working with cubical Agda so far, and the proofs above were
+a pleasure to write.
+I think I can use the above definition to get a workable differential privacy
+monad, also.
+
+Anyway, all the code is available
+[here](https://oisdk.github.io/agda-cubical-probability/Probability.html).
