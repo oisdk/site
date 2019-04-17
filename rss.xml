@@ -7,8 +7,166 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sun, 24 Mar 2019 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Wed, 17 Apr 2019 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Cubical Agda and Probability Monads</title>
+    <link>https://doisinkidney.com/posts/2019-04-17-cubical-probability.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on April 17, 2019
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Agda.html">Agda</a>, <a href="/tags/Probability.html">Probability</a>
+    
+</div>
+
+<p><a href="https://agda.readthedocs.io/en/latest/language/cubical.html">Cubical Agda</a> has just come out, and I’ve been playing around with it for a bit. There’s a bunch of info out there on the theory of cubical types, and Homotopy Type Theory more generally (cubical type theory is kind of like an “implementation” of Homotopy type theory), but I wanted to make a post demonstrating cubical Agda in practice, and one of its cool uses from a programming perspective.</p>
+<h1 id="so-what-is-cubical-agda">So What is Cubical Agda?</h1>
+<p>I don’t really know! Cubical type theory is quite complex (even for a type theory), and I’m not nearly qualified to properly explain it. In lieu of a proper first-principles explanation, then, I’ll try and give a few examples of how it differs from normal Agda, before moving on to the main example of this post.</p>
+<dl>
+<dt>Extensionality</dt>
+<dd><p>One of the big annoyances in standard Agda is that we can’t prove the following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1">extensionality <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>f g <span class="ot">:</span> A <span class="ot">→</span> B<span class="ot">}</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">              <span class="ot">→</span> <span class="ot">(∀</span> <span class="ot">{</span>x<span class="ot">}</span> <span class="ot">→</span> f x ≡ g x<span class="ot">)</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">              <span class="ot">→</span> f ≡ g</a></code></pre></div>
+<p>It’s emblematic of a wider problem in Agda: we can’t say “two things are equal if they always behave the same”. Infinite types, for instance (like streams) are often only equal via bisimulation: we can’t translate this into normal equality in standard Agda. Cubical type theory, though, has a different notion of “equality”, which allow a wide variety of things (including bisimulations and extensional proofs) to be translated into a proper equality</p>
+</dd>
+<dt>Isomorphisms</dt>
+<dd><p>One of these such things we can promote to a “proper equality” is an isomorphism. In the <a href="https://github.com/agda/cubical">cubical repo</a> this is used to <a href="https://github.com/agda/cubical/blob/8391a4835b3d2478e9394c6c3ec7e6fff42ede62/Cubical/Data/BinNat/BinNat.agda">prove things about binary numbers</a>: by proving that there’s an isomorphism between the Peano numbers and binary numbers, they can lift any properties on the Peano numbers to the binary numbers.</p>
+</dd>
+</dl>
+<p>So those are two useful examples, but the <em>most</em> interesting use I’ve seen so far is the following:</p>
+<h1 id="higher-inductive-types">Higher Inductive Types</h1>
+<p>Higher Inductive Types are an extension of normal inductive types, like the list:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">data</span> List <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  [] <span class="ot">:</span> List A</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="ot">_</span>∷<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> List A <span class="ot">→</span> List A</a></code></pre></div>
+<p>They allow us to add new equations to a type, as well as constructors. To demonstrate what this means, as well as why you’d want it, I’m going to talk about free objects.</p>
+<p>Very informally, a free object on some algebra is the <em>minimal</em> type which satisfies the laws of the algebra. Lists, for instance, are the free monoid. They satisfy all of the monoid laws (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>•</mo><annotation encoding="application/x-tex">\bullet</annotation></semantics></math> is <code>++</code> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math> is <code>[]</code>):</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>•</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>•</mo><mi>z</mi><mo>=</mo><mi>x</mi><mo>•</mo><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo>•</mo><mi>z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x \bullet y) \bullet z = x \bullet (y \bullet z)</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>ϵ</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet \epsilon = x</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>•</mo><mi>x</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">\epsilon \bullet x = x</annotation></semantics></math></p>
+<p>But <em>nothing else</em>. That means they don’t satisfy any extra laws (like, for example, commutativity), and they don’t have any extra structure they don’t need.</p>
+<p>How did we get to the definition of lists from the monoid laws, though? It doesn’t look anything like them. It would be nice if there was some systematic way to construct the corresponding free object given the laws of an algebra. Unfortunately, in normal Agda, this isn’t possible. Consider, for instance, if we added the commutativity law to the algebra: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>y</mi><mo>=</mo><mi>y</mi><mo>•</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet y = y \bullet x</annotation></semantics></math> Not only is it not obvious how we’d write the corresponding free object, it’s actually <em>not possible</em> in normal Agda!</p>
+<p>This kind of problem comes up a lot: we have a type, and we want it to obey just <em>one more</em> equation, but there is no inductive type which does so. Higher Inductive Types solve the problem in quite a straightforward way. So we want lists to satisfy another equation? Well, just add it to the definition!</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> List <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  [] <span class="ot">:</span> List A</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="ot">_</span>∷<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> List A <span class="ot">→</span> List A</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  comm <span class="ot">:</span> <span class="ot">∀</span> xs ys <span class="ot">→</span> xs ++ ys ≡ ys ++ xs</a></code></pre></div>
+<p>Now, when we write a function that processes lists, Agda will check that the function behaves the same on <code>xs ++ ys</code> and <code>ys ++ xs</code>. As an example, here’s how you might define the free monoid as a HIT:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">data</span> FreeMonoid <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  [<span class="ot">_</span>] <span class="ot">:</span> A <span class="ot">→</span> FreeMonoid A</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="ot">_</span>∙<span class="ot">_</span> <span class="ot">:</span> FreeMonoid A <span class="ot">→</span> FreeMonoid A <span class="ot">→</span> FreeMonoid A</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  ε <span class="ot">:</span> FreeMonoid A</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">  ∙ε <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> x ∙ ε ≡ x</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  ε∙ <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> ε ∙ x ≡ x</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">  assoc <span class="ot">:</span> <span class="ot">∀</span> x y z <span class="ot">→</span> <span class="ot">(</span>x ∙ y<span class="ot">)</span> ∙ z ≡ x ∙ <span class="ot">(</span>y ∙ z<span class="ot">)</span></a></code></pre></div>
+<p>It’s quite a satisfying definition, and very easy to see how we got to it from the monoid laws.</p>
+<p>Now, when we write functions, we have to prove that those functions themselves also obey the monoid laws. For instance, here’s how we would take the length:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb5-1" data-line-number="1">length <span class="ot">:</span> FreeMonoid A <span class="ot">→</span> ℕ</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">length [ x ] <span class="ot">=</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">length <span class="ot">(</span>xs ∙ ys<span class="ot">)</span> <span class="ot">=</span> length xs + length ys</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">length ε <span class="ot">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">length <span class="ot">(</span>∙ε xs i<span class="ot">)</span> <span class="ot">=</span> +-identityʳ <span class="ot">(</span>length xs<span class="ot">)</span> i</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">length <span class="ot">(</span>ε∙ xs i<span class="ot">)</span> <span class="ot">=</span> +-identityˡ <span class="ot">(</span>length xs<span class="ot">)</span> i</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">length <span class="ot">(</span>assoc xs ys zs i<span class="ot">)</span> <span class="ot">=</span> +-assoc <span class="ot">(</span>length xs<span class="ot">)</span> <span class="ot">(</span>length ys<span class="ot">)</span> <span class="ot">(</span>length zs<span class="ot">)</span> i</a></code></pre></div>
+<p>The first three clauses are the actual function: they deal with the three normal constructors of the type. The next three clauses prove that those previous clauses obey the equalities defined on the type.</p>
+<p>With the preliminary stuff out of the way, let’s get on to the type I wanted to talk about:</p>
+<h1 id="probability">Probability</h1>
+<p>First things first, let’s remember the classic definition of the probability monad:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="fu">=</span> <span class="dt">Prob</span> {<span class="ot"> runProb ::</span> [(a, <span class="dt">Rational</span>)] }</a></code></pre></div>
+<p>Definitionally speaking, this doesn’t really represent what we’re talking about. For instance, the following two things express the same distribution, but have different representations:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="dt">Prob</span> [(<span class="dt">True</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">4</span>), (<span class="dt">True</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">4</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>)]</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="dt">Prob</span> [(<span class="dt">True</span> , <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>)]</a></code></pre></div>
+<p>So it’s the perfect candidate for an extra equality clause like we had above.</p>
+<p>Second, in an effort to generalise, we won’t deal specifically with <code>Rational</code>, and instead we’ll use any semiring. After all of that, we get the following definition:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="ot">_</span>&amp;<span class="ot">_</span>∷<span class="ot">_</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="kw">data</span> 𝒫 <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="ot">(</span>a ⊔ s<span class="ot">)</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  []  <span class="ot">:</span> 𝒫 A</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">  <span class="ot">_</span>&amp;<span class="ot">_</span>∷<span class="ot">_</span> <span class="ot">:</span> <span class="ot">(</span>p <span class="ot">:</span> Carrier<span class="ot">)</span> <span class="ot">→</span> <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> 𝒫 A <span class="ot">→</span> 𝒫 A</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">  dup <span class="ot">:</span> <span class="ot">∀</span> p q x xs <span class="ot">→</span> p &amp; x ∷ q &amp; x ∷ xs ≡ p + q &amp; x ∷ xs</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">  com <span class="ot">:</span> <span class="ot">∀</span> p x q y xs <span class="ot">→</span> p &amp; x ∷ q &amp; y ∷ xs ≡ q &amp; y ∷ p &amp; x ∷ xs</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">  del <span class="ot">:</span> <span class="ot">∀</span> x xs <span class="ot">→</span> 0# &amp; x ∷ xs ≡ xs</a></code></pre></div>
+<p>The three extra conditions are pretty sensible: the first removes duplicates, the second makes things commutative, and the third removes impossible events.</p>
+<p>Let’s get to writing some functions, then:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb9-1" data-line-number="1">sample <span class="ot">:</span> <span class="ot">(</span>A <span class="ot">→</span> Carrier<span class="ot">)</span> <span class="ot">→</span> 𝒫 A <span class="ot">→</span> Carrier</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">sample f [] <span class="ot">=</span> 0#</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">sample f <span class="ot">(</span>p &amp; x ∷ xs<span class="ot">)</span> <span class="ot">=</span> p * f x + sample f xs</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">sample f <span class="ot">(</span>dup p q x xs i<span class="ot">)</span> <span class="ot">=</span> begin[ i ]</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  p * f x + <span class="ot">(</span>q * f x + sample f xs<span class="ot">)</span> ≡˘⟨ +-assoc <span class="ot">(</span>p * f x<span class="ot">)</span> <span class="ot">(</span>q * f x<span class="ot">)</span> <span class="ot">(</span>sample f xs<span class="ot">)</span> ⟩</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">  <span class="ot">(</span>p * f x + q * f x<span class="ot">)</span> + sample f xs ≡˘⟨ cong <span class="ot">(_</span>+ sample f xs<span class="ot">)</span> <span class="ot">(</span>⟨+⟩* p q <span class="ot">(</span>f x<span class="ot">))</span>  ⟩</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">  <span class="ot">(</span>p + q<span class="ot">)</span> * f x + sample f xs ∎</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">sample f <span class="ot">(</span>swap p x q y xs i<span class="ot">)</span> <span class="ot">=</span> begin[ i ]</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">  p * f x + <span class="ot">(</span>q * f y + sample f xs<span class="ot">)</span> ≡˘⟨ +-assoc <span class="ot">(</span>p * f x<span class="ot">)</span> <span class="ot">(</span>q * f y<span class="ot">)</span> <span class="ot">(</span>sample f xs<span class="ot">)</span> ⟩</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">  p * f x + q * f y + sample f xs   ≡⟨ cong <span class="ot">(_</span>+ sample f xs<span class="ot">)</span> <span class="ot">(</span>+-comm <span class="ot">(</span>p * f x<span class="ot">)</span> <span class="ot">(</span>q * f y<span class="ot">))</span> ⟩</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">  q * f y + p * f x + sample f xs   ≡⟨ +-assoc <span class="ot">(</span>q * f y<span class="ot">)</span> <span class="ot">(</span>p * f x<span class="ot">)</span> <span class="ot">(</span>sample f xs<span class="ot">)</span> ⟩</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">  q * f y + <span class="ot">(</span>p * f x + sample f xs<span class="ot">)</span> ∎</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">sample f <span class="ot">(</span>del x xs i<span class="ot">)</span> <span class="ot">=</span> begin[ i ]</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14">  0# * f x + sample f xs ≡⟨ cong <span class="ot">(_</span>+ sample f xs<span class="ot">)</span> <span class="ot">(</span>0* <span class="ot">(</span>f x<span class="ot">))</span> ⟩</a>
+<a class="sourceLine" id="cb9-15" data-line-number="15">  0# + sample f xs       ≡⟨ 0+ <span class="ot">(</span>sample f xs<span class="ot">)</span> ⟩</a>
+<a class="sourceLine" id="cb9-16" data-line-number="16">  sample f xs ∎</a></code></pre></div>
+<p>This is much more involved than the free monoid function, but the principle is the same: we first write the actual function (on the first three lines), and then we show that the function doesn’t care about the “rewrite rules” we have in the next three clauses.</p>
+<p>Before going any further, we will have to amend the definition a little. The problem is that if we tried to prove something about any function on our <code>𝒫</code> type, we’d have to prove equalities <em>between equalities</em> as well. I’m sure that this is possible, but it’s very annoying, so I’m going to use a technique I saw in <a href="https://github.com/L-TChen/FiniteSets">this repository</a>. We add another rule to our type, stating that all equalities on the type are themselves equal. The clause itself looks like this:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb10-1" data-line-number="1">trunc <span class="ot">:</span> isSet <span class="ot">(</span>𝒫 A<span class="ot">)</span></a></code></pre></div>
+<h1 id="eliminators">Eliminators</h1>
+<p>Unfortunately, after adding that case we have to deal with it explicitly in every pattern-match on <code>𝒫</code>. We can get around it by writing an eliminator for the type which deals with it itself. Eliminators are often irritating to work with, though: we give up the nice pattern-matching syntax we get when we program directly. It’s a bit like having to rely on church encoding everywhere.</p>
+<p>However, we can get back some pattern-like syntax if we use <em>copatterns</em>. Here’s an example of what I mean, for folds on lists:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">record</span> [<span class="ot">_</span>↦<span class="ot">_</span>] <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">(</span>B <span class="ot">:</span> <span class="dt">Set</span> b<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="ot">(</span>a ⊔ b<span class="ot">)</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="kw">field</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">    [<span class="ot">_</span>][] <span class="ot">:</span> B</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">    [<span class="ot">_</span>]<span class="ot">_</span>∷<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> B <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">  [<span class="ot">_</span>]↓ <span class="ot">:</span> List A <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">  [ [] ]↓ <span class="ot">=</span> [<span class="ot">_</span>][]</a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">  [ x ∷ xs ]↓ <span class="ot">=</span> [<span class="ot">_</span>]<span class="ot">_</span>∷<span class="ot">_</span> x [ xs ]↓</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8"><span class="kw">open</span> [<span class="ot">_</span>↦<span class="ot">_</span>]</a>
+<a class="sourceLine" id="cb11-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb11-10" data-line-number="10">sum-alg <span class="ot">:</span> [ ℕ ↦ ℕ ]</a>
+<a class="sourceLine" id="cb11-11" data-line-number="11">[ sum-alg ][] <span class="ot">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb11-12" data-line-number="12">[ sum-alg ] x ∷ xs <span class="ot">=</span> x + xs</a>
+<a class="sourceLine" id="cb11-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb11-14" data-line-number="14">sum <span class="ot">:</span> List ℕ <span class="ot">→</span> ℕ</a>
+<a class="sourceLine" id="cb11-15" data-line-number="15">sum <span class="ot">=</span> [ sum-alg ]↓</a></code></pre></div>
+<p>For the probability monad, there’s an eliminator for the whole thing, and eliminator for propositional proofs, and a normal eliminator for folding. Here’s one in action, to define <code>map</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb12-1" data-line-number="1">map <span class="ot">:</span> <span class="ot">(</span>A <span class="ot">→</span> B<span class="ot">)</span> <span class="ot">→</span> [ A ↦ 𝒫 B ]</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">[ map f ] p &amp; x ∷ xs <span class="ot">=</span> p &amp; f x ∷ xs</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">[ map f ][] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">[ map f ]-set <span class="ot">=</span> trunc</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">[ map f ]-dup p q x xs <span class="ot">=</span> dup p q <span class="ot">(</span>f x<span class="ot">)</span> xs</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">[ map f ]-com p x q y xs <span class="ot">=</span> com p <span class="ot">(</span>f x<span class="ot">)</span> q <span class="ot">(</span>f y<span class="ot">)</span> xs</a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">[ map f ]-del x xs <span class="ot">=</span> del <span class="ot">(</span>f x<span class="ot">)</span> xs</a></code></pre></div>
+<p>And here’s one proving that union is associative:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb13-1" data-line-number="1">∪-assoc <span class="ot">:</span> <span class="ot">∀</span> ys zs <span class="ot">→</span> ⟦ xs ∈𝒫 A ⇒ xs ∪ <span class="ot">(</span>ys ∪ zs<span class="ot">)</span> ≡ <span class="ot">(</span>xs ∪ ys<span class="ot">)</span> ∪ zs ⟧</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">⟦ ∪-assoc ys zs ⟧-prop <span class="ot">=</span> trunc <span class="ot">_</span> <span class="ot">_</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">⟦ ∪-assoc ys zs ⟧[] <span class="ot">=</span> refl</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">⟦ ∪-assoc ys zs ⟧ p &amp; x ∷ xs ⟨ P ⟩ <span class="ot">=</span> cong <span class="ot">(</span>p &amp; x ∷<span class="ot">_)</span> P</a></code></pre></div>
+<p>Finally, the main event: monadic bind.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">_</span>=&lt;&lt; <span class="ot">:</span> <span class="ot">(</span>A <span class="ot">→</span> 𝒫 B<span class="ot">)</span> <span class="ot">→</span> [ A ↦ 𝒫 B ]</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">[ f =&lt;&lt; ] p &amp; x ∷ xs <span class="ot">=</span> [ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ xs</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">[ f =&lt;&lt; ][] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">[ f =&lt;&lt; ]-set <span class="ot">=</span> trunc</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">[ f =&lt;&lt; ]-del x xs <span class="ot">=</span> cong <span class="ot">(_</span>∪ xs<span class="ot">)</span> <span class="ot">(</span>⟦ cond-0 ⟧⇓ <span class="ot">(</span>f x<span class="ot">))</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">[ f =&lt;&lt; ]-dup p q x xs <span class="ot">=</span></a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">  [ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ [ cond q ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ xs   ≡⟨ ⟦ ∪-assoc <span class="ot">(</span>[ cond q ]↓ <span class="ot">(</span>f x<span class="ot">))</span> xs ⟧⇓ <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">))</span>⟩</a>
+<a class="sourceLine" id="cb14-8" data-line-number="8">  <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ [ cond q ]↓ <span class="ot">(</span>f x<span class="ot">))</span> ∪ xs ≡⟨ cong <span class="ot">(_</span>∪ xs<span class="ot">)</span> <span class="ot">(</span>⟦ cond-distrib p q ⟧⇓ <span class="ot">(</span>f x<span class="ot">)</span> <span class="ot">)</span> ⟩</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">  [ cond <span class="ot">(</span>p + q<span class="ot">)</span> ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ xs ∎</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10">[ f =&lt;&lt; ]-com p x q y xs <span class="ot">=</span></a>
+<a class="sourceLine" id="cb14-11" data-line-number="11">  [ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ [ cond q ]↓ <span class="ot">(</span>f y<span class="ot">)</span> ∪ xs   ≡⟨ ⟦ ∪-assoc <span class="ot">(</span>[ cond q ]↓ <span class="ot">(</span>f y<span class="ot">))</span> xs ⟧⇓ <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">))</span> ⟩</a>
+<a class="sourceLine" id="cb14-12" data-line-number="12">  <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ [ cond q ]↓ <span class="ot">(</span>f y<span class="ot">))</span> ∪ xs ≡⟨ cong <span class="ot">(_</span>∪ xs<span class="ot">)</span> <span class="ot">(</span>⟦ ∪-comm <span class="ot">(</span>[ cond q ]↓ <span class="ot">(</span>f y<span class="ot">))</span> ⟧⇓ <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)))</span> ⟩</a>
+<a class="sourceLine" id="cb14-13" data-line-number="13">  <span class="ot">(</span>[ cond q ]↓ <span class="ot">(</span>f y<span class="ot">)</span> ∪ [ cond p ]↓ <span class="ot">(</span>f x<span class="ot">))</span> ∪ xs ≡˘⟨ ⟦ ∪-assoc <span class="ot">(</span>[ cond p ]↓ <span class="ot">(</span>f x<span class="ot">))</span> xs ⟧⇓ <span class="ot">(</span>[ cond q ]↓ <span class="ot">(</span>f y<span class="ot">))</span> ⟩</a>
+<a class="sourceLine" id="cb14-14" data-line-number="14">  [ cond q ]↓ <span class="ot">(</span>f y<span class="ot">)</span> ∪ [ cond p ]↓ <span class="ot">(</span>f x<span class="ot">)</span> ∪ xs ∎</a>
+<a class="sourceLine" id="cb14-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb14-16" data-line-number="16"><span class="ot">_</span>&gt;&gt;=<span class="ot">_</span> <span class="ot">:</span> 𝒫 A <span class="ot">→</span> <span class="ot">(</span>A <span class="ot">→</span> 𝒫 B<span class="ot">)</span> <span class="ot">→</span> 𝒫 B</a>
+<a class="sourceLine" id="cb14-17" data-line-number="17">xs &gt;&gt;= f <span class="ot">=</span> [ f =&lt;&lt; ]↓ xs</a></code></pre></div>
+<h1 id="conclusion">Conclusion</h1>
+<p>I’ve really enjoyed working with cubical Agda so far, and the proofs above were a pleasure to write. I think I can use the above definition to get a workable differential privacy monad, also.</p>
+<p>Anyway, all the code is available <a href="https://oisdk.github.io/agda-cubical-probability/Probability.html">here</a>.</p>
+]]></description>
+    <pubDate>Wed, 17 Apr 2019 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2019-04-17-cubical-probability.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Permutations By Sorting</title>
     <link>https://doisinkidney.com/posts/2019-03-24-permutations-by-sorting.html</link>
     <description><![CDATA[<div class="info">
