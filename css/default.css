@@ -182,3 +182,12 @@ ol li.serieslist:before {
  .sourceCode span.er {
      color: red
  }
+
+
+ li {
+     margin-bottom: 2px;
+ }
+
+ li:last-child {
+     margin-bottom: 0px;
+ }
