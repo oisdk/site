@@ -39,6 +39,10 @@ main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
     -- match "css/*" $ do
     --     route   idRoute
     --     compile compressCssCompiler
+    match "code/*/*" $ do
+        route idRoute
+        compile $ getResourceString
+              >>= relativizeUrls
 
     match "css/default.css" $ compile cssTemplateCompiler
 
