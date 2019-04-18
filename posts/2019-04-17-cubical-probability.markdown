@@ -19,6 +19,7 @@ nearly qualified to properly explain it.
 In lieu of a proper first-principles explanation, then, I'll try and give a
 few examples of how it differs from normal Agda, before moving on to the main
 example of this post.
+
 <details>
 <summary>Imports</summary>
 <pre class="Agda"><a id="920" class="Symbol">{-#</a> <a id="924" class="Keyword">OPTIONS</a> <a id="932" class="Pragma">--cubical</a> <a id="942" class="Symbol">#-}</a>
@@ -35,7 +36,6 @@ example of this post.
 </pre></details>
 
 Extensionality
-
 :   One of the big annoyances in standard Agda is that we can't prove the
     following:
 <pre class="Agda"><a id="extensionality"></a><a id="1407" href="#1407" class="Function">extensionality</a> <a id="1422" class="Symbol">:</a> <a id="1424" class="Symbol">∀</a> <a id="1426" class="Symbol">{</a><a id="1427" href="#1427" class="Bound">f</a> <a id="1429" href="#1429" class="Bound">g</a> <a id="1431" class="Symbol">:</a> <a id="1433" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="1435" class="Symbol">→</a> <a id="1437" href="../code/probability/ProbabilityModule.Utils.html#206" class="Generalizable">B</a><a id="1438" class="Symbol">}</a>
@@ -51,8 +51,8 @@ Extensionality
     proofs) to be translated into a proper equality
 <pre class="Agda"><a id="1989" href="#1407" class="Function">extensionality</a> <a id="2004" class="Symbol">=</a> <a id="2006" href="../code/probability/Cubical.Foundations.Prelude.html#4401" class="Function">funExt</a>
 </pre>
-Isomorphisms
 
+Isomorphisms
 :   One of these such things we can promote to a "proper equality" is an
     isomorphism.
     In the [cubical repo](https://github.com/agda/cubical) this is used to [prove
@@ -347,9 +347,13 @@ Their definitions are quite long, but mechanical.
             <a id="12851" class="Symbol">(λ</a> <a id="12854" href="#12854" class="Bound">x</a> <a id="12856" href="#12856" class="Bound">xs</a> <a id="12859" class="Symbol">→</a> <a id="12861" href="#12635" class="Field Operator">[_]-del</a> <a id="12869" href="#12854" class="Bound">x</a><a id="12870" class="Symbol">)</a>
   <a id="[_↦_].[_]↓"></a><a id="12874" href="#12874" class="Function Operator">[_]↓</a> <a id="12879" class="Symbol">=</a> <a id="12881" href="#10811" class="Function Operator">⟅</a> <a id="12883" href="#12671" class="Function Operator">[_]⇑</a> <a id="12888" href="#10811" class="Function Operator">⟆⇓</a>
 <a id="12891" class="Keyword">open</a> <a id="12896" href="#12307" class="Module Operator">[_↦_]</a> <a id="12902" class="Keyword">public</a>
-</pre></details>
+</pre>
+</details>
+
+
 
 Here's one in action, to define `map`:
+
 <pre class="Agda"><a id="map"></a><a id="12972" href="#12972" class="Function">map</a> <a id="12976" class="Symbol">:</a> <a id="12978" class="Symbol">(</a><a id="12979" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="12981" class="Symbol">→</a> <a id="12983" href="../code/probability/ProbabilityModule.Utils.html#206" class="Generalizable">B</a><a id="12984" class="Symbol">)</a> <a id="12986" class="Symbol">→</a> <a id="12988" href="#8679" class="Datatype">𝒫</a> <a id="12990" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="12992" class="Symbol">→</a> <a id="12994" href="#8679" class="Datatype">𝒫</a> <a id="12996" href="../code/probability/ProbabilityModule.Utils.html#206" class="Generalizable">B</a>
 <a id="12998" href="#12972" class="Function">map</a> <a id="13002" class="Symbol">=</a> <a id="13004" class="Symbol">λ</a> <a id="13006" href="#13006" class="Bound">f</a> <a id="13008" class="Symbol">→</a> <a id="13010" href="#12874" class="Function Operator">[</a> <a id="13012" href="#13043" class="Function">map′</a> <a id="13017" href="#13006" class="Bound">f</a> <a id="13019" href="#12874" class="Function Operator">]↓</a>
   <a id="13024" class="Keyword">module</a> <a id="Map"></a><a id="13031" href="#13031" class="Module">Map</a> <a id="13035" class="Keyword">where</a>
