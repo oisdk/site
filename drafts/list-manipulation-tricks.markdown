@@ -4,8 +4,8 @@ tags: Haskell
 bibliography: Lists.bib
 ---
 
-This post is a collection of some of the tricks I've learned for efficiently
-manipulating lists in Haskell.
+This post is a collection of some of the tricks I've learned for manipulating
+lists in Haskell.
 Each one starts with a puzzle: you should try the puzzle yourself before seeing
 the solution!
 
@@ -14,7 +14,7 @@ the solution!
 > How can you split a list in half, in one pass, without taking its length?
 
 This first one is a relatively well-known trick, but it occasionally comes in
-handy, so I thought I'd mention it first.
+handy, so I thought I'd mention it.
 The naive way is as follows:
 
 ```haskell
@@ -52,8 +52,7 @@ Whenever I need to do some list manipulation in reverse (i.e., I need the input
 list to be reversed), I first see if I can rewrite the function as a fold, and
 then just switch out `foldr` for `foldl`.
 
-For our puzzle here, we need to first write `zip` as a fold (we're going to
-pretend the input lists always have the same length for now):
+For our puzzle here, we need to first write `zip` as a fold:
 
 ```haskell
 zip :: [a] -> [b] -> [(a,b)]
@@ -153,6 +152,86 @@ zipRev = flip (foldl (flip f) b)
     b _ = []
 ```
 
+# Maintaining Laziness
+
+> Rewrite the above function without using continuations.
+
+`zipRev`, as written above, actually uses *continuation-passing style*.
+In most languages (including standard ML, which was the one used in
+@danvy_there_2005), this is pretty much equivalent to a direct-style
+implementation (modulo some performance weirdness).
+In a lazy language like Haskell, though, continuation-passing style often makes
+things unnecessarily strict.
+
+Consider the church-encoded pairs:
+
+```haskell
+newtype Pair a b
+    = Pair
+    { runPair :: forall c. (a -> b -> c) -> c
+    }
+    
+firstC :: (a -> a') -> Pair a b -> Pair a' b
+firstC f p = Pair (\k -> runPair p (k . f))
+
+firstD :: (a -> a') -> (a, b) -> (a', b)
+firstD f ~(x,y) = (f x, y)
+
+fstD :: (a, b) -> a
+fstD ~(x,y) = x
+
+fstC :: Pair a b -> a
+fstC p = runPair p const
+
+>>> fstC (firstC (const ()) undefined)
+undefined
+
+>>> fstD (firstD (const ()) undefined)
+()
+```
+
+So it's sometimes worth trying to avoid continuations if there is a fast
+direct-style solution.
+(alternatively, continuations can give you extra strictness when you *do* want
+it)
+
+First, I'm going to write a different version of `zipRev`, which folds on the
+first list, not the second.
+
+```haskell
+zipRev xs ys = foldl f (\_ r -> r) xs ys []
+  where
+    f k x (y:ys) r = k ys ((x,y):r)
+```
+
+Then, we inline the definition of `foldl`:
+
+```haskell
+zipRev xs ys = foldr f id xs (\_ r -> r) ys []
+  where
+    f x k c = k (\(y:ys) r -> c ys ((x,y):r)) 
+```
+
+Then, as a hint, we tuple up the two accumulating parameters:
+
+```haskell
+zipRev xs ys = foldr f id xs snd (ys,[])
+  where
+    f x k c = k (\((y:ys),r) -> c (ys,(x,y):r)) 
+```
+
+What we can see here is that we have two continuations stacked on top of each
+other.
+When this happens, they can often "cancel out", like so:
+
+```haskell
+zipRev xs ys = snd (foldr f (ys,[]) xs)
+  where
+    f x (y:ys,r) = (ys,(x,y):r)
+```
+
+And we have our direct-style implementation!
+
 # Manual Fusion
 
 > Detect that a list is a palindrome, in one pass.
@@ -184,79 +263,36 @@ x `f` (y `f` b)
 The trick is making sure that the consumer is written as a fold, and then we
 just put its `f` and `b` in place of the `:` and `[]` in the producer.
 
-But isn't `zipRev` (our consumer) written as a `foldl`, not `foldr`?
-That's no problem!
-`foldl` itself can be written as `foldr`:
-
-```haskell
-foldl f b xs = foldr (\x k xs -> k (f xs x)) id xs b
-```
-
-If we inline that definition into `zipRev`, we get the following:
-
-```haskell
-zipRev :: [a] -> [b] -> [(a,b)]
-zipRev xs ys = foldr f id ys (const []) xs
-  where
-    f y k c = k (\case 
-        [] -> []
-        (x:xs) -> (x,y) : c xs)
-```
-
-And we can inline *that* definition into `splitHalf` to get the following:
+So, when we inline the definition of `splitHalf` into `zipRev`, we get the
+following: 
 
 ```haskell
 zipRevHalf :: [a] -> [(a,a)]
-zipRevHalf xs = a (go xs xs)
+zipRevHalf xs = snd (go xs xs)
   where
-    go (y:ys) (_:_:zs) = first (f y) (go ys zs)
-    go ys _ = (id,ys)
-    a (xs,ys) = xs (const []) ys
-    f y k c = k (\case 
-      [] -> []
-      (x:xs) -> (x,y) : c xs)
+    go (y:ys) (_:_:zs) = f y (go ys zs)
+    go (_:ys) [_]      = (ys,[])
+    go ys []           = (ys,[])
+
+    f x (y:ys,r) = (ys,(x,y):r)
 
 isPal xs = all (uncurry (==)) (zipRevHalf xs)
 ```
+
+(adding a special case for odd-length lists)
 
 Finally, the `all (uncurry (==))` is implemented as a fold also.
 So we can fuse it with the rest of the definitions:
 
 ```haskell
 isPal :: Eq a => [a] -> Bool
-isPal xs = a (go xs xs)
+isPal xs = snd (go xs xs)
   where
-    go (y:ys) (_:_:zs) = first (f y) (go ys zs)
-    go (_:ys) [_] = (id,ys)
-    go ys [] = (id,ys)
-    a (xs,ys) = xs (const True) ys
-    f y k c = k (\case 
-      [] -> True
-      (x:xs) -> (x == y) && c xs)
-```
-
-(adding a special case for odd-length lists)
-
-Once we get to this point, we can start looking for places where we've done
-unnecessary continuation-passing style.
-CPS is kind of like multiplying by a negative: if you do it twice, you can
-rewrite the function in a direct style.
-This often happens when you use the `foldl` trick, as that's implemented using
-CPS: if any of our logic was CPS'd, they should cancel out.
-
-Here, `a` looks suspiciously like a church-encoded pair.
-It takes a continuation (`xs`), and applies it to two arguments.
-As it turns out, there are a few church-encoded pairs lying around.
-If we take them out, we get the following very clean implementation:
-
-```haskell
-isPal :: Eq a => [a] -> Bool
-isPal xs = fst (go xs xs) where
-  go (y:ys) (_:_:zs) = f y (go ys zs)
-  go (_:ys) [_]      = (True, ys)
-  go ys     []       = (True, ys)
-  
-  f y (r, (z:zs))    = ((y == z) && r, zs)
+    go (y:ys) (_:_:zs) = f y (go ys zs)
+    go (_:ys) [_]      = (ys,True)
+    go ys     []       = (ys,True)
+    
+    f x (y:ys,r) = (ys,(x == y) && r)
 ```
 
 You may have spotted the writer monad over `All` there.
@@ -264,7 +300,7 @@ Indeed, we can rewrite it to use the monadic bind:
 
 
 ```haskell
-isPal :: forall a. Eq a => [a] -> Bool
+isPal :: Eq a => [a] -> Bool
 isPal xs = getAll (fst (go xs xs)) where
   go (y:ys) (_:_:zs) = f y =<< go ys zs
   go (_:ys) [_]      = pure ys
@@ -274,6 +310,8 @@ isPal xs = getAll (fst (go xs xs)) where
 ```
 
 # Eliminating Multiple Passes with Laziness
+
+> Construct a Braun tree from a list in linear time.
 
 This is also a very well-known trick [@bird_using_1984], but today I'm going to
 use it to write a function for constructing Braun trees.
