@@ -1,8 +1,11 @@
 ---
 title: Concatenative Programming; The Free Monoid of Programming Languages
-tags: Concatenative
+tags: Concatenative, Haskell
+bibliography: Concatenative.bib
 ---
 
+This post demonstrates a simple encoding of a (typed) concatenative language in
+Haskell.
 
 Point-free style is one of the distinctive markers of functional programming
 languages.
@@ -225,6 +228,8 @@ infixr 0 :->
 type (:->) xs ys = Stack xs -> Stack ys
 ```
 
+And suddenly, our endomorphism type from above shows up again.
+
 We can, of course, get back our original types.
 
 ```haskell
@@ -376,3 +381,17 @@ false = drop ! dot
 test :: '[] :-> '[ '[a] :~> '[a,a] ]
 test = quote dup
 ```
+
+Interestingly, these combinators represent the monadic operations on state
+(`dot` = `join`, `pure` = `pure`, etc.)
+
+And can we get the nicer composition of the function from the intro?
+Kind of:
+
+```haskell
+sumAdded = quote add ! curry ! dot ! map ! sum
+```
+
+Here are some references for concatenative languages:
+@okasaki_techniques_2002, @purdy_big_2012, @kerby_theory_2007,
+@okasaki_theoretical_2003.
