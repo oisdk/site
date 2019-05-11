@@ -4,7 +4,7 @@ tags: Concatenative
 ---
 
 
-Point-free style is one of the distinctive markets of functional programming
+Point-free style is one of the distinctive markers of functional programming
 languages.
 Want to sum a list?
 That's as easy as:
@@ -190,3 +190,189 @@ type DoubleState s1 s2 a = StateT s1 (State s2) a
 
 It's nothing earth shattering, but it inlines and optimises well.
 That output is effectively a left-nested list, also.
+
+# Multi-State
+
+If we can do one, and we can do two, why not more?
+Can we generalise the state pattern to an arbitrary number of variables?
+First we'll need a generic tuple:
+
+```haskell
+infixr 5 :-
+data Stack (xs :: [Type]) :: Type where
+    Nil  :: Stack '[]
+    (:-) :: x -> Stack xs -> Stack (x : xs)
+```
+
+Then, the state type.
+
+```haskell
+newtype State xs a = State { runState :: Stack xs -> (a, Stack xs) }
+```
+
+We can actually clean the definition up a little: instead of a tuple at the
+other end, why not push it onto the stack.
+
+```haskell
+newtype State xs a = State { runState :: Stack xs -> Stack (a : xs) }
+```
+
+In fact, let's make this as polymorphic as possible.
+We should be able to change the state is we so desire.
+
+```haskell
+infixr 0 :->
+type (:->) xs ys = Stack xs -> Stack ys
+```
+
+We can, of course, get back our original types.
+
+```haskell
+newtype State xs a = State { runState :: xs :-> a : xs }
+```
+
+And it comes with all of the instances you might expect:
+
+```haskell
+instance Functor (State xs) where
+    fmap f xs = State (\s -> case runState xs s of
+        (x :- ys) -> f x :- ys)
+        
+instance Applicative (State xs) where
+    pure x = State (x :-)
+    fs <*> xs = State (\s -> case runState fs s of
+        (f :- s') -> case runState xs s' of
+            (x :- s'') -> f x :- s'')
+            
+instance Monad (State xs) where
+    xs >>= f = State (\s -> case runState xs s of
+        y :- ys -> runState (f y) ys)
+```
+
+# Polymorphism
+
+But what's the point?
+So far we've basically just encoded an unnecessarily complicated state
+transformer.
+Think back to the stacking of states.
+Written in the [mtl](https://hackage.haskell.org/package/mtl) style, the main
+advantage of stacking monads like that is you can write code like the following: 
+
+```haskell
+pop :: (MonadState [a] m, MonadError String m) => m a
+pop = get >>= \case
+    [] -> throwError "pop: empty list"
+    x:xs -> do
+        put xs 
+        pure x
+```
+
+In other words, we don't care about the rest of `m`, we just care that it has,
+somewhere, state for an `[a]`.
+
+This logic should apply to our stack transformer, as well.
+If it only cares about the top two variables, it shouldn't care what the rest of
+the list is.
+In types:
+
+```haskell
+infixr 0 :->
+type (:->) xs ys = forall zs. Stack (xs ++ zs) -> Stack (ys ++ zs)
+```
+
+And straight away we can write some of the standard combinators:
+
+```haskell
+dup :: '[a] :-> '[a,a]
+dup (x :- xs) = (x :- x :- xs)
+
+swap :: '[x,y] :-> '[y,x]
+swap (x :- y :- xs) = y :- x :- xs
+
+drop :: '[x,y] :-> '[y]
+drop (_ :- xs) = xs
+
+infixl 9 !
+(f ! g) x = g (f x)
+```
+
+You'll immediately run into trouble if you try to work with some of the more
+involved combinators, though.
+Quote should have the following type, for instance:
+
+```haskell
+quote :: (xs :-> ys) -> '[] :-> '[ xs :-> ys ]
+```
+
+But GHC complains again:
+
+```
+• Illegal polymorphic type: xs :-> ys
+  GHC doesn't yet support impredicative polymorphism
+• In the type signature:
+    quote :: (xs :-> ys) -> '[] :-> '[xs :-> ys]
+```
+
+I won't go into the detail of this particular error: if you've been around the
+block with Haskell you know that it means "wrap it in a newtype".
+If we do *that*, though, we get yet more errors:
+
+```haskell
+newtype (:~>) xs ys = Q { d :: xs :-> ys }
+```
+```
+• Couldn't match type ‘ys ++ zs0’ with ‘ys ++ zs’
+  Expected type: Stack (xs ++ zs) -> Stack (ys ++ zs)
+    Actual type: Stack (xs ++ zs0) -> Stack (ys ++ zs0)
+  NB: ‘++’ is a type function, and may not be injective
+```
+
+This injectivity error comes up often.
+It means that GHC needs to prove that the input to two functions is equal, but
+it only knows that their outputs are.
+This is a doubly serious problem for us, as we can't do type family injectivity
+on two type variables (in current Haskell).
+To solve the problem, we need to rely on a weird mishmash of type families and
+functional dependencies:
+
+```haskell
+type family (++) xs ys where
+    '[] ++ ys = ys
+    (x : xs) ++ ys = x : (xs ++ ys)
+    
+class (xs ++ ys ~ zs) => Conc xs ys zs | xs zs -> ys where
+    conc :: Stack xs -> Stack ys -> Stack zs
+    
+instance Conc '[] ys ys where
+    conc _ ys = ys
+    
+instance Conc xs ys zs => Conc (x : xs) ys (x : zs) where
+    conc (x :- xs) ys = x :- conc xs ys
+
+infixr 0 :->
+type (:->) xs ys = forall zs yszs. Conc ys zs yszs => Stack (xs ++ zs) -> Stack yszs
+```
+
+And it does indeed work:
+
+```haskell
+pure :: a -> '[] :-> '[a]
+pure = (:-)
+
+newtype (:~>) xs ys = Q { d :: xs :-> ys }
+
+quote :: (xs :-> ys) -> '[] :-> '[ xs :~> ys ]
+quote x = pure (Q x)
+
+dot :: forall xs ys. ((xs :~> ys) : xs) :-> ys
+dot (x :- xs) = d x xs
+
+true :: (xs :~> ys) : (xs :~> ys) : xs :-> ys
+true = swap ! drop ! dot
+
+false :: (xs :~> ys) : (xs :~> ys) : xs :-> ys
+false = drop ! dot
+
+test :: '[] :-> '[ '[a] :~> '[a,a] ]
+test = quote dup
+```
