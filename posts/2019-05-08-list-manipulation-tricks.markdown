@@ -232,6 +232,14 @@ zipRev xs ys = snd (foldr f (ys,[]) xs)
 
 And we have our direct-style implementation!
 
+Note 14/05/2019: the "cancel-out" explanation there is a little handwavy, as I'm
+sure you'll notice.
+However, there are a number of [excellent explanations on this stackoverflow
+thread](https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out)
+which explain it much better than I ever could.
+Thanks to Anders Kaseorg, Will Ness, user11228628, and to Joseph Sible
+-@sible_how_2019 for asking the question.
+
 # Manual Fusion
 
 > Detect that a list is a palindrome, in one pass.
