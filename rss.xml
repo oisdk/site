@@ -535,6 +535,7 @@
 <a class="sourceLine" id="cb15-2" data-line-number="2">  <span class="kw">where</span></a>
 <a class="sourceLine" id="cb15-3" data-line-number="3">    f x (y<span class="fu">:</span>ys,r) <span class="fu">=</span> (ys,(x,y)<span class="fu">:</span>r)</a></code></pre></div>
 <p>And we have our direct-style implementation!</p>
+<p>Note 14/05/2019: the “cancel-out” explanation there is a little handwavy, as I’m sure you’ll notice. However, there are a number of <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">excellent explanations on this stackoverflow thread</a> which explain it much better than I ever could. Thanks to Anders Kaseorg, Will Ness, user11228628, and to Joseph Sible <span class="citation" data-cites="sible_how_2019">(<a href="#ref-sible_how_2019">2019</a>)</span> for asking the question.</p>
 <h1 id="manual-fusion">Manual Fusion</h1>
 <blockquote>
 <p>Detect that a list is a palindrome, in one pass.</p>
@@ -667,6 +668,9 @@
 </div>
 <div id="ref-okasaki_three_1997">
 <p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf" class="uri">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
+</div>
+<div id="ref-sible_how_2019">
+<p>Sible, Joseph. 2019. “How can two continuations cancel each other out?” <em>Stack Overflow</em>. <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out" class="uri">https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out</a>.</p>
 </div>
 </div>
 ]]></description>
