@@ -74,7 +74,7 @@
 <h1 id="dualities-of-sorts">Dualities of Sorts</h1>
 <p>Notice the similarity of the function above to a standard insertion sort:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">insert x [] <span class="fu">=</span> x <span class="fu">:</span> xs</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">insert x [] <span class="fu">=</span> x <span class="fu">:</span> []</a>
 <a class="sourceLine" id="cb5-3" data-line-number="3">insert x (y<span class="fu">:</span>ys)</a>
 <a class="sourceLine" id="cb5-4" data-line-number="4"> <span class="fu">|</span> x <span class="fu">&lt;=</span> y <span class="fu">=</span> x <span class="fu">:</span> y <span class="fu">:</span> ys</a>
 <a class="sourceLine" id="cb5-5" data-line-number="5"> <span class="fu">|</span> otherwise <span class="fu">=</span> y <span class="fu">:</span> insert x ys</a>
