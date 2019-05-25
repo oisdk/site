@@ -122,7 +122,7 @@ constructor (`Queue`) is *non-empty*. Since, in this algorithm, we're only
 actually going to be working with non-empty queues, this saves us a pattern
 match on pretty much every function. They're also what's used in [Data.Sequence
 for
-sorting](https://github.com/haskell/containers/blob/master/Data/Sequence/Internal/sorting.md#sorting).
+sorting](https://github.com/haskell/containers/blob/30ccbaa201043109bf1ee905c66ccd0dbe24422f/containers/src/Data/Sequence/Internal/sorting.md).
 
 With that, we can write our proper sieve:
 
