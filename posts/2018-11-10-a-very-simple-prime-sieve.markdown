@@ -101,10 +101,13 @@ data List a b
   | otherwise = Queue x2 y2 (q1 :- ts2)
 
 mergeQs :: Ord a => List a b -> Queue a b
-mergeQs (t :- Nil)        = t
-mergeQs (t1 :- t2 :- Nil) = t1 <+> t2
-mergeQs (t1 :- t2 :- ts)  = (t1 <+> t2) <+> mergeQs ts
-mergeQs Nil               = errorWithoutStackTrace "tried to merge empty list"
+mergeQs (t :- ts) = mergeQs1 t ts
+mergeQs Nil       = errorWithoutStackTrace "tried to merge empty list"
+
+mergeQs1 :: Ord a => Queue a b -> List a b -> Queue a b
+mergeQs1 t1 Nil              = t1
+mergeQs1 t1 (t2 :- Nil)      = t1 <+> t2
+mergeQs1 t1 (t2 :- t3 :- ts) = (t1 <+> t2) <+> mergeQs1 t3 ts
 
 insert :: Ord a => a -> b -> Queue a b -> Queue a b
 insert !k !v = (<+>) (singleton k v)
@@ -184,10 +187,10 @@ Finally, we get the implementation:
 ```haskell
 primes = 2 : sieve 3 (singleton 4 2)
   where
-    adjust x q@(Queue y z qs)
+    adjust !x q@(Queue y z qs)
         | x < y = q
-        | otherwise = adjust x (insert (y + z) z (mergeQs qs))
-    sieve x q
+        | otherwise = adjust x (mergeQs1 (singleton (y + z) z) qs)
+    sieve !x q
         | x < minKey q = x : sieve (x + 1) (insert (x * x) x q)
         | otherwise = sieve (x + 1) (adjust x q)
 ```
