@@ -84,16 +84,19 @@
 <a class="sourceLine" id="cb5-17" data-line-number="17">  <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Queue</span> x2 y2 (q1 <span class="fu">:-</span> ts2)</a>
 <a class="sourceLine" id="cb5-18" data-line-number="18"></a>
 <a class="sourceLine" id="cb5-19" data-line-number="19"><span class="ot">mergeQs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
-<a class="sourceLine" id="cb5-20" data-line-number="20">mergeQs (t <span class="fu">:-</span> <span class="dt">Nil</span>)        <span class="fu">=</span> t</a>
-<a class="sourceLine" id="cb5-21" data-line-number="21">mergeQs (t1 <span class="fu">:-</span> t2 <span class="fu">:-</span> <span class="dt">Nil</span>) <span class="fu">=</span> t1 <span class="fu">&lt;+&gt;</span> t2</a>
-<a class="sourceLine" id="cb5-22" data-line-number="22">mergeQs (t1 <span class="fu">:-</span> t2 <span class="fu">:-</span> ts)  <span class="fu">=</span> (t1 <span class="fu">&lt;+&gt;</span> t2) <span class="fu">&lt;+&gt;</span> mergeQs ts</a>
-<a class="sourceLine" id="cb5-23" data-line-number="23">mergeQs <span class="dt">Nil</span>               <span class="fu">=</span> errorWithoutStackTrace <span class="st">&quot;tried to merge empty list&quot;</span></a>
-<a class="sourceLine" id="cb5-24" data-line-number="24"></a>
-<a class="sourceLine" id="cb5-25" data-line-number="25"><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
-<a class="sourceLine" id="cb5-26" data-line-number="26">insert <span class="fu">!</span>k <span class="fu">!</span>v <span class="fu">=</span> (<span class="fu">&lt;+&gt;</span>) (singleton k v)</a>
+<a class="sourceLine" id="cb5-20" data-line-number="20">mergeQs (t <span class="fu">:-</span> ts) <span class="fu">=</span> mergeQs1 t ts</a>
+<a class="sourceLine" id="cb5-21" data-line-number="21">mergeQs <span class="dt">Nil</span>       <span class="fu">=</span> errorWithoutStackTrace <span class="st">&quot;tried to merge empty list&quot;</span></a>
+<a class="sourceLine" id="cb5-22" data-line-number="22"></a>
+<a class="sourceLine" id="cb5-23" data-line-number="23"><span class="ot">mergeQs1 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
+<a class="sourceLine" id="cb5-24" data-line-number="24">mergeQs1 t1 <span class="dt">Nil</span>              <span class="fu">=</span> t1</a>
+<a class="sourceLine" id="cb5-25" data-line-number="25">mergeQs1 t1 (t2 <span class="fu">:-</span> <span class="dt">Nil</span>)      <span class="fu">=</span> t1 <span class="fu">&lt;+&gt;</span> t2</a>
+<a class="sourceLine" id="cb5-26" data-line-number="26">mergeQs1 t1 (t2 <span class="fu">:-</span> t3 <span class="fu">:-</span> ts) <span class="fu">=</span> (t1 <span class="fu">&lt;+&gt;</span> t2) <span class="fu">&lt;+&gt;</span> mergeQs1 t3 ts</a>
 <a class="sourceLine" id="cb5-27" data-line-number="27"></a>
-<a class="sourceLine" id="cb5-28" data-line-number="28"><span class="ot">singleton ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
-<a class="sourceLine" id="cb5-29" data-line-number="29">singleton <span class="fu">!</span>k <span class="fu">!</span>v <span class="fu">=</span> <span class="dt">Queue</span> k v <span class="dt">Nil</span></a></code></pre></div>
+<a class="sourceLine" id="cb5-28" data-line-number="28"><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
+<a class="sourceLine" id="cb5-29" data-line-number="29">insert <span class="fu">!</span>k <span class="fu">!</span>v <span class="fu">=</span> (<span class="fu">&lt;+&gt;</span>) (singleton k v)</a>
+<a class="sourceLine" id="cb5-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb5-31" data-line-number="31"><span class="ot">singleton ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</a>
+<a class="sourceLine" id="cb5-32" data-line-number="32">singleton <span class="fu">!</span>k <span class="fu">!</span>v <span class="fu">=</span> <span class="dt">Queue</span> k v <span class="dt">Nil</span></a></code></pre></div>
 <p>These are pairing heaps: I’m using them here because they’re relatively simple and very fast. A lot of their speed comes from the fact that the top-level constructor (<code>Queue</code>) is <em>non-empty</em>. Since, in this algorithm, we’re only actually going to be working with non-empty queues, this saves us a pattern match on pretty much every function. They’re also what’s used in <a href="https://github.com/haskell/containers/blob/master/Data/Sequence/Internal/sorting.md#sorting">Data.Sequence for sorting</a>.</p>
 <p>With that, we can write our proper sieve:</p>
 <div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1">insertPrime x xs <span class="fu">=</span> insert (x<span class="fu">*</span>x) (map (<span class="fu">*</span>x) xs)</a>
@@ -135,10 +138,10 @@
 <p>Finally, we get the implementation:</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1">primes <span class="fu">=</span> <span class="dv">2</span> <span class="fu">:</span> sieve <span class="dv">3</span> (singleton <span class="dv">4</span> <span class="dv">2</span>)</a>
 <a class="sourceLine" id="cb9-2" data-line-number="2">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb9-3" data-line-number="3">    adjust x q<span class="fu">@</span>(<span class="dt">Queue</span> y z qs)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">    adjust <span class="fu">!</span>x q<span class="fu">@</span>(<span class="dt">Queue</span> y z qs)</a>
 <a class="sourceLine" id="cb9-4" data-line-number="4">        <span class="fu">|</span> x <span class="fu">&lt;</span> y <span class="fu">=</span> q</a>
-<a class="sourceLine" id="cb9-5" data-line-number="5">        <span class="fu">|</span> otherwise <span class="fu">=</span> adjust x (insert (y <span class="fu">+</span> z) z (mergeQs qs))</a>
-<a class="sourceLine" id="cb9-6" data-line-number="6">    sieve x q</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">        <span class="fu">|</span> otherwise <span class="fu">=</span> adjust x (mergeQs1 (singleton (y <span class="fu">+</span> z) z) qs)</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    sieve <span class="fu">!</span>x q</a>
 <a class="sourceLine" id="cb9-7" data-line-number="7">        <span class="fu">|</span> x <span class="fu">&lt;</span> minKey q <span class="fu">=</span> x <span class="fu">:</span> sieve (x <span class="fu">+</span> <span class="dv">1</span>) (insert (x <span class="fu">*</span> x) x q)</a>
 <a class="sourceLine" id="cb9-8" data-line-number="8">        <span class="fu">|</span> otherwise <span class="fu">=</span> sieve (x <span class="fu">+</span> <span class="dv">1</span>) (adjust x q)</a></code></pre></div>
 <p>8 lines for a lazy prime sieve isn’t bad!</p>
