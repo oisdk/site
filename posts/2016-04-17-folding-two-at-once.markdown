@@ -139,27 +139,13 @@ zip = zipo alg where
   alg (Cons x xs) (Cons y ys) = (x, y) : ys xs
 ```
 
-However, the `RecF`{.haskell} is a little ugly. In fact, it's possible to write the above without any recursive types, using the RankNTypes extension. (It's possible that you could do the same with `foldr2`{.haskell} as well, but I haven't figured it out yet)
-
-You can actually use a `newtype`{.haskell} that's provided by the recursion-schemes library as-is. It's `Mu`{.haskell}. This is required for an encoding of the Y-combinator. It's usually presented in this form:
-
-```haskell
-newtype Mu a = Roll { unroll :: Mu a -> a }
-```
-
-However, in the recursion-schemes package, its definition looks like this:
-
-```haskell
-newtype Mu f = Mu (forall a. (f a -> a) -> a)
-```
-
-No recursion! The `zipo`{.haskell} combinator above can be written using `Mu`{.haskell} like so:
+However, the `RecF`{.haskell} is a little ugly. In fact, it's possible to write the above without any recursive types. (It's possible that you could do the same with `foldr2`{.haskell} as well, but I haven't figured it out yet)
 
 ```haskell
 zipo :: (Functor.Foldable f, Functor.Foldable g)
-     => (Base f (Mu (Base g) -> c) -> Base g (Mu (Base g)) -> c)
+     => (Base f (g -> c) -> Base g g -> c)
      -> f -> g -> c
-zipo alg xs = cata (\x -> alg x . project) xs . refix
+zipo alg = cata (\x -> alg x . project)
 ```
 
 And the new version of `zip`{.haskell} has a slightly more natural order of arguments:
