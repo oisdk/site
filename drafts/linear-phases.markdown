@@ -182,7 +182,7 @@ bft f = runPhases . go
 </details>
 <details>
 <summary>
-Inline `go'`
+Inline `go'` (and rename `go''` to `go'`)
 
 </summary>
 
@@ -212,7 +212,7 @@ bft f = runPhases . go
 </details>
 <details>
 <summary>
-Definition of `liftA2`
+Definition of `liftA2` (pattern-matching on `ys`)
 
 </summary>
 
