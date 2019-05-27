@@ -288,8 +288,8 @@ liftA2 (,) (foldr go' (pure []) xs) zs
 Is what makes the whole thing quadratic.
 We need to find a way to thread that `liftA2` along with the fold to get it to
 linear.
-This is the only real trick in the derivation: we need to introduce it as an
-existential to make the types line up.
+This is the only real trick in the derivation: I'll use polymorphic recursion to
+avoid the extra zip.
 
 ```haskell
 bft :: forall f a b. Applicative f => (a -> f b) -> Tree a -> f (Tree b)
