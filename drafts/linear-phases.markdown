@@ -17,10 +17,13 @@ algorithm, with an albeit simple implementation.
 The next simplest version is to use a banker's queue (which is just a pair of
 lists).
 From this version, if we inline and apply identities like the following:
+
 ```haskell
 foldr f b . reverse = foldl (flip f) b
 ```
+
 We'll get to the following definition:
+
 ```haskell
 bfe :: Forest a -> [a]
 bfe ts = foldr f b ts []
@@ -30,6 +33,7 @@ bfe ts = foldr f b ts []
     b [] = []
     b qs = foldl (foldr f) b qs []
 ```
+
 We can get from this function to others (like one which uses a corecursive
 queue, and so on) through a similar derivation.
 I might some day write a post on each derivation, starting from the simple
@@ -151,6 +155,7 @@ bft f = runPhases . go
 <summary>
 Inline `traverse`.
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -158,11 +163,13 @@ bft f = runPhases . go
     go (Node x xs) = liftA2 Node (Lift (f x)) (later (go' xs))
     go' = foldr (liftA2 (:) . go) (pure [])
 ```
+
 </details>
 <details>
 <summary>
 Factor out `go''`.
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -171,11 +178,14 @@ bft f = runPhases . go
     go' = foldr go'' (pure [])
     go'' (Node x xs) ys = liftA2 (:) (liftA2 Node (Lift (f x)) (later (go' xs))) ys
 ```
+
 </details>
 <details>
 <summary>
 Inline `go'`
+
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -183,11 +193,14 @@ bft f = runPhases . go
     go (Node x xs) = liftA2 Node (Lift (f x)) (later (foldr go' (pure []) xs))
     go' (Node x xs) ys = liftA2 (:) (liftA2 Node (Lift (f x)) (later (foldr go' (pure []) xs))) ys
 ```
+
 </details>
 <details>
 <summary>
 Definition of `liftA2`
+
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -195,11 +208,14 @@ bft f = runPhases . go
     go (Node x xs) = liftA2 Node (Lift (f x)) (later (foldr go' (pure []) xs))
     go' (Node x xs) ys = liftA2 (:) (fmap Node (f x) :<*> (foldr go' (pure []) xs)) ys
 ```
+
 </details>
 <details>
 <summary>
 Definition of `liftA2`
+
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -208,11 +224,13 @@ bft f = runPhases . go
     go' (Node x xs) (Lift ys)    = fmap (((:).) . Node) (f x) :<*> (foldr go' (pure []) xs) <*> Lift ys
     go' (Node x xs) (ys :<*> zs) = fmap (((:).) . Node) (f x) :<*> (foldr go' (pure []) xs) <*> ys :<*> zs
 ```
+
 </details>
 <details>
 <summary>
 Definition of `<*>`.
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -223,11 +241,14 @@ bft f = runPhases . go
       where
         c f g ~(x,y) = f x (g y)
 ```
+
 </details>
 <details>
 <summary>
 Fuse `liftA2` with `fmap`
+
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
@@ -238,11 +259,13 @@ bft f = runPhases . go
       where
         c f g ~(x,y) = f x (g y)
 ```
+
 </details>
 <details open>
 <summary>
 Beta-reduction.
 </summary>
+
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = go
@@ -254,6 +277,7 @@ bft f = go
       where
         c y g ~(ys,z) = Node y ys : g z
 ```
+
 </details>
 At this point, we actually hit a wall: the expression
 ```haskell
