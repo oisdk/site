@@ -280,9 +280,11 @@ bft f = go
 
 </details>
 At this point, we actually hit a wall: the expression
+
 ```haskell
 liftA2 (,) (foldr go' (pure []) xs) zs
 ```
+
 Is what makes the whole thing quadratic.
 We need to find a way to thread that `liftA2` along with the fold to get it to
 linear.
