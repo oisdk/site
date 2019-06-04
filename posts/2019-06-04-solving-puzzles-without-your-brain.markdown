@@ -463,3 +463,6 @@ def solution(n,m):
 
 I'm not sure if this function is fully correct, but it was accepted as a
 solution to the puzzle.
+
+Anyway, in conclusion: you can get quite far through a programming puzzle by
+applying some educated guesses and googling!
