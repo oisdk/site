@@ -1,0 +1,366 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Solving Programming Puzzles without using your Brain - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Solving Programming Puzzles without using your Brain</h2>
+
+            <div class="info">
+    Posted on June  4, 2019
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Python.html">Python</a>
+    
+</div>
+
+<p>This post is a write-up of a solution to part of a programming puzzle I did yesterday. It’s a little different than the usual “solution + theory” approach, though: I’m going to talk about the actual steps you’d need to take to get to the solution (i.e. what to google, what intermediate code looks like, etc.). Often write ups like this are presented as finished artefacts, with little info on the tricks or techniques the author used to jog their intuition into figuring out the puzzle (or where some intermediate step requires a leap of insight). In actual fact, this particular puzzle requires almost no insight <em>at all</em>: I’m going to show how to get to a working solution without understanding any of the theory behind it!</p>
+<p>Spoilers ahead for the google foobar problem “Distract the Guards”.</p>
+<h1 id="the-problem">The Problem</h1>
+<p>We’re interested in a particular type of sequences of pairs of numbers. These sequences are generated from a starting pair <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> like so:</p>
+<blockquote>
+<p>If <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math> are equal, the sequence stops.</p>
+<p>Otherwise, the smaller number is subtracted from the larger, and then the smaller is doubled, and the sequence continues with these two numbers.</p>
+</blockquote>
+<p>Here’s an example starting with 3 and 5:</p>
+<pre><code>     3, 5
+     6, 2
+     4, 4
+---- done ----</code></pre>
+<p>Once it hits <code>4, 4</code>, the first condition is met, and the sequence stops. Not all of these sequences stop, however:</p>
+<pre><code>     1, 4
+     2, 3
+     1, 4
+---- done ---- </code></pre>
+<p>As you can see, in this case we loop back around to <code>1, 4</code>: our task is to figure out, given a pair of numbers, whether the sequence generated by them loops forever, or stops at some point.</p>
+<h1 id="step-1-write-a-dumb-solution">Step 1: Write a Dumb Solution</h1>
+<p>This step is crucial: before trying to figure out any of the deep mathematics behind the problem, write the dumbest thing that could work. You’re going to need it, anyway, to test your faster versions against, and besides, it might be good enough as-is!</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">def</span> sequence(n,m):</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">    <span class="cf">while</span> n <span class="op">!=</span> m:</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">        <span class="cf">yield</span> (n,m)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">        <span class="cf">if</span> n <span class="op">&lt;</span> m:</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">            m <span class="op">-=</span> n</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">            n <span class="op">*=</span> <span class="dv">2</span></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">        <span class="cf">else</span>:</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">            n <span class="op">-=</span> m</a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">            m <span class="op">*=</span> <span class="dv">2</span></a>
+<a class="sourceLine" id="cb3-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11"><span class="kw">def</span> loops(xs):</a>
+<a class="sourceLine" id="cb3-12" data-line-number="12">    seen <span class="op">=</span> <span class="bu">set</span>()</a>
+<a class="sourceLine" id="cb3-13" data-line-number="13">    <span class="cf">for</span> x <span class="kw">in</span> xs:</a>
+<a class="sourceLine" id="cb3-14" data-line-number="14">        <span class="cf">if</span> x <span class="kw">in</span> seen:</a>
+<a class="sourceLine" id="cb3-15" data-line-number="15">            <span class="cf">return</span> <span class="va">True</span></a>
+<a class="sourceLine" id="cb3-16" data-line-number="16">        <span class="cf">else</span>:</a>
+<a class="sourceLine" id="cb3-17" data-line-number="17">            seen.add(x)</a>
+<a class="sourceLine" id="cb3-18" data-line-number="18">    <span class="cf">return</span> <span class="va">False</span></a>
+<a class="sourceLine" id="cb3-19" data-line-number="19"></a>
+<a class="sourceLine" id="cb3-20" data-line-number="20"><span class="kw">def</span> solution(n,m):</a>
+<a class="sourceLine" id="cb3-21" data-line-number="21">    <span class="cf">return</span> loops(sequence(n,m))</a></code></pre></div>
+<p>The first function actually generates the sequence we’re interested in: it uses python’s generators to do so. The second function is just a generic function that checks a sequence for duplicates. Finally, the last function answers the question we’re interested in.</p>
+<h1 id="step-2-graph-it">Step 2: Graph it</h1>
+<p>Next, we want to try and spot some patterns in the answers the function generates. Remember, we’re not really interested in figuring out the theory at this point: if we find out that a loop only happens when both numbers are even (for instance), that’s good enough for us and we can stop there!</p>
+<p>We humans are pattern-matching machines: to leverage our abilities, though, we will need to visualise the data somehow. In this case, I’m going to plot a simple scatter graph to the terminal, using the following code (I apologise for my terrible indentation style):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="bu">print</span>(</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">    <span class="st">'</span><span class="ch">\n</span><span class="st">'</span>.join(</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">        <span class="st">''</span>.join(</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">            <span class="st">'*'</span> <span class="cf">if</span> solution(x,y) <span class="cf">else</span> <span class="st">' '</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">            <span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>,<span class="dv">81</span>)</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">        )</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">        <span class="cf">for</span> y <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">100</span>,<span class="dv">0</span>,<span class="op">-</span><span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">    )</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">)</a></code></pre></div>
+<p>And we get the following output:</p>
+<details>
+<p><summary> Output </summary></p>
+<pre><code>*************************** ******************************* ********************
+**************************** *** *********** ******************************* ***
+************* *************** **************************************************
+****************************** *************************************************
+******************************* ************************************************
+******************************** *********************** ******* ***************
+********************************* **********************************************
+** *************************** *** *********************************************
+*********************************** ********************************************
+************ ******* *************** *******************************************
+***** *********************** ******* *************** *************** **********
+************************************** *****************************************
+*************************************** ****************************************
+******** ******************* *********** ***************************************
+***************************************** **************************************
+****************************************** ******* *********************** *****
+*********** *************** *************** ************************************
+******************************************** ***********************************
+********************************************* **********************************
+************** *********** ******************* *************** *****************
+*********************************************** ******************************* 
+************************************************ ***************************** *
+***************** ******* *********************** *************************** **
+********** *********************** *************** ************************* ***
+*************************************************** *********************** ****
+**** *************** *** ******************* ******* ********************* *****
+***************************************************** ******************* ******
+****************************************************** ***************** *******
+*********************** ******************************* *************** ********
+******************************************************** ************* *********
+********* ******************************* *************** *********** **********
+********************** *** ******************************* ********* ***********
+*********************************************************** ******* ************
+************************************************************ ***** *************
+********************* ******* ******************************* *** **************
+************** *********************** *********************** * ***************
+*************************************************************** ****************
+ ******* *********** *********** *************** ************* * ***************
+* *********************************************************** *** **************
+** ********************************************************* ***** *************
+*** *************** *************** *********************** ******* ************
+**** ***************************************************** ********* ***********
+***** *************************************************** *********** **********
+****** *********** ******************* ***************** ************* *********
+******* *********************************************** *************** ********
+******** *************** ******* ********************* ***************** *******
+********* ******* *********************** *********** ******************* ******
+********** ***************************************** ********************* *****
+*********** *************************************** *********************** ****
+************ *** *************************** ***** ************************* ***
+************* *************** ******************* *************************** **
+****** ******* ********************************* ************* *************** *
+*************** ******************************* ******************************* 
+**************** ***************************** *********************************
+***************** *************************** **********************************
+** *********** *** ******* ******* ********* ***** *********************** *****
+******************* *********************** ************************************
+******************** ********************* *************************************
+***** ******* ******* ******************* *********** *************** **********
+********************** ***************** ***************************************
+*********************** *************** ****************************************
+******** *** *********** ************* ***************** ******* ***************
+************************* *********** ******************************************
+************************** ********* *******************************************
+*********** *************** ******* *********************** ********************
+**** *************** ******* ***** ********* ******************************* ***
+***************************** *** **********************************************
+********** *** *************** * ********************* ******* *****************
+******************************* ************************************************
+ ***************************** * ***********************************************
+* ******* ******* *********** *** *************** *************** **************
+** ************************* ***** *********************************************
+*** *********************** ******* ********************************************
+**** *** *********** ***** ********* ******* *********************** ***********
+***** ******************* *********** *************************************** **
+****** ******* ********* ************* *************** ******************* *****
+******* *************** *************** ******************************* ********
+******** ************* ***************** *************************** ***********
+********* *********** ******************* *********************** **************
+** *** *** ********* ***** ******* ******* ******************* *********** *****
+*********** ******* *********************** *************** ********************
+************ ***** ************************* *********** ***********************
+***** ******* *** *********** *************** ******* *********************** **
+************** * ***************************** *** *****************************
+*************** ******************************* ********************************
+ *** *** ***** * ******* ******* *********** *** *************** ***************
+* *********** *** *********************** ******* ******************************
+** ********* ***** ******************* *********** *****************************
+*** ******* ******* *************** *************** ****************************
+**** ***** ********* *********** ******************* *********************** ***
+***** *** *********** ******* *********************** *************** **********
+** *** * ***** ******* *** *********** *************** ******* *****************
+******* *************** ******************************* ************************
+ ***** * *********** *** *********************** ******* ***********************
+* *** *** ******* ******* *************** *************** **********************
+** * ***** *** *********** ******* *********************** *************** *****
+*** ******* *************** ******************************* ********************
+ * * *** *** ******* ******* *************** *************** *******************
+* *** ******* *************** ******************************* ******************
+ * *** ******* *************** ******************************* *****************</code></pre>
+</details>
+<p>There’s a clear pattern there, but it might be easier to see if we inverted it, plotting those things which <em>don’t</em> loop:</p>
+<details>
+<p><summary> Output </summary></p>
+<pre><code>                           *                               *                    
+                            *   *           *                               *   
+             *               *                                                  
+                              *                                                 
+                               *                                                
+                                *                       *       *               
+                                 *                                              
+  *                           *   *                                             
+                                   *                                            
+            *       *               *                                           
+     *                       *       *               *               *          
+                                      *                                         
+                                       *                                        
+        *                   *           *                                       
+                                         *                                      
+                                          *       *                       *     
+           *               *               *                                    
+                                            *                                   
+                                             *                                  
+              *           *                   *               *                 
+                                               *                               *
+                                                *                             * 
+                 *       *                       *                           *  
+          *                       *               *                         *   
+                                                   *                       *    
+    *               *   *                   *       *                     *     
+                                                     *                   *      
+                                                      *                 *       
+                       *                               *               *        
+                                                        *             *         
+         *                               *               *           *          
+                      *   *                               *         *           
+                                                           *       *            
+                                                            *     *             
+                     *       *                               *   *              
+              *                       *                       * *               
+                                                               *                
+*       *           *           *               *             * *               
+ *                                                           *   *              
+  *                                                         *     *             
+   *               *               *                       *       *            
+    *                                                     *         *           
+     *                                                   *           *          
+      *           *                   *                 *             *         
+       *                                               *               *        
+        *               *       *                     *                 *       
+         *       *                       *           *                   *      
+          *                                         *                     *     
+           *                                       *                       *    
+            *   *                           *     *                         *   
+             *               *                   *                           *  
+      *       *                                 *             *               * 
+               *                               *                               *
+                *                             *                                 
+                 *                           *                                  
+  *           *   *       *       *         *     *                       *     
+                   *                       *                                    
+                    *                     *                                     
+     *       *       *                   *           *               *          
+                      *                 *                                       
+                       *               *                                        
+        *   *           *             *                 *       *               
+                         *           *                                          
+                          *         *                                           
+           *               *       *                       *                    
+    *               *       *     *         *                               *   
+                             *   *                                              
+          *   *               * *                     *       *                 
+                               *                                                
+*                             * *                                               
+ *       *       *           *   *               *               *              
+  *                         *     *                                             
+   *                       *       *                                            
+    *   *           *     *         *       *                       *           
+     *                   *           *                                       *  
+      *       *         *             *               *                   *     
+       *               *               *                               *        
+        *             *                 *                           *           
+         *           *                   *                       *              
+  *   *   *         *     *       *       *                   *           *     
+           *       *                       *               *                    
+            *     *                         *           *                       
+     *       *   *           *               *       *                       *  
+              * *                             *   *                             
+               *                               *                                
+*   *   *     * *       *       *           *   *               *               
+ *           *   *                       *       *                              
+  *         *     *                   *           *                             
+   *       *       *               *               *                            
+    *     *         *           *                   *                       *   
+     *   *           *       *                       *               *          
+  *   * *     *       *   *           *               *       *                 
+       *               *                               *                        
+*     * *           *   *                       *       *                       
+ *   *   *       *       *               *               *                      
+  * *     *   *           *       *                       *               *     
+   *       *               *                               *                    
+* * *   *   *       *       *               *               *                   
+ *   *       *               *                               *                  
+* *   *       *               *                               *                 </code></pre>
+</details>
+<p>For this kind of thing it’s also worth getting familiar with <a href="http://www.gnuplot.info/">gnuplot</a>.</p>
+<h1 id="step-3-reduce-the-space">Step 3: Reduce The Space</h1>
+<p>The clearest pattern in the graph above is the straight lines coming from the origin. This tells me, straight away, that we have an opportunity for optimisation if we wanted to memoize. We can’t yet be sure, but it <em>looks</em> like every point belongs to one of these straight lines. That means that once we find a non-looping pair like <code>3, 5</code>, we can extend that line out to <code>6, 10</code> and <code>9, 15</code>, etc.</p>
+<p>We can also see that the graph has a symmetry through the line <code>x = y</code>. This means that if <code>3, 5</code> doesn’t loop, neither does <code>5, 3</code>.</p>
+<p>Both of these techniques allow us to reduce the arguments to a canonical form, making the memoization table smaller, also. In code:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="im">from</span> fractions <span class="im">import</span> Fraction</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="kw">def</span> canonical(n,m):</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">    f <span class="op">=</span> Fraction(n,m) <span class="cf">if</span> n <span class="op">&lt;=</span> m <span class="cf">else</span> Fraction(m,n)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    <span class="cf">return</span> (f.numerator, f.denominator)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">memo_dict <span class="op">=</span> {}</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9"><span class="kw">def</span> solution(n,m):</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">    c <span class="op">=</span> canonical(n, m)</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">    <span class="cf">try</span>:</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">        <span class="cf">return</span> memo_dict[c]</a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">    <span class="cf">except</span> <span class="pp">KeyError</span>:</a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">      r <span class="op">=</span> loops(sequence(<span class="op">*</span>c))</a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">      memo_dict[c] <span class="op">=</span> r</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16">      <span class="cf">return</span> r</a></code></pre></div>
+<h1 id="step-4-test">Step 4: Test</h1>
+<p>Now that we have our faster version, we want to be able to quickly check that it’s equivalent to the slow. While Python is usually great for programming puzzles, this step in particular is crying out for something like QuickCheck: without it, we’ll have to roll our own.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="im">from</span> random <span class="im">import</span> randrange</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1000</span>):</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    x, y <span class="op">=</span> randrange(<span class="dv">1</span>,<span class="dv">10000</span>), randrange(<span class="dv">1</span>,<span class="dv">10000</span>)</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">    <span class="cf">if</span> solution_new(x,y) <span class="op">!=</span> solution_old(x,y):</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">        <span class="bu">print</span>(x,y)</a></code></pre></div>
+<p>We’re not looking for certainty here, just something that will quickly spot an error if one exists.</p>
+<h1 id="step-5-more-sophisticated-patterns">Step 5: More Sophisticated Patterns</h1>
+<p>Now that we’ve made some of the more obvious optimisations, it’s time to move on to finding another pattern in the output. To do this, we’ll use <a href="https://oeis.org/">oeis.org</a>. We want to find if the pairs which pass our test follow some sequence which has a simple generating function which we can adapt into a test.</p>
+<p>Since the things we’re testing are pairs, rather than individual numbers, we’ll have to fix one of them and see if there’s a pattern in the other.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="bu">print</span>([x <span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">1</span>,<span class="dv">101</span>) <span class="cf">if</span> <span class="kw">not</span> solution(<span class="dv">1</span>, x)])</a></code></pre></div>
+<p>This prints the following sequence:</p>
+<pre><code>[1, 3, 7, 15, 31, 63]</code></pre>
+<p>And when we search for it on oeis, we get <a href="https://oeis.org/A000225">this</a> as the top result:</p>
+<pre><code>0, 1, 3, 7, 15, 31, 63, 127, 255, 511, 1023, 2047, 4095, 8191, 16383, 32767,
+65535, 131071, 262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215,
+33554431, 67108863...</code></pre>
+<p>And looking at the comments under the sequence, we see the following:</p>
+<blockquote>
+<p>Numbers n for which the expression 2^n/(n+1) is an integer. - <a href="https://oeis.org/wiki/User:Paolo_P._Lava">Paolo P. Lava</a>, May 12 2006</p>
+</blockquote>
+<p>A test for members of the sequence, all packaged up for us!</p>
+<p>But how do we generalise to pairs other than 1? Well, as a total guess, we can see that 1 appears in one place in the formula: why not replace that with the other member of the pair?</p>
+<p>After that, we get the following function to test:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">def</span> solution(n,m):</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">    nc, mc <span class="op">=</span> canonical(n,m)</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">    <span class="cf">return</span> <span class="bu">bool</span>((<span class="dv">2</span> <span class="op">**</span> mc) <span class="op">%</span> (nc <span class="op">+</span> mc))</a></code></pre></div>
+<p>And it works!</p>
+<h1 id="step-6-look-for-algorithms">Step 6: Look For Algorithms</h1>
+<p>This last step is pretty straightforward: see if there’s an algorithm already out there that solves your problem. In our case, taking the modulus is still pretty slow, but it turns out that modular exponentiation (i.e. computing expressions of the form <code>x^y mod z</code>) can be done <a href="https://en.wikipedia.org/wiki/Modular_exponentiation">faster</a> than the naive way. In fact, python provides this algorithm as a function in the standard library, making our last version of the function the following:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">def</span> solution(n,m):</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">    nc, mc <span class="op">=</span> canonical(n,m)</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">    <span class="cf">return</span> <span class="bu">bool</span>(<span class="bu">pow</span>(<span class="dv">2</span>, mc, nc <span class="op">+</span> mc))</a></code></pre></div>
+<p>I’m not sure if this function is fully correct, but it was accepted as a solution to the puzzle.</p>
+<p>Anyway, in conclusion: you can get quite far through a programming puzzle by applying some educated guesses and googling!</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
