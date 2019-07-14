@@ -7,8 +7,43 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 04 Jun 2019 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sun, 14 Jul 2019 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Bachelor's Thesis</title>
+    <link>https://doisinkidney.com/posts/2019-07-14-bsc-thesis.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on July 14, 2019
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Agda.html">Agda</a>
+    
+</div>
+
+<p>I recently finished my undergrad degree in <a href="https://www.ucc.ie/">UCC</a>. I’m putting my final-year project up here for reference purposes.</p>
+<p><a href="/pdfs/bsc-thesis.pdf">Here</a> is the pdf.</p>
+<p>And here’s a bibtext entry:</p>
+<pre><code>@thesis{kidney_automatically_2019,
+	address = {Cork, Ireland},
+	type = {Bachelor thesis},
+	title = {Automatically and {Efficiently} {Illustrating} {Polynomial} {Equalities} in {Agda}},
+	url = {https://doisinkidney.com/pdfs/bsc-thesis.pdf},
+	abstract = {We present a new library which automates the construction of equivalence proofs between polynomials over commutative rings and semirings in the programming language Agda [20]. It is signi cantly faster than Agda’s existing solver. We use re ection to provide a sim- ple interface to the solver, and demonstrate how to use the constructed proofs to provide step-by-step solutions.},
+	language = {en},
+	school = {University College Cork},
+	author = {Kidney, Donnacha Oisín},
+	month = apr,
+	year = {2019}
+}</code></pre>
+]]></description>
+    <pubDate>Sun, 14 Jul 2019 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2019-07-14-bsc-thesis.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Solving Programming Puzzles without using your Brain</title>
     <link>https://doisinkidney.com/posts/2019-06-04-solving-puzzles-without-your-brain.html</link>
     <description><![CDATA[<div class="info">
