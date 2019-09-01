@@ -9,8 +9,7 @@ I'm putting my final-year project up here for reference purposes.
 [Here](/pdfs/bsc-thesis.pdf) is the pdf.
 
 And here’s a bibtext entry:
-
-```
+```bib
 @thesis{kidney_automatically_2019,
 	address = {Cork, Ireland},
 	type = {Bachelor thesis},
