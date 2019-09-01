@@ -229,3 +229,7 @@ ol li.serieslist:before {
 /* Standard attributes. */
 .Agda a { text-decoration: none }
 .Agda a[href]:hover { background-color: #B4EEB4 }
+
+.sourceCode {
+    overflow-x: auto;
+}
