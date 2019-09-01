@@ -26,18 +26,18 @@
 <p>I recently finished my undergrad degree in <a href="https://www.ucc.ie/">UCC</a>. I’m putting my final-year project up here for reference purposes.</p>
 <p><a href="/pdfs/bsc-thesis.pdf">Here</a> is the pdf.</p>
 <p>And here’s a bibtext entry:</p>
-<pre><code>@thesis{kidney_automatically_2019,
-	address = {Cork, Ireland},
-	type = {Bachelor thesis},
-	title = {Automatically and {Efficiently} {Illustrating} {Polynomial} {Equalities} in {Agda}},
-	url = {https://doisinkidney.com/pdfs/bsc-thesis.pdf},
-	abstract = {We present a new library which automates the construction of equivalence proofs between polynomials over commutative rings and semirings in the programming language Agda [20]. It is signi cantly faster than Agda’s existing solver. We use re ection to provide a sim- ple interface to the solver, and demonstrate how to use the constructed proofs to provide step-by-step solutions.},
-	language = {en},
-	school = {University College Cork},
-	author = {Kidney, Donnacha Oisín},
-	month = apr,
-	year = {2019}
-}</code></pre>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bib"><code class="sourceCode bibtex"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="va">@thesis</span>{<span class="ot">kidney_automatically_2019</span>,</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">	<span class="dt">address</span> = {Cork, Ireland},</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">	<span class="dt">type</span> = {Bachelor thesis},</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">	<span class="dt">title</span> = {Automatically and {Efficiently} {Illustrating} {Polynomial} {Equalities} in {Agda}},</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">	<span class="dt">url</span> = {https://doisinkidney.com/pdfs/bsc-thesis.pdf},</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">	<span class="dt">abstract</span> = {We present a new library which automates the construction of equivalence proofs between polynomials over commutative rings and semirings in the programming language Agda [20]. It is signi cantly faster than Agda’s existing solver. We use re ection to provide a sim- ple interface to the solver, and demonstrate how to use the constructed proofs to provide step-by-step solutions.},</a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">	<span class="dt">language</span> = {en},</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8">	<span class="dt">school</span> = {University College Cork},</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">	<span class="dt">author</span> = {Kidney, Donnacha Oisín},</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">	<span class="dt">month</span> = <span class="st">apr</span>,</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">	<span class="dt">year</span> = {2019}</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">}</a></code></pre></div>
 ]]></description>
     <pubDate>Sun, 14 Jul 2019 00:00:00 UT</pubDate>
     <guid>https://doisinkidney.com/posts/2019-07-14-bsc-thesis.html</guid>
