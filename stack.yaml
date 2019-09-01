@@ -1,19 +1,13 @@
 resolver: lts-11.11
 
 packages:
-- '.'
-- location:
-    git: https://github.com/st3ll1s/haddock/
-    commit: b3912d70f74b0693f1ea8cffb8f547b1303ef325
-  subdirs:
-    - haddock-library
-  extra-dep: true
+- .
 
 extra-deps:
 - pandoc-2.1.3
 - pandoc-types-1.17.4.2
 - git: https://github.com/oisdk/hakyll-series
-  commit: 64fce8092715609ee3129610906452002218fac1
+  commit: "64fce8092715609ee3129610906452002218fac1"
 
 flags: {}
 extra-package-dbs: []
