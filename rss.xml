@@ -85,7 +85,7 @@
 <a class="sourceLine" id="cb6-3" data-line-number="3"><span class="kw">class</span> Tree(ABC):</a>
 <a class="sourceLine" id="cb6-4" data-line-number="4">    <span class="at">@abstractmethod</span></a>
 <a class="sourceLine" id="cb6-5" data-line-number="5">    <span class="kw">def</span> size(<span class="va">self</span>):</a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">        <span class="cf">raise</span> NotImlemented</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">        <span class="cf">raise</span> <span class="va">NotImplemented</span></a>
 <a class="sourceLine" id="cb6-7" data-line-number="7"></a>
 <a class="sourceLine" id="cb6-8" data-line-number="8"><span class="kw">class</span> Leaf(Tree):</a>
 <a class="sourceLine" id="cb6-9" data-line-number="9">    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>):</a>
