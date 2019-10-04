@@ -138,7 +138,7 @@ and their issues.
    class Tree(ABC):
        @abstractmethod
        def size(self):
-           raise NotImlemented
+           raise NotImplemented
  
    class Leaf(Tree):
        def __init__(self):
