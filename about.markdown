@@ -1,12 +1,10 @@
 ---
 title: About
 ---
-I'm an undergraduate computer science student, studying at
-[UCC](https://www.ucc.ie) in Cork, Ireland.
+I'm a master's student, studying at [UCC](https://www.ucc.ie) in Cork, Ireland.
 
 I'm mainly interested in statically-typed functional programming. Currently I'm
-coding in [Haskell](http://haskell.org), [Idris](http://idris-lang.org), and
-[Agda](http://agda.readthedocs.io).
+coding in [Haskell](http://haskell.org), and [Agda](http://agda.readthedocs.io).
 
 I go by Oisín: it's pronounced "uh-sheen", with an emphasis on the first
 syllable. Kind of rhymes with machine.
