@@ -3,6 +3,9 @@ title: What is Good About Haskell?
 tags: Haskell
 ---
 
+Update 5/10/2019: check the bottom of this post for some links to comments and
+discussion.
+
 Beginners to Haskell are often confused as to what's so great about the
 language. Much of the proselytizing online focuses on pretty abstract (and often
 poorly defined) concepts like "purity", "strong types", and (god forbid)
@@ -595,3 +598,63 @@ but unfortunately several languages don't.
 Hopefully the example here illustrates a little why these features are good, and
 pushes back against the idea that algebraic data types are too complex for
 mainstream languages.
+
+# Update 5/10/2019
+
+This got posted to
+[/r/haskell](https://reddit.com/r/haskell/comments/dclflr/what_is_good_about_haskell/)
+and [hackernews](https://news.ycombinator.com/item?id=21145014).
+You can find me arguing in the comments there a little bit: I'm [`oisdk` on
+hackernews](https://news.ycombinator.com/user?id=oisdk) and [u/foBrowsing on
+reddit](https://reddit.com/user/foBrowsing).
+
+There are two topics that came up a bunch that I'd like to add to this post.
+First I'll just quote [one of the
+comments](https://news.ycombinator.com/item?id=21145374) from
+[Beltiras](https://news.ycombinator.com/user?id=Beltiras):
+
+> Friend of mine is always trying to convert me. Asked me to read this yesterday
+> evening. This is my take on the article:
+
+> Most of my daily job goes into gluing services (API endpoints to databases or
+> other services, some business logic in the middle). I don't need to see yet
+> another exposition of how to do algorithmic tasks. Haven't seen one of those
+> since doing my BSc. Show me the tools available to write a daemon, an http
+> server, API endpoints, ORM-type things and you will have provided me with
+> tools to tackle what I do. I'll never write a binary tree or search or a
+> linked list at work.
+
+> If you want to convince me, show me what I need to know to do what I do.
+
+and [my response](https://news.ycombinator.com/item?id=21151580):
+
+> I wasn't really trying to convince anyone to use Haskell at their day job: I
+> am just a college student, after all, so I would have no idea what I was
+> talking about!
+
+> I wrote the article a while ago after being frustrated using a bunch of Go and
+> Python at an internship. Often I really wanted simple algebraic data types and
+> pattern-matching, but when I looked up why Go didn't have them I saw a lot of
+> justifications that amounted to "functional features are too complex and we're
+> making a simple language. Haskell is notoriously complex". In my opinion, the
+> `res, err := fun(); if err != nil` (for example) pattern was much more complex
+> than the alternative with pattern-matching. So I wanted to write an article
+> demonstrating that, while Haskell has a lot of out-there stuff in it, there's
+> a bunch of simple ideas which really shouldn't be missing from any modern
+> general-purpose language.
+
+> As to why I used a binary tree as the example, I thought it was pretty
+> self-contained, and I find skew heaps quite interesting. 
+
+The second topic was basically people having a go at my ugly Python; to which I
+say: fair enough!
+It is not my best.
+I wasn't trying necessarily to write the best Python I could here, though,
+rather I was trying to write the "normal" implementation of a binary tree.
+If I was to implement a binary tree of some sort myself, though, I would
+certainly write it in an immutable style rather than the style here.
+Bear in mind as well that much of what I'm arguing for is stylistic: I think
+(for instance) that it would be better to use `reduce` in Python more, and I
+think the move away from it is a bad thing.
+So of course I'm not going to use reduce when I'm showing the Python version:
+I'm doing a compare and contrast!
