@@ -23,6 +23,7 @@
     
 </div>
 
+<p>Update 5/10/2019: check the bottom of this post for some links to comments and discussion.</p>
 <p>Beginners to Haskell are often confused as to what’s so great about the language. Much of the proselytizing online focuses on pretty abstract (and often poorly defined) concepts like “purity”, “strong types”, and (god forbid) “monads”. These things are difficult to understand, somewhat controversial, and not obviously beneficial (especially when you’ve only been using the language for a short amount of time).</p>
 <p>The real tragedy is that Haskell (and other ML-family languages) are <em>packed</em> with simple, decades-old features like pattern matching and algebraic data types which have massive, clear benefits and few (if any) downsides. Some of these ideas are finally filtering in to mainstream languages (like Swift and Rust) where they’re used to great effect, but the vast majority of programmers out there haven’t yet been exposed to them.</p>
 <p>This post aims to demonstrate some of these features in a simple (but hopefully not too simple) example. I’m going to write and package up a simple sorting algorithm in both Haskell and Python, and compare the code in each. I’m choosing Python because I like it and beginners like it, but also because it’s missing most of the features I’ll be demonstrating. It’s important to note I’m not comparing Haskell and Python as languages: the Python code is just there as a reference for people less familiar with Haskell. What’s more, the comparison is unfair, as the example deliberately plays to Haskell’s strengths (so I can show off the features I’m interested in): it wouldn’t be difficult to pick an example that makes Python look good and Haskell look poor.</p>
@@ -276,6 +277,29 @@
 <p>In that single line, the <a href="https://hackage.haskell.org/package/QuickCheck">QuickCheck</a> library will automatically generate random input, run each sort function on it, and compare the two outputs, giving a rich diff if they don’t match.</p>
 <h1 id="conclusion">Conclusion</h1>
 <p>This post was meant to show a few features like pattern-matching, algebraic data types, and function-based APIs in a good light. These ideas aren’t revolutionary any more, and plenty of languages have them, but unfortunately several languages don’t. Hopefully the example here illustrates a little why these features are good, and pushes back against the idea that algebraic data types are too complex for mainstream languages.</p>
+<h1 id="update-5102019">Update 5/10/2019</h1>
+<p>This got posted to <a href="https://reddit.com/r/haskell/comments/dclflr/what_is_good_about_haskell/">/r/haskell</a> and <a href="https://news.ycombinator.com/item?id=21145014">hackernews</a>. You can find me arguing in the comments there a little bit: I’m <a href="https://news.ycombinator.com/user?id=oisdk"><code>oisdk</code> on hackernews</a> and <a href="https://reddit.com/user/foBrowsing">u/foBrowsing on reddit</a>.</p>
+<p>There are two topics that came up a bunch that I’d like to add to this post. First I’ll just quote <a href="https://news.ycombinator.com/item?id=21145374">one of the comments</a> from <a href="https://news.ycombinator.com/user?id=Beltiras">Beltiras</a>:</p>
+<blockquote>
+<p>Friend of mine is always trying to convert me. Asked me to read this yesterday evening. This is my take on the article:</p>
+</blockquote>
+<blockquote>
+<p>Most of my daily job goes into gluing services (API endpoints to databases or other services, some business logic in the middle). I don’t need to see yet another exposition of how to do algorithmic tasks. Haven’t seen one of those since doing my BSc. Show me the tools available to write a daemon, an http server, API endpoints, ORM-type things and you will have provided me with tools to tackle what I do. I’ll never write a binary tree or search or a linked list at work.</p>
+</blockquote>
+<blockquote>
+<p>If you want to convince me, show me what I need to know to do what I do.</p>
+</blockquote>
+<p>and <a href="https://news.ycombinator.com/item?id=21151580">my response</a>:</p>
+<blockquote>
+<p>I wasn’t really trying to convince anyone to use Haskell at their day job: I am just a college student, after all, so I would have no idea what I was talking about!</p>
+</blockquote>
+<blockquote>
+<p>I wrote the article a while ago after being frustrated using a bunch of Go and Python at an internship. Often I really wanted simple algebraic data types and pattern-matching, but when I looked up why Go didn’t have them I saw a lot of justifications that amounted to “functional features are too complex and we’re making a simple language. Haskell is notoriously complex”. In my opinion, the <code>res, err := fun(); if err != nil</code> (for example) pattern was much more complex than the alternative with pattern-matching. So I wanted to write an article demonstrating that, while Haskell has a lot of out-there stuff in it, there’s a bunch of simple ideas which really shouldn’t be missing from any modern general-purpose language.</p>
+</blockquote>
+<blockquote>
+<p>As to why I used a binary tree as the example, I thought it was pretty self-contained, and I find skew heaps quite interesting.</p>
+</blockquote>
+<p>The second topic was basically people having a go at my ugly Python; to which I say: fair enough! It is not my best. I wasn’t trying necessarily to write the best Python I could here, though, rather I was trying to write the “normal” implementation of a binary tree. If I was to implement a binary tree of some sort myself, though, I would certainly write it in an immutable style rather than the style here. Bear in mind as well that much of what I’m arguing for is stylistic: I think (for instance) that it would be better to use <code>reduce</code> in Python more, and I think the move away from it is a bad thing. So of course I’m not going to use reduce when I’m showing the Python version: I’m doing a compare and contrast!</p>
 <section class="footnotes">
 <hr />
 <ol>
