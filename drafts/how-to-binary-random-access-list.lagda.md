@@ -178,6 +178,7 @@ representation unique for every natural number.
 
 <details>
 <summary>Evaluation is pretty standard</summary>
+  
 ```agda
   ⟦_⇓⟧⁺ : 𝔹⁺ → ℕ
   ⟦ 1ᵇ   ⇓⟧⁺ = 1
@@ -188,6 +189,7 @@ representation unique for every natural number.
   ⟦ 𝕓0ᵇ  ⇓⟧ = 0
   ⟦ 𝕓 x  ⇓⟧ = ⟦ x ⇓⟧⁺
 ```
+
 </details>
 
 The odd syntax lets us write binary numbers in the natural way:
@@ -247,6 +249,7 @@ of the post.
 
 <details>
 <summary>Proof that 𝔹 and ℕ are isomorphic</summary>
+  
 ```agda
 ⟦_⇑⟧ : ℕ → 𝔹
 ⟦ zero  ⇑⟧ = []
@@ -273,6 +276,7 @@ inc⇔suc (2ᵇ ∷ xs) = cong (suc ∘ 2*) (inc⇔suc xs)
 𝔹⇔ℕ : 𝔹 ⇔ ℕ
 𝔹⇔ℕ = iso ⟦_⇓⟧ ⟦_⇑⟧ ℕ→𝔹→ℕ 𝔹→ℕ→𝔹
 ```
+
 </details>
 
 # Arrays
