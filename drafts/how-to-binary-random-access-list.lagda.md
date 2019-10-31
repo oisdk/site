@@ -3,7 +3,7 @@ title: How to do Binary Random-Access Lists Simply
 tags: agda
 ---
 
-"Heterogenous Random-Access lists" by Wouter Swierstra describes how to write a
+"Heterogenous Random-Access Lists" by Wouter Swierstra describes how to write a
 simple binary random-access list (from Okasaki) to use as a heterogenous tuple.
 If you haven't tried to implement the data structure described in the paper
 before, you might not realise the just how *elegant* the implementation is.
@@ -16,7 +16,7 @@ on the "wrong turns" in implementation which can lead to headache.
 
 <!--
 ```agda
-{-# OPTIONS --cubical #-}
+{-# OPTIONS --cubical --allow-unsolved-metas #-}
 
 open import Prelude
 ```
@@ -134,62 +134,111 @@ convolve =
 # Binary Numbers
 
 Binary numbers come up a lot in dependently-typed programming languages: they
-offer an alternative representation of ℕ that's tolerably efifcient (depending
+offer an alternative representation of ℕ that's tolerably efficient (depending
 on who's doing the tolerating).
 In contrast to the Peano numbers, though, there are a huge number of ways to
 implement them.
-After trying almost every different way to encode them, I have eventually
-settled on the following "best" encoding:
 
-```agda
-data Bit : Set where O I : Bit
-
-𝔹⁺ : Set
-𝔹⁺ = List Bit
-
-𝔹 : Set
-𝔹 = Maybe 𝔹⁺
-```
-
-A binary number is a list of bits, least significant first.
-That list is implicitly 1-terminated, so that every binary number has a unique
-representation.
-
-The rest of the functions are as you would expect.
-Incrementing:
-
-```agda
-inc⁺ : 𝔹⁺ → 𝔹⁺
-inc⁺ [] = O ∷ []
-inc⁺ (O ∷ xs) = I ∷ xs
-inc⁺ (I ∷ xs) = O ∷ inc⁺ xs
-
-inc : 𝔹 → 𝔹
-inc = just ∘ maybe inc⁺ []
-```
-
-And evaluation:
+I'm going to recommend one particular implementation over the others, but before
+I do I want to define a function on ℕ:
 
 ```agda
 2* : ℕ → ℕ
 2* zero = zero
 2* (suc n) = suc (suc (2* n))
-
-_∷⇓_ : Bit → ℕ → ℕ
-O ∷⇓ xs = 2* xs
-I ∷⇓ xs = suc (2* xs)
-
-⟦_⇓⟧⁺ : 𝔹⁺ → ℕ
-⟦_⇓⟧⁺ = foldr _∷⇓_ 1
-
-⟦_⇓⟧ : 𝔹 → ℕ
-⟦ nothing ⇓⟧ = 0
-⟦ just xs ⇓⟧ = ⟦ xs ⇓⟧⁺
 ```
 
-The most important component here is the definition of the `2*` function.
-You might be tempted to write `2* n = n + n`, but you would be severely punushed
-(in terms of proof length and complexity) later on if you did so.
+In all of the implementations of binary numbers we'll need a function like this.
+It is absolutely crucial that it is defined in the way above: the other obvious
+definition (`2* n = n + n`) is a nightmare for proofs.
+
+The obvious way (a list of bits) is insufficient, as it allows multiple
+representations of the same number (because of the trailing zeroes).
+Picking a more clever implementation is tricky, though.
+The most obvious one adds a constructor at the top level:
+
+```agda
+module OneTerminated where
+  infixl 5 _0ᵇ _1ᵇ
+  infixr 4 𝕓_
+
+  data 𝔹⁺ : Set where
+    1ᵇ : 𝔹⁺
+    _0ᵇ _1ᵇ : 𝔹⁺ → 𝔹⁺
+
+  data 𝔹 : Set where
+    𝕓0ᵇ : 𝔹
+    𝕓_ : 𝔹⁺ → 𝔹
+```
+
+𝔹⁺ is the stricly positive natural numbers (i.e. the naturals starting from 1).
+𝔹 adds a zero to that set.
+This removes the possibility for trailing zeroes, thereby making this
+representation unique for every natural number.
+
+<details>
+<summary>Evaluation is pretty standard</summary>
+```agda
+  ⟦_⇓⟧⁺ : 𝔹⁺ → ℕ
+  ⟦ 1ᵇ   ⇓⟧⁺ = 1
+  ⟦ x 0ᵇ ⇓⟧⁺ =      2* ⟦ x ⇓⟧⁺
+  ⟦ x 1ᵇ ⇓⟧⁺ = suc (2* ⟦ x ⇓⟧⁺)
+
+  ⟦_⇓⟧ : 𝔹 → ℕ
+  ⟦ 𝕓0ᵇ  ⇓⟧ = 0
+  ⟦ 𝕓 x  ⇓⟧ = ⟦ x ⇓⟧⁺
+```
+</details>
+
+The odd syntax lets us write binary numbers in the natural way:
+
+```agda
+  _ : ⟦ 𝕓 1ᵇ 0ᵇ 1ᵇ ⇓⟧ ≡ 5
+  _ = refl
+
+  _ : ⟦ 𝕓 1ᵇ 0ᵇ 0ᵇ 1ᵇ ⇓⟧ ≡ 9
+  _ = refl
+```
+
+I would actually recommend this representation for most use-cases, especially
+when you're using binary numbers "as binary numbers", rather than as an abstract
+type for faster computation.
+
+Another clever representation is one I wrote about before: the "gapless"
+representation.
+This is far too much trouble for what it's worth.
+
+Finally, my favourite representation at the moment is *zeroless*.
+It has a unique representation for each number, just like the two above, but it
+is still a lits of bits.
+The difference is that the bits here are 1 and 2, not 0 and 1.
+
+```agda
+data Bit : Set where 1ᵇ 2ᵇ : Bit
+
+𝔹 : Set
+𝔹 = List Bit
+```
+
+Functions like `inc` are not difficult to implement:
+
+```agda
+inc : 𝔹 → 𝔹
+inc [] = 1ᵇ ∷ []
+inc (1ᵇ ∷ xs) = 2ᵇ ∷ xs
+inc (2ᵇ ∷ xs) = 1ᵇ ∷ inc xs
+```
+
+And evaluation:
+
+```agda
+_∷⇓_ : Bit → ℕ → ℕ
+1ᵇ ∷⇓ xs =      suc (2* xs)
+2ᵇ ∷⇓ xs = suc (suc (2* xs))
+
+⟦_⇓⟧ : 𝔹 → ℕ
+⟦_⇓⟧ = foldr _∷⇓_ zero
+```
 
 Since we're working in Cubical Agda, we might as well go on and prove that 𝔹 is
 isomorphic to ℕ.
@@ -200,40 +249,112 @@ of the post.
 <summary>Proof that 𝔹 and ℕ are isomorphic</summary>
 ```agda
 ⟦_⇑⟧ : ℕ → 𝔹
-⟦ zero ⇑⟧ = nothing
+⟦ zero  ⇑⟧ = []
 ⟦ suc n ⇑⟧ = inc ⟦ n ⇑⟧
 
-inc⁺⇔suc : ∀ x → ⟦ inc⁺ x ⇓⟧⁺ ≡ suc ⟦ x ⇓⟧⁺
-inc⁺⇔suc [] = refl
-inc⁺⇔suc (O ∷ xs) = refl
-inc⁺⇔suc (I ∷ xs) = cong 2* (inc⁺⇔suc xs)
+2*⇔1ᵇ∷ : ∀ n → inc ⟦ 2* n ⇑⟧ ≡ 1ᵇ ∷ ⟦ n ⇑⟧
+2*⇔1ᵇ∷ zero = refl
+2*⇔1ᵇ∷ (suc n) = cong (inc ∘ inc) (2*⇔1ᵇ∷ n)
 
-ℕ→𝔹⁺→ℕ : ∀ n → ⟦ maybe inc⁺ [] ⟦ n ⇑⟧ ⇓⟧⁺ ≡ suc n
-ℕ→𝔹⁺→ℕ zero = refl
-ℕ→𝔹⁺→ℕ (suc n) = inc⁺⇔suc (maybe inc⁺ [] ⟦ n ⇑⟧) ; cong suc (ℕ→𝔹⁺→ℕ n)
+𝔹→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧ ⇑⟧ ≡ n
+𝔹→ℕ→𝔹 [] = refl
+𝔹→ℕ→𝔹 (1ᵇ ∷ xs) = 2*⇔1ᵇ∷ ⟦ xs ⇓⟧ ; cong (1ᵇ ∷_) (𝔹→ℕ→𝔹 xs)
+𝔹→ℕ→𝔹 (2ᵇ ∷ xs) = cong inc (2*⇔1ᵇ∷ ⟦ xs ⇓⟧) ; cong (2ᵇ ∷_) (𝔹→ℕ→𝔹 xs)
+
+inc⇔suc : ∀ n → ⟦ inc n ⇓⟧ ≡ suc ⟦ n ⇓⟧
+inc⇔suc [] = refl
+inc⇔suc (1ᵇ ∷ xs) = refl
+inc⇔suc (2ᵇ ∷ xs) = cong (suc ∘ 2*) (inc⇔suc xs)
 
 ℕ→𝔹→ℕ : ∀ n → ⟦ ⟦ n ⇑⟧ ⇓⟧ ≡ n
 ℕ→𝔹→ℕ zero = refl
-ℕ→𝔹→ℕ (suc x) = ℕ→𝔹⁺→ℕ x
-
-shift : 𝔹 → 𝔹
-shift = maybe-map (O ∷_)
-
-2*⇔O∷ : ∀ n → ⟦ 2* n ⇑⟧ ≡ shift ⟦ n ⇑⟧
-2*⇔O∷ zero = refl
-2*⇔O∷ (suc zero) = refl
-2*⇔O∷ (suc (suc n)) = cong (inc ∘ inc) (2*⇔O∷ (suc n))
-
-𝔹⁺→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧⁺ ⇑⟧ ≡ just n
-𝔹⁺→ℕ→𝔹 [] = refl
-𝔹⁺→ℕ→𝔹 (O ∷ xs) = 2*⇔O∷ ⟦ xs ⇓⟧⁺ ; cong shift (𝔹⁺→ℕ→𝔹 xs)
-𝔹⁺→ℕ→𝔹 (I ∷ xs) = cong inc (2*⇔O∷ ⟦ xs ⇓⟧⁺) ; cong (inc ∘ shift) (𝔹⁺→ℕ→𝔹 xs)
-
-𝔹→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧ ⇑⟧ ≡ n
-𝔹→ℕ→𝔹 nothing = refl
-𝔹→ℕ→𝔹 (just xs) = 𝔹⁺→ℕ→𝔹 xs
+ℕ→𝔹→ℕ (suc n) = inc⇔suc ⟦ n ⇑⟧ ; cong suc (ℕ→𝔹→ℕ n)
 
 𝔹⇔ℕ : 𝔹 ⇔ ℕ
 𝔹⇔ℕ = iso ⟦_⇓⟧ ⟦_⇑⟧ ℕ→𝔹→ℕ 𝔹→ℕ→𝔹
 ```
 </details>
+
+# Arrays
+
+Now on to the binary random-access list.
+
+```agda
+infixr 5 _1∷_ _2∷_
+data Array (T : ℕ → Type a) : 𝔹 → Type a where
+  [] : Array T []
+  _1∷_ : ∀ {ns} → T 0 → Array (T ∘ suc) ns → Array T (1ᵇ ∷ ns)
+  _2∷_ : ∀ {ns} → T 1 → Array (T ∘ suc) ns → Array T (2ᵇ ∷ ns)
+```
+
+```agda
+cons : ∀ {a} {A : ℕ → Type a}
+     → (_∙_ : ∀ {n} → A n → A n → A (suc n))
+     → ∀ {ns}
+     → A 0 → Array A ns → Array A (inc ns)
+cons _∙_ x [] = x 1∷ []
+cons _∙_ x (y 1∷ ys) = (x ∙ y) 2∷ ys
+cons _∙_ x (y 2∷ ys) = x 1∷ cons _∙_ y ys
+```
+
+```agda
+2^_*_ : ℕ → ℕ → ℕ
+2^ zero  * n = n
+2^ suc m * n = 2* (2^ m * n)
+```
+
+```agda
+foldrArray : {A : ℕ → Type a}
+           → (B : ℕ → Type b)
+           → (∀ n {m} → A n → B (2^ n * m) → B (2^ n * suc m))
+           → B zero → ∀ {ns} → Array A ns → B ⟦ ns ⇓⟧
+foldrArray B c b []        = b
+foldrArray B c b (x 1∷ xs) = c 0 x (foldrArray (B ∘ 2*) (c ∘ suc) b xs)
+foldrArray B c b (x 2∷ xs) = c 1 x (foldrArray (B ∘ 2*) (c ∘ suc) b xs)
+```
+
+```agda
+data Fin𝔹 (A : Set a) : 𝔹 → Type a where
+  here₁ : ∀ {ns}                         → Fin𝔹 A (1ᵇ ∷ ns)
+  here₂ : ∀ {ns}   → (i : A)             → Fin𝔹 A (2ᵇ ∷ ns)
+  there : ∀ {n ns} → (i : A) → Fin𝔹 A ns → Fin𝔹 A (n  ∷ ns)
+```
+
+```agda
+lookup : ∀ {a i} {I : Type i} {A : ℕ → Type a}
+       → (ind : ∀ {n} → I → A (suc n) → A n)
+       → ∀ {ns}
+       → Array A ns
+       → Fin𝔹 I ns
+       → A 0
+lookup ind (x 1∷ xs) here₁ = x
+lookup ind (x 1∷ xs) (there i is) = ind i (lookup ind xs is)
+lookup ind (x 2∷ xs) (here₂ i)    = ind i x
+lookup ind (x 2∷ xs) (there i is) = ind i (lookup ind xs is)
+```
+
+```agda
+Perfect : Set a → ℕ → Set a
+Perfect A zero = A
+Perfect A (suc n) = Perfect (A × A) n
+
+branch : ∀ n → Perfect A n → Perfect A n → Perfect A (suc n)
+branch zero = _,_
+branch (suc n) = branch n
+
+foldrPerf : (B : ℕ → Type b)
+          → (∀ {n} → A → B n → B (suc n))
+          → ∀ n {m}
+          → Perfect A n
+          → B (2^ n * m)
+          → B (2^ n * suc m)
+foldrPerf B f zero = f
+foldrPerf B f (suc n) =
+  foldrPerf (B ∘ 2*) (λ { (x , y) zs → f x (f y zs) }) n
+
+toVec : ∀ {ns} → Array (Perfect A) ns → Vec A ⟦ ns ⇓⟧
+toVec = foldrArray (Vec _) (foldrPerf (Vec _) _∷_) []
+
+fromVec : ∀ {n} → Vec A n → Array (Perfect A) ⟦ n ⇑⟧
+fromVec = vec-foldr (Array (Perfect _) ∘ ⟦_⇑⟧) (cons (λ {n} → branch n)) []
+```
