@@ -56,10 +56,6 @@ Reversing a list is easy: we do it the standard way, in $\mathcal{O}(n)$ time,
 with an accumulator:
 
 ```agda
-data List (A : Set a) : Set a where
-  [] : List A
-  _∷_ : A → List A → List A
-
 list-reverse : List A → List A
 list-reverse = go []
   where
@@ -84,13 +80,13 @@ recursion.
 Folds on vectors are a little more aggresively typed than those on lists:
 
 ```agda
-foldr : (B : ℕ → Type b)
-      → (∀ {n} → A → B n → B (suc n))
-      → B zero
-      → Vec A n
-      → B n
-foldr B f b [] = b
-foldr B f b (x ∷ xs) = f x (foldr B f b xs)
+vec-foldr : (B : ℕ → Type b)
+          → (∀ {n} → A → B n → B (suc n))
+          → B zero
+          → Vec A n
+          → B n
+vec-foldr B f b [] = b
+vec-foldr B f b (x ∷ xs) = f x (vec-foldr B f b xs)
 ```
 
 We allow the output type to be indexed by the list of the vector.
@@ -98,23 +94,23 @@ This is a good thing, bear in mind: we need that extra information to properly
 type `reverse`.
 
 For reverse, unfortunately, we need a *left*-leaning fold, which is a little
-trickier to implement than `foldr`.
+trickier to implement than `vec-foldr`.
 
 ```agda
-foldl : (B : ℕ → Set b)
-      → (∀ {n} → B n → A → B (suc n))
-      → B zero
-      → Vec A n
-      → B n
-foldl B f b [] = b
-foldl B f b (x ∷ xs) = foldl (B ∘ suc) f (f b x) xs
+vec-foldl : (B : ℕ → Set b)
+          → (∀ {n} → B n → A → B (suc n))
+          → B zero
+          → Vec A n
+          → B n
+vec-foldl B f b [] = b
+vec-foldl B f b (x ∷ xs) = vec-foldl (B ∘ suc) f (f b x) xs
 ```
 
 With this we can finally `reverse`.
 
 ```agda
 vec-reverse : Vec A n → Vec A n
-vec-reverse = foldl (Vec _) (λ xs x → x ∷ xs) []
+vec-reverse = vec-foldl (Vec _) (λ xs x → x ∷ xs) []
 ```
 
 The real trick in this function is that the type of the return value changes as
@@ -129,7 +125,7 @@ simply:
 ```agda
 convolve : Vec A n → Vec B n → Vec (A × B) n
 convolve =
-  foldl
+  vec-foldl
     (λ n → Vec _ n → Vec _ n)
     (λ { k x (y ∷ ys) → (x , y) ∷ k ys})
     (λ _ → [])
@@ -151,8 +147,93 @@ data Bit : Set where O I : Bit
 𝔹⁺ : Set
 𝔹⁺ = List Bit
 
-infixr 5 0<_
-data 𝔹 : Set where
-  0𝕓 : 𝔹
-  0<_ : 𝔹⁺ → 𝔹
+𝔹 : Set
+𝔹 = Maybe 𝔹⁺
 ```
+
+A binary number is a list of bits, least significant first.
+That list is implicitly 1-terminated, so that every binary number has a unique
+representation.
+
+The rest of the functions are as you would expect.
+Incrementing:
+
+```agda
+inc⁺ : 𝔹⁺ → 𝔹⁺
+inc⁺ [] = O ∷ []
+inc⁺ (O ∷ xs) = I ∷ xs
+inc⁺ (I ∷ xs) = O ∷ inc⁺ xs
+
+inc : 𝔹 → 𝔹
+inc = just ∘ maybe inc⁺ []
+```
+
+And evaluation:
+
+```agda
+2* : ℕ → ℕ
+2* zero = zero
+2* (suc n) = suc (suc (2* n))
+
+_∷⇓_ : Bit → ℕ → ℕ
+O ∷⇓ xs = 2* xs
+I ∷⇓ xs = suc (2* xs)
+
+⟦_⇓⟧⁺ : 𝔹⁺ → ℕ
+⟦_⇓⟧⁺ = foldr _∷⇓_ 1
+
+⟦_⇓⟧ : 𝔹 → ℕ
+⟦ nothing ⇓⟧ = 0
+⟦ just xs ⇓⟧ = ⟦ xs ⇓⟧⁺
+```
+
+The most important component here is the definition of the `2*` function.
+You might be tempted to write `2* n = n + n`, but you would be severely punushed
+(in terms of proof length and complexity) later on if you did so.
+
+Since we're working in Cubical Agda, we might as well go on and prove that 𝔹 is
+isomorphic to ℕ.
+I'll include the proof here for completeness, but it's not relevant to the rest
+of the post.
+
+<details>
+<summary>Proof that 𝔹 and ℕ are isomorphic</summary>
+```agda
+⟦_⇑⟧ : ℕ → 𝔹
+⟦ zero ⇑⟧ = nothing
+⟦ suc n ⇑⟧ = inc ⟦ n ⇑⟧
+
+inc⁺⇔suc : ∀ x → ⟦ inc⁺ x ⇓⟧⁺ ≡ suc ⟦ x ⇓⟧⁺
+inc⁺⇔suc [] = refl
+inc⁺⇔suc (O ∷ xs) = refl
+inc⁺⇔suc (I ∷ xs) = cong 2* (inc⁺⇔suc xs)
+
+ℕ→𝔹⁺→ℕ : ∀ n → ⟦ maybe inc⁺ [] ⟦ n ⇑⟧ ⇓⟧⁺ ≡ suc n
+ℕ→𝔹⁺→ℕ zero = refl
+ℕ→𝔹⁺→ℕ (suc n) = inc⁺⇔suc (maybe inc⁺ [] ⟦ n ⇑⟧) ; cong suc (ℕ→𝔹⁺→ℕ n)
+
+ℕ→𝔹→ℕ : ∀ n → ⟦ ⟦ n ⇑⟧ ⇓⟧ ≡ n
+ℕ→𝔹→ℕ zero = refl
+ℕ→𝔹→ℕ (suc x) = ℕ→𝔹⁺→ℕ x
+
+shift : 𝔹 → 𝔹
+shift = maybe-map (O ∷_)
+
+2*⇔O∷ : ∀ n → ⟦ 2* n ⇑⟧ ≡ shift ⟦ n ⇑⟧
+2*⇔O∷ zero = refl
+2*⇔O∷ (suc zero) = refl
+2*⇔O∷ (suc (suc n)) = cong (inc ∘ inc) (2*⇔O∷ (suc n))
+
+𝔹⁺→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧⁺ ⇑⟧ ≡ just n
+𝔹⁺→ℕ→𝔹 [] = refl
+𝔹⁺→ℕ→𝔹 (O ∷ xs) = 2*⇔O∷ ⟦ xs ⇓⟧⁺ ; cong shift (𝔹⁺→ℕ→𝔹 xs)
+𝔹⁺→ℕ→𝔹 (I ∷ xs) = cong inc (2*⇔O∷ ⟦ xs ⇓⟧⁺) ; cong (inc ∘ shift) (𝔹⁺→ℕ→𝔹 xs)
+
+𝔹→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧ ⇑⟧ ≡ n
+𝔹→ℕ→𝔹 nothing = refl
+𝔹→ℕ→𝔹 (just xs) = 𝔹⁺→ℕ→𝔹 xs
+
+𝔹⇔ℕ : 𝔹 ⇔ ℕ
+𝔹⇔ℕ = iso ⟦_⇓⟧ ⟦_⇑⟧ ℕ→𝔹→ℕ 𝔹→ℕ→𝔹
+```
+</details>
