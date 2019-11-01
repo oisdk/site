@@ -19,6 +19,12 @@ on the "wrong turns" in implementation which can lead to headache.
 {-# OPTIONS --cubical --allow-unsolved-metas #-}
 
 open import Prelude
+
+variable
+  t : Level
+  T : ℕ → Set t
+  p : Level
+  P : Set p
 ```
 -->
 
@@ -152,10 +158,11 @@ In all of the implementations of binary numbers we'll need a function like this.
 It is absolutely crucial that it is defined in the way above: the other obvious
 definition (`2* n = n + n`) is a nightmare for proofs.
 
+Right, now on to some actual binary numbers.
 The obvious way (a list of bits) is insufficient, as it allows multiple
 representations of the same number (because of the trailing zeroes).
 Picking a more clever implementation is tricky, though.
-The most obvious one adds a constructor at the top level:
+One way splits it into two types:
 
 ```agda
 module OneTerminated where
@@ -212,13 +219,27 @@ Finally, my favourite representation at the moment is *zeroless*.
 It has a unique representation for each number, just like the two above, but it
 is still a lits of bits.
 The difference is that the bits here are 1 and 2, not 0 and 1.
+I like to reuse types in combination with pattern synonyms (rather than defining
+new types), as it can often make parallels between different functions clearer.
 
 ```agda
-data Bit : Set where 1ᵇ 2ᵇ : Bit
+Bit : Set
+Bit = Bool
+
+pattern 1ᵇ = false
+pattern 2ᵇ = true
 
 𝔹 : Set
 𝔹 = List Bit
 ```
+
+<!--
+```agda
+variable
+  d : Bit
+  ds : 𝔹
+```
+-->
 
 Functions like `inc` are not difficult to implement:
 
@@ -243,7 +264,8 @@ _∷⇓_ : Bit → ℕ → ℕ
 Since we're working in Cubical Agda, we might as well go on and prove that 𝔹 is
 isomorphic to ℕ.
 I'll include the proof here for completeness, but it's not relevant to the rest
-of the post.
+of the post (although it is very short, as a consequence of the simple
+definitions).
 
 <details>
 <summary>Proof that 𝔹 and ℕ are isomorphic</summary>
@@ -258,7 +280,7 @@ of the post.
 
 𝔹→ℕ→𝔹 : ∀ n → ⟦ ⟦ n ⇓⟧ ⇑⟧ ≡ n
 𝔹→ℕ→𝔹 [] = refl
-𝔹→ℕ→𝔹 (1ᵇ ∷ xs) = 2*⇔1ᵇ∷ ⟦ xs ⇓⟧ ; cong (1ᵇ ∷_) (𝔹→ℕ→𝔹 xs)
+𝔹→ℕ→𝔹 (1ᵇ ∷ xs) =           2*⇔1ᵇ∷ ⟦ xs ⇓⟧  ; cong (1ᵇ ∷_) (𝔹→ℕ→𝔹 xs)
 𝔹→ℕ→𝔹 (2ᵇ ∷ xs) = cong inc (2*⇔1ᵇ∷ ⟦ xs ⇓⟧) ; cong (2ᵇ ∷_) (𝔹→ℕ→𝔹 xs)
 
 inc⇔suc : ∀ n → ⟦ inc n ⇓⟧ ≡ suc ⟦ n ⇓⟧
@@ -267,7 +289,7 @@ inc⇔suc (1ᵇ ∷ xs) = refl
 inc⇔suc (2ᵇ ∷ xs) = cong (suc ∘ 2*) (inc⇔suc xs)
 
 ℕ→𝔹→ℕ : ∀ n → ⟦ ⟦ n ⇑⟧ ⇓⟧ ≡ n
-ℕ→𝔹→ℕ zero = refl
+ℕ→𝔹→ℕ zero    = refl
 ℕ→𝔹→ℕ (suc n) = inc⇔suc ⟦ n ⇑⟧ ; cong suc (ℕ→𝔹→ℕ n)
 
 𝔹⇔ℕ : 𝔹 ⇔ ℕ
@@ -275,27 +297,158 @@ inc⇔suc (2ᵇ ∷ xs) = cong (suc ∘ 2*) (inc⇔suc xs)
 ```
 </details>
 
-# Arrays
+# Binary Arrays
 
-Now on to the binary random-access list.
+Now on to the data structure.
+Here's its type.
 
 ```agda
 infixr 5 _1∷_ _2∷_
 data Array (T : ℕ → Type a) : 𝔹 → Type a where
-  [] : Array T []
-  _1∷_ : ∀ {ns} → T 0 → Array (T ∘ suc) ns → Array T (1ᵇ ∷ ns)
-  _2∷_ : ∀ {ns} → T 1 → Array (T ∘ suc) ns → Array T (2ᵇ ∷ ns)
+  []  : Array T []
+  _∷_ : T (bool 0 1 d) → Array (T ∘ suc) ds → Array T (d ∷ ds)
+
+pattern _1∷_ x xs = _∷_ {d = 1ᵇ} x xs
+pattern _2∷_ x xs = _∷_ {d = 2ᵇ} x xs
 ```
 
+So it is a list-like structure, which contains elements of type `T`.
+`T` is the type of trees in the array: by keeping this type a parameter, our
+data structure is going to be quite general.
+For instance, to do random-access lists, we can use perfect trees as the `T`:
+
 ```agda
-cons : ∀ {a} {A : ℕ → Type a}
-     → (_∙_ : ∀ {n} → A n → A n → A (suc n))
-     → ∀ {ns}
-     → A 0 → Array A ns → Array A (inc ns)
-cons _∙_ x [] = x 1∷ []
-cons _∙_ x (y 1∷ ys) = (x ∙ y) 2∷ ys
-cons _∙_ x (y 2∷ ys) = x 1∷ cons _∙_ y ys
+module Prelim where
+  Perfect : Set a → ℕ → Set a
+  Perfect A zero = A
+  Perfect A (suc n) = Perfect (A × A) n
 ```
+
+We could equally use a binomial tree, to get us a binomial heap:
+
+```agda
+mutual
+  data BinomNode (A : Set a) : ℕ → Set a where
+    binom-leaf   : BinomNode A 0
+    binom-branch : Binomial A n → BinomNode A n → BinomNode A (suc n)
+
+  Binomial : Set a → ℕ → Set a
+  Binomial A n = A × BinomNode A n
+```
+
+But we'll stick to the random-access lists for now.
+
+# Top-down and Bottom-up Trees
+
+The perfect trees above are actually a specific instance of a more general data
+type: exponentiations of functors.
+
+```agda
+_^_ : (Set a → Set a) → ℕ → Set a → Set a
+(F ^ zero ) A = A
+(F ^ suc n) A = (F ^ n) (F A)
+
+Nest : (Set a → Set a) → Set a → ℕ → Set a
+Nest F A n = (F ^ n) A
+
+Pair : Set a → Set a
+Pair A = A × A
+
+Perfect : Set a → ℕ → Set a
+Perfect = Nest Pair
+```
+
+<!--
+
+```agda
+variable
+  F : Set a → Set a
+```
+
+-->
+
+It's a nested datatype, built in a bottom-up way.
+This is in contrast to, say, the binomial trees above, which are top-down.
+
+# Construction
+
+Our first function on the array is `cons`, which inserts an element:
+
+```agda
+cons : (∀ n → T n → T n → T (suc n))
+     → T 0 → Array T ds → Array T (inc ds)
+cons branch x [] = x 1∷ []
+cons branch x (y 1∷ ys) = branch 0 x y 2∷ ys
+cons branch x (y 2∷ ys) = x 1∷ cons (branch ∘ suc) y ys
+```
+
+Since we're generic over the type of trees, we need to pass in the "branch"
+constructor (or function) for whatever tree type we end up using.
+Here's how we'd implement such a branch function for perfect trees.
+
+```agda
+perf-branch : ∀ n → Perfect A n → Perfect A n → Perfect A (suc n)
+perf-branch zero = _,_
+perf-branch (suc n) = perf-branch n
+```
+
+One issue here is that the `perf-branch` function probably doesn't optimise to
+the correct complexity, because the `n` has to be scrutinised repeatedly.
+The alternative is to define a `cons` for nested types, like so:
+
+```agda
+nest-cons : (∀ {A} → A → A → F A) → A → Array (Nest F A) ds → Array (Nest F A) (inc ds)
+nest-cons _∙_ x [] = x ∷ []
+nest-cons _∙_ x (y 1∷ ys) = (x ∙ y) 2∷ ys
+nest-cons _∙_ x (y 2∷ ys) = x ∷ nest-cons _∙_ y ys
+
+perf-cons : A → Array (Perfect A) ds → Array (Perfect A) (inc ds)
+perf-cons = nest-cons _,_
+```
+
+# Indexing
+
+Again, we're going to keep things general, allowing multiple index types.
+For those index types we'll need a type like `Fin` but for binary numbers.
+
+```agda
+data Fin𝔹 (A : Set a) : 𝔹 → Type a where
+  here₁ :                       Fin𝔹 A (1ᵇ ∷ ds)
+  here₂ : (i : A)             → Fin𝔹 A (2ᵇ ∷ ds)
+  there : (i : A) → Fin𝔹 A ds → Fin𝔹 A (d  ∷ ds)
+
+lookup : (∀ {n} → P → T (suc n) → T n)
+       → Array T ds
+       → Fin𝔹 P ds
+       → T 0
+lookup ind (x ∷ xs) here₁ = x
+lookup ind (x ∷ xs) (here₂ i) = ind i x
+lookup ind (x ∷ xs) (there i is) = ind i (lookup ind xs is)
+
+nest-lookup : (∀ {A} → P → F A → A)
+            → Array (Nest F A) ds
+            → Fin𝔹 P ds
+            → A
+nest-lookup ind (x ∷ xs) here₁ = x
+nest-lookup ind (x ∷ xs) (here₂ i) = ind i x
+nest-lookup ind (x ∷ xs) (there i is) = ind i (nest-lookup ind xs is)
+```
+
+We'll once more use perfect to show how these generic functions can be
+concretised.
+For the index types into a perfect tree, we will use a `Bool`.
+
+```agda
+perf-lookup : Array (Perfect A) ds → Fin𝔹 Bool ds → A
+perf-lookup = nest-lookup (bool fst snd)
+```
+
+# Folding
+
+This next function is quite difficult to get right: a fold.
+We want to consume the binary array into a unary, cons-list type thing.
+Similarly to `foldl` on vectors, we will need to change the return type as we
+fold, using the following function:
 
 ```agda
 2^_*_ : ℕ → ℕ → ℕ
@@ -304,57 +457,74 @@ cons _∙_ x (y 2∷ ys) = x 1∷ cons _∙_ y ys
 ```
 
 ```agda
-foldrArray : {A : ℕ → Type a}
-           → (B : ℕ → Type b)
-           → (∀ n {m} → A n → B (2^ n * m) → B (2^ n * suc m))
-           → B zero → ∀ {ns} → Array A ns → B ⟦ ns ⇓⟧
-foldrArray B c b []        = b
-foldrArray B c b (x 1∷ xs) = c 0 x (foldrArray (B ∘ 2*) (c ∘ suc) b xs)
-foldrArray B c b (x 2∷ xs) = c 1 x (foldrArray (B ∘ 2*) (c ∘ suc) b xs)
+array-foldr : (B : ℕ → Type b)
+            → (∀ n {m} → T n → B (2^ n * m) → B (2^ n * suc m))
+            → B 0 → Array T ds → B ⟦ ds ⇓⟧
+array-foldr B c b []        = b
+array-foldr B c b (x 1∷ xs) = c 0 x (array-foldr (B ∘ 2*) (c ∘ suc) b xs)
+array-foldr B c b (x 2∷ xs) = c 1 x (array-foldr (B ∘ 2*) (c ∘ suc) b xs)
 ```
 
 ```agda
-data Fin𝔹 (A : Set a) : 𝔹 → Type a where
-  here₁ : ∀ {ns}                         → Fin𝔹 A (1ᵇ ∷ ns)
-  here₂ : ∀ {ns}   → (i : A)             → Fin𝔹 A (2ᵇ ∷ ns)
-  there : ∀ {n ns} → (i : A) → Fin𝔹 A ns → Fin𝔹 A (n  ∷ ns)
+perf-foldr : (B : ℕ → Type b)
+           → (∀ {n} → A → B n → B (suc n))
+           → ∀ n {m}
+           → Perfect A n
+           → B (2^ n * m)
+           → B (2^ n * suc m)
+perf-foldr B f zero = f
+perf-foldr B f (suc n) =
+  perf-foldr (B ∘ 2*) (λ { (x , y) zs → f x (f y zs) }) n
+
+toVec : Array (Perfect A) ds → Vec A ⟦ ds ⇓⟧
+toVec = array-foldr (Vec _) (perf-foldr (Vec _) _∷_) []
+
+fromVec : Vec A n → Array (Perfect A) ⟦ n ⇑⟧
+fromVec = vec-foldr (Array (Perfect _) ∘ ⟦_⇑⟧) perf-cons []
 ```
+
+# Fenwick
 
 ```agda
-lookup : ∀ {a i} {I : Type i} {A : ℕ → Type a}
-       → (ind : ∀ {n} → I → A (suc n) → A n)
-       → ∀ {ns}
-       → Array A ns
-       → Fin𝔹 I ns
-       → A 0
-lookup ind (x 1∷ xs) here₁ = x
-lookup ind (x 1∷ xs) (there i is) = ind i (lookup ind xs is)
-lookup ind (x 2∷ xs) (here₂ i)    = ind i x
-lookup ind (x 2∷ xs) (there i is) = ind i (lookup ind xs is)
+module _ {ℓ} (mon : Monoid ℓ) where
+  open Monoid mon
+
+  running : (∀ n → Bool → T (suc n) → T n)
+          → (∀ n → T n → 𝑆)
+          → Array T ds
+          → Fin𝔹 Bool ds
+          → 𝑆 × T 0
+  running l s (x ∷ xs) (there i is) =
+    let y , ys = running (l ∘ suc) (s ∘ suc) xs is
+    in s _ x ∙ y , l _ i ys
+  running l s (x 1∷ xs) here₁ = ε , x
+  running l s (x 2∷ xs) (here₂ i) = ε , l _ i x
+
+  mutual
+    data SumNode : ℕ → Set ℓ where
+      leaf : SumNode zero
+      branch : Summary n → Summary n → SumNode (suc n)
+
+    Summary : ℕ → Set ℓ
+    Summary n = 𝑆 × SumNode n
+
+  comb : ∀ n → Summary n → Summary n → Summary (suc n)
+  comb n xs ys = fst xs ∙ fst ys , branch xs ys
+
+  Fenwick : 𝔹 →  Set ℓ
+  Fenwick = Array Summary
+
+  prefix : Fenwick ds → Fin𝔹 Bool ds → 𝑆
+  prefix xs is = let ys , zs , _ = running ind top xs is in ys ∙ zs
+    where
+    top : ∀ n → Summary n → 𝑆
+    top _ = fst
+
+    ind : ∀ n → Bool → Summary (suc n) → Summary n
+    ind n false (_ , branch xs _) = xs
+    ind n true  (_ , branch (x , _) (y , ys)) = x ∙ y , ys
+
+  fFromVec : Vec 𝑆 n → Fenwick ⟦ n ⇑⟧
+  fFromVec = vec-foldr (Fenwick ∘ ⟦_⇑⟧) (cons comb ∘ (_, leaf)) []
 ```
 
-```agda
-Perfect : Set a → ℕ → Set a
-Perfect A zero = A
-Perfect A (suc n) = Perfect (A × A) n
-
-branch : ∀ n → Perfect A n → Perfect A n → Perfect A (suc n)
-branch zero = _,_
-branch (suc n) = branch n
-
-foldrPerf : (B : ℕ → Type b)
-          → (∀ {n} → A → B n → B (suc n))
-          → ∀ n {m}
-          → Perfect A n
-          → B (2^ n * m)
-          → B (2^ n * suc m)
-foldrPerf B f zero = f
-foldrPerf B f (suc n) =
-  foldrPerf (B ∘ 2*) (λ { (x , y) zs → f x (f y zs) }) n
-
-toVec : ∀ {ns} → Array (Perfect A) ns → Vec A ⟦ ns ⇓⟧
-toVec = foldrArray (Vec _) (foldrPerf (Vec _) _∷_) []
-
-fromVec : ∀ {n} → Vec A n → Array (Perfect A) ⟦ n ⇑⟧
-fromVec = vec-foldr (Array (Perfect _) ∘ ⟦_⇑⟧) (cons (λ {n} → branch n)) []
-```
