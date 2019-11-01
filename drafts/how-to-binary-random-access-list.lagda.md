@@ -435,7 +435,7 @@ nest-lookup ind (x ∷ xs) (there i is) = ind i (nest-lookup ind xs is)
 ```
 
 If I was so inclined, I might even do this indexing with *lenses*, although
-they're not very ergonomic in Agda
+they're not very ergonomic in Agda.
 
 <details>
 <summary>Indexing as a Lens</summary>
