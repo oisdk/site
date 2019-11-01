@@ -185,7 +185,6 @@ representation unique for every natural number.
 
 <details>
 <summary>Evaluation is pretty standard</summary>
-  
 ```agda
   ⟦_⇓⟧⁺ : 𝔹⁺ → ℕ
   ⟦ 1ᵇ   ⇓⟧⁺ = 1
@@ -196,7 +195,6 @@ representation unique for every natural number.
   ⟦ 𝕓0ᵇ  ⇓⟧ = 0
   ⟦ 𝕓 x  ⇓⟧ = ⟦ x ⇓⟧⁺
 ```
-
 </details>
 
 The odd syntax lets us write binary numbers in the natural way:
@@ -271,7 +269,6 @@ definitions).
 
 <details>
 <summary>Proof that 𝔹 and ℕ are isomorphic</summary>
-  
 ```agda
 ⟦_⇑⟧ : ℕ → 𝔹
 ⟦ zero  ⇑⟧ = []
@@ -298,7 +295,6 @@ inc⇔suc (2ᵇ ∷ xs) = cong (suc ∘ 2*) (inc⇔suc xs)
 𝔹⇔ℕ : 𝔹 ⇔ ℕ
 𝔹⇔ℕ = iso ⟦_⇓⟧ ⟦_⇑⟧ ℕ→𝔹→ℕ 𝔹→ℕ→𝔹
 ```
-
 </details>
 
 # Binary Arrays
@@ -438,6 +434,25 @@ nest-lookup ind (x ∷ xs) (here₂ i) = ind i x
 nest-lookup ind (x ∷ xs) (there i is) = ind i (nest-lookup ind xs is)
 ```
 
+If I was so inclined, I might even do this indexing with *lenses*, although
+they're not very ergonomic in Agda
+
+<details>
+<summary>Indexing as a Lens</summary>
+
+```agda
+open import Lenses
+
+nest-lens : (∀ {A} → P → Lens (F A) A)
+          → Fin𝔹 P ds
+          → Lens (Array (Nest F A) ds) A
+nest-lens ln here₁        ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (_∷ xs) (fn x)
+nest-lens ln (here₂ i)    ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (_∷ xs) (ln i fn x)
+nest-lens ln (there i is) ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (x ∷_) (nest-lens ln is (ln i fn) xs)
+```
+
+</details>
+
 We'll once more use perfect to show how these generic functions can be
 concretised.
 For the index types into a perfect tree, we will use a `Bool`.
@@ -452,13 +467,18 @@ perf-lookup = nest-lookup (bool fst snd)
 This next function is quite difficult to get right: a fold.
 We want to consume the binary array into a unary, cons-list type thing.
 Similarly to `foldl` on vectors, we will need to change the return type as we
-fold, using the following function:
+fold, but we will *also* need to convert from binary to unary, *as we fold*.
+The key ingredient is the following function:
 
 ```agda
 2^_*_ : ℕ → ℕ → ℕ
 2^ zero  * n = n
 2^ suc m * n = 2* (2^ m * n)
 ```
+
+It will let us do the type-change-as-you-go trick from `foldl`, but in a binary
+setting.
+Here's `foldr`:
 
 ```agda
 array-foldr : (B : ℕ → Type b)
@@ -468,6 +488,11 @@ array-foldr B c b []        = b
 array-foldr B c b (x 1∷ xs) = c 0 x (array-foldr (B ∘ 2*) (c ∘ suc) b xs)
 array-foldr B c b (x 2∷ xs) = c 1 x (array-foldr (B ∘ 2*) (c ∘ suc) b xs)
 ```
+
+And, as you should expect, here's how to use this in combination with the
+perfect trees.
+Here we'll build a binary random access list from a vector, and convert back to
+a vector.
 
 ```agda
 perf-foldr : (B : ℕ → Type b)
@@ -488,6 +513,9 @@ fromVec = vec-foldr (Array (Perfect _) ∘ ⟦_⇑⟧) perf-cons []
 ```
 
 # Fenwick
+
+Finally, to demonstrate some of the versatility of this data structure, we're
+going to implement a tree based on a *fenwick* tree.
 
 ```agda
 module _ {ℓ} (mon : Monoid ℓ) where
@@ -527,6 +555,22 @@ module _ {ℓ} (mon : Monoid ℓ) where
     ind : ∀ n → Bool → Summary (suc n) → Summary n
     ind n false (_ , branch xs _) = xs
     ind n true  (_ , branch (x , _) (y , ys)) = x ∙ y , ys
+
+  upd : (∀ {n} → P → (T n → T n) → T (suc n) → T (suc n))
+      → (T zero → T zero)
+      → Fin𝔹 P ds
+      → Array T ds
+      → Array T ds
+  upd ind f here₁ (x ∷ xs) = f x ∷ xs
+  upd ind f (here₂ i) (x ∷ xs) = ind i f x ∷ xs
+  upd ind f (there i is) (x ∷ xs) = x ∷ upd ind (ind i f) is xs
+
+  update : (𝑆 → 𝑆) → Fin𝔹 Bool ds → Fenwick ds → Fenwick ds
+  update f = upd g λ { (x , y) → f x , y }
+    where
+    g : Bool → (Summary n → Summary n) → Summary (suc n) → Summary (suc n)
+    g false f (_  , branch xs ys) = comb _ (f xs) ys
+    g true  f (_  , branch xs ys) = comb _ xs (f ys)
 
   fFromVec : Vec 𝑆 n → Fenwick ⟦ n ⇑⟧
   fFromVec = vec-foldr (Fenwick ∘ ⟦_⇑⟧) (cons comb ∘ (_, leaf)) []
