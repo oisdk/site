@@ -1,0 +1,78 @@
+
+@inproceedings{danvyThereBackAgain2002,
+  address = {{New York, NY, USA}},
+  series = {{{ICFP}} '02},
+  title = {There and {{Back Again}}},
+  isbn = {978-1-58113-487-2},
+  abstract = {We present a programming pattern where a recursive function traverses a data structure---typically a list---at return time. The idea is that the recursive calls get us there (typically to a base case) and the returns get us back again while traversing the data structure. We name this programming pattern of traversing a data structure at return time "There And Back Again" (TABA).The TABA pattern directly applies to computing a symbolic convolution. It also synergizes well with other programming patterns, e.g., dynamic programming and traversing a list at double speed. We illustrate TABA and dynamic programming with Catalan numbers. We illustrate TABA and traversing a list at double speed with palindromes and we obtain a novel solution to this traditional exercise.A TABA-based function written in direct style makes full use of an Algol-like control stack and needs no heap allocation. Conversely, in a TABA-based function written in continuation-passing style, the continuation acts as a list iterator. In general, the TABA pattern saves one from constructing intermediate lists in reverse order.},
+  booktitle = {Proceedings of the {{Seventh ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  doi = {10.1145/581478.581500},
+  author = {Danvy, Olivier and Goldberg, Mayer},
+  year = {2002},
+  keywords = {Catalan numbers,Symbolic convolutions,continuation-based programming,palindrome detection},
+  pages = {230--234},
+  file = {/Users/doisinkidney/Zotero/storage/J7EVJ6WW/Danvy and Goldberg - 2002 - There and Back Again.pdf}
+}
+
+@article{danvyThereBackAgain2005,
+  title = {There and {{Back Again}}},
+  volume = {12},
+  issn = {1601-5355},
+  abstract = {We present a programming pattern where a recursive function defined over a data structure traverses another data structure at return time. The idea is that the recursive calls get us `there' by traversing the first data structure and the returns get us `back again' while traversing the second data structure. We name this programming pattern of traversing a data structure at call time and another data structure at return time ``There And Back Again'' (TABA). The TABA pattern directly applies to computing symbolic convolutions and to multiplying polynomials. It also blends well with other programming patterns such as dynamic programming and traversing a list at double speed. We illustrate TABA and dynamic programming with Catalan numbers. We illustrate TABA and traversing a list at double speed with palindromes and we obtain a novel solution to this traditional exercise. Finally, through a variety of tree traversals, we show how to apply TABA to other data structures than lists. A TABA-based function written in direct style makes full use of an ALGOL-like control stack and needs no heap allocation. Conversely, in a TABA-based function written in continuation-passing style and recursively defined over a data structure (traversed at call time), the continuation acts as an iterator over a second data structure (traversed at return time). In general, the TABA pattern saves one from accumulating intermediate data structures at call time.},
+  number = {3},
+  journal = {BRICS Report Series},
+  doi = {10.7146/brics.v12i3.21869},
+  author = {Danvy, Olivier and Goldberg, Mayer},
+  year = {2005},
+  file = {/Users/doisinkidney/Zotero/storage/2ZS4MQX3/Danvy and Goldberg - 2005 - There and Back Again.pdf}
+}
+
+@inproceedings{okasakiPurelyFunctionalRandomaccess1995,
+  address = {{New York, NY, USA}},
+  series = {{{FPCA}} '95},
+  title = {Purely {{Functional Random}}-Access {{Lists}}},
+  isbn = {978-0-89791-719-3},
+  booktitle = {Proceedings of the {{Seventh International Conference}} on {{Functional Programming Languages}} and {{Computer Architecture}}},
+  publisher = {{ACM}},
+  doi = {10.1145/224164.224187},
+  author = {Okasaki, Chris},
+  year = {1995},
+  pages = {86--95},
+  file = {/Users/doisinkidney/Zotero/storage/SC9BZ5MX/Okasaki - 1995 - Purely Functional Random-access Lists.pdf}
+}
+
+@article{danielssonDependentLenses,
+  title = {Dependent Lenses},
+  abstract = {Very well-behaved lenses provide a convenient mechanism for defining setters and getters for nested records (among other things). However, they do not work very well for dependent records, in which one field's type can depend on the value of a previous field.},
+  language = {en},
+  author = {Danielsson, Nils Anders},
+  pages = {11},
+  file = {/Users/doisinkidney/Zotero/storage/2JWJKWWL/Danielsson - Dependent lenses.pdf}
+}
+
+@unpublished{swierstraHeterogeneousRandomaccessLists2019,
+  title = {Heterogeneous Random-Access Lists},
+  language = {en},
+  author = {Swierstra, Wouter},
+  month = jun,
+  year = {2019},
+  file = {/Users/doisinkidney/Zotero/storage/B9KPGT9W/Swierstra - 2019 - Heterogeneous random-access lists.pdf}
+}
+
+@misc{fonerThereBackAgain2016,
+  address = {{New York}},
+  title = {'{{There}} and {{Back Again}}' and {{What Happened After}}},
+  abstract = {Kenneth Foner
+C{$\smwhtcircle$}mp{$\smwhtcircle$}se :: Conference
+http://www.composeconference.org/
+February 4, 2016
+
+Reconstructing `There and Back Again' in modern Haskell requires us to elucidate some subtle arithmetic invariants of the pattern, both to ourselves and to the type system. To automatically verify the tricky arithmetic latent in the pearl, we use GHC's brand new type-checker plugin interface to augment our type system with the power of the Z3 theorem prover.},
+  author = {Foner, Kenneth},
+  month = feb,
+  year = {2016},
+  note = {https://github.com/kwf/TABA-AWHA}
+}
+
+
