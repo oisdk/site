@@ -443,12 +443,27 @@ they're not very ergonomic in Agda.
 ```agda
 open import Lenses
 
-nest-lens : (∀ {A} → P → Lens (F A) A)
+head : Lens′ (Array T (d ∷ ds)) (T (bool 0 1 d))
+head .get (x ∷ xs) = x
+head .set (_ ∷ xs) x = x ∷ xs
+
+tail : Lens′ (Array T (d ∷ ds)) (Array (T ∘ suc) ds)
+tail .get (_ ∷ xs) = xs
+tail .set (x ∷ _ ) xs = x ∷ xs
+
+nest-lens : (∀ {A} → P → Lens′ (F A) A)
           → Fin𝔹 P ds
-          → Lens (Array (Nest F A) ds) A
-nest-lens ln here₁        ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (_∷ xs) (fn x)
-nest-lens ln (here₂ i)    ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (_∷ xs) (ln i fn x)
-nest-lens ln (there i is) ⦃ func ⦄ fn (x ∷ xs) = Functor.map func (x ∷_) (nest-lens ln is (ln i fn) xs)
+          → Lens′ (Array (Nest F A) ds) A
+nest-lens ln here₁        = head
+nest-lens ln (here₂ i)    = head ⋯ ln i
+nest-lens ln (there i is) = tail ⋯ nest-lens ln is ⋯ ln i
+
+ind-lens : (∀ {n} → P → Lens′ (T (suc n)) (T n))
+         → Fin𝔹 P ds
+         → Lens′ (Array T ds) (T 0)
+ind-lens ln here₁        = head
+ind-lens ln (here₂ i)    = head ⋯ ln i
+ind-lens ln (there i is) = tail ⋯ ind-lens ln is ⋯ ln i
 ```
 
 </details>
