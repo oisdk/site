@@ -16,7 +16,7 @@ on the "wrong turns" in implementation which can lead to headache.
 
 <!--
 ```agda
-{-# OPTIONS --cubical --allow-unsolved-metas #-}
+{-# OPTIONS --cubical --safe #-}
 
 open import Prelude
 
@@ -140,8 +140,8 @@ convolve =
 # Binary Numbers
 
 Binary numbers come up a lot in dependently-typed programming languages: they
-offer an alternative representation of ℕ that's tolerably efficient (depending
-on who's doing the tolerating).
+offer an alternative representation of ℕ that's tolerably efficient (well,
+depending on who's doing the tolerating).
 In contrast to the Peano numbers, though, there are a huge number of ways to
 implement them.
 
@@ -317,9 +317,9 @@ pattern _2∷_ x xs = _∷_ {d = 2ᵇ} x xs
 ```
 
 So it is a list-like structure, which contains elements of type `T`.
-`T` is the type of trees in the array: by keeping this type a parameter, our
-data structure is going to be quite general.
-For instance, to do random-access lists, we can use perfect trees as the `T`:
+`T` is the type of trees in the array: making the array generic over the types
+of trees is a slight departure from the norm.
+Usually, we would just use a perfect tree or something:
 
 ```agda
 module Prelim where
@@ -328,7 +328,12 @@ module Prelim where
   Perfect A (suc n) = Perfect (A × A) n
 ```
 
-We could equally use a binomial tree, to get us a binomial heap:
+By making the tree type a parameter, though, we actually *simplify* some of the
+code for manipulating the tree.
+It's basically the same trick as the type-changing parameter in `vec-foldl`.
+
+As well as that, of course, we can use the array with more exotic tree types.
+With binomial trees, for example, we get a binomial heap:
 
 ```agda
 mutual
@@ -438,39 +443,6 @@ nest-lookup ind (x ∷ xs) (here₂ i) = ind i x
 nest-lookup ind (x ∷ xs) (there i is) = ind i (nest-lookup ind xs is)
 ```
 
-If I was so inclined, I might even do this indexing with *lenses*, although
-they're not very ergonomic in Agda.
-
-<details>
-<summary>Indexing as a Lens</summary>
-
-```agda
-open import Lenses
-
-head : Lens′ (Array T (d ∷ ds)) (T (bool 0 1 d))
-head .get (x ∷ xs) = x
-head .set (_ ∷ xs) x = x ∷ xs
-
-tail : Lens′ (Array T (d ∷ ds)) (Array (T ∘ suc) ds)
-tail .get (_ ∷ xs) = xs
-tail .set (x ∷ _ ) xs = x ∷ xs
-
-nest-lens : (∀ {A} → P → Lens′ (F A) A)
-          → Fin𝔹 P ds
-          → Lens′ (Array (Nest F A) ds) A
-nest-lens ln here₁        = head
-nest-lens ln (here₂ i)    = head ⋯ ln i
-nest-lens ln (there i is) = tail ⋯ nest-lens ln is ⋯ ln i
-
-ind-lens : (∀ {n} → P → Lens′ (T (suc n)) (T n))
-         → Fin𝔹 P ds
-         → Lens′ (Array T ds) (T 0)
-ind-lens ln here₁        = head
-ind-lens ln (here₂ i)    = head ⋯ ln i
-ind-lens ln (there i is) = tail ⋯ ind-lens ln is ⋯ ln i
-```
-
-</details>
 
 We'll once more use perfect to show how these generic functions can be
 concretised.
@@ -531,67 +503,180 @@ fromVec : Vec A n → Array (Perfect A) ⟦ n ⇑⟧
 fromVec = vec-foldr (Array (Perfect _) ∘ ⟦_⇑⟧) perf-cons []
 ```
 
-# Fenwick
+# Lenses
+
+That's the end of the "simple" stuff!
+The binary random-access list I've presented above is about as simple as I can
+get it.
+
+In this section, I want to look at some more complex (and more fun) things you
+can do with it.
+First: lenses.
+
+Lenses aren't super ergonomic in dependently-typed languages, but they do come
+with some advantages.
+The lens laws are quite strong, for instance, meaning that often by constructing
+programs using a lot of lenses gives us certain properties "for free".
+Here, for instance, we can define the lenses for indexing.
+
+```agda
+open import Lenses
+```
+
+<details>
+<summary>Lenses into the head and tail of an array</summary>
+
+```agda
+head : Lens (Array T (d ∷ ds)) (T (bool 0 1 d))
+head .into (x ∷ _ ) .get = x
+head .into (_ ∷ xs) .set x = x ∷ xs
+head .get-set (_ ∷ _) _ = refl
+head .set-get (_ ∷ _) = refl
+head .set-set (_ ∷ _) _ _ = refl
+
+tail : Lens (Array T (d ∷ ds)) (Array (T ∘ suc) ds)
+tail .into (_ ∷ xs) .get = xs
+tail .into (x ∷ _ ) .set xs = x ∷ xs
+tail .get-set (_ ∷ _) _ = refl
+tail .set-get (_ ∷ _) = refl
+tail .set-set (_ ∷ _) _ _ = refl
+```
+
+</details>
+
+```agda
+nest-lens : (∀ {A} → P → Lens (F A) A)
+          → Fin𝔹 P ds
+          → Lens (Array (Nest F A) ds) A
+nest-lens ln here₁        = head
+nest-lens ln (here₂ i)    = head ⋯ ln i
+nest-lens ln (there i is) = tail ⋯ nest-lens ln is ⋯ ln i
+```
+
+<details>
+<summary>Top-down version</summary>
+
+```agda
+ind-lens : (∀ {n} → P → Lens (T (suc n)) (T n))
+         → Fin𝔹 P ds
+         → Lens (Array T ds) (T 0)
+ind-lens ln here₁        = head
+ind-lens ln (here₂ i)    = head ⋯ ln i
+ind-lens ln (there i is) = tail ⋯ ind-lens ln is ⋯ ln i
+```
+
+</details>
+
+# Fenwick Trees
 
 Finally, to demonstrate some of the versatility of this data structure, we're
 going to implement a tree based on a *fenwick* tree.
+This is a data structure for prefix sums: we can query the running total at any
+point, and *update* the value at a given point, in $\mathcal{O}(\log n)$ time.
+We're going to make it generic over a monoid:
 
 ```agda
 module _ {ℓ} (mon : Monoid ℓ) where
   open Monoid mon
 
-  running : (∀ n → Bool → T (suc n) → T n)
+  record Leaf : Set ℓ where
+    constructor leaf
+    field val : 𝑆
+  open Leaf
+
+  mutual
+    SumNode : ℕ → Set ℓ
+    SumNode zero = Leaf
+    SumNode (suc n) = Summary n × Summary n
+
+    Summary : ℕ → Set ℓ
+    Summary n = Σ 𝑆 (fiber (cmb n))
+
+    cmb : ∀ n → SumNode n → 𝑆
+    cmb zero = val
+    cmb (suc _) (x , y) = fst x ∙ fst y
+
+  Fenwick : 𝔹 →  Set ℓ
+  Fenwick = Array Summary
+```
+
+So it's an aray of perfect trees, with each branch in the tree containing a
+summary of its children.
+Constructing a tree is straightforward:
+
+```agda
+  comb : ∀ n → Summary n → Summary n → Summary (suc n)
+  comb n xs ys = _ , (xs , ys) , refl
+
+  sing : 𝑆 → Summary 0
+  sing x = _ , leaf x , refl
+
+  fFromVec : Vec 𝑆 n → Fenwick ⟦ n ⇑⟧
+  fFromVec = vec-foldr (Fenwick ∘ ⟦_⇑⟧) (cons comb ∘ sing) []
+```
+
+Updating a particular point involves a good bit of boilerplate, but isn't too
+complex.
+
+<details>
+<summary>Lenses into a single level of the tree</summary>
+
+```agda
+  upd-lens : Bool → Lens (Summary (suc n)) (Summary n)
+  upd-lens false .into (_ , (x , y) , _) .get = x
+  upd-lens false .into (_ , (_ , y) , _) .set x = _ , (x , y) , refl
+  upd-lens true  .into (_ , (x , y) , _) .get = y
+  upd-lens true  .into (_ , (x , _) , _) .set y = _ , (x , y) , refl
+  upd-lens false .get-set _ _ = refl
+  upd-lens true  .get-set _ _ = refl
+  upd-lens false .set-get (t , xs , p) i .fst = p i
+  upd-lens false .set-get (t , xs , p) i .snd .fst = xs
+  upd-lens false .set-get (t , xs , p) i .snd .snd j = p (i ∧ j)
+  upd-lens true  .set-get (t , xs , p) i .fst = p i
+  upd-lens true  .set-get (t , xs , p) i .snd .fst = xs
+  upd-lens true  .set-get (t , xs , p) i .snd .snd j = p (i ∧ j)
+  upd-lens false .set-set _ _ _ = refl
+  upd-lens true  .set-set _ _ _ = refl
+
+  top : Lens (Summary 0) 𝑆
+  top .into x .get = x .snd .fst .val
+  top .into x .set y .fst = y
+  top .into x .set y .snd .fst .val = y
+  top .into x .set y .snd .snd = refl
+  top .get-set _ _ = refl
+  top .set-get (x , y , p) i .fst = p i
+  top .set-get (x , y , p) i .snd .fst = y
+  top .set-get (x , y , p) i .snd .snd j = p (i ∧ j)
+  top .set-set _ _ _ = refl
+```
+
+</details>
+
+```agda
+  update : Fin𝔹 Bool ds → Lens (Fenwick ds) 𝑆
+  update is = ind-lens upd-lens is ⋯ top
+```
+
+Finally, here's how we get the summary up to a particular point in
+$\mathcal{O}(\log n)$ time:
+
+```agda
+  running : (∀ n → Bool → T (suc n) → 𝑆 × T n)
           → (∀ n → T n → 𝑆)
           → Array T ds
           → Fin𝔹 Bool ds
           → 𝑆 × T 0
   running l s (x ∷ xs) (there i is) =
     let y , ys = running (l ∘ suc) (s ∘ suc) xs is
-    in s _ x ∙ y , l _ i ys
+        z , zs = l _ i ys
+    in s _ x ∙ y ∙ z , zs
   running l s (x 1∷ xs) here₁ = ε , x
-  running l s (x 2∷ xs) (here₂ i) = ε , l _ i x
-
-  mutual
-    data SumNode : ℕ → Set ℓ where
-      leaf : SumNode zero
-      branch : Summary n → Summary n → SumNode (suc n)
-
-    Summary : ℕ → Set ℓ
-    Summary n = 𝑆 × SumNode n
-
-  comb : ∀ n → Summary n → Summary n → Summary (suc n)
-  comb n xs ys = fst xs ∙ fst ys , branch xs ys
-
-  Fenwick : 𝔹 →  Set ℓ
-  Fenwick = Array Summary
+  running l s (x 2∷ xs) (here₂ i) = l _ i x
 
   prefix : Fenwick ds → Fin𝔹 Bool ds → 𝑆
-  prefix xs is = let ys , zs , _ = running ind top xs is in ys ∙ zs
+  prefix xs is = let ys , zs , _ = running ind (λ _ → fst) xs is in ys ∙ zs
     where
-    top : ∀ n → Summary n → 𝑆
-    top _ = fst
-
-    ind : ∀ n → Bool → Summary (suc n) → Summary n
-    ind n false (_ , branch xs _) = xs
-    ind n true  (_ , branch (x , _) (y , ys)) = x ∙ y , ys
-
-  upd : (∀ {n} → P → (T n → T n) → T (suc n) → T (suc n))
-      → (T zero → T zero)
-      → Fin𝔹 P ds
-      → Array T ds
-      → Array T ds
-  upd ind f here₁ (x ∷ xs) = f x ∷ xs
-  upd ind f (here₂ i) (x ∷ xs) = ind i f x ∷ xs
-  upd ind f (there i is) (x ∷ xs) = x ∷ upd ind (ind i f) is xs
-
-  update : (𝑆 → 𝑆) → Fin𝔹 Bool ds → Fenwick ds → Fenwick ds
-  update f = upd g λ { (x , y) → f x , y }
-    where
-    g : Bool → (Summary n → Summary n) → Summary (suc n) → Summary (suc n)
-    g false f (_  , branch xs ys) = comb _ (f xs) ys
-    g true  f (_  , branch xs ys) = comb _ xs (f ys)
-
-  fFromVec : Vec 𝑆 n → Fenwick ⟦ n ⇑⟧
-  fFromVec = vec-foldr (Fenwick ∘ ⟦_⇑⟧) (cons comb ∘ (_, leaf)) []
+    ind : ∀ n → Bool → Summary (suc n) → 𝑆 × Summary n
+    ind n false (_ , (xs , _) , _) = ε , xs
+    ind n true  (_ , ((x , _) , (y , ys)) , _) = x , (y , ys)
 ```
-
