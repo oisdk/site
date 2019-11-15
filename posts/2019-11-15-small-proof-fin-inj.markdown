@@ -1,6 +1,6 @@
 ---
 title: A Small Proof that Fin is Injective
-tags: agda
+tags: Agda
 ---
 
 <details>
