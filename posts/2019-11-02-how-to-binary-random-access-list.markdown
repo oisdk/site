@@ -4,13 +4,13 @@ bibliography: Arrays.bib
 tags: Agda
 ---
 
-"Heterogenous Random-Access Lists" by Wouter Swierstra
+"Heterogeneous Random-Access Lists" by Wouter Swierstra
 [-@swierstraHeterogeneousRandomaccessLists2019] describes how to write a simple
 binary random-access list [@okasakiPurelyFunctionalRandomaccess1995] to use as a
-heterogenous tuple. If you haven't tried to implement the data structure
+heterogeneous tuple. If you haven't tried to implement the data structure
 described in the paper before, you might not realise the just how *elegant* the
 implementation is. The truth is that arriving at the definitions presented is
-difficult: behind every simple function is a littany of copmlex and ugly
+difficult: behind every simple function is a litany of complex and ugly
 alternatives that had to be tried and discarded first before settling on the
 final answer.
 
@@ -76,7 +76,7 @@ Transferring over to a vector and we see our friends `+-suc` and `+0`.
 </pre>
 The solution, as with so many things, is to use a fold instead of explicit
 recursion.
-Folds on vectors are a little more aggresively typed than those on lists:
+Folds on vectors are a little more aggressively typed than those on lists:
 
 <pre class="Agda"><a id="vec-foldr"></a><a id="2378" href="#2378" class="Function">vec-foldr</a> <a id="2388" class="Symbol">:</a> <a id="2390" class="Symbol">(</a><a id="2391" href="#2391" class="Bound">B</a> <a id="2393" class="Symbol">:</a> <a id="2395" href="../code/binary/Agda.Builtin.Nat.html#165" class="Datatype">ℕ</a> <a id="2397" class="Symbol">→</a> <a id="2399" href="../code/binary/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="2404" href="../code/binary/Prelude.html#456" class="Generalizable">b</a><a id="2405" class="Symbol">)</a>
           <a id="2417" class="Symbol">→</a> <a id="2419" class="Symbol">(∀</a> <a id="2422" class="Symbol">{</a><a id="2423" href="#2423" class="Bound">n</a><a id="2424" class="Symbol">}</a> <a id="2426" class="Symbol">→</a> <a id="2428" href="../code/binary/Prelude.html#470" class="Generalizable">A</a> <a id="2430" class="Symbol">→</a> <a id="2432" href="#2391" class="Bound">B</a> <a id="2434" href="#2423" class="Bound">n</a> <a id="2436" class="Symbol">→</a> <a id="2438" href="#2391" class="Bound">B</a> <a id="2440" class="Symbol">(</a><a id="2441" href="../code/binary/Agda.Builtin.Nat.html#196" class="InductiveConstructor">suc</a> <a id="2445" href="#2423" class="Bound">n</a><a id="2446" class="Symbol">))</a>
@@ -159,7 +159,7 @@ One way splits it into two types:
     <a id="OneTerminated.𝔹.𝕓0ᵇ"></a><a id="4937" href="#4937" class="InductiveConstructor">𝕓0ᵇ</a> <a id="4941" class="Symbol">:</a> <a id="4943" href="#4919" class="Datatype">𝔹</a>
     <a id="OneTerminated.𝔹.𝕓_"></a><a id="4949" href="#4949" class="InductiveConstructor Operator">𝕓_</a> <a id="4952" class="Symbol">:</a> <a id="4954" href="#4862" class="Datatype">𝔹⁺</a> <a id="4957" class="Symbol">→</a> <a id="4959" href="#4919" class="Datatype">𝔹</a>
 </pre>
-𝔹⁺ is the stricly positive natural numbers (i.e. the naturals starting from 1).
+𝔹⁺ is the strictly positive natural numbers (i.e. the naturals starting from 1).
 𝔹 adds a zero to that set.
 This removes the possibility for trailing zeroes, thereby making this
 representation unique for every natural number.
@@ -196,7 +196,7 @@ This is far too much trouble for what it's worth.
 
 Finally, my favourite representation at the moment is *zeroless*.
 It has a unique representation for each number, just like the two above, but it
-is still a lits of bits.
+is still a list of bits.
 The difference is that the bits here are 1 and 2, not 0 and 1.
 I like to reuse types in combination with pattern synonyms (rather than defining
 new types), as it can often make parallels between different functions clearer.
@@ -503,7 +503,7 @@ Here, for instance, we can define the lenses for indexing.
 # Fenwick Trees
 
 Finally, to demonstrate some of the versatility of this data structure, we're
-going to implement a tree based on a *fenwick* tree.
+going to implement a tree based on a *Fenwick* tree.
 This is a data structure for prefix sums: we can query the running total at any
 point, and *update* the value at a given point, in $\mathcal{O}(\log n)$ time.
 We're going to make it generic over a monoid:
@@ -531,7 +531,7 @@ We're going to make it generic over a monoid:
   <a id="15848" href="#15848" class="Function">Fenwick</a> <a id="15856" class="Symbol">:</a> <a id="15858" href="#6377" class="Function">𝔹</a> <a id="15860" class="Symbol">→</a>  <a id="15863" class="PrimitiveType">Set</a> <a id="15867" href="#15468" class="Bound">ℓ</a>
   <a id="15871" href="#15848" class="Function">Fenwick</a> <a id="15879" class="Symbol">=</a> <a id="15881" href="#7823" class="Datatype">Array</a> <a id="15887" href="#15699" class="Function">Summary</a>
 </pre>
-So it's an aray of perfect trees, with each branch in the tree containing a
+So it's an array of perfect trees, with each branch in the tree containing a
 summary of its children.
 Constructing a tree is straightforward:
 
