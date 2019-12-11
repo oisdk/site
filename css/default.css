@@ -80,7 +80,7 @@ a {
     word-wrap: break-word
 }
 
-ul {
+ul.post-list {
     margin-left: 0px;
     padding-left: 0px;
     list-style-type: none
