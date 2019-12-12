@@ -1,6 +1,7 @@
 ---
 title: Constructive Numbers and the Stern-Brocot Tree
 tags: Haskell, Agda
+bibliography: Rationals.bib
 ---
 
 In dependently typed languages, it's often important to figure out a good
@@ -49,7 +50,7 @@ going to try satisfy those requirements as best I can.
 Our first attempt at representing the rationals might use a fraction:
 
 ```haskell
-data Frac = Natural :/ Natural
+data Frac = Integer :/ Natural
 ```
 
 This obviously fails the redundancy property.
@@ -95,15 +96,26 @@ instance Num Frac where
 # The Rationals as a Pair of Coprime Numbers
 
 Let's look a little more at Data.Ratio's approach.
-For the `Frac` type above, we overloaded the `==` function to do what we wanted.
-Another approach would be to only permit users to construct a fraction in
-reduced form.
-In other words we wouldn't export the `:/` constructor, but rather a smart
-constructor which would first reduce its two arguments.
+What we did above was postpone the normalisation until we do operations on the
+fraction.
+Data.Ratio, on the other hand, does normalisation on construction, ensuring that
+the fraction is only ever stored in its lowest form.
+This is actually what Agda does in the standard library: each rational also
+comes equipped with a proof that the two numbers are coprime, making it a "true"
+type for the rationals.
 
-This choice isn't perfect either: but it *is* what's used in Agda's standard
-library (where the rationals carry a proof that the two numbers are coprime),
-and it's relatively easy to understand.
+Interestingly, the normalisation on testing approach is basically what we'd do
+in Cubical Agda: our type might look something like this.
+
+```agda
+data ℚ : Type₀ where
+  _÷_ : (n d : ℕ) → ℚ
+  reduce : ∀ xⁿ xᵈ yⁿ yᵈ →
+           xⁿ ℕ* yᵈ ≡ yⁿ ℕ* xᵈ →
+           xⁿ ÷ xᵈ ≡ yⁿ ÷ yᵈ
+```
+
+But we'll leave the Agda stuff for another post.
 
 # The Rationals as a Trace of Euclid's Algorithm
 
@@ -177,18 +189,180 @@ rep = foldr f (1 :/ 1)
 ```
 
 Now `abs . rep` is the identity function, and `rep . abs` reduces a fraction!
+We have identified an isomorphism between our type (a list of bits) and the
+rational numbers!
+
+Well, between the positive rational numbers. 
+Not to worry: we can add a sign before it.
+And, because our type doesn't actually include 0, we don't get the duplicate 0
+problems we did with `Int`.
+
+```haskell
+data Q
+  = Neg Rational
+  | Zero
+  | Pos Rational 
+
+
+```
+
+We can also define some operations on the type, by converting back and forth.
+
+```haskell
+instance Num Rational where
+  fromInteger n = abs (fromInteger n :/ 1)
+  
+  xs + ys = abs (rep xs + rep ys)
+  xs * ys = abs (rep xs * rep ys)
+  xs - ys = abs (rep xs - rep ys)
+```
 
 # Rationals as a Path into The Stern-Brocot Tree
 
-Let's now turn to the subject of the title of this post: the [Stern-Brocot
+So we have a construction that has our desired property of canonicity.
+Even better, there's a reasonably efficient algorithm to convert to and from it!
+Our next task will be examining the representation itself, and seeing what
+information we can get from it.
+
+To do so we'll turn to the subject of the title of this post: the [Stern-Brocot
 tree](https://en.wikipedia.org/wiki/Stern%E2%80%93Brocot_tree).
 
 ![The Stern-Brocot Tree. By Aaron Rotenberg, CC BY-SA 3.0, from Wikimedia
-Commons.](https://upload.wikimedia.org/wikipedia/commons/3/37/SternBrocotTree.svg)
+Commons.](/images/SternBrocotTree.svg)
 
 This tree, pictured above, has some incredible properties:
 
 * It contains every rational number (in reduced form) exactly once.
 * It is a binary search tree.
 
-Both these
+Both of these properties make it an excellent candidate for basing a
+representation on.
+As it turns out, that's what we already did!
+Our list of bits above is precisely a path into the Stern-Brocot tree, where
+every `O` is a left turn and every `I` right.
+This gives us a very useful piece of information: the list of bits we have above
+is lexicographically ordered on the rationals.
+
+# Incrementalising
+
+Probably the most intriguing aspect of the Stern-Brocot tree (for our purposes)
+is the fact that it is a binary search tree.
+This gives us an easy way to express an order on the binary representation, but
+more interestingly it can allow us to *incrementalise* computation somewhat.
+Consider adding $\frac{1}{3}$ and $\frac{4}{3}$.
+They are represented by the binary sequences `00` and `100`, respectively.
+When looking out what to output, we don't need to inspect the entire inputs:
+once we see the `1` from $\frac{4}{3}$ we know that we're going to be outputting
+a number above 1, so we'll output a `1` at that point.
+
+We're going to have some difficulty in trying to generalise this, though.
+Our main problem comes from the way we convert a bit sequence to a fraction: we
+`foldr` over it, and we inspect the accumulator at every step.
+That means the function isn't nearly lazy enough to give us proper incremental
+computation.
+We need a way to computer the fraction that uses a *left* fold.
+
+# Intervals
+
+So we need another way to convert our list of bits to a fraction.
+The tree above will help us here: every step down can be thought of as a
+narrowing function, reducing the size of some interval as you go.
+The first interval is $\left(\frac{0}{1},\frac{1}{0}\right)$.
+To move left (to $\frac{1}{2}$ in the diagram), we need to use a peculiar
+operation called "child's addition", often denoted with a $\oplus$.
+
+$$ \frac{a}{b} \oplus \frac{c}{d} = \frac{a+c}{b+d} $$
+
+The name comes from the fact that it's a very common mistaken definition of
+addition on fractions.
+
+Right, next steps: to move *left* in an interval, we do the following:
+
+$$ \text{left} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}, \mathit{lb} \oplus \mathit{ub} \right) $$
+
+In other words, we narrow the right-hand-side of the interval.
+To move right is the opposite:
+
+$$ \text{right} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}
+\oplus \mathit{ub} , \mathit{ub} \right) $$
+
+And finally, when we hit the end of the sequence, we take the *mediant* value.
+
+$$ \text{mediant}\left(\mathit{lb} , \mathit{ub}\right) = \mathit{lb} \oplus
+\mathit{rb} $$
+
+From this, we get a straightforward left fold which can computer our fraction!
+
+```haskell
+infix 6 :-:
+data Interval
+  = (:-:)
+  { lb :: Frac
+  , ub :: Frac
+  }
+
+mediant :: Interval -> Frac
+mediant (b :/ d :-: a :/ c) = (a+b) :/ (c+d)
+
+left, right :: Interval -> Interval
+left  x = lb x :-: mediant x
+right x = mediant x :-: ub x
+
+rep' :: [Bit] -> Frac
+rep' = mediant . foldl f ((0 :/ 1) :-: (1 :/ 0))
+  where
+    f a I = right a
+    f a O = left a
+```
+
+# Monoids and Matrices
+
+Before diving in and using this new evaluator to incrementalise our functions,
+let's take a look at what's going on behind the scenes of the "interval
+narrowing" idea.
+
+It turns out that the "interval" is really a $2\times2$ square matrix in
+disguise (albeit a little reordered).
+
+$$ \left( \frac{a}{b} , \frac{c}{d} \right) =
+\left(
+\begin{matrix} 
+  c & a \\ 
+  d & b
+\end{matrix} 
+\right)
+$$
+
+Seen in this way, the beginning interval---$\left(\frac{0}{1} ,
+\frac{1}{0}\right)$---is actually the identity matrix.
+Also, the two values in the second row of the tree correspond to special
+matrices which we will refer to as $L$ and $R$.
+
+$$ L = 
+\left(
+\begin{matrix} 
+  1 & 0 \\ 
+  1 & 1
+\end{matrix} 
+\right)
+$$
+$$ R = 
+\left(
+\begin{matrix} 
+  1 & 1 \\ 
+  0 & 1
+\end{matrix} 
+\right)
+$$
+
+It turns out that the left and right functions we defined earlier correspond to
+multiplication by these matrices.
+
+$$ \text{left}(x) = Lx $$
+$$ \text{right}(x) = Rx $$
+
+Since matrix multiplication is associative, what we have here is a monoid.
+`mempty` is the open interval at the beginning, and `mappend` is matrix
+multiplication.
+This is the property that lets us incrementalise the whole thing, by the way:
+associativity allows us to decide when to start and stop the calculation.
