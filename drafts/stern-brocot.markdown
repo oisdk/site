@@ -14,7 +14,7 @@ data Nat = Z | S Nat
 
 For "real" applications, of course, these numbers are offensively inefficient,
 in terms of both space and time (although stick around til the end for some fun
-uses of this type in Haskell which are).
+uses of this type in Haskell which are almost efficient).
 But that's not what I'm after here: I'm looking for a type which best describes
 the essence of the natural numbers, and that can be used to prove and think
 about them.
@@ -266,14 +266,20 @@ answer lies, and so on.
 
 This turns out to be quite a useful property: we often don't need *exact*
 precision for some calculation, but rather some approximate answer.
-It's even rarely still that we know exactly how much precision we need for a
+It's even rarer still that we know exactly how much precision we need for a
 given expression (which is what floating point demands).
+Usually, the precision we need changes quite dynamically.
+If a particular number plays a more influential role in some expression, for
+instance, its precision is more important than the others!
 
 By producing a lazy list of bits, however, we can allow the *consumer* to
 specify the precision they need, by demanding those bits as they go along.
 (In the literature, this kind of thing is referred to as "lazy exact
-arithmetic", and it's quite fascinating. The representation presented here,
-however, is not very suitable for any real computation: it's incredibly slow).
+arithmetic", and it's quite fascinating. 
+The representation presented here, however, is not very suitable for any real
+computation: it's incredibly slow.
+There is a paper on the topic: @niquiExactArithmeticStern2007, which examines
+the Stern-Brocot numbers in Coq).
 
 In proofs, the benefit is even more pronounced: finding out that a number is in
 a given range by just inspecting the first element of the list gives an
@@ -290,7 +296,7 @@ We will need to figure out another evaluator which folds from the left.
 So let's look more at the "interval" interpretation of the Stern-Brocot tree.
 The first interval is $\left(\frac{0}{1},\frac{1}{0}\right)$: neither of these
 values are actually members of the type, which is why we're not breaking any
-major rules with the $\frac{0}{1}$.
+major rules with the $\frac{1}{0}$.
 To move left (to $\frac{1}{2}$ in the diagram), we need to use a peculiar
 operation called "child's addition", often denoted with a $\oplus$.
 
@@ -394,6 +400,7 @@ associativity allows us to decide when to start and stop the calculation.
 
 We now have all the parts we need.
 First, we will write an evaluator that returns increasingly precise intervals.
+Our friend `scanl` fits the requirement precisely.
 
 ```haskell
 approximate :: [Bit] -> [Interval]
@@ -413,8 +420,8 @@ interleave :: (Frac -> Frac -> Frac)
            -> [Interval]
 interleave (*) [xi] ys = map (\y -> x * lb y :-: x * ub y) ys
   where x = mediant xi
-interleave (*) ((xlb :-: xub):xs) ys@((ylb :-: yub):_) =
-  (xlb * ylb :-: xub * yub) : interleave (*) ys xs
+interleave (*) (x:xs) ys@(y:_) =
+  (((*) `on` lb) x y :-: ((*) `on` ub) x y) : interleave (*) ys xs
 ```
 
 The operation must respect orders in the proper way for this to be valid.
@@ -431,14 +438,16 @@ quad :: (Frac -> Frac -> Frac)
      -> [Bit]
      -> [Bit]
      -> [Bit]
-quad (*) xs ys = foldr f (unfoldr p) ((interleave (*) `on` approximate) xs ys) mempty
+quad (*) xs ys = foldr f (unfoldr p) zs mempty
   where
+    zs = (interleave (*) `on` approximate) xs ys
+    
     f x xs c
       | mediant c < lb x = I : f x xs (right c)
       | mediant c > ub x = O : f x xs (left  c)
       | otherwise = xs c
         
-    t = rep xs * rep ys
+    t = mediant (last zs)
     
     p c = case compare (mediant c) t of
       LT -> Just (I, right c)
@@ -467,6 +476,61 @@ We (could) also try and optimise the times we look for a new bit.
 For addition, if two strings are inverses of each other, the result will be
 precisely in the middle.
 i.e. `OIOOI` + `IOIIO` = $\frac{1}{1}$.
-We could try and spot this, only testing for the 
+We could try and spot this, only testing with comparison of the mediant when the
+bits are the same.
+You've doubtless spotted some other possible optimisations: I have yet to look
+into them!
+
+# Inverting Functions
+
+One of the other applications of lazy rationals is that they can begin to *look*
+like the real numbers.
+For instance, the `p` helper function above is basically defined extensionally.
+Instead of stating the value of the number, we give a function which tells us
+when we've made something too big or too small (which sounds an awful lot like a
+Dedekind cut to my ears).
+Here's a function which *inverts* a given function on fractions, for instance.
+
+```haskell
+inv :: (Frac -> Frac) -> [Bit] -> [Bit]
+inv o n = unfoldr f mempty
+  where
+    t = fromQ n
+    
+    f c = case compare (o (mediant c)) t of
+      LT -> Just (I, right c)
+      GT -> Just (O, left  c)
+      EQ -> Nothing
+```
+
+Of course, the function has to satisfy all kinds of extra properties that I
+haven't really thought a lot about yet, but no matter.
+We can use it to invert a squaring function:
+
+```haskell
+sqrt :: [Bit] -> [Bit]
+sqrt = inv (\x -> x * x)
+```
+
+And we can use *this* to get successive approximations to $\sqrt{2}$!
+
+```haskell
+root2Approx
+  = map (toDouble . mediant) (approximate (sqrt (abs (2 :/ 1))))
+  
+>>> mapM_ print root2Approx
+1.0
+2.0
+1.5
+1.3333333333333333
+1.4
+1.4285714285714286
+1.4166666666666667
+1.411764705882353
+1.4137931034482758
+1.4146341463414633
+...
+```
+
 
 # Using The Peano Numbers for Computation
