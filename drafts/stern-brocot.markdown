@@ -12,12 +12,19 @@ The natural numbers, for instance:
 data Nat = Z | S Nat
 ```
 
-Though it's easy in this case, figuring out a representation is often
-nontrivial.
-As well as having the type be interpretable as the thing it's meant to
-represent, we also want it to have the following properties:
+For "real" applications, of course, these numbers are offensively inefficient,
+in terms of both space and time (although stick around til the end for some fun
+uses of this type in Haskell which are).
+But that's not what I'm after here: I'm looking for a type which best describes
+the essence of the natural numbers, and that can be used to prove and think
+about them.
+In that sense, this representation is second to none: it's basically the
+simplest possible type which *can* represent the naturals.
 
--  It should not have any redundancy.
+Let's nail down that idea a little better.
+What do we mean when a type is a "good" representation for some concept.
+
+-  There should be no redundancy.
    The type for the natural numbers above has this property: every natural
    number as one (and only one) canonical representative in `Nat`.
    Compare that to the following possible representation for the integers:
@@ -25,14 +32,18 @@ represent, we also want it to have the following properties:
    data Int = Neg Nat | Pos Nat
    ```
    There are two ways to represent `0` here: as `Pos Z` or `Neg Z`.
-   There are obvious reasons this causes trouble (it tends to be bug-prone, as
-   you tend to forget about the "other" case, and equality becomes a much weaker
-   property), but my main concern is how it mucks up proofs.
-   Also, we have failed at finding the "theoretically true" representative of
-   the type.
+   
+   Of course, you can quotient out the redundancy in Cubical Agda, or normalise
+   on construction every time, but either of these workarounds gets your
+   representation a demerit.
 
--  Operations on the type should be easily expressible on its representation.
-   Take addition on `Nat` above: it is straightforward and natural to define.
+-  Operations should be definable simply and directly on the representation.
+   Points docked for converting to and from some non-normalised form.
+   
+-  That conversion, however, can exist, and ideally should exist, in some
+   fundamental way.
+   You should be able to establish an efficient isomorphism with other
+   representations of the same concept.
 
 -  Properties about the type should correspond to intuitive properties about the
    representation.
@@ -63,9 +74,18 @@ Indeed, Haskell's
 [Data.Ratio](https://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Ratio.html)
 uses something quite like this to implement rationals.
 
-Here, we'll use it as a kind of intermediate representation.
-To keep us (semantically) honest, though, we'll give it the proper `Eq` and
-`Ord` instances.
+If you're going to deal with redundant elements, there are two broad ways to
+deal with it.
+Data.Ratio's approach is to normalise on construction, and only export a
+constructor which does this.
+This gives you a pretty good guarantee that there won't be any unreduced
+fractions lying around in you program.
+Agda's standard library also uses an approach like this, although the fact that
+the numerator and denominator are coprime is statically verified by way of a
+proof carried in the type.
+
+The other way to deal with redundancy is by quotient.
+In Haskell, that kind of means doing the following:
 
 ```haskell
 instance Eq Frac where
@@ -74,6 +94,11 @@ instance Eq Frac where
 instance Ord Frac where
   compare (x :/ xd) (y :/ yd) = compare (x * yd) (y * xd)
 ```
+
+We don't have real quotient types in Haskell, but this gets the idea across: we
+haven't normalised our representation internally, but as far as anyone *using*
+the type is concerned, they shouldn't be able to tell the difference between
+$\frac{1}{2}$ and $\frac{2}{4}$.
 
 Th `Num` instance is pretty much just a restating of the axioms for fractions.
 
@@ -93,19 +118,8 @@ instance Num Frac where
 ```
 </details>
 
-# The Rationals as a Pair of Coprime Numbers
-
-Let's look a little more at Data.Ratio's approach.
-What we did above was postpone the normalisation until we do operations on the
-fraction.
-Data.Ratio, on the other hand, does normalisation on construction, ensuring that
-the fraction is only ever stored in its lowest form.
-This is actually what Agda does in the standard library: each rational also
-comes equipped with a proof that the two numbers are coprime, making it a "true"
-type for the rationals.
-
-Interestingly, the normalisation on testing approach is basically what we'd do
-in Cubical Agda: our type might look something like this.
+Cubical Agda, of course, *does* have real quotient types.
+There, the `Eq` instance becomes a path constructor.
 
 ```agda
 data ℚ : Type₀ where
@@ -202,8 +216,6 @@ data Q
   = Neg Rational
   | Zero
   | Pos Rational 
-
-
 ```
 
 We can also define some operations on the type, by converting back and forth.
@@ -228,7 +240,7 @@ To do so we'll turn to the subject of the title of this post: the [Stern-Brocot
 tree](https://en.wikipedia.org/wiki/Stern%E2%80%93Brocot_tree).
 
 ![The Stern-Brocot Tree. By Aaron Rotenberg, CC BY-SA 3.0, from Wikimedia
-Commons.](/images/SternBrocotTree.svg)
+Commons.](https://upload.wikimedia.org/wikipedia/commons/3/37/SternBrocotTree.svg)
 
 This tree, pictured above, has some incredible properties:
 
@@ -240,34 +252,45 @@ representation on.
 As it turns out, that's what we already did!
 Our list of bits above is precisely a path into the Stern-Brocot tree, where
 every `O` is a left turn and every `I` right.
-This gives us a very useful piece of information: the list of bits we have above
-is lexicographically ordered on the rationals.
 
 # Incrementalising
 
-Probably the most intriguing aspect of the Stern-Brocot tree (for our purposes)
-is the fact that it is a binary search tree.
-This gives us an easy way to express an order on the binary representation, but
-more interestingly it can allow us to *incrementalise* computation somewhat.
-Consider adding $\frac{1}{3}$ and $\frac{4}{3}$.
-They are represented by the binary sequences `00` and `100`, respectively.
-When looking out what to output, we don't need to inspect the entire inputs:
-once we see the `1` from $\frac{4}{3}$ we know that we're going to be outputting
-a number above 1, so we'll output a `1` at that point.
+The most important fact we've gleaned so far from the Stern-Brocot tree is that
+our representation is lexicographically ordered.
+While that may not seem like much, it turns our list of bits into a
+progressively-narrowing interval, which generates more and more accurate
+estimates of the true value.
+When we see a `O` at the head of the list, we know that the result must be
+smaller than `1`; what follows will tell us on what side of $\frac{1}{2}$ the
+answer lies, and so on.
 
-We're going to have some difficulty in trying to generalise this, though.
-Our main problem comes from the way we convert a bit sequence to a fraction: we
-`foldr` over it, and we inspect the accumulator at every step.
-That means the function isn't nearly lazy enough to give us proper incremental
-computation.
-We need a way to computer the fraction that uses a *left* fold.
+This turns out to be quite a useful property: we often don't need *exact*
+precision for some calculation, but rather some approximate answer.
+It's even rarely still that we know exactly how much precision we need for a
+given expression (which is what floating point demands).
+
+By producing a lazy list of bits, however, we can allow the *consumer* to
+specify the precision they need, by demanding those bits as they go along.
+(In the literature, this kind of thing is referred to as "lazy exact
+arithmetic", and it's quite fascinating. The representation presented here,
+however, is not very suitable for any real computation: it's incredibly slow).
+
+In proofs, the benefit is even more pronounced: finding out that a number is in
+a given range by just inspecting the first element of the list gives an
+excellent recursion strategy.
+We can do case analysis on: "what if it's 1", "what if it's less than 1", and
+"what if it's greater than 1", which is quite intuitive.
+
+There's one problem: our evaluation function is defined as a `foldr`, and forces
+the accumulator at every step.
+We will need to figure out another evaluator which folds from the left.
 
 # Intervals
 
-So we need another way to convert our list of bits to a fraction.
-The tree above will help us here: every step down can be thought of as a
-narrowing function, reducing the size of some interval as you go.
-The first interval is $\left(\frac{0}{1},\frac{1}{0}\right)$.
+So let's look more at the "interval" interpretation of the Stern-Brocot tree.
+The first interval is $\left(\frac{0}{1},\frac{1}{0}\right)$: neither of these
+values are actually members of the type, which is why we're not breaking any
+major rules with the $\frac{0}{1}$.
 To move left (to $\frac{1}{2}$ in the diagram), we need to use a peculiar
 operation called "child's addition", often denoted with a $\oplus$.
 
@@ -291,7 +314,7 @@ And finally, when we hit the end of the sequence, we take the *mediant* value.
 $$ \text{mediant}\left(\mathit{lb} , \mathit{ub}\right) = \mathit{lb} \oplus
 \mathit{rb} $$
 
-From this, we get a straightforward left fold which can computer our fraction!
+From this, we get a straightforward left fold which can compute our fraction.
 
 ```haskell
 infix 6 :-:
@@ -366,3 +389,84 @@ Since matrix multiplication is associative, what we have here is a monoid.
 multiplication.
 This is the property that lets us incrementalise the whole thing, by the way:
 associativity allows us to decide when to start and stop the calculation.
+
+# Incrementalising!
+
+We now have all the parts we need.
+First, we will write an evaluator that returns increasingly precise intervals.
+
+```haskell
+approximate :: [Bit] -> [Interval]
+approximate = scanl f mempty
+  where
+    f i I = right i
+    f i O = left  i
+```
+
+Next, we will need to combine two of these lists with some operation on
+fractions.
+
+```haskell
+interleave :: (Frac -> Frac -> Frac)
+           -> [Interval]
+           -> [Interval]
+           -> [Interval]
+interleave (*) [xi] ys = map (\y -> x * lb y :-: x * ub y) ys
+  where x = mediant xi
+interleave (*) ((xlb :-: xub):xs) ys@((ylb :-: yub):_) =
+  (xlb * ylb :-: xub * yub) : interleave (*) ys xs
+```
+
+The operation must respect orders in the proper way for this to be valid.
+
+This pops one bit from each list in turn: one of the many possible optimisations
+would be to pull more information from the more informative value, in some
+clever way.
+
+Finally, we have a function which incrementally runs some binary operator
+lazily on a list of bits.
+
+```haskell
+quad :: (Frac -> Frac -> Frac)
+     -> [Bit]
+     -> [Bit]
+     -> [Bit]
+quad (*) xs ys = foldr f (unfoldr p) ((interleave (*) `on` approximate) xs ys) mempty
+  where
+    f x xs c
+      | mediant c < lb x = I : f x xs (right c)
+      | mediant c > ub x = O : f x xs (left  c)
+      | otherwise = xs c
+        
+    t = rep xs * rep ys
+    
+    p c = case compare (mediant c) t of
+      LT -> Just (I, right c)
+      GT -> Just (O, left  c)
+      EQ -> Nothing
+```
+
+The function only ever inspects the next bit when it absolutely needs to.
+
+The helper function `f` here is the "incremental" version.
+`p` takes over when the precision of the input is exhausted.
+
+We can use this to write an addition function (with some added special cases to
+speed things up).
+
+```haskell
+add :: [Bit] -> [Bit] -> [Bit]
+add [] ys = I : ys
+add xs [] = I : xs
+add (I:xs) ys = I : add xs ys
+add xs (I:ys) = I : add xs ys
+add xs ys = quad (+) xs ys
+```
+
+We (could) also try and optimise the times we look for a new bit.
+For addition, if two strings are inverses of each other, the result will be
+precisely in the middle.
+i.e. `OIOOI` + `IOIIO` = $\frac{1}{1}$.
+We could try and spot this, only testing for the 
+
+# Using The Peano Numbers for Computation
