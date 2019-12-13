@@ -1,5 +1,5 @@
 ---
-title: Constructive Numbers and the Stern-Brocot Tree
+title: Lazy Constructive Numbers and the Stern-Brocot Tree
 tags: Haskell, Agda
 bibliography: Rationals.bib
 ---
@@ -13,8 +13,7 @@ data Nat = Z | S Nat
 ```
 
 For "real" applications, of course, these numbers are offensively inefficient,
-in terms of both space and time (although stick around til the end for some fun
-uses of this type in Haskell which are almost efficient).
+in terms of both space and time.
 But that's not what I'm after here: I'm looking for a type which best describes
 the essence of the natural numbers, and that can be used to prove and think
 about them.
@@ -373,9 +372,8 @@ $$ L =
   1 & 0 \\ 
   1 & 1
 \end{matrix} 
-\right)
-$$
-$$ R = 
+\right) \;
+R = 
 \left(
 \begin{matrix} 
   1 & 1 \\ 
@@ -532,5 +530,73 @@ root2Approx
 ...
 ```
 
+# Conclusions and Related Work
 
-# Using The Peano Numbers for Computation
+Using the Stern-Brocot tree to represent the rationals was formalised in Coq in
+@bertotSimpleCanonicalRepresentation2003.
+The corresponding lazy operations are formalised in
+[QArith](https://github.com/coq-community/qarith-stern-brocot).
+Its theory and implementation is described in @niquiExactArithmeticStern2007.
+Unfortunately, I found most of the algorithms impenetrably complex, so I can't
+really judge how they compare to the ones I have here.
+
+I mentioned that one of the reasons you might want lazy rational arithmetic is
+that it can help with certain proofs.
+While this is true, in general the two main reasons people reach for lazy
+arithmetic is efficiency and as a way to get to the real numbers.
+
+From the perspective of efficiency, the Stern-Brocot tree is probably a bad
+idea.
+You may have noticed that the right branch of the tree contains all the whole
+numbers: this means that the whole part is encoded in unary.
+Beyond that, we generally have to convert to some fraction in order to do any
+calculation, which is massively expensive.
+
+The problem is that bits in the same position in different numbers don't
+necessarily correspond to the same quantities.
+In base 10, for instance, the numbers 561 and 1024 have values in the "ones"
+position of 1 and 4, respectively.
+We can work with those two values independent of the rest of the number, which
+can lead to quicker algorithms.
+
+Looking at the Stern-Brocot encoding, the numbers $\frac{2}{3}$ and 3 are
+represented by `OI` and `II`, respectively.
+That second `I` in each, despite being in the same position, corresponds to
+*different values*: $\frac{2}{3}$ in the first, and $\frac{1}{2}$ in the second.
+
+Solutions to both of these problems necessitate losing the one-to-one property
+of the representation.
+We could improve the size of the representation of terms by having our $L$ and
+$R$ matrices be the following [@kurkaExactRealArithmetic2014]:
+
+$$ L = \left( 
+\begin{matrix}
+  1 & 0 \\
+  1 & 2
+\end{matrix}
+\right) \;
+ R = \left( 
+\begin{matrix}
+  2 & 1 \\
+  0 & 1
+\end{matrix}
+\right) $$
+
+But now there will be gaps in the tree.
+This basically means we'll have to use infinite repeating bits to represent
+terms like $\frac{1}{2}$.
+
+We could solve the other problem by throwing out the Stern-Brocot tree entirely
+and using a more traditional positional number system.
+Again, this introduces redundancy: in order to represent some fraction which
+doesn't divide properly into the base of the number system you have to use
+repeating decimals.
+
+The second reason for lazy rational arithmetic is that it can be a crucial
+component in building a constructive interpretation of the real numbers.
+This in particular is an area of real excitement at the moment: HoTT has opened
+up some interesting avenues that weren't possible before for constructing the
+reals [@bauerRealNumbersHomotopy2016].
+
+In a future post, I might present a formalisation of these numbers in Agda.
+I also intend to look at the dyadic numbers.
