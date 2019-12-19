@@ -110,10 +110,10 @@ Th `Num` instance is pretty much just a restating of the axioms for fractions.
 instance Num Frac where
   fromInteger n = fromInteger n :/ 1
   (x :/ xd) * (y :/ yd) = (x * y) :/ (xd * yd)
-  (x :/ xd) + (y :/ yd) = (x * yd + y * xd) :/ (xd * yd)
-  signum = (:/ 1) . signum . numerator
+  (x :/ xd) + (y :/ yd) = (x * toInteger yd + y * toInteger xd) :/ (xd * yd)
+  signum (x :/ _) = signum x :/ 1
   abs (x :/ xd) = abs x :/ xd
-  (x :/ xd) - (y :/ yd) = (x * yd - y * xd) :/ (xd * yd)
+  (x :/ xd) - (y :/ yd) = (x * toInteger yd - y * toInteger xd) :/ (xd * yd)
 ```
 </details>
 
