@@ -112,7 +112,7 @@ instance Num Frac where
   (x :/ xd) * (y :/ yd) = (x * y) :/ (xd * yd)
   (x :/ xd) + (y :/ yd) = (x * yd + y * xd) :/ (xd * yd)
   signum = (:/ 1) . signum . numerator
-  abs = id
+  abs (x :/ xd) = abs x :/ xd
   (x :/ xd) - (y :/ yd) = (x * yd - y * xd) :/ (xd * yd)
 ```
 </details>
