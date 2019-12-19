@@ -88,10 +88,10 @@ In Haskell, that kind of means doing the following:
 
 ```haskell
 instance Eq Frac where
-  (x :/ xd) == (y :/ yd) = (x * yd) == (y * xd)
+  (x :/ xd) == (y :/ yd) = (x * toInteger yd) == (y * toInteger xd)
   
 instance Ord Frac where
-  compare (x :/ xd) (y :/ yd) = compare (x * yd) (y * xd)
+  compare (x :/ xd) (y :/ yd) = compare (x * toInteger yd) (y * toInteger xd)
 ```
 
 We don't have real quotient types in Haskell, but this gets the idea across: we
@@ -184,10 +184,10 @@ type Rational = [Bit]
 abs :: Frac -> Rational
 abs = unfoldr f
   where
-    f (n :/ d) = case compare n d of
+    f (n :/ d) = case compare n (toInteger d) of
       EQ -> Nothing
-      LT -> Just (O, n :/ (d - n))
-      GT -> Just (I, (n - d) :/ d)
+      LT -> Just (O, n :/ (d - fromInteger n))
+      GT -> Just (I, (n - toInteger d) :/ d)
 ```
 
 And since we used `unfoldr`, it's easy to reverse the algorithm to convert from
@@ -197,8 +197,8 @@ the representation to a pair of numbers.
 rep :: Rational -> Frac
 rep = foldr f (1 :/ 1)
   where
-    f I (n :/ d) = (n + d) :/ d
-    f O (n :/ d) = n :/ (n + d)
+    f I (n :/ d) = (n + toInteger d) :/ d
+    f O (n :/ d) = n :/ (fromInteger n + d)
 ```
 
 Now `abs . rep` is the identity function, and `rep . abs` reduces a fraction!
