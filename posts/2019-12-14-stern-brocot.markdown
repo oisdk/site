@@ -603,4 +603,7 @@ reals [@bauerRealNumbersHomotopy2016].
 In a future post, I might present a formalisation of these numbers in Agda.
 I also intend to look at the dyadic numbers.
 
+Update 26/12/2019: thanks Anton Felix Lorenzen and Joseph C. Sible for spotting
+some mistakes in this post.
+
 # References
