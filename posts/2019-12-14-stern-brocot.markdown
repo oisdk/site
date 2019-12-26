@@ -60,7 +60,7 @@ going to try satisfy those requirements as best I can.
 Our first attempt at representing the rationals might use a fraction:
 
 ```haskell
-data Frac = Integer :/ Natural
+data Frac = Integer :/ Integer
 ```
 
 This obviously fails the redundancy property.
@@ -108,11 +108,11 @@ Th `Num` instance is pretty much just a restating of the axioms for fractions.
 
 ```haskell
 instance Num Frac where
-  fromInteger n = fromInteger n :/ 1
+  fromInteger n = n :/ 1
   (x :/ xd) * (y :/ yd) = (x * y) :/ (xd * yd)
   (x :/ xd) + (y :/ yd) = (x * yd + y * xd) :/ (xd * yd)
-  signum = (:/ 1) . signum . numerator
-  abs = id
+  signum (n :/ d) = signum (n * d) :/ 1
+  abs n = signum n * n
   (x :/ xd) - (y :/ yd) = (x * yd - y * xd) :/ (xd * yd)
 ```
 </details>
@@ -221,7 +221,7 @@ We can also define some operations on the type, by converting back and forth.
 
 ```haskell
 instance Num Rational where
-  fromInteger n = abs (fromInteger n :/ 1)
+  fromInteger n = abs (n :/ 1)
   
   xs + ys = abs (rep xs + rep ys)
   xs * ys = abs (rep xs * rep ys)
@@ -385,8 +385,8 @@ $$
 It turns out that the left and right functions we defined earlier correspond to
 multiplication by these matrices.
 
-$$ \text{left}(x) = Lx $$
-$$ \text{right}(x) = Rx $$
+$$ \text{left}(x) = xL $$
+$$ \text{right}(x) = xR $$
 
 Since matrix multiplication is associative, what we have here is a monoid.
 `mempty` is the open interval at the beginning, and `mappend` is matrix
@@ -471,9 +471,11 @@ add xs ys = quad (+) xs ys
 ```
 
 We (could) also try and optimise the times we look for a new bit.
-For addition, if two strings are inverses of each other, the result will be
-precisely in the middle.
-i.e. `OIOOI` + `IOIIO` = $\frac{1}{1}$.
+Above we have noticed every case where one of the rationals is preceded by a
+whole part.
+After you encounter two `O`s, in addition if the two strings are inverses of
+each other the result will be 1.
+i.e. `OOIOOI` + `OIOIIO` = $\frac{1}{1}$.
 We could try and spot this, only testing with comparison of the mediant when the
 bits are the same.
 You've doubtless spotted some other possible optimisations: I have yet to look
@@ -562,7 +564,7 @@ can lead to quicker algorithms.
 Looking at the Stern-Brocot encoding, the numbers $\frac{2}{3}$ and 3 are
 represented by `OI` and `II`, respectively.
 That second `I` in each, despite being in the same position, corresponds to
-*different values*: $\frac{2}{3}$ in the first, and $\frac{1}{2}$ in the second.
+*different values*: $\frac{1}{3}$ in the first, and $\frac{3}{2}$ in the second.
 
 Solutions to both of these problems necessitate losing the one-to-one property
 of the representation.
