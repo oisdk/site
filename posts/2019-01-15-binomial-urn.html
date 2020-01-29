@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>A Binomial Urn - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>A Binomial Urn</h2>
+
+            <div class="info">
+    Posted on January 15, 2019
+</div>
+<div class="info">
+    
+        Part 3 of a <a href="../series/Balanced%20Folds.html">3-part series on Balanced Folds</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>When we started the series, we wanted to find a “better” fold: one that was more balanced than either <code>foldl</code> or <code>foldr</code> (in its placement of parentheses). Both of these are about as unbalanced as you can get:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> foldr (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> (<span class="dv">3</span> <span class="fu">+</span> <span class="dv">0</span>))</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="fu">&gt;&gt;&gt;</span> foldl (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">((<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span></a></code></pre></div>
+<p>The first better fold I found was Jon Fairbairn’s simple <code>treeFold</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">treeFold f <span class="fu">=</span> go</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    go x [] <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">    go a  (b<span class="fu">:</span>l) <span class="fu">=</span> go (f a b) (pairMap l)</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">    pairMap (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap rest</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">    pairMap xs <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">  </a>
+<a class="sourceLine" id="cb2-9" data-line-number="9"><span class="fu">&gt;&gt;&gt;</span> treeFold (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10">(<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> <span class="dv">3</span>)</a></code></pre></div>
+<p>Already this function was kind of magical: if your binary operator merges two sorted lists, <code>foldr</code> will give you insertion sort, whereas <code>treeFold</code> will give you merge sort; for summing floats, <code>treeFold</code> has a lower error growth than <code>sum</code>. By dividing up the work better, we were able to improve the characteristics of many algorithms automatically. We also saw that it could easily be made parallel:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">parseq ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">parseq a b <span class="fu">=</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">    runST</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">        (bool (par a b) (seq a b) <span class="fu">&lt;$&gt;</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">         unsafeIOToST (liftA2 (<span class="fu">&gt;</span>) numSparks getNumCapabilities))</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7"><span class="ot">treeFoldParallel ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">treeFoldParallel f <span class="fu">=</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">    treeFold</a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">        (\l r <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb3-11" data-line-number="11">              r <span class="ot">`parseq`</span> (l <span class="ot">`parseq`</span> f l r))</a></code></pre></div>
+<p>In the next post, we saw how we could make the fold incremental, by using binary number representations for data structures. This let us do 2 things: it meant the fold was structurally terminating, so it would pass the termination checker (efficiently) in languages like Agda or Idris, and it meant we could write <code>scanl</code> using the fold. The <code>scanl</code> was also efficient: you could run the fold at any point in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math> time, and work would be shared between subsequent runs. Effectively, this let us use it to solve greedy optimization problems. We also saw how it was effectively constructing an implicit binomial priority queue under the hood, and how it exploited laziness to get sharing.</p>
+<p>I’ve gotten huge mileage out of this fold and the general ideas about it, and today I’m going to show one more use of it. We’re going to improve some of the asymptotics of the data structure presented in <span class="citation" data-cites="lampropoulos_ode_2017">Lampropoulos, Spector-Zabusky, and Foner (<a href="#ref-lampropoulos_ode_2017">2017</a>)</span>.</p>
+<h1 id="a-random-urn">A Random Urn</h1>
+<p>The paper opens with the problem:</p>
+<blockquote>
+<p>Suppose you have an urn containing two red balls, four green balls, and three blue balls. If you take three balls out of the urn, what is the probability that two of them are green?</p>
+</blockquote>
+<p>If you were to take just <em>one</em> ball out of the earn, calculating the associated probabilities would be easy. Once you get to the second, though, you have to update the previous probability <em>based on what ball was removed</em>. In other words, we need to be able to dynamically update the distribution.</p>
+<p>Using lists, this would obviously become an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> operation. In the paper, an almost-perfect binary tree is used. This turns the operation into one that’s <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math>. The rest of the operations have the following complexities:</p>
+<table>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Operation</th>
+<th>Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>insert</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>remove</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>fromList</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
+</tr>
+</tbody>
+</table>
+<p>As a quick spoiler, the improved version presented here has these complexities:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Operation</th>
+<th>Complexity</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>insert</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math></td>
+</tr>
+<tr class="even">
+<td><code>remove</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+</tr>
+<tr class="odd">
+<td><code>merge</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math></td>
+</tr>
+<tr class="even">
+<td><code>fromList</code></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
+</tr>
+</tbody>
+</table>
+<p>We add another operation (<code>merge</code>), which means that the new structure is viable as an instance of <code>Alternative</code>, <code>Monad</code>, and so on, making it an efficient monad for weighted backtracking search.</p>
+<h1 id="priority-queues">Priority Queues</h1>
+<p>The key thing to notice in the paper which will let us improve the structure is that what they’re designing is actually a <em>priority queue</em>. Well, a weird looking priority queue, but a priority queue nonetheless.</p>
+<p>Think about it like a max-priority queue (pop returns the largest element first), with a degree of “randomization”. In other words, when you go to do a pop, all of the comparisons between the ordering keys (the weights in this case) sprinkles some randomness into the equation, meaning that instead of <code>1 &lt; 2</code> returning <code>True</code>, it returns <code>True</code> <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math> of the time, and <code>False</code> the other <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{3}</annotation></semantics></math>.</p>
+<p>This way of doing things means that not every priority queue is suitable: we want to run comparisons at <code>pop</code> time (not <code>insert</code>), so a binary heap (for instance) won’t do. At branches (non-leaves), the queue will only be allowed store <em>summaries</em> of the data, not the “max element”.</p>
+<p>The one presented in the paper is something like a Braun priority queue: the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> <code>fromList</code> implementation is reminiscent of the one in <span class="citation" data-cites="okasaki_three_1997">Okasaki (<a href="#ref-okasaki_three_1997">1997</a>)</span>.</p>
+<p>So what priority queue can we choose to get us the desired efficiency? Why, a binomial one of course!</p>
+<h1 id="the-data-structure">The Data Structure</h1>
+<p>The urn structure itself looks a lot like a binomial heap:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Tree</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  {<span class="ot"> weight ::</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Word</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  ,<span class="ot"> branch ::</span> <span class="dt">Node</span> a</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">  }</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="kw">data</span> <span class="dt">Node</span> a</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">  <span class="fu">=</span> <span class="dt">Leaf</span> a</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">  <span class="fu">|</span> <span class="dt">Branch</span> (<span class="dt">Tree</span> a) (<span class="dt">Node</span> a)</a>
+<a class="sourceLine" id="cb4-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11"><span class="kw">data</span> <span class="dt">Heap</span> a</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12">  <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13">  <span class="fu">|</span> <span class="dt">Cons</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Word</span> (<span class="dt">Tree</span> a) (<span class="dt">Heap</span> a)</a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">  </a>
+<a class="sourceLine" id="cb4-15" data-line-number="15"><span class="kw">data</span> <span class="dt">Urn</span> a <span class="fu">=</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16">    <span class="dt">Urn</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Word</span></a>
+<a class="sourceLine" id="cb4-17" data-line-number="17">        <span class="fu">!</span>(<span class="dt">Heap</span> a)</a></code></pre></div>
+<p>By avoiding the usual <code>Skip</code> constructors you often see in a binomial heap we save a huge amount of space. Instead, we store the “number of zeroes before this bit”. Another thing to point out is that only left branches in the trees store their weight: the same optimization is made in the paper.</p>
+<p>Insertion is not much different from insertion for a usual binomial priority queue, although we don’t need to do anything to merge the trees:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">insertHeap ::</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">insertHeap i' x' <span class="fu">=</span> go <span class="dv">0</span> (<span class="dt">Tree</span> i' (<span class="dt">Leaf</span> x'))</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">    go <span class="fu">!</span>i x <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Cons</span> i x <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    go <span class="fu">!</span>i x (<span class="dt">Cons</span> <span class="dv">0</span> y ys) <span class="fu">=</span> go (i<span class="fu">+</span><span class="dv">1</span>) (mergeTree x y) ys</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    go <span class="fu">!</span>i x (<span class="dt">Cons</span> j y ys) <span class="fu">=</span> <span class="dt">Cons</span> i x (<span class="dt">Cons</span> (j<span class="fu">-</span><span class="dv">1</span>) y ys)</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"><span class="ot">mergeTree ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">mergeTree xs ys <span class="fu">=</span></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">  <span class="dt">Tree</span></a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">    (weight xs <span class="fu">+</span> weight ys)</a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">    (<span class="dt">Branch</span> xs (branch ys))</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb5-14" data-line-number="14"><span class="ot">insert ::</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15">insert i x (<span class="dt">Urn</span> w xs) <span class="fu">=</span> <span class="dt">Urn</span> (w<span class="fu">+</span>i) (insertHeap i x xs)</a></code></pre></div>
+<p>We <em>could</em> potentially get insertion from amortized <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> to worst-case <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> by using skew binary instead of binary (in fact I am almost sure it’s possible), but then I think we’d lose the efficient merge. I’ll leave exploring that for another day.</p>
+<p>To get randomness, we’ll write a very simple class that encapsulates only what we need:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Sample</span> m <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">    <span class="co">-- | Inclusive range</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="ot">    inRange ::</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> <span class="dt">Word</span> <span class="ot">-&gt;</span> m <span class="dt">Word</span></a></code></pre></div>
+<p>You can later instantiate this to whatever random monad you end up using. (The same approach was taken in the paper, although we only require <code>Functor</code> here, not <code>Monad</code>).</p>
+<p>Sampling (with replacement) first randomly chooses a tree from the top-level list, and then we drill down into that tree with binary search.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">sample ::</span> (<span class="dt">Functor</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m a)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">sample (<span class="dt">Urn</span> _ <span class="dt">Nil</span>) <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">sample (<span class="dt">Urn</span> w' (<span class="dt">Cons</span> _ x' xs')) <span class="fu">=</span> <span class="dt">Just</span> (fmap (go x' xs') (inRange <span class="dv">0</span> (w' <span class="fu">-</span> <span class="dv">1</span>)))</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    go x <span class="dt">Nil</span> <span class="fu">!</span>w <span class="fu">=</span> go' w (branch x)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">    go x (<span class="dt">Cons</span> _ y ys) <span class="fu">!</span>w</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">      <span class="fu">|</span> w <span class="fu">&lt;</span> weight x <span class="fu">=</span> go' w (branch x)</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">      <span class="fu">|</span> otherwise    <span class="fu">=</span> go y ys (w <span class="fu">-</span> weight x)</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">    go' <span class="fu">!</span>_ (<span class="dt">Leaf</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">    go' <span class="fu">!</span>i (<span class="dt">Branch</span> xs ys)</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">      <span class="fu">|</span> i <span class="fu">&lt;</span> weight xs <span class="fu">=</span> go' i (branch xs)</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">      <span class="fu">|</span> otherwise <span class="fu">=</span> go' (i <span class="fu">-</span> weight xs) ys</a></code></pre></div>
+<p>So we’re off to a good start, but <code>remove</code> is a complex operation. We take the same route taken in the paper: first, we perform an “uncons”-like operation, which pops out the last inserted element. Then, we randomly choose a point in the tree (using the same logic as in <code>sample</code>), and replace it with the popped element<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">remove ::</span> (<span class="dt">Functor</span> m, <span class="dt">Sample</span> m) <span class="ot">=&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (m ((a, <span class="dt">Word</span>), <span class="dt">Urn</span> a))</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">remove (<span class="dt">Urn</span> w hp) <span class="fu">=</span> fmap go' (Heap.uninsert hp)</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    go' (vw,v,hp') <span class="fu">=</span> fmap (<span class="ot">`go`</span> hp') (inRange <span class="dv">0</span> (w<span class="fu">-</span><span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">        go <span class="fu">!</span>_  <span class="dt">Nil</span> <span class="fu">=</span> ((v, vw), <span class="dt">Urn</span> <span class="dv">0</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">        go <span class="fu">!</span>rw vs<span class="fu">@</span>(<span class="dt">Cons</span> i' x' xs')</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">          <span class="fu">|</span> rw <span class="fu">&lt;</span> vw <span class="fu">=</span> ((v, vw), <span class="dt">Urn</span> (w <span class="fu">-</span> vw) vs)</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">          <span class="fu">|</span> otherwise <span class="fu">=</span> replace (rw <span class="fu">-</span> vw) i' x' xs'</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">            (\ys yw y <span class="ot">-&gt;</span> ((y, yw), <span class="dt">Urn</span> (w <span class="fu">-</span> yw) ys))</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">        replace <span class="fu">!</span>rw i x <span class="dt">Nil</span> k <span class="fu">=</span> replaceTree rw x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t <span class="dt">Nil</span>))</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">        replace <span class="fu">!</span>rw i x xs<span class="fu">@</span>(<span class="dt">Cons</span> j y ys) k</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">          <span class="fu">|</span> rw <span class="fu">&lt;</span> weight x <span class="fu">=</span> replaceTree rw x (\t <span class="ot">-&gt;</span> k (<span class="dt">Cons</span> i t xs))</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">          <span class="fu">|</span> otherwise <span class="fu">=</span> replace (rw <span class="fu">-</span> weight x) j y ys (k <span class="fu">.</span> <span class="dt">Cons</span> i x)</a>
+<a class="sourceLine" id="cb8-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">        replaceTree <span class="fu">!</span>_  (<span class="dt">Tree</span> tw (<span class="dt">Leaf</span> x)) k <span class="fu">=</span> k (<span class="dt">Tree</span> vw (<span class="dt">Leaf</span> v)) tw x</a>
+<a class="sourceLine" id="cb8-18" data-line-number="18">        replaceTree <span class="fu">!</span>rw (<span class="dt">Tree</span> tw (<span class="dt">Branch</span> xs ys)) k</a>
+<a class="sourceLine" id="cb8-19" data-line-number="19">          <span class="fu">|</span> rw <span class="fu">&lt;</span> weight xs <span class="fu">=</span> replaceTree rw xs</a>
+<a class="sourceLine" id="cb8-20" data-line-number="20">            (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (tw <span class="fu">+</span> (weight t <span class="fu">-</span> weight xs)) (<span class="dt">Branch</span> t ys)))</a>
+<a class="sourceLine" id="cb8-21" data-line-number="21">          <span class="fu">|</span> otherwise <span class="fu">=</span> replaceTree (rw <span class="fu">-</span> weight xs)</a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">            (<span class="dt">Tree</span> (tw <span class="fu">-</span> weight xs) ys)</a>
+<a class="sourceLine" id="cb8-23" data-line-number="23">            (\t <span class="ot">-&gt;</span> k (<span class="dt">Tree</span> (weight xs <span class="fu">+</span> weight t) (<span class="dt">Branch</span> xs (branch t))))</a></code></pre></div>
+<p>Merge is the same as on binomial heaps:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">mergeHeap ::</span> <span class="dt">Heap</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a <span class="ot">-&gt;</span> <span class="dt">Heap</span> a</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">mergeHeap <span class="dt">Nil</span> <span class="fu">=</span> id</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">mergeHeap (<span class="dt">Cons</span> i' x' xs') <span class="fu">=</span> merger i' x' xs'</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">    merger <span class="fu">!</span>i x xs <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Cons</span> i x xs</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    merger <span class="fu">!</span>i x xs (<span class="dt">Cons</span> j y ys) <span class="fu">=</span> merge' i x xs j y ys</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">    merge' <span class="fu">!</span>i x xs <span class="fu">!</span>j y ys <span class="fu">=</span> <span class="kw">case</span> compare i j <span class="kw">of</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">        <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Cons</span> i x (merger (j<span class="fu">-</span>i<span class="fu">-</span><span class="dv">1</span>) y ys xs)</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">        <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Cons</span> j y (merger (i<span class="fu">-</span>j<span class="fu">-</span><span class="dv">1</span>) x xs ys)</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">        <span class="dt">EQ</span> <span class="ot">-&gt;</span> mergec (succ i) (mergeTree x y) xs ys</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">    mergec <span class="fu">!</span>p <span class="fu">!</span>t <span class="dt">Nil</span> <span class="fu">=</span> carryLonger p t</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14">    mergec <span class="fu">!</span>p <span class="fu">!</span>t (<span class="dt">Cons</span> i x xs) <span class="fu">=</span> mergecr p t i x xs</a>
+<a class="sourceLine" id="cb9-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb9-16" data-line-number="16">    mergecr <span class="fu">!</span>p <span class="fu">!</span>t <span class="fu">!</span>i x xs <span class="dt">Nil</span> <span class="fu">=</span> carryLonger' p t i x xs</a>
+<a class="sourceLine" id="cb9-17" data-line-number="17">    mergecr <span class="fu">!</span>p <span class="fu">!</span>t <span class="fu">!</span>i x xs (<span class="dt">Cons</span> j y ys) <span class="fu">=</span> mergec' p t i x xs j y ys</a>
+<a class="sourceLine" id="cb9-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb9-19" data-line-number="19">    mergec' <span class="fu">!</span>p t <span class="fu">!</span>i x xs <span class="fu">!</span>j y ys <span class="fu">=</span> <span class="kw">case</span> compare i j <span class="kw">of</span></a>
+<a class="sourceLine" id="cb9-20" data-line-number="20">      <span class="dt">LT</span> <span class="ot">-&gt;</span> mergecr'' p t i x xs (j<span class="fu">-</span>i<span class="fu">-</span><span class="dv">1</span>) y ys</a>
+<a class="sourceLine" id="cb9-21" data-line-number="21">      <span class="dt">GT</span> <span class="ot">-&gt;</span> mergecr'' p t j y ys (i<span class="fu">-</span>j<span class="fu">-</span><span class="dv">1</span>) x xs</a>
+<a class="sourceLine" id="cb9-22" data-line-number="22">      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Cons</span> p t (mergec i (mergeTree x y) xs ys)</a>
+<a class="sourceLine" id="cb9-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb9-24" data-line-number="24">    mergecr'' <span class="fu">!</span>p <span class="fu">!</span>t  <span class="dv">0</span> x xs <span class="fu">!</span>j y ys <span class="fu">=</span> mergecr (p<span class="fu">+</span><span class="dv">1</span>) (mergeTree t x) j y ys xs</a>
+<a class="sourceLine" id="cb9-25" data-line-number="25">    mergecr'' <span class="fu">!</span>p <span class="fu">!</span>t <span class="fu">!</span>i x xs <span class="fu">!</span>j y ys <span class="fu">=</span> <span class="dt">Cons</span> p t (<span class="dt">Cons</span> (i<span class="fu">-</span><span class="dv">1</span>) x (merger j y ys xs))</a>
+<a class="sourceLine" id="cb9-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb9-27" data-line-number="27">    carryLonger <span class="fu">!</span>i <span class="fu">!</span>t <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Cons</span> i t <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb9-28" data-line-number="28">    carryLonger <span class="fu">!</span>i <span class="fu">!</span>t (<span class="dt">Cons</span> j y ys) <span class="fu">=</span> carryLonger' i t j y ys</a>
+<a class="sourceLine" id="cb9-29" data-line-number="29"></a>
+<a class="sourceLine" id="cb9-30" data-line-number="30">    carryLonger' <span class="fu">!</span>i <span class="fu">!</span>t  <span class="dv">0</span> y ys <span class="fu">=</span> carryLonger (succ i) (mergeTree t y) ys</a>
+<a class="sourceLine" id="cb9-31" data-line-number="31">    carryLonger' <span class="fu">!</span>i <span class="fu">!</span>t <span class="fu">!</span>j y ys <span class="fu">=</span> <span class="dt">Cons</span> i t (<span class="dt">Cons</span> (j<span class="fu">-</span><span class="dv">1</span>) y ys)</a>
+<a class="sourceLine" id="cb9-32" data-line-number="32"></a>
+<a class="sourceLine" id="cb9-33" data-line-number="33"><span class="ot">merge ::</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a <span class="ot">-&gt;</span> <span class="dt">Urn</span> a</a>
+<a class="sourceLine" id="cb9-34" data-line-number="34">merge (<span class="dt">Urn</span> i xs) (<span class="dt">Urn</span> j ys) <span class="fu">=</span> <span class="dt">Urn</span> (i<span class="fu">+</span>j) (mergeHeap xs ys)   </a></code></pre></div>
+<h1 id="finger-trees">Finger Trees</h1>
+<p>Again, the cleverness of all the tree folds is that they intelligently batch summarizing operations, allowing you to efficiently so prefix-scan-like operations that exploit sharing.</p>
+<p>The bare-bones version just uses binary numbers: you can upgrade the <code>cons</code> operation to worst-case constant-time if you use <em>skew</em> binary. Are there other optimizations? Yes! What if we wanted to stick something on to the <em>other</em> end, for instance? What if we wanted to reverse?</p>
+<p>If you figure out a way to do <em>all</em> these optimizations, and put them into one big data structure, you get the mother-of-all “batching” data structures: the finger tree. This is the basis for Haskell’s Data.Sequence, but it can also implement priority queues, urns (I’d imagine), fenwick-tree-like structures, and more.</p>
+<h1 id="uses-and-further-work">Uses and Further Work</h1>
+<p>First and foremost, I should test the above implementations! I’m pretty confident the asymptotics are correct, but I’m certain the implementations have bugs.</p>
+<p>The efficient <code>merge</code> is intriguing: it means that <code>Urn</code> could conceivably be <code>Alternative</code>, <code>MonadPlus</code>, etc. I have yet to see a use for that, but it’s interesting nonetheless! I’m constantly looking for a way to express something like Dijkstra’s algorithm algebraicly, using the usual <code>Alternative</code> combinators; I don’t know if this is related.</p>
+<p>The other interesting point is that, for this to be an instance of <code>Applicative</code>, it would need some analogue for multiplication for the weights. I’m not sure what that should be.</p>
+<p>This is inherently <em>max</em>-priority. It’s not obvious how to translate what we have into a min-priority queue version.</p>
+<p>Finally, it might be worth trying out different priority queues (a pairing heap is very similar in structure to this). Also, we could rearrange the weights so that larger ones are higher in each tree: this might give a performance boost.</p>
+<div id="refs" class="references">
+<div id="ref-lampropoulos_ode_2017">
+<p>Lampropoulos, Leonidas, Antal Spector-Zabusky, and Kenneth Foner. 2017. “Ode on a random urn (functional pearl).” In, 26–37. ACM Press. doi:<a href="https://doi.org/10.1145/3122955.3122959">10.1145/3122955.3122959</a>.</p>
+</div>
+<div id="ref-okasaki_three_1997">
+<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>.</p>
+</div>
+</div>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>There’s one extra step I haven’t mentioned: we also must allow the first element (the last inserted) to be chosen, so we run the random-number generator once to check if that’s the element we want to choose.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

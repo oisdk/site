@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Applicative Arithmetic - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Applicative Arithmetic</h2>
+
+            <div class="info">
+    Posted on September 25, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Applicative.html">Applicative</a>
+    
+</div>
+
+<h1 id="safer-arithmetic">Safer Arithmetic</h1>
+<p>There are a couple partial functions in the Haskell Prelude which people seem to agree shouldn’t be there. <code class="sourceCode haskell">head</code>, for example, will throw an error on an empty list. Most seem to agree that it should work something more like this:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">head<span class="ot"> ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">head <span class="fu">=</span> foldr (const <span class="fu">.</span> <span class="dt">Just</span>) <span class="dt">Nothing</span></a></code></pre></div>
+<p>There are other examples, like <code class="sourceCode haskell">last</code>, <code class="sourceCode haskell"><span class="fu">!!</span></code>, etc.</p>
+<p>One which people <em>don’t</em> agree on, however, is division by zero. In the current Prelude, the following will throw an error:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="dv">1</span> <span class="fu">/</span> <span class="dv">0</span></a></code></pre></div>
+<p>The “safe” version might have a signature like this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">(/) ::</span> <span class="dt">Fractional</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</a></code></pre></div>
+<p>However, this turns out to be quite a headache for writing code generally. So the default is the (somewhat) unsafe version.</p>
+<p>Is there a way to introduce a safer version without much overhead, so the programmer is given the option? Of course! With some newtype magic, it’s pretty simple to write a wrapper which catches division by zero in some arbitrary monad:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">AppNum</span> f a <span class="fu">=</span> <span class="dt">AppNum</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">    {<span class="ot"> runAppNum ::</span> f a</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">    } <span class="kw">deriving</span> (<span class="dt">Functor</span>,<span class="dt">Applicative</span>,<span class="dt">Monad</span>,<span class="dt">Alternative</span>,<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">MonadFail</span>)</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="kw">instance</span> (<span class="dt">Num</span> a, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">         <span class="dt">Num</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">    abs <span class="fu">=</span> fmap abs</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">    signum <span class="fu">=</span> fmap signum</a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">    (<span class="fu">+</span>) <span class="fu">=</span> liftA2 (<span class="fu">+</span>)</a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">    (<span class="fu">*</span>) <span class="fu">=</span> liftA2 (<span class="fu">*</span>)</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">    (<span class="fu">-</span>) <span class="fu">=</span> liftA2 (<span class="fu">-</span>)</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12">    negate <span class="fu">=</span> fmap negate</a>
+<a class="sourceLine" id="cb4-13" data-line-number="13">    fromInteger <span class="fu">=</span> pure <span class="fu">.</span> fromInteger</a>
+<a class="sourceLine" id="cb4-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb4-15" data-line-number="15"><span class="kw">instance</span> (<span class="dt">Fractional</span> a, <span class="dt">MonadFail</span> f, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16">         <span class="dt">Fractional</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-17" data-line-number="17">    fromRational <span class="fu">=</span> pure <span class="fu">.</span> fromRational</a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">    xs <span class="fu">/</span> ys <span class="fu">=</span></a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">        ys <span class="fu">&gt;&gt;=</span></a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">        \<span class="kw">case</span></a>
+<a class="sourceLine" id="cb4-21" data-line-number="21">            <span class="dv">0</span> <span class="ot">-&gt;</span> fail <span class="st">&quot;divide by zero&quot;</span></a>
+<a class="sourceLine" id="cb4-22" data-line-number="22">            y <span class="ot">-&gt;</span> fmap (<span class="fu">/</span> y) xs</a></code></pre></div>
+<p>I’m using the <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XLambdaCase</span></code> extension and <code class="sourceCode haskell"><span class="dt">MonadFail</span></code> here.</p>
+<h1 id="free-applicatives">Free Applicatives</h1>
+<p>You’ll notice that you only need <code class="sourceCode haskell"><span class="dt">Applicative</span></code> for most of the arithmetic operations above. In fact, you only need <code class="sourceCode haskell"><span class="dt">Monad</span></code> when you want to examine the contents of <code class="sourceCode haskell">f</code>. Using that fact, we can manipulate expression trees using the free applicative from the <a href="https://hackage.haskell.org/package/free">free</a> package. Say, for instance, we want to have free variables in our expressions. Using <code class="sourceCode haskell"><span class="dt">Either</span></code>, it’s pretty easy:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">type</span> <span class="dt">WithVars</span> <span class="fu">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">var <span class="fu">=</span> <span class="dt">AppNum</span> <span class="fu">.</span> liftAp <span class="fu">.</span> <span class="dt">Left</span></a></code></pre></div>
+<p>We can collect the free variables from an expression:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">vars <span class="fu">=</span> runAp_ (either pure (const [])) <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">x <span class="fu">=</span> <span class="dv">1</span><span class="ot"> ::</span> <span class="dt">WithVars</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">y <span class="fu">=</span> var <span class="st">&quot;y&quot;</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">z <span class="fu">=</span> var <span class="st">&quot;z&quot;</span></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">vars (x <span class="fu">+</span> y <span class="fu">+</span> z) <span class="co">-- [&quot;y&quot;,&quot;z&quot;]</span></a></code></pre></div>
+<p>If we want to sub in, though, we’re going to run into a problem: we can’t just pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span></code> because you’re able to construct values like this:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">bad ::</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">bad <span class="fu">=</span> <span class="dt">AppNum</span> (liftAp (<span class="dt">Left</span> <span class="st">&quot;oh noes&quot;</span>))</a></code></pre></div>
+<p>We’d need to pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</code> as well; in fact you’d need a map for every possible type. Which isn’t feasible.</p>
+<h1 id="gadts">GADTs</h1>
+<p>Luckily, we <em>can</em> constrain the types of variables in our expression so that they’re always <code class="sourceCode haskell"><span class="dt">Integer</span></code>, using a GADT:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Variable</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">        <span class="dt">Constant</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Variable</span> a</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">        <span class="dt">Variable</span><span class="ot"> ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Variable</span> <span class="dt">Integer</span></a></code></pre></div>
+<p>The type above seems useless on its own: it doesn’t have a <code class="sourceCode haskell"><span class="dt">Functor</span></code> instance, never mind an <code class="sourceCode haskell"><span class="dt">Applicative</span></code>, so how can it fit into <code class="sourceCode haskell"><span class="dt">AppNum</span></code>?</p>
+<p>The magic comes from the free applicative, which converts any type of kind <code class="sourceCode haskell"><span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></code> into an applicative. With that in mind, we can change around the previous code:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">type</span> <span class="dt">WithVars</span> <span class="fu">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> <span class="dt">Variable</span>) <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">var <span class="fu">=</span> <span class="dt">AppNum</span> <span class="fu">.</span> liftAp <span class="fu">.</span> <span class="dt">Variable</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6"><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">vars <span class="fu">=</span> runAp_ f <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9"><span class="ot">    f ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> [<span class="dt">String</span>]</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">    f (<span class="dt">Constant</span> _) <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">    f (<span class="dt">Variable</span> s) <span class="fu">=</span> [s]</a></code></pre></div>
+<p>And write the function to sub in for us:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">variableA</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="ot">    ::</span> <span class="dt">Applicative</span> f</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">    <span class="ot">=&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">variableA _ (<span class="dt">Constant</span> x) <span class="fu">=</span> pure x</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">variableA f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb10-7" data-line-number="7"><span class="ot">variable ::</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">variable _ (<span class="dt">Constant</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb10-9" data-line-number="9">variable f (<span class="dt">Variable</span> s) <span class="fu">=</span> f s</a>
+<a class="sourceLine" id="cb10-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb10-11" data-line-number="11"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb10-12" data-line-number="12">replace m <span class="fu">=</span> runAp (variable (m <span class="fu">Map.!</span>)) <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb10-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb10-14" data-line-number="14">replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2</span>), (<span class="st">&quot;y&quot;</span>,<span class="dv">3</span>)]) (x <span class="fu">+</span> y <span class="fu">+</span> z)</a>
+<a class="sourceLine" id="cb10-15" data-line-number="15"><span class="co">-- 6</span></a></code></pre></div>
+<h1 id="accumulation">Accumulation</h1>
+<p>This will fail if a free variable isn’t present in the map, unfortunately. To fix it, we <em>could</em> use <code class="sourceCode haskell"><span class="dt">Either</span></code> instead of <code class="sourceCode haskell"><span class="dt">Identity</span></code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">String</span> <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">replace m <span class="fu">=</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">    runAp</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">        (variableA <span class="fu">$</span></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">         \s <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">              maybe (<span class="dt">Left</span> s) <span class="dt">Right</span> (Map.lookup s m)) <span class="fu">.</span></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7">    runAppNum</a></code></pre></div>
+<p>But this only gives us the first missing variable encountered. We’d like to get back <em>all</em> of the missing variables, ideally: accumulating the <code class="sourceCode haskell"><span class="dt">Left</span></code>s. <code class="sourceCode haskell"><span class="dt">Either</span></code> doesn’t accumulate values, as if it did it would <a href="https://stackoverflow.com/a/23611068/4892417">break the monad laws</a>.</p>
+<p>There’s no issue with the <em>applicative</em> laws, though, which is why the <a href="https://hackage.haskell.org/package/validation-0.5.4">validation</a> package provides a <em>non-monadic</em> either-like type, which we can use here.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">AccValidation</span> [<span class="dt">String</span>] <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">replace m <span class="fu">=</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">    runAp</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">        (variableA <span class="fu">$</span></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">         \s <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">              maybe (<span class="dt">AccFailure</span> [s]) pure (Map.lookup s m)) <span class="fu">.</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">    runAppNum</a>
+<a class="sourceLine" id="cb12-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">replace (Map.fromList []) (x <span class="fu">+</span> y <span class="fu">+</span> z)</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10"><span class="co">-- AccFailure [&quot;y&quot;,&quot;z&quot;]</span></a></code></pre></div>
+<h1 id="other-uses">Other uses</h1>
+<p>There are a bunch more applicatives you could use instead of <code class="sourceCode haskell"><span class="dt">Either</span></code>. Using lists, for instance, you could calculate the possible outcomes from a range of inputs:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1">range<span class="ot"> ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">range <span class="fu">=</span> runAp (variable (const [<span class="dv">1</span><span class="fu">..</span><span class="dv">3</span>])) <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">range (x <span class="fu">+</span> y <span class="fu">+</span> z)</a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="co">-- [3,4,5,4,5,6,5,6,7]</span></a></code></pre></div>
+<p>Or you could ask the user for input:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">query ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">query <span class="fu">=</span> runAp (variable f) <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">    f s <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">      putStr <span class="st">&quot;Input a value for &quot;</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">      putStrLn s</a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">      fmap read getLine</a></code></pre></div>
+<p>Finally, and this one’s a bit exotic, you could examine every variable in turn, with defaults for the others:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1">zygo</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="ot">    ::</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x)</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">    <span class="ot">-&gt;</span> (forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">    <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">    <span class="ot">-&gt;</span> [b]</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">zygo (<span class="ot">l ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> x) (<span class="ot">c ::</span> forall x<span class="fu">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">    fst <span class="fu">.</span> go id</a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-9" data-line-number="9"><span class="ot">    go ::</span> forall c<span class="fu">.</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], c)</a>
+<a class="sourceLine" id="cb15-10" data-line-number="10">    go _ (<span class="dt">Pure</span> x) <span class="fu">=</span> ([], x)</a>
+<a class="sourceLine" id="cb15-11" data-line-number="11">    go k (<span class="dt">Ap</span> x f) <span class="fu">=</span> (c x (k <span class="fu">.</span> ls) <span class="fu">:</span> xs, ls lx)</a>
+<a class="sourceLine" id="cb15-12" data-line-number="12">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-13" data-line-number="13">        (xs,ls) <span class="fu">=</span> go (k <span class="fu">.</span> (<span class="fu">$</span> lx)) f</a>
+<a class="sourceLine" id="cb15-14" data-line-number="14">        lx <span class="fu">=</span> l x</a>
+<a class="sourceLine" id="cb15-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb15-16" data-line-number="16"><span class="ot">examineEach ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>]</a>
+<a class="sourceLine" id="cb15-17" data-line-number="17">examineEach <span class="fu">=</span> zygo (variable (const <span class="dv">1</span>)) g <span class="fu">.</span> runAppNum</a>
+<a class="sourceLine" id="cb15-18" data-line-number="18">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-19" data-line-number="19"><span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb15-20" data-line-number="20">    g (<span class="dt">Constant</span> x) rhs _ <span class="fu">=</span> rhs x</a>
+<a class="sourceLine" id="cb15-21" data-line-number="21">    g (<span class="dt">Variable</span> _) rhs i <span class="fu">=</span> rhs i</a></code></pre></div>
+<p>This produces a list of functions which are equivalent to subbing in for each variable with the rest set to 1.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

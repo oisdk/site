@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Lenses are Static Selectors - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Lenses are Static Selectors</h2>
+
+            <div class="info">
+    Posted on June 16, 2016
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Swift.html">Swift</a>
+    
+</div>
+
+<p>So I don’t really know what <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html">KVC</a> is, or much about <code class="sourceCode scala">performSelector</code> functions. <a href="http://inessential.com/2016/05/20/updating_local_objects_with_server_objec">This</a> blogpost, from Brent Simmons, let me know a little bit about why I would want to use them.</p>
+<p>It centred around removing code repetition of this type:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span> <span class="co">// There was an (intentional)</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">}                                    <span class="co">// bug here in the original post</span></a></code></pre></div>
+<p>To clean up the code, Brent used selector methods. At first, I was a little uncomfortable with the solution. As far as I could tell, the basis of a lot of this machinery used functions with types like this:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb2-1" data-line-number="1">func <span class="fu">get</span>(fromSelector: String) -&gt; AnyObject?</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">func <span class="fu">set</span>(forSelector: String) -&gt; ()</a></code></pre></div>
+<p>Which <em>seems</em> to be extremely dynamic. Stringly-typed and all that. Except that there are two different things going on here. One is the dynamic stuff; the ability to get rid of types when you need to. The other, though, has <em>nothing</em> to do with types. The other idea is being able to pass around something which can access the property (or method) of an object. Let’s look at the code that was being repeated:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span></a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">}</a></code></pre></div>
+<p>The logical, obvious thing to do here is try refactor out the common elements. In fact, the only things that <em>differ</em> between the two actions above are the <code class="sourceCode scala">foo</code> and <code class="sourceCode scala">bar</code>. It would be great to be able to write a function like this:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb4-1" data-line-number="1">func <span class="fu">checkThenUpdate</span>(selector) {</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  <span class="kw">if</span> localObject.<span class="fu">selector</span> != serverObject.<span class="fu">selector</span> {</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">    localObject.<span class="fu">selector</span> = serverObject.<span class="fu">selector</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">  }</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">}</a></code></pre></div>
+<p>And then maybe a single line like this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb5-1" data-line-number="1">[foo, bar, baz].<span class="fu">forEach</span>(checkThenUpdate)</a></code></pre></div>
+<p>That’s pretty obviously better. It’s just good programming: when faced with repetition, find the repeated part, and abstract it out. Is it more <em>dynamic</em> than the repetition, though? I don’t think so. All you have to figure out is an appropriate type for the selector, and you can keep all of your static checking. To me, it seems a lot like a <a href="https://hackage.haskell.org/package/lens">lens</a>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb6-1" data-line-number="1">struct Lens&lt;Whole, Part&gt; {</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  let get: Whole -&gt; Part</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  let set: (Whole, Part) -&gt; Whole</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">}</a></code></pre></div>
+<p>(This is a lens similar to the ones used in the <a href="http://hackage.haskell.org/package/data-lens">data-lens</a> library, in contrast to van Laarhoven lenses, or LensFamilies. LensFamilies are used in the <a href="https://hackage.haskell.org/package/lens">lens</a> package, and they allow you to change the type of the <code class="sourceCode scala">Part</code>. They’re also just normal functions, rather than a separate type, so you can manipulate them in a pretty standard way. Swift’s type system isn’t able to model those lenses, though, unfortunately.) It has two things: a getter and a setter. The getter is pretty obvious: it takes the object, and returns the property. The setter is a little more confusing. It’s taking an object, and the new property you want to stick in to the object, and returns the object with that property updated. For instance, if we were to make a <code class="sourceCode scala">Person</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb7-1" data-line-number="1">struct LocalPerson {</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">  <span class="kw">var</span> age: Int</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="kw">var</span> name: String</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">}</a></code></pre></div>
+<p>We could then have a lens for the <code class="sourceCode scala">name</code> field like this:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb8-1" data-line-number="1">let localName: Lens&lt;LocalPerson,String&gt; = <span class="fu">Lens</span>(</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  get: { p in p.<span class="fu">name</span> },</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  set: { (oldPerson,newName) in</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    <span class="kw">var</span> newPerson = oldPerson</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">    newPerson.<span class="fu">name</span> = newName</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">    <span class="kw">return</span> newPerson</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">  }</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">)</a></code></pre></div>
+<p>And you’d use it like this:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb9-1" data-line-number="1">let caoimhe = <span class="fu">LocalPerson</span>(age: <span class="dv">46</span>, name: <span class="st">&quot;caoimhe&quot;</span>)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">localName.<span class="fu">get</span>(caoimhe) <span class="co">// 46</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">localName.<span class="fu">set</span>(caoimhe, <span class="st">&quot;breifne&quot;</span>) <span class="co">// LocalPerson(age: 46, name: &quot;breifne&quot;)</span></a></code></pre></div>
+<p>Straight away, we’re able to do (something) like the <code class="sourceCode scala">checkThenUpdate</code> function:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb10-1" data-line-number="1">func checkThenUpdate</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">  &lt;A: Equatable&gt;</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  (localLens: Lens&lt;LocalPerson,A&gt;, serverLens: Lens&lt;ServerPerson,A&gt;) {</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">  let serverProp = serverLens.<span class="fu">get</span>(serverObject)</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">  <span class="kw">if</span> localLens.<span class="fu">get</span>(localObject) != serverProp {</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">    localObject = localLens.<span class="fu">set</span>(localObject,serverProp)</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">  }</a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">}</a></code></pre></div>
+<p>And it could be called pretty tersely:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="fu">checkThenUpdate</span>(localName, serverLens: serverName)</a></code></pre></div>
+<p>The biggest problem with this approach, obviously, is the boilerplate. In Haskell, that’s solved with Template Haskell, so the lens code is generated for you. (I’d love to see something like that in Swift) There’s a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called “classy-lenses”. That’s where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb12-1" data-line-number="1">struct Place {</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">  <span class="kw">var</span> name: String</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="co">// Instead of just having a lens for the name field, have a whole protocol</span></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6"><span class="co">// for things with a name field:</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">protocol HasName {</a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">  associatedtype Name</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10">  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; { get }</a>
+<a class="sourceLine" id="cb12-11" data-line-number="11">  <span class="kw">var</span> name: Name { get set }</a>
+<a class="sourceLine" id="cb12-12" data-line-number="12">}</a>
+<a class="sourceLine" id="cb12-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb12-14" data-line-number="14"><span class="co">// Because the mutable property is included in the protocol, you can rely on</span></a>
+<a class="sourceLine" id="cb12-15" data-line-number="15"><span class="co">// it in extensions:</span></a>
+<a class="sourceLine" id="cb12-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb12-17" data-line-number="17">extension HasName {</a>
+<a class="sourceLine" id="cb12-18" data-line-number="18">  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; {</a>
+<a class="sourceLine" id="cb12-19" data-line-number="19">    <span class="kw">return</span> <span class="fu">Lens</span>(</a>
+<a class="sourceLine" id="cb12-20" data-line-number="20">      get: {$<span class="fl">0.</span>name},</a>
+<a class="sourceLine" id="cb12-21" data-line-number="21">      set: { (w,p) in </a>
+<a class="sourceLine" id="cb12-22" data-line-number="22">        <span class="kw">var</span> n = w</a>
+<a class="sourceLine" id="cb12-23" data-line-number="23">        n.<span class="fu">name</span> = p</a>
+<a class="sourceLine" id="cb12-24" data-line-number="24">        <span class="kw">return</span> n</a>
+<a class="sourceLine" id="cb12-25" data-line-number="25">      }</a>
+<a class="sourceLine" id="cb12-26" data-line-number="26">    )</a>
+<a class="sourceLine" id="cb12-27" data-line-number="27">  }</a>
+<a class="sourceLine" id="cb12-28" data-line-number="28">  <span class="kw">var</span> name: Name {</a>
+<a class="sourceLine" id="cb12-29" data-line-number="29">    get { <span class="kw">return</span> Self.<span class="fu">name</span>.<span class="fu">get</span>(self) }</a>
+<a class="sourceLine" id="cb12-30" data-line-number="30">    set { self = Self.<span class="fu">name</span>.<span class="fu">set</span>(self,newValue) }</a>
+<a class="sourceLine" id="cb12-31" data-line-number="31">  }</a>
+<a class="sourceLine" id="cb12-32" data-line-number="32">}</a>
+<a class="sourceLine" id="cb12-33" data-line-number="33"></a>
+<a class="sourceLine" id="cb12-34" data-line-number="34"><span class="co">// This way, you can provide either the lens or the property, and you get the</span></a>
+<a class="sourceLine" id="cb12-35" data-line-number="35"><span class="co">// other for free.</span></a>
+<a class="sourceLine" id="cb12-36" data-line-number="36"></a>
+<a class="sourceLine" id="cb12-37" data-line-number="37">extension Place: HasName {}</a>
+<a class="sourceLine" id="cb12-38" data-line-number="38"></a>
+<a class="sourceLine" id="cb12-39" data-line-number="39"><span class="co">// Then, you can rely on that protocol, and all of the types:</span></a>
+<a class="sourceLine" id="cb12-40" data-line-number="40"></a>
+<a class="sourceLine" id="cb12-41" data-line-number="41">func checkEqualOnNames</a>
+<a class="sourceLine" id="cb12-42" data-line-number="42">  &lt;A,B where A: HasName, B: HasName, A.<span class="fu">Name</span>: Equatable, A.<span class="fu">Name</span> == B.<span class="fu">Name</span>&gt;</a>
+<a class="sourceLine" id="cb12-43" data-line-number="43">  (x: A, _ y: B) -&gt; Bool {</a>
+<a class="sourceLine" id="cb12-44" data-line-number="44">    <span class="kw">return</span> x.<span class="fu">name</span> == y.<span class="fu">name</span></a>
+<a class="sourceLine" id="cb12-45" data-line-number="45">}</a></code></pre></div>
+<p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the types intact. Other people have spoken about the other things you can do with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams - Lenses in Swift</a>), like composing them together, chaining operations, etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method cascading</a>) Unfortunately, in current Swift, the boilerplate makes all of this a little unpleasant. Still, they’re an interesting idea, and they show how a good type system needn’t always get in the way.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,349 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Scheduling Effects - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Scheduling Effects</h2>
+
+            <div class="info">
+    Posted on June 23, 2018
+</div>
+<div class="info">
+    
+        Part 4 of a <a href="../series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>After the <a href="2018-06-03-breadth-first-traversals-in-too-much-detail.html">last post</a>, Noah Easterly pointed me to their <a href="https://hackage.haskell.org/package/tree-traversals">tree-traversals library</a>, and in particular the <a href="https://hackage.haskell.org/package/tree-traversals-0.1.0.0/docs/Control-Applicative-Phases.html#t:Phases"><code class="sourceCode haskell"><span class="dt">Phases</span></code></a> applicative transformer. It allows you to batch applicative effects to be run together: for the breadth-first traversal, we can batch the effects from each level together, giving us a lovely short solution to the problem.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">breadthFirst c <span class="fu">=</span> runPhasesForwards <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    go (x<span class="fu">:&lt;</span>xs) <span class="fu">=</span> liftA2 (<span class="fu">:&lt;</span>) (now (c x)) (delay (traverse go xs))</a></code></pre></div>
+<p>In my efforts to speed this implementation up, I came across a wide and interesting literature on scheduling effects, which I’ll go through a little here.</p>
+<h1 id="coroutines">Coroutines</h1>
+<p>The first thing that jumps to mind, for me, when I think of “scheduling” is coroutines. These are constructs that let you finely control the order of execution of effects. They’re well explored in Haskell by now, and most libraries will let you do something like the following:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1">oneThenTwo <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  liftIO <span class="fu">$</span> print <span class="dv">1</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  delay <span class="fu">$</span> liftIO <span class="fu">$</span> print <span class="dv">2</span></a></code></pre></div>
+<p>We first print <code>1</code>, then, after a delay, we print <code>2</code>. The <code class="sourceCode haskell">delay</code> doesn’t make a difference if we just run the whole thing:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> retract oneThenTwo</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="dv">1</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="dv">2</span></a></code></pre></div>
+<p>But you can see its effect when we use the <code class="sourceCode haskell">interleave</code> combinator:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> retract <span class="fu">$</span> interleave (replicate <span class="dv">3</span> oneThenTwo)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="dv">1</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="dv">1</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="dv">1</span></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="dv">2</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="dv">2</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7"><span class="dv">2</span></a></code></pre></div>
+<p>Hopefully you can see how useful this might be, and the similarity to the <code class="sourceCode haskell"><span class="dt">Phases</span></code> construction.</p>
+<p>The genealogy of most coroutine libraries in Haskell seems to trace back to <span class="citation" data-cites="blazevic_coroutine_2011">Blažević (<a href="#ref-blazevic_coroutine_2011">2011</a>)</span> or <span class="citation" data-cites="kiselyov_iteratees_2012">Kiselyov (<a href="#ref-kiselyov_iteratees_2012">2012</a>)</span>: the implementation I have been using in these past few examples (<a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Iter.html"><code>IterT</code></a>) comes from a slightly different place. Let’s take a quick detour to explore it a little.</p>
+<h1 id="partiality">Partiality</h1>
+<p>In functional programming, there are several constructions for modeling error-like states: <code class="sourceCode haskell"><span class="dt">Maybe</span></code> for your nulls, <code class="sourceCode haskell"><span class="dt">Either</span></code> for your exceptions. What separates these approaches from the “unsafe” variants (null pointers, unchecked exceptions) is that we can <em>prove</em>, in the type system, that the error case is handled correctly.</p>
+<p>Conspicuously absent from the usual toolbox for modeling partiality is a way to model <em>nontermination</em>. At first glance, it may seem strange to attempt to do so in Haskell. After all, if I have a function of type:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Int</span></a></code></pre></div>
+<p>I can prove that I won’t throw any errors (with <code class="sourceCode haskell"><span class="dt">Either</span></code>, that is), because the type <code class="sourceCode haskell"><span class="dt">Int</span></code> doesn’t contain <code class="sourceCode haskell"><span class="dt">Left</span> _</code>. I’ve also proved, miraculously, that I won’t make any null dereferences, because <code class="sourceCode haskell"><span class="dt">Int</span></code> also doesn’t contain <code class="sourceCode haskell"><span class="dt">Nothing</span></code>. I <em>haven’t</em> proved, however, that I won’t loop infinitely, because (in Haskell), <code class="sourceCode haskell"><span class="dt">Int</span></code> absolutely <em>does</em> contain <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>⊥</mi><annotation encoding="application/x-tex">\bot</annotation></semantics></math>.</p>
+<p>So we’re somewhat scuppered. On the other hand, While we can’t <em>prove</em> termination in Haskell, we can:</p>
+<ol>
+<li>Model it.</li>
+<li>Prove it in something else.</li>
+</ol>
+<p>Which is exactly what Venanzio Capretta did in the fascinating (and quite accessible) talk “Partiality is an effect” <span class="citation" data-cites="capretta_partiality_2004">(Capretta, Altenkirch, and Uustalu <a href="#ref-capretta_partiality_2004">2004</a>)</span><a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<p>The monad in question looks like this:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode idris"><code class="sourceCode idris"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Iter</span> a</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Now</span> a</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">    <span class="fu">|</span> <span class="dt">Later</span> (<span class="dt">Inf</span> (<span class="dt">Iter</span> a))</a></code></pre></div>
+<p>We’re writing in Idris for the time being, so that we can prove termination and so on. The “recursive call” to <code class="sourceCode haskell"><span class="dt">Iter</span></code> is guarded by the <code class="sourceCode haskell"><span class="dt">Inf</span></code> type: this turns on a different kind of totality checking in the compiler. Usually, Idris will prevent you from constructing infinite values. But that’s exactly what we want to do here. Take the little-known function <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:until"><code class="sourceCode haskell">until</code></a>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1">until<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a></code></pre></div>
+<p>It’s clearly not necessarily total, and the totality checker will complain as such when we try and implement it directly:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode idris"><code class="sourceCode idris"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="fu">until</span> <span class="ot">:</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">until p f x <span class="fu">=</span> <span class="kw">if</span> p x <span class="kw">then</span> x <span class="kw">else</span> until p f (f x)</a></code></pre></div>
+<p>But we can use <code class="sourceCode haskell"><span class="dt">Iter</span></code> to model that possible totality:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode idris"><code class="sourceCode idris"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="fu">until</span> <span class="ot">:</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Iter</span> a</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">until p f x <span class="fu">=</span> <span class="kw">if</span> p x <span class="kw">then</span> <span class="dt">Now</span> x <span class="kw">else</span> <span class="dt">Later</span> (until p f (f x))</a></code></pre></div>
+<p>Of course, nothing’s for free: when we get the ability to construct infinite values, we lose the ability to consume them.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode idris"><code class="sourceCode idris"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="fu">run</span> <span class="ot">:</span> <span class="dt">Iter</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">run (<span class="dt">Now</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">run (<span class="dt">Later</span> x) <span class="fu">=</span> run x</a></code></pre></div>
+<p>We get an error on the <code class="sourceCode haskell">run</code> function. However, as you would expect, we can run <em>guarded</em> iteration: iteration up until some finite point.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode idris"><code class="sourceCode idris"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="fu">runUntil</span> <span class="ot">:</span> <span class="dt">Nat</span> <span class="ot">-&gt;</span> <span class="dt">Iter</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">runUntil <span class="dt">Z</span> <span class="fu">_</span> <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">runUntil (<span class="dt">S</span> n) (<span class="dt">Now</span> x) <span class="fu">=</span> <span class="dt">Just</span> x</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">runUntil (<span class="dt">S</span> n) (<span class="dt">Later</span> x) <span class="fu">=</span> runUntil n x</a></code></pre></div>
+<p>Making our way back to Haskell, we must first—as is the law—add a type parameter, and upgrade our humble monad to a monad transformer:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">IterT</span> m a <span class="fu">=</span> <span class="dt">IterT</span> {<span class="ot"> runIterT ::</span> m (<span class="dt">Either</span> a (<span class="dt">IterT</span> m a)) }</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3"><span class="kw">type</span> <span class="dt">Iter</span> <span class="fu">=</span> <span class="dt">IterT</span> <span class="dt">Identity</span></a></code></pre></div>
+<p>The semantic meaning of the extra <code class="sourceCode haskell">m</code> here is interesting: each layer adds not just a recursive step, or a single iteration, but a single effect. Interpreting things in this way gets us back to the original goal:</p>
+<h1 id="scheduling">Scheduling</h1>
+<p>The <code class="sourceCode haskell"><span class="dt">Later</span></code> constructor above can be translated to a <code class="sourceCode haskell">delay</code> function on the transformer:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1">delay <span class="fu">=</span> <span class="dt">IterT</span> <span class="fu">.</span> pure <span class="fu">.</span> <span class="dt">Right</span></a></code></pre></div>
+<p>And using this again, we can write the following incredibly short definition for <code class="sourceCode haskell">unfoldTreeM_BF</code>:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">unfoldTreeM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> m (<span class="dt">Tree</span> a)</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">unfoldTreeM_BF f <span class="fu">=</span> retract <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">    go b <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">      (x,xs) <span class="ot">&lt;-</span> lift (f b)</a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">      fmap (<span class="dt">Node</span> x) (interleave (map (delay <span class="fu">.</span> go) xs))</a></code></pre></div>
+<h1 id="applicative">Applicative</h1>
+<p>It would be nice to bring this back to traversals, but alas, <code class="sourceCode haskell"><span class="dt">IterT</span></code> is pretty monad-centric. What’s more, if it’s analogous to <code class="sourceCode haskell"><span class="dt">Phases</span></code> it certainly doesn’t look like it:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Phases</span> f a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">  <span class="dt">Lift</span><span class="ot"> ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3"><span class="ot">  (:&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f b</a></code></pre></div>
+<p>However, in the documentation for <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Iter.html#t:IterT"><code class="sourceCode haskell"><span class="dt">IterT</span></code></a>, there’s the following little note:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="dt">IterT</span> <span class="fu">~</span> <span class="dt">FreeT</span> <span class="dt">Identity</span></a></code></pre></div>
+<p>Where <code class="sourceCode haskell"><span class="dt">FreeT</span></code> is the <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Monad-Trans-Free.html">free monad transformer</a>. This seems to strongly hint that we could get the same thing for applicatives with <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Applicative-Trans-Free.html"><code class="sourceCode haskell"><span class="dt">ApT</span></code></a>. Let’s try it:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Phases</span> f a <span class="fu">=</span> <span class="dt">Phases</span></a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">    {<span class="ot"> runPhases ::</span> <span class="dt">ApT</span> <span class="dt">Identity</span> f a</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">    } <span class="kw">deriving</span> <span class="dt">Functor</span></a></code></pre></div>
+<p>The <code class="sourceCode haskell"><span class="dt">Applicative</span></code> instance is a little hairy, but it <em>seems</em> correct:</p>
+<details>
+<p><summary> Applicative Instance </summary></p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">         <span class="dt">Applicative</span> (<span class="dt">Phases</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">    pure <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> pure</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">    liftA2 f' (<span class="dt">Phases</span> (<span class="dt">ApT</span> xs')) (<span class="dt">Phases</span> (<span class="dt">ApT</span> ys')) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">        <span class="dt">Phases</span> (<span class="dt">ApT</span> (liftA2 (go f') xs' ys'))</a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-7" data-line-number="7">        go</a>
+<a class="sourceLine" id="cb18-8" data-line-number="8"><span class="ot">            ::</span> <span class="ot">∀</span> a b c<span class="fu">.</span></a>
+<a class="sourceLine" id="cb18-9" data-line-number="9">               (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb18-10" data-line-number="10">            <span class="ot">-&gt;</span> <span class="dt">ApF</span> <span class="dt">Identity</span> f a</a>
+<a class="sourceLine" id="cb18-11" data-line-number="11">            <span class="ot">-&gt;</span> <span class="dt">ApF</span> <span class="dt">Identity</span> f b</a>
+<a class="sourceLine" id="cb18-12" data-line-number="12">            <span class="ot">-&gt;</span> <span class="dt">ApF</span> <span class="dt">Identity</span> f c</a>
+<a class="sourceLine" id="cb18-13" data-line-number="13">        go f (<span class="dt">Pure</span> x) ys <span class="fu">=</span> fmap (f x) ys</a>
+<a class="sourceLine" id="cb18-14" data-line-number="14">        go f xs (<span class="dt">Pure</span> y) <span class="fu">=</span> fmap (<span class="ot">`f`</span> y) xs</a>
+<a class="sourceLine" id="cb18-15" data-line-number="15">        go f (<span class="dt">Ap</span> x (<span class="dt">ApT</span> xs)) (<span class="dt">Ap</span> y (<span class="dt">ApT</span> ys)) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb18-16" data-line-number="16">            <span class="dt">Ap</span></a>
+<a class="sourceLine" id="cb18-17" data-line-number="17">                (liftA2 (,) x y)</a>
+<a class="sourceLine" id="cb18-18" data-line-number="18">                (<span class="dt">ApT</span> (liftA2 (go (\xx yy <span class="ot">-&gt;</span> uncurry f <span class="fu">.</span> (xx <span class="fu">***</span> yy))) xs ys))</a></code></pre></div>
+</details>
+<p>(on a side note: thank <em>goodness</em> for <code class="sourceCode haskell">liftA2</code> finally getting into <code class="sourceCode haskell"><span class="dt">Applicative</span></code>)</p>
+<p>And we get all the normal combinators:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="ot">delay ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">delay <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> <span class="dt">ApT</span> <span class="fu">.</span> pure <span class="fu">.</span> <span class="dt">Ap</span> (pure ()) <span class="fu">.</span> fmap const <span class="fu">.</span> runPhases</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="ot">lift ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">lift <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> liftApO</a></code></pre></div>
+<p>The issue comes with running the thing at the end: <code class="sourceCode haskell"><span class="dt">Monad</span></code> creeps back in.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">retract ::</span> <span class="dt">Monad</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">retract <span class="fu">=</span> fmap (runIdentity <span class="fu">.</span> retractAp) <span class="fu">.</span> joinApT <span class="fu">.</span> runPhases</a></code></pre></div>
+<p>Because the effects are all layered on top of each other, you need to flatten them out at the end, which requires <code class="sourceCode haskell">join</code>. Mind you, it does work: it’s just not as general as it could be.</p>
+<p>All’s not lost, though. Turns out, we never needed the transformer in the first place: we could just define the different applicative instance straight off.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Phases</span> f a <span class="fu">=</span> <span class="dt">Phases</span></a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">    {<span class="ot"> runPhases ::</span> <span class="dt">Ap</span> f a</a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">    } <span class="kw">deriving</span> <span class="dt">Functor</span></a>
+<a class="sourceLine" id="cb21-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb21-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb21-6" data-line-number="6">         <span class="dt">Applicative</span> (<span class="dt">Phases</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-7" data-line-number="7">    pure <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> <span class="dt">Pure</span></a>
+<a class="sourceLine" id="cb21-8" data-line-number="8">    liftA2 f' (<span class="dt">Phases</span> xs') (<span class="dt">Phases</span> ys') <span class="fu">=</span> <span class="dt">Phases</span> (go f' xs' ys')</a>
+<a class="sourceLine" id="cb21-9" data-line-number="9">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-10" data-line-number="10"><span class="ot">        go ::</span> <span class="ot">∀</span> a b c<span class="fu">.</span></a>
+<a class="sourceLine" id="cb21-11" data-line-number="11">              (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb21-12" data-line-number="12">           <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a</a>
+<a class="sourceLine" id="cb21-13" data-line-number="13">           <span class="ot">-&gt;</span> <span class="dt">Ap</span> f b</a>
+<a class="sourceLine" id="cb21-14" data-line-number="14">           <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c</a>
+<a class="sourceLine" id="cb21-15" data-line-number="15">        go f (<span class="dt">Pure</span> x) ys <span class="fu">=</span> fmap (f x) ys</a>
+<a class="sourceLine" id="cb21-16" data-line-number="16">        go f xs (<span class="dt">Pure</span> y) <span class="fu">=</span> fmap (<span class="ot">`f`</span> y) xs</a>
+<a class="sourceLine" id="cb21-17" data-line-number="17">        go f (<span class="dt">Ap</span> x xs) (<span class="dt">Ap</span> y ys) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb21-18" data-line-number="18">            <span class="dt">Ap</span></a>
+<a class="sourceLine" id="cb21-19" data-line-number="19">                (liftA2 (,) x y)</a>
+<a class="sourceLine" id="cb21-20" data-line-number="20">                (go (\xx yy <span class="ot">-&gt;</span> uncurry f <span class="fu">.</span> (xx <span class="fu">***</span> yy)) xs ys)</a>
+<a class="sourceLine" id="cb21-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb21-22" data-line-number="22"><span class="ot">delay ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb21-23" data-line-number="23">delay <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> <span class="dt">Ap</span> (pure ()) <span class="fu">.</span> fmap const <span class="fu">.</span> runPhases</a>
+<a class="sourceLine" id="cb21-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb21-25" data-line-number="25"><span class="ot">retract ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb21-26" data-line-number="26">retract <span class="fu">=</span> retractAp <span class="fu">.</span> runPhases</a>
+<a class="sourceLine" id="cb21-27" data-line-number="27"></a>
+<a class="sourceLine" id="cb21-28" data-line-number="28"><span class="ot">lift ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb21-29" data-line-number="29">lift <span class="fu">=</span> <span class="dt">Phases</span> <span class="fu">.</span> liftAp</a></code></pre></div>
+<h1 id="more-coroutines">More Coroutines</h1>
+<p>In the wonderful article Coroutine Pipelines <span class="citation" data-cites="blazevic_coroutine_2011">(Blažević <a href="#ref-blazevic_coroutine_2011">2011</a>)</span>, several different threads on coroutine-like constructions are unified. What I’ve demonstrated above isn’t yet as powerful as what you might see in a full coroutine library: ideally, you’d want generators and sinks. As it turns out, when we look back at the note from <code class="sourceCode haskell"><span class="dt">IterT</span></code>:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="dt">IterT</span> <span class="fu">~</span> <span class="dt">FreeT</span> <span class="dt">Identity</span></a></code></pre></div>
+<p>We can get both of those other constructs by swapping out <code class="sourceCode haskell"><span class="dt">Identity</span></code><a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="dt">Generator</span> a <span class="fu">=</span> <span class="dt">FreeT</span> ((,) a)</a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="dt">Sink</span> a <span class="fu">=</span> <span class="dt">FreeT</span> ((<span class="ot">-&gt;</span>) a)</a></code></pre></div>
+<p>(<code class="sourceCode haskell"><span class="dt">Sink</span></code> is usually called an <code class="sourceCode haskell"><span class="dt">Iteratee</span></code>)</p>
+<p>This is the fundamental abstraction that underlies things like the pipes library <span class="citation" data-cites="gonzalez_pipes_2018">(Gonzalez <a href="#ref-gonzalez_pipes_2018">2018</a>)</span>.</p>
+<h1 id="interleaving">Interleaving</h1>
+<p>The only missing part from the first coroutine example by now is <code class="sourceCode haskell">interleave</code>. In the free library, it has the following signature:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="ot">interleave ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> [<span class="dt">IterT</span> m a] <span class="ot">-&gt;</span> <span class="dt">IterT</span> m [a]</a></code></pre></div>
+<p>But we should be able to spot that, really, it’s a traversal. And, as a traversal, it should rely on some underlying <code class="sourceCode haskell"><span class="dt">Applicative</span></code> instance. Let’s try and come up with one:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Parallel</span> m f a <span class="fu">=</span> <span class="dt">Parallel</span></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">    {<span class="ot"> runParallel ::</span> <span class="dt">FreeT</span> m f a</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3">    }</a>
+<a class="sourceLine" id="cb25-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb25-5" data-line-number="5"><span class="kw">instance</span> (<span class="dt">Functor</span> f, <span class="dt">Functor</span> m) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb25-6" data-line-number="6">         <span class="dt">Functor</span> (<span class="dt">Parallel</span> m f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-7" data-line-number="7">    fmap f <span class="fu">=</span> <span class="dt">Parallel</span> <span class="fu">.</span> <span class="dt">FreeT</span> <span class="fu">.</span> fmap go <span class="fu">.</span> runFreeT <span class="fu">.</span> runParallel</a>
+<a class="sourceLine" id="cb25-8" data-line-number="8">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-9" data-line-number="9">        go <span class="fu">=</span> bimap f (<span class="dt">FreeT</span> <span class="fu">.</span> fmap go <span class="fu">.</span> runFreeT)</a>
+<a class="sourceLine" id="cb25-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb25-11" data-line-number="11"><span class="kw">instance</span> (<span class="dt">Applicative</span> f, <span class="dt">Applicative</span> m) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb25-12" data-line-number="12">         <span class="dt">Applicative</span> (<span class="dt">Parallel</span> m f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-13" data-line-number="13">    pure <span class="fu">=</span> <span class="dt">Parallel</span> <span class="fu">.</span> <span class="dt">FreeT</span> <span class="fu">.</span> pure <span class="fu">.</span> <span class="dt">Pure</span></a>
+<a class="sourceLine" id="cb25-14" data-line-number="14">    <span class="dt">Parallel</span> fs' <span class="fu">&lt;*&gt;</span> <span class="dt">Parallel</span> xs' <span class="fu">=</span> <span class="dt">Parallel</span> (unw fs' xs')</a>
+<a class="sourceLine" id="cb25-15" data-line-number="15">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-16" data-line-number="16">        unw (<span class="dt">FreeT</span> fs) (<span class="dt">FreeT</span> xs) <span class="fu">=</span> <span class="dt">FreeT</span> (liftA2 go fs xs)</a>
+<a class="sourceLine" id="cb25-17" data-line-number="17">        go (<span class="dt">Pure</span> f) <span class="fu">=</span> bimap f (runParallel <span class="fu">.</span> fmap f <span class="fu">.</span> <span class="dt">Parallel</span>)</a>
+<a class="sourceLine" id="cb25-18" data-line-number="18">        go (<span class="dt">Free</span> fs) <span class="fu">=</span> <span class="dt">Free</span> <span class="fu">.</span> \<span class="kw">case</span></a>
+<a class="sourceLine" id="cb25-19" data-line-number="19">            <span class="dt">Pure</span> x <span class="ot">-&gt;</span> fmap (runParallel <span class="fu">.</span> fmap (<span class="fu">$</span>x) <span class="fu">.</span> <span class="dt">Parallel</span>) fs</a>
+<a class="sourceLine" id="cb25-20" data-line-number="20">            <span class="dt">Free</span> xs <span class="ot">-&gt;</span> liftA2 unw fs xs</a></code></pre></div>
+<p>Now, interleave is just <code class="sourceCode haskell">sequenceA</code>!</p>
+<h1 id="applicatives-again">Applicatives, Again</h1>
+<p>So we can see that there’s a “parallel” applicative for both the free monad and the free applicative. To try and understand this type a little better, we can leverage our intuition about a much simpler, more familiar setting: lists. There’s an interesting similarity between lists and the free monad: <code class="sourceCode haskell"><span class="dt">FreeT</span> ((,) a)</code>) looks a lot like “<a href="https://wiki.haskell.org/ListT_done_right"><code class="sourceCode haskell"><span class="dt">ListT</span></code> done right</a>” (so much so, in fact, that most coroutine libraries provide their own version of it). More concretely, list also has a famous “parallel” applicative: <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Applicative.html#t:ZipList"><code class="sourceCode haskell"><span class="dt">ZipList</span></code></a>!</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">ZipList</span> a</a>
+<a class="sourceLine" id="cb26-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">ZipList</span> </a>
+<a class="sourceLine" id="cb26-3" data-line-number="3">    {<span class="ot"> getZipList ::</span> [a]</a>
+<a class="sourceLine" id="cb26-4" data-line-number="4">    } <span class="kw">deriving</span> <span class="dt">Functor</span></a>
+<a class="sourceLine" id="cb26-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb26-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">ZipList</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb26-7" data-line-number="7">  pure <span class="fu">=</span> <span class="dt">ZipList</span> <span class="fu">.</span> repeat</a>
+<a class="sourceLine" id="cb26-8" data-line-number="8">  liftA2 f (<span class="dt">ZipList</span> xs) (<span class="dt">ZipList</span> ys) <span class="fu">=</span> <span class="dt">ZipList</span> (zipWith f xs ys)</a></code></pre></div>
+<p>We’ll use some of our knowledge about <code class="sourceCode haskell"><span class="dt">ZipList</span></code> to help us in the next section.</p>
+<h1 id="timekeeping">Timekeeping</h1>
+<p>We’ve seen that efforts to model both coroutines and partiality end up in the same neighborhood: there’s yet another way to get there, which seems (at first) almost the opposite of the second. It starts with a blog post from Conor McBride <span class="citation" data-cites="mcbride_time_2009">(<a href="#ref-mcbride_time_2009">2009</a>)</span> called “Time flies like an applicative functor”. Curiously, here too breadth-first labeling is the focus. Remember first the lovely circular solution from <span class="citation" data-cites="jones_linear-time_1993-1">(<span class="citeproc-not-found" data-reference-id="jones_linear-time_1993-1"><strong>???</strong></span>)</span>:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> <span class="fu">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb27-3" data-line-number="3"><span class="ot">relabel ::</span> <span class="dt">Tree</span> x <span class="ot">-&gt;</span> [[a]] <span class="ot">-&gt;</span> (<span class="dt">Tree</span> a, [[a]])</a>
+<a class="sourceLine" id="cb27-4" data-line-number="4">relabel <span class="dt">Leaf</span> xss <span class="fu">=</span> (<span class="dt">Leaf</span>,xss)</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5">relabel (<span class="dt">Node</span> _ l r) ((x<span class="fu">:</span>xs)<span class="fu">:</span>xss0) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb27-6" data-line-number="6">  <span class="kw">let</span> (l',xss1) <span class="fu">=</span> relabel l xss0</a>
+<a class="sourceLine" id="cb27-7" data-line-number="7">      (r',xss2) <span class="fu">=</span> relabel r xss1</a>
+<a class="sourceLine" id="cb27-8" data-line-number="8">  <span class="kw">in</span> (<span class="dt">Node</span> x l' r',xs<span class="fu">:</span>xss2)</a>
+<a class="sourceLine" id="cb27-9" data-line-number="9">  </a>
+<a class="sourceLine" id="cb27-10" data-line-number="10"><span class="ot">bflabel ::</span> <span class="dt">Tree</span> x <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb27-11" data-line-number="11">bflabel tr xs <span class="fu">=</span> u</a>
+<a class="sourceLine" id="cb27-12" data-line-number="12">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb27-13" data-line-number="13">    (u,xss) <span class="fu">=</span> relabel tr (xs<span class="fu">:</span>xss)</a></code></pre></div>
+<p>As lovely as it is, spare a thought for the poor totality checker: it’s hard to imagine how it would even <em>start</em> to show that something so lazy and circular would terminate. <code class="sourceCode haskell"><span class="dt">IterT</span></code> won’t help us here, either: it can help us express programs that <em>might</em> diverge, not weird-looking ones that definitely won’t.</p>
+<p>The solution presented is a type (<code class="sourceCode haskell"><span class="dt">De</span></code>) which has a limited set of combinators: a fixpoint (<code class="sourceCode haskell"><span class="ot">fix ::</span> (<span class="dt">De</span> x <span class="ot">-&gt;</span> x) <span class="ot">-&gt;</span> x</code>), and an applicative instance. As long as all problematic recursive calls are instead expressed using those combinators, the termination checker should be satisfied.</p>
+<p><code class="sourceCode haskell"><span class="dt">De</span></code> can be thought of as a “delay” wrapper. Values of type <code class="sourceCode haskell"><span class="dt">De</span> a</code> are one step in the future, <code class="sourceCode haskell"><span class="dt">De</span> (<span class="dt">De</span> a)</code> are two, and so on. This idea was later expanded upon in <span class="citation" data-cites="atkey_how_2011">Atkey (<a href="#ref-atkey_how_2011">2011</a>)</span> and <span class="citation" data-cites="atkey_productive_2013">Atkey and McBride (<a href="#ref-atkey_productive_2013">2013</a>)</span> to <em>clock variables</em>. Instead of types with a delay, types are tagged with how much more time they have (something like “fuel” in the Idris sense, maybe). So a value of type <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>a</mi><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle></msup><annotation encoding="application/x-tex">a^\mathsf{K}</annotation></semantics></math> is tagged with time <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><annotation encoding="application/x-tex">\mathsf{K}</annotation></semantics></math>, effectively meaning “I have <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><annotation encoding="application/x-tex">\mathsf{K}</annotation></semantics></math> productive steps left before I diverge”. “Productive steps” will mean something different for every data type: for lists, it could mean that it can produce up until the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><annotation encoding="application/x-tex">\mathsf{K}</annotation></semantics></math>th cons-cell. In the paper <span class="citation" data-cites="atkey_productive_2013">(Atkey and McBride <a href="#ref-atkey_productive_2013">2013</a>)</span> this is fleshed out a little more, with fixpoint combinators and so on. As a concrete example, take the type of the cons operator on streams:</p>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Cons</mtext><mo>:</mo><mtext mathvariant="normal">a</mtext><mo>→</mo><msup><mtext mathvariant="normal">Stream a</mtext><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle></msup><mo>→</mo><msup><mtext mathvariant="normal">Stream a</mtext><mrow><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><mo>+</mo><mn>1</mn></mrow></msup></mrow><annotation encoding="application/x-tex">\begin{equation}
+\text{Cons} : \text{a}
+\rightarrow \text{Stream a}^\mathsf{K}
+\rightarrow \text{Stream a}^{\mathsf{K}+1}
+\end{equation}</annotation></semantics></math>
+<p>It increments the clock on the type, saying that it has one more productive step than it did before. This is kind of the opposite of a “delay”: previously, the scheduling types have meant “this is available <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><annotation encoding="application/x-tex">\mathsf{K}</annotation></semantics></math> number of steps in the future” rather than “this is available for another <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle><annotation encoding="application/x-tex">\mathsf{K}</annotation></semantics></math> steps”. We can still describe delays in this system, though, using the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mo>⊳</mo><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle></msup><annotation encoding="application/x-tex">\rhd^\mathsf{K}</annotation></semantics></math> notation:</p>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">Cons</mtext><mo>:</mo><mtext mathvariant="normal">a</mtext><mo>→</mo><mover><mo>⊳</mo><mstyle mathvariant="sans-serif"><mi>𝖪</mi></mstyle></mover><mtext mathvariant="normal">Stream a</mtext><mo>→</mo><mtext mathvariant="normal">Stream a</mtext></mrow><annotation encoding="application/x-tex">\begin{equation}
+\text{Cons} : \text{a}
+\rightarrow \rhd^\mathsf{K}\text{Stream a}
+\rightarrow \text{Stream a}
+\end{equation}</annotation></semantics></math>
+<p>Let’s first try express some of this in the free monad:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1"><span class="kw">data</span> <span class="dt">K</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">K</span></a>
+<a class="sourceLine" id="cb28-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb28-3" data-line-number="3"><span class="kw">data</span> <span class="dt">Delay</span><span class="ot"> ::</span> <span class="dt">K</span> <span class="ot">-&gt;</span> (<span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>) <span class="ot">-&gt;</span> (<span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>) <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb28-4" data-line-number="4">  <span class="dt">Now</span><span class="ot">   ::</span> a <span class="ot">-&gt;</span> <span class="dt">Delay</span> n f m a</a>
+<a class="sourceLine" id="cb28-5" data-line-number="5">  <span class="dt">Later</span><span class="ot"> ::</span> f (<span class="dt">DelayT</span> n f m a) <span class="ot">-&gt;</span> <span class="dt">Delay</span> (<span class="dt">S</span> n) f m a</a>
+<a class="sourceLine" id="cb28-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb28-7" data-line-number="7"><span class="kw">instance</span> (<span class="dt">Functor</span> f, <span class="dt">Functor</span> m) <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Delay</span> n f m) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb28-8" data-line-number="8">  fmap f (<span class="dt">Now</span> x) <span class="fu">=</span> <span class="dt">Now</span> (f x)</a>
+<a class="sourceLine" id="cb28-9" data-line-number="9">  fmap f (<span class="dt">Later</span> xs) <span class="fu">=</span> <span class="dt">Later</span> (fmap (fmap f) xs)</a>
+<a class="sourceLine" id="cb28-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb28-11" data-line-number="11"><span class="kw">newtype</span> <span class="dt">DelayT</span> n f m a <span class="fu">=</span> <span class="dt">DelayT</span> {<span class="ot"> runDelayT ::</span> m (<span class="dt">Delay</span> n f m a) }</a>
+<a class="sourceLine" id="cb28-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb28-13" data-line-number="13"><span class="kw">instance</span> (<span class="dt">Functor</span> f, <span class="dt">Functor</span> m) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb28-14" data-line-number="14">         <span class="dt">Functor</span> (<span class="dt">DelayT</span> n f m) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb28-15" data-line-number="15">    fmap f <span class="fu">=</span> <span class="dt">DelayT</span> <span class="fu">.</span> fmap (fmap f) <span class="fu">.</span> runDelayT</a></code></pre></div>
+<p>We can straight away express one of the combinators from the paper, <code class="sourceCode haskell">force</code>:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="ot">force ::</span> <span class="dt">Functor</span> m <span class="ot">=&gt;</span> (<span class="ot">∀</span> k<span class="fu">.</span> <span class="dt">DelayT</span> k f m a) <span class="ot">-&gt;</span> m a</a>
+<a class="sourceLine" id="cb29-2" data-line-number="2">force (<span class="dt">DelayT</span> xs) <span class="fu">=</span> fmap f xs</a>
+<a class="sourceLine" id="cb29-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb29-4" data-line-number="4"><span class="ot">    f ::</span> <span class="dt">Delay</span> <span class="dt">Z</span> f m a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb29-5" data-line-number="5">    f (<span class="dt">Now</span> x) <span class="fu">=</span> x</a></code></pre></div>
+<p>Similar trick to <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-ST.html#v:runST"><code class="sourceCode haskell">runST</code></a> here: if the type is delayed however long we want it to be, then it mustn’t really be delayed at all.</p>
+<p>Next, remember that we have types for streams (generators) from the <code class="sourceCode haskell"><span class="dt">IterT</span></code> monad:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb30-1" data-line-number="1"><span class="kw">type</span> <span class="dt">Stream</span> n a <span class="fu">=</span> <span class="dt">DelayT</span> n ((,) a)</a></code></pre></div>
+<p>And cons does indeed have the right type:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="ot">cons ::</span> <span class="dt">Applicative</span> m <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Stream</span> n a m b <span class="ot">-&gt;</span> <span class="dt">Stream</span> (<span class="dt">S</span> n) a m b</a>
+<a class="sourceLine" id="cb31-2" data-line-number="2">cons x xs <span class="fu">=</span> <span class="dt">DelayT</span> (pure (<span class="dt">Later</span> (x,xs)))</a></code></pre></div>
+<p>We also get an applicative:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="kw">instance</span> (<span class="dt">Applicative</span> f, <span class="dt">Applicative</span> m) <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb32-2" data-line-number="2">         <span class="dt">Applicative</span> (<span class="dt">DelayT</span> n f m) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb32-3" data-line-number="3">    pure <span class="fu">=</span> <span class="dt">DelayT</span> <span class="fu">.</span> pure <span class="fu">.</span> <span class="dt">Now</span></a>
+<a class="sourceLine" id="cb32-4" data-line-number="4">    <span class="dt">DelayT</span> fs' <span class="fu">&lt;*&gt;</span> <span class="dt">DelayT</span> xs' <span class="fu">=</span> <span class="dt">DelayT</span> (liftA2 go fs' xs')</a>
+<a class="sourceLine" id="cb32-5" data-line-number="5">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb32-6" data-line-number="6"><span class="ot">        go ::</span> <span class="ot">∀</span> k a b<span class="fu">.</span> <span class="dt">Delay</span> k f m (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Delay</span> k f m a <span class="ot">-&gt;</span> <span class="dt">Delay</span> k f m b</a>
+<a class="sourceLine" id="cb32-7" data-line-number="7">        go (<span class="dt">Now</span> f) <span class="fu">=</span> fmap f</a>
+<a class="sourceLine" id="cb32-8" data-line-number="8">        go (<span class="dt">Later</span> fs) <span class="fu">=</span> <span class="dt">Later</span> <span class="fu">.</span> \<span class="kw">case</span></a>
+<a class="sourceLine" id="cb32-9" data-line-number="9">            <span class="dt">Now</span> x <span class="ot">-&gt;</span> fmap (fmap (<span class="fu">$</span>x)) fs</a>
+<a class="sourceLine" id="cb32-10" data-line-number="10">            <span class="dt">Later</span> xs <span class="ot">-&gt;</span> liftA2 (<span class="fu">&lt;*&gt;</span>) fs xs</a></code></pre></div>
+<p>Now, I’m not sure how much this stuff actually corresponds to the paper, but what caught my eye is the statement that <code class="sourceCode haskell"><span class="dt">De</span></code> is a classic “applicative-not-monad”: just like <code class="sourceCode haskell"><span class="dt">ZipList</span></code>. However, under the analogy that the free monad is listy, and the parallel construction is ziplist-y, what we have in the <code class="sourceCode haskell"><span class="dt">DelayT</span></code> is the equivalent of a length-indexed list. These have an applicative instance similar to ziplists: but they also have a monad. Can we apply the same trick here?</p>
+<h1 id="future-posts">Future Posts</h1>
+<p>There’s a lot of fascinating stuff out there—about clock variables, especially—that I hope to get a chance to learn about once I get a chance. What I’m particularly interested to follow up on includes:</p>
+<ol>
+<li>Comonads and their relationship to these constructions. Streams are naturally expressed as comonads, could they be used as a basis on which to build a similar “delay” mechanism?</li>
+<li>I’d love to explore more efficient implementations like the ones in <span class="citation" data-cites="spivey_faster_2017">Spivey (<a href="#ref-spivey_faster_2017">2017</a>)</span>.</li>
+<li>I’m interested to see the relationship between these types, power series, and algebras for combinatorial search <span class="citation" data-cites="spivey_algebras_2009">(Spivey <a href="#ref-spivey_algebras_2009">2009</a>)</span>.</li>
+</ol>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-atkey_how_2011">
+<p>Atkey, Robert. 2011. “How to be a Productive Programmer - by putting things off until tomorrow.” Heriot-Watt University.</p>
+</div>
+<div id="ref-atkey_productive_2013">
+<p>Atkey, Robert, and Conor McBride. 2013. “Productive coprogramming with guarded recursion.” In, 197. ACM Press. doi:<a href="https://doi.org/10.1145/2500365.2500597">10.1145/2500365.2500597</a>.</p>
+</div>
+<div id="ref-blazevic_coroutine_2011">
+<p>Blažević, Mario. 2011. “Coroutine Pipelines.” <em>The Monad.Reader</em> 19 (19) (August): 29–50.</p>
+</div>
+<div id="ref-capretta_partiality_2004">
+<p>Capretta, Venanzio, Thorsten Altenkirch, and Tarmo Uustalu. 2004. “Partiality is an effect.” In <em>Dependently Typed Programming</em>, 04381:20. Dagstuhl Seminar Proceedings. Dagstuhl, Germany: Internationales Begegnungs- und Forschungszentrum für Informatik (IBFI), Schloss Dagstuhl, Germany.</p>
+</div>
+<div id="ref-gonzalez_pipes_2018">
+<p>Gonzalez, Gabriel. 2018. “Pipes: Compositional pipelines.”</p>
+</div>
+<div id="ref-kiselyov_iteratees_2012">
+<p>Kiselyov, Oleg. 2012. “Iteratees.” In <em>Proceedings of the 11th International Conference on Functional and Logic Programming</em>, 166–181. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer, Berlin, Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-29822-6_15">10.1007/978-3-642-29822-6_15</a>.</p>
+</div>
+<div id="ref-mcbride_time_2009">
+<p>McBride, Conor. 2009. “Time flies like an applicative functor.” <em>Epilogue for Epigram</em>.</p>
+</div>
+<div id="ref-spivey_algebras_2009">
+<p>Spivey, J. Michael. 2009. “Algebras for combinatorial search.” <em>Journal of Functional Programming</em> 19 (3-4) (July): 469–487. doi:<a href="https://doi.org/10.1017/S0956796809007321">10.1017/S0956796809007321</a>.</p>
+</div>
+<div id="ref-spivey_faster_2017">
+<p>Spivey, Michael. 2017. “Faster coroutine pipelines.” <em>Proceedings of the ACM on Programming Languages</em> 1 (ICFP) (August): 1–23. doi:<a href="https://doi.org/10.1145/3110249">10.1145/3110249</a>.</p>
+</div>
+</div>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>There is a later, seemingly more formal version of the talk available <span class="citation" data-cites="capretta_partiality_2005">(<span class="citeproc-not-found" data-reference-id="capretta_partiality_2005"><strong>???</strong></span>)</span>, but the one from 2004 was a little easier for me to understand, and had a lot more Haskell code.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Small note: <code>(,) a</code> and <code>(-&gt;) a</code> are adjunct. I wonder if there is any implication from this? Certainly, producers and consumers seem adjunct, but there’s no instance I can find for it in adjunctions.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

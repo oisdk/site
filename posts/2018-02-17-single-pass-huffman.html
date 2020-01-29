@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Single-Pass Huffman Coding - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Single-Pass Huffman Coding</h2>
+
+            <div class="info">
+    Posted on February 17, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Folds.html">Folds</a>
+    
+</div>
+
+<p>While working on something else, I figured out a nice Haskell implementation of Huffman coding, and I thought I’d share it here. I’ll go through a few techniques for transforming a multi-pass algorithm into a single-pass one first, and then I’ll show how to use them for Huffman. If you just want to skip to the code, it’s provided at the end.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<p>The algorithm isn’t single-pass in the sense of <a href="https://www2.cs.duke.edu/csed/curious/compression/adaptivehuff.html">Adaptive Huffman Coding</a>: it still uses the normal Huffman algorithm, but the input is transformed in the same traversal that builds the tree to transform it.</p>
+<h2 id="circular-programming">Circular Programming</h2>
+<p>There are several techniques for turning multi-pass algorithms into single-pass ones in functional languages. Perhaps the most famous is circular programming: using <em>laziness</em> to eliminate a pass. <span class="citation" data-cites="bird_using_1984">Bird (<a href="#ref-bird_using_1984">1984</a>)</span> used this to great effect in solving the repmin problem:</p>
+<blockquote>
+<p>Given a tree of integers, replace every integer with the minimum integer in the tree, in one pass.</p>
+</blockquote>
+<p>For an imperative programmer, the problem is relatively easy: first, write the code to find the minimum value in the tree in the standard way, using a loop and a “smallest so far” accumulator. Then, inside the loop, after updating the accumulator, set the value of the leaf to be a <em>reference</em> to the accumulator.</p>
+<p>At first, that solution may seem necessarily impure: we’re using global, mutable state to update many things at once. However, as the paper shows, we can claw back purity using laziness:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="ot">repMin ::</span> <span class="dt">Tree</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Tree</span> <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">repMin xs <span class="fu">=</span> ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">  (m, ys) <span class="fu">=</span> go xs</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">  go (<span class="dt">Leaf</span> x) <span class="fu">=</span> (x, <span class="dt">Leaf</span> m)</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">  go (xs <span class="fu">:*:</span> ys) <span class="fu">=</span> (min x y, xs' <span class="fu">:*:</span> ys')</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">      (x,xs') <span class="fu">=</span> go xs</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10">      (y,ys') <span class="fu">=</span> go ys</a></code></pre></div>
+<h2 id="there-and-back-again">There and Back Again</h2>
+<p>Let’s say we don’t have laziness at our disposal: are we hosed? No!<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005">2005</a>)</span> explore this very issue, by posing the question:</p>
+<blockquote>
+<p>Given two lists, xs and ys, can you zip xs with the reverse of ys in one pass?</p>
+</blockquote>
+<p>The technique used to solve the problem is named “There and Back Again”; it should be clear why from one of the solutions:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1">convolve xs ys <span class="fu">=</span> walk xs const <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  walk [] k <span class="fu">=</span> k [] ys</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  walk (x<span class="fu">:</span>xs) k <span class="fu">=</span> walk xs (\r (y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> k ((x,y) <span class="fu">:</span> r) ys)</a></code></pre></div>
+<p>The traversal of one list builds up the function to consume the other. We could write repmin in the same way:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">repMin <span class="fu">=</span> uncurry (<span class="fu">$</span>) <span class="fu">.</span> go <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  go (<span class="dt">Leaf</span> x) <span class="fu">=</span> (<span class="dt">Leaf</span>, x)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  go (xs <span class="fu">:*:</span> ys) <span class="fu">=</span> (\m <span class="ot">-&gt;</span> xs' m <span class="fu">:*:</span> ys' m, min xm ym) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    (xs',xm) <span class="fu">=</span> go xs</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">    (ys',ym) <span class="fu">=</span> go ys</a></code></pre></div>
+<h2 id="cayley-representations">Cayley Representations</h2>
+<p>If you’re doing a lot of appending to some list-like structure, you probably don’t want to use actual lists: you’ll end up traversing the left-hand-side of the append many more times than necessary. A type you can drop in to use instead is difference lists <span class="citation" data-cites="hughes_novel_1986">(Hughes <a href="#ref-hughes_novel_1986">1986</a>)</span>:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">type</span> <span class="dt">DList</span> a <span class="fu">=</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="ot">rep ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">DList</span> a</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">rep <span class="fu">=</span> (<span class="fu">++</span>)</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">abs<span class="ot"> ::</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">abs xs <span class="fu">=</span> xs []</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="ot">append ::</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> <span class="dt">DList</span> a <span class="ot">-&gt;</span> <span class="dt">DList</span> a</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">append <span class="fu">=</span> (<span class="fu">.</span>)</a></code></pre></div>
+<p><code class="sourceCode haskell">append</code> is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> in this representation. In fact, for any monoid with a slow <code class="sourceCode haskell">mappend</code>, you can use the same trick: it’s called the Cayley representation, and available as <code class="sourceCode haskell"><span class="dt">Endo</span></code> in <a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-Monoid.html#t:Endo">Data.Monoid</a>.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">rep ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Endo</span> a</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">rep x <span class="fu">=</span> <span class="dt">Endo</span> (mappend x)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">abs<span class="ot"> ::</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span> <span class="dt">Endo</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">abs (<span class="dt">Endo</span> f) <span class="fu">=</span> f mempty</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7"><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Endo</span> a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">  mempty <span class="fu">=</span> <span class="dt">Endo</span> id</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">  mappend (<span class="dt">Endo</span> f) (<span class="dt">Endo</span> g) <span class="fu">=</span> <span class="dt">Enfo</span> (f <span class="fu">.</span> g)</a></code></pre></div>
+<p>You can actually do the same transformation for “monoids” in the categorical sense: applying it to monads, for instance, will give you codensity <span class="citation" data-cites="rivas_notions_2014">(Rivas and Jaskelioff <a href="#ref-rivas_notions_2014">2014</a>)</span>.</p>
+<h2 id="traversable">Traversable</h2>
+<p>Looking back—just for a second—to the repmin example, we should be able to spot a pattern we can generalize. There’s really nothing tree-specific about it, so why can’t we apply it to lists? Or other structures, for that matter? It turns out we can: the <code class="sourceCode haskell">mapAccumL</code> function is tailor-made to this need:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">repMin ::</span> <span class="dt">Traversable</span> t <span class="ot">=&gt;</span> t <span class="dt">Integer</span> <span class="ot">-&gt;</span> t <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">repMin xs <span class="fu">=</span> ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  (<span class="fu">~</span>(<span class="dt">Just</span> m), ys) <span class="fu">=</span> mapAccumL f <span class="dt">Nothing</span> xs</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  f <span class="dt">Nothing</span> x <span class="fu">=</span> (<span class="dt">Just</span> x, m)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">  f (<span class="dt">Just</span> y) x <span class="fu">=</span> (<span class="dt">Just</span> (min x y), m)</a></code></pre></div>
+<p>The tilde before the <code class="sourceCode haskell"><span class="dt">Just</span></code> ensures this won’t fail on empty input.</p>
+<h1 id="huffman-coding">Huffman Coding</h1>
+<p>Finally, it’s time for the main event. Huffman coding is a <em>very</em> multi-pass algorithm, usually. The steps look like this:</p>
+<ol type="1">
+<li>Build a frequency table for each character in the input.</li>
+<li>Build a priority queue from that frequency table.</li>
+<li>Iteratively pop elements and combine them (into Huffman trees) from the queue until there’s only one left.</li>
+<li>That Huffman tree can be used to construct the mapping from items back to their Huffman codes.</li>
+<li>Traverse the input again, using the constructed mapping to replace elements with their codes.</li>
+</ol>
+<p>We can’t <em>skip</em> any of these steps: we can try perform them all at once, though.</p>
+<p>Let’s write the multi-pass version first. We’ll need the frequency table:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">frequencies ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">frequencies <span class="fu">=</span> Map.fromListWith (<span class="fu">+</span>) <span class="fu">.</span> map (flip (,) <span class="dv">1</span>)</a></code></pre></div>
+<p>And a heap, ordered on the frequencies of its elements (I’m using a skew heap here):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Heap</span> a</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  <span class="fu">|</span> <span class="dt">Node</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span> a (<span class="dt">Heap</span> a) (<span class="dt">Heap</span> a)</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Heap</span> a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">  mappend <span class="dt">Nil</span> ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">  mappend xs <span class="dt">Nil</span> <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">  mappend h1<span class="fu">@</span>(<span class="dt">Node</span> i x lx rx) h2<span class="fu">@</span>(<span class="dt">Node</span> j y ly ry)</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">    <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> <span class="dt">Node</span> i x (mappend h2 rx) lx</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">    <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Node</span> j y (mappend h1 ry) ly</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">  mempty <span class="fu">=</span> <span class="dt">Nil</span></a></code></pre></div>
+<p>Next, we need to build the tree<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. We can use the tree type from above.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">buildTree ::</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k) <span class="dt">Nil</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span></a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> x</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">    <span class="dt">Node</span> j y l' r' <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (x <span class="fu">:*:</span> y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l' r'))</a></code></pre></div>
+<p>Then, a way to convert between the tree and a map:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="ot">toMapping ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a [<span class="dt">Bool</span>]</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">toMapping (<span class="dt">Leaf</span> x) <span class="fu">=</span> Map.singleton x []</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">toMapping (xs <span class="fu">:*:</span> ys) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">    Map.union (fmap (<span class="dt">True</span><span class="fu">:</span>) (toMapping xs)) (fmap (<span class="dt">False</span><span class="fu">:</span>) (toMapping ys))</a></code></pre></div>
+<p>And finally, putting the whole thing together:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">huffman ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), [[<span class="dt">Bool</span>]])</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">huffman xs <span class="fu">=</span> (tree, map (mapb <span class="fu">Map.!</span>) xs) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">  freq <span class="fu">=</span> frequencies xs</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">  tree <span class="fu">=</span> buildTree freq</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">  mapb <span class="fu">=</span> maybe Map.empty toMapping tree</a></code></pre></div>
+<h2 id="removing-the-passes">Removing the passes</h2>
+<p>The first thing to fix is the <code class="sourceCode haskell">toMapping</code> function: at every level, it calls <code class="sourceCode haskell">union</code>, a complex and expensive operation. However, <code class="sourceCode haskell">union</code> and <code class="sourceCode haskell">empty</code> form a monoid, so we can use the Cayley representation to reduce the calls to a minimum. Next, we want to get rid of the <code class="sourceCode haskell">fmap</code>s: we can do that by assembling a function to perform the <code class="sourceCode haskell">fmap</code> as we go, as in <code class="sourceCode haskell">convolve</code><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">toMapping ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a [<span class="dt">Bool</span>]</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">toMapping tree <span class="fu">=</span> go tree id Map.empty <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">  go (<span class="dt">Leaf</span> x) k <span class="fu">=</span> Map.insert x (k [])</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">  go (xs <span class="fu">:*:</span> ys) k <span class="fu">=</span></a>
+<a class="sourceLine" id="cb13-5" data-line-number="5">    go xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> go ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)</a></code></pre></div>
+<p>Secondly, we can integrate the <code class="sourceCode haskell">toMapping</code> function with the <code class="sourceCode haskell">buildTree</code> function, removing another pass:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">buildTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a, <span class="dt">Map</span> a [<span class="dt">Bool</span>])</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k, leaf k) <span class="dt">Nil</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (fmap (\k <span class="ot">-&gt;</span> k id Map.empty) x)</a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">    <span class="dt">Node</span> j y l' r' <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb14-8" data-line-number="8">      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (cmb x y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l' r'))</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">  leaf x k <span class="fu">=</span> Map.insert x (k [])</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10">  node xs ys k <span class="fu">=</span> xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)</a>
+<a class="sourceLine" id="cb14-11" data-line-number="11">  cmb (xt,xm) (yt,ym) <span class="fu">=</span> (xt <span class="fu">:*:</span> yt, node xm ym)</a></code></pre></div>
+<p>Finally, to remove the second pass over the list, we can copy repmin, using <code class="sourceCode haskell">mapAccumL</code> to both construct the mapping and apply it to the structure in one go.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="ot">huffman ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">huffman xs <span class="fu">=</span> (fmap fst tree, ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  (freq,ys) <span class="fu">=</span> mapAccumL f Map.empty xs</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">  f fm x <span class="fu">=</span> (Map.insertWith (<span class="fu">+</span>) x <span class="dv">1</span> fm, mapb <span class="fu">Map.!</span> x)</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">  tree <span class="fu">=</span> buildTree freq</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">  mapb <span class="fu">=</span> maybe Map.empty snd tree</a></code></pre></div>
+<p>And that’s it!</p>
+<h1 id="generalization">Generalization</h1>
+<p>The similarity between the repmin function and the solution above is suggestive: is there a way to <em>encode</em> this idea of making a multi-pass algorithm single-pass? Of course! We can use an applicative:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Circular</span> a b c <span class="fu">=</span></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">    <span class="dt">Circular</span> <span class="fu">!</span>a</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">             (b <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb16-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb16-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Circular</span> a b) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-6" data-line-number="6">    fmap f (<span class="dt">Circular</span> tally run) <span class="fu">=</span> <span class="dt">Circular</span> tally (f <span class="fu">.</span> run)</a>
+<a class="sourceLine" id="cb16-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb16-8" data-line-number="8"><span class="kw">instance</span> <span class="dt">Monoid</span> a <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb16-9" data-line-number="9">         <span class="dt">Applicative</span> (<span class="dt">Circular</span> a b) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-10" data-line-number="10">    pure x <span class="fu">=</span> <span class="dt">Circular</span> mempty (const x)</a>
+<a class="sourceLine" id="cb16-11" data-line-number="11">    <span class="dt">Circular</span> fl fr <span class="fu">&lt;*&gt;</span> <span class="dt">Circular</span> xl xr <span class="fu">=</span></a>
+<a class="sourceLine" id="cb16-12" data-line-number="12">        <span class="dt">Circular</span></a>
+<a class="sourceLine" id="cb16-13" data-line-number="13">            (mappend fl xl)</a>
+<a class="sourceLine" id="cb16-14" data-line-number="14">            (\r <span class="ot">-&gt;</span> fr r (xr r))</a>
+<a class="sourceLine" id="cb16-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb16-16" data-line-number="16">liftHuffman</a>
+<a class="sourceLine" id="cb16-17" data-line-number="17"><span class="ot">    ::</span> <span class="dt">Ord</span> a</a>
+<a class="sourceLine" id="cb16-18" data-line-number="18">    <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Circular</span> (<span class="dt">Map</span> a <span class="dt">Int</span>) (<span class="dt">Map</span> a [<span class="dt">Bool</span>]) [<span class="dt">Bool</span>]</a>
+<a class="sourceLine" id="cb16-19" data-line-number="19">liftHuffman x <span class="fu">=</span> <span class="dt">Circular</span> (Map.singleton x <span class="dv">1</span>) (<span class="fu">Map.!</span> x)</a>
+<a class="sourceLine" id="cb16-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb16-21" data-line-number="21">runHuffman</a>
+<a class="sourceLine" id="cb16-22" data-line-number="22"><span class="ot">    ::</span> <span class="dt">Ord</span> a</a>
+<a class="sourceLine" id="cb16-23" data-line-number="23">    <span class="ot">=&gt;</span> <span class="dt">Circular</span> (<span class="dt">Map</span> a <span class="dt">Int</span>) (<span class="dt">Map</span> a [<span class="dt">Bool</span>]) r <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), r)</a>
+<a class="sourceLine" id="cb16-24" data-line-number="24">runHuffman (<span class="dt">Circular</span> smry run) <span class="fu">=</span></a>
+<a class="sourceLine" id="cb16-25" data-line-number="25">    maybe (<span class="dt">Nothing</span>, run Map.empty) (<span class="dt">Just</span> <span class="fu">***</span> run) (buildTree smry)</a>
+<a class="sourceLine" id="cb16-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb16-27" data-line-number="27">huffman</a>
+<a class="sourceLine" id="cb16-28" data-line-number="28"><span class="ot">    ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t)</a>
+<a class="sourceLine" id="cb16-29" data-line-number="29">    <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])</a>
+<a class="sourceLine" id="cb16-30" data-line-number="30">huffman <span class="fu">=</span> runHuffman <span class="fu">.</span> traverse liftHuffman</a></code></pre></div>
+<p>Thanks to it being an applicative, you can do all the fun lensy things with it:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="ot">showBin ::</span> [<span class="dt">Bool</span>] <span class="ot">-&gt;</span> <span class="dt">String</span></a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">showBin <span class="fu">=</span> map (bool <span class="ch">'0'</span> <span class="ch">'1'</span>)</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="fu">&gt;&gt;&gt;</span> <span class="kw">let</span> liftBin <span class="fu">=</span> fmap showBin <span class="fu">.</span> liftHuffman</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5"><span class="fu">&gt;&gt;&gt;</span> (snd <span class="fu">.</span> runHuffman <span class="fu">.</span> (each<span class="fu">.</span>traverse) liftBin) (<span class="st">&quot;abb&quot;</span>, <span class="st">&quot;cad&quot;</span>, <span class="st">&quot;c&quot;</span>)</a>
+<a class="sourceLine" id="cb17-6" data-line-number="6">([<span class="st">&quot;01&quot;</span>,<span class="st">&quot;11&quot;</span>,<span class="st">&quot;11&quot;</span>],[<span class="st">&quot;00&quot;</span>,<span class="st">&quot;01&quot;</span>,<span class="st">&quot;10&quot;</span>],[<span class="st">&quot;00&quot;</span>])</a></code></pre></div>
+<p>Bringing us back to the start, it can also let us solve repmin!</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="ot">liftRepMin ::</span> a <span class="ot">-&gt;</span> <span class="dt">Circular</span> (<span class="dt">Option</span> (<span class="dt">Min</span> a)) a a</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">liftRepMin x <span class="fu">=</span> <span class="dt">Circular</span> (pure (pure x)) id</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb18-4" data-line-number="4"><span class="ot">runRepMin ::</span> <span class="dt">Circular</span> (<span class="dt">Option</span> (<span class="dt">Min</span> a)) a b <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">runRepMin (<span class="dt">Circular</span> m r) <span class="fu">=</span> r (<span class="kw">case</span> m <span class="kw">of</span></a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">  <span class="dt">Option</span> (<span class="dt">Just</span> (<span class="dt">Min</span> x)) <span class="ot">-&gt;</span> x)</a>
+<a class="sourceLine" id="cb18-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb18-8" data-line-number="8"><span class="ot">repMin ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> t a</a>
+<a class="sourceLine" id="cb18-9" data-line-number="9">repMin <span class="fu">=</span> runRepMin <span class="fu">.</span> traverse liftRepMin</a></code></pre></div>
+<h1 id="related">Related</h1>
+<p>So the <code class="sourceCode haskell"><span class="dt">Circular</span></code> type is actually just the product of reader and writer, and is closely related to the <a href="https://github.com/treeowl/sort-traversable">sort</a> type.</p>
+<p>It’s also related to the <a href="https://www.reddit.com/r/haskell/comments/7qwzn4/an_update_about_the_store_monad_and_state_comonad/"><code class="sourceCode haskell"><span class="dt">Prescient</span></code></a> type, which I noticed after I’d written the above.</p>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-bird_more_1997">
+<p>Bird, Richard, Geraint Jones, and Oege De Moor. 1997. “More haste‚ less speed: Lazy versus eager evaluation.” <em>Journal of Functional Programming</em> 7 (5) (September): 541–547. doi:<a href="https://doi.org/10.1017/S0956796897002827">10.1017/S0956796897002827</a>. <a href="https://ora.ox.ac.uk/objects/uuid:761a4646-60a2-4622-a1e0-ddea11507d57/datastreams/ATTACHMENT01" class="uri">https://ora.ox.ac.uk/objects/uuid:761a4646-60a2-4622-a1e0-ddea11507d57/datastreams/ATTACHMENT01</a>.</p>
+</div>
+<div id="ref-bird_using_1984">
+<p>Bird, R. S. 1984. “Using Circular Programs to Eliminate Multiple Traversals of Data.” <em>Acta Inf.</em> 21 (3) (October): 239–250. doi:<a href="https://doi.org/10.1007/BF00264249">10.1007/BF00264249</a>. <a href="http://dx.doi.org/10.1007/BF00264249" class="uri">http://dx.doi.org/10.1007/BF00264249</a>.</p>
+</div>
+<div id="ref-danvy_there_2005">
+<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <a href="http://brics.dk/RS/05/3/BRICS-RS-05-3.pdf" class="uri">http://brics.dk/RS/05/3/BRICS-RS-05-3.pdf</a>.</p>
+</div>
+<div id="ref-hughes_novel_1986">
+<p>Hughes, R. John Muir. 1986. “A Novel Representation of Lists and Its Application to the Function &quot;Reverse&quot;.” <em>Information Processing Letters</em> 22 (3) (March): 141–144. doi:<a href="https://doi.org/10.1016/0020-0190(86)90059-1">10.1016/0020-0190(86)90059-1</a>. <a href="http://www.sciencedirect.com/science/article/pii/0020019086900591" class="uri">http://www.sciencedirect.com/science/article/pii/0020019086900591</a>.</p>
+</div>
+<div id="ref-pippenger_pure_1997">
+<p>Pippenger, Nicholas. 1997. “Pure Versus Impure Lisp.” <em>ACM Trans. Program. Lang. Syst.</em> 19 (2) (March): 223–238. doi:<a href="https://doi.org/10.1145/244795.244798">10.1145/244795.244798</a>. <a href="http://doi.acm.org/10.1145/244795.244798" class="uri">http://doi.acm.org/10.1145/244795.244798</a>.</p>
+</div>
+<div id="ref-rivas_notions_2014">
+<p>Rivas, Exequiel, and Mauro Jaskelioff. 2014. “Notions of Computation as Monoids.” <em>arXiv:1406.4823 [cs, math]</em> (May). <a href="http://arxiv.org/abs/1406.4823" class="uri">http://arxiv.org/abs/1406.4823</a>.</p>
+</div>
+</div>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Huffman coding single-pass implementation:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">import</span>           <span class="dt">Data.Map.Strict</span>  (<span class="dt">Map</span>)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span>  <span class="kw">as</span> <span class="dt">Map</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">import</span>           <span class="dt">Data.Traversable</span> (mapAccumL)</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">data</span> <span class="dt">Heap</span> a</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  <span class="fu">|</span> <span class="dt">Node</span> <span class="ot">{-# UNPACK #-}</span> <span class="fu">!</span><span class="dt">Int</span> a (<span class="dt">Heap</span> a) (<span class="dt">Heap</span> a)</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Heap</span> a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  mappend <span class="dt">Nil</span> ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  mappend xs <span class="dt">Nil</span> <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  mappend h1<span class="fu">@</span>(<span class="dt">Node</span> i x lx rx) h2<span class="fu">@</span>(<span class="dt">Node</span> j y ly ry)</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">    <span class="fu">|</span> i <span class="fu">&lt;=</span> j    <span class="fu">=</span> <span class="dt">Node</span> i x (mappend h2 rx) lx</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">    <span class="fu">|</span> otherwise <span class="fu">=</span> <span class="dt">Node</span> j y (mappend h1 ry) ly</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">  mempty <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> <span class="dt">Leaf</span> a <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"><span class="ot">buildTree ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Map</span> a <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Tree</span> a, <span class="dt">Map</span> a [<span class="dt">Bool</span>])</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">buildTree <span class="fu">=</span> prune <span class="fu">.</span> toHeap <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21">  toHeap <span class="fu">=</span> Map.foldMapWithKey (\k v <span class="ot">-&gt;</span> <span class="dt">Node</span> v (<span class="dt">Leaf</span> k, leaf k) <span class="dt">Nil</span> <span class="dt">Nil</span>)</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">  prune <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">  prune (<span class="dt">Node</span> i x l r) <span class="fu">=</span> <span class="kw">case</span> mappend l r <span class="kw">of</span></a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">    <span class="dt">Nil</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (fmap (\k <span class="ot">-&gt;</span> k id Map.empty) x)</a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">    <span class="dt">Node</span> j y l' r' <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb1-26" data-line-number="26">      prune (mappend (<span class="dt">Node</span> (i<span class="fu">+</span>j) (cmb x y) <span class="dt">Nil</span> <span class="dt">Nil</span>) (mappend l' r'))</a>
+<a class="sourceLine" id="cb1-27" data-line-number="27">  leaf x k <span class="fu">=</span> Map.insert x (k [])</a>
+<a class="sourceLine" id="cb1-28" data-line-number="28">  node xs ys k <span class="fu">=</span> xs (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">True</span>) <span class="fu">.</span> ys (k <span class="fu">.</span> (<span class="fu">:</span>) <span class="dt">False</span>)</a>
+<a class="sourceLine" id="cb1-29" data-line-number="29">  cmb (xt,xm) (yt,ym) <span class="fu">=</span> (xt <span class="fu">:*:</span> yt, node xm ym)</a>
+<a class="sourceLine" id="cb1-30" data-line-number="30"></a>
+<a class="sourceLine" id="cb1-31" data-line-number="31"><span class="ot">huffman ::</span> (<span class="dt">Ord</span> a, <span class="dt">Traversable</span> t) <span class="ot">=&gt;</span> t a <span class="ot">-&gt;</span> (<span class="dt">Maybe</span> (<span class="dt">Tree</span> a), t [<span class="dt">Bool</span>])</a>
+<a class="sourceLine" id="cb1-32" data-line-number="32">huffman xs <span class="fu">=</span> (fmap fst tree, ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-33" data-line-number="33">  (freq,ys) <span class="fu">=</span> mapAccumL f Map.empty xs</a>
+<a class="sourceLine" id="cb1-34" data-line-number="34">  f fm x <span class="fu">=</span> (Map.insertWith (<span class="fu">+</span>) x <span class="dv">1</span> fm, mapb <span class="fu">Map.!</span> x)</a>
+<a class="sourceLine" id="cb1-35" data-line-number="35">  tree <span class="fu">=</span> buildTree freq</a>
+<a class="sourceLine" id="cb1-36" data-line-number="36">  mapb <span class="fu">=</span> maybe Map.empty snd tree</a></code></pre></div>
+<a href="#fnref1" class="footnote-back">↩</a></li>
+<li id="fn2"><p>Well, that’s a little bit of a lie. In terms of asympostics, <span class="citation" data-cites="pippenger_pure_1997">Pippenger (<a href="#ref-pippenger_pure_1997">1997</a>)</span> stated a problem that could be solved in linear time in impure Lisp, but <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>Ω</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\Omega(n \log n)</annotation></semantics></math> in pure Lisp. <span class="citation" data-cites="bird_more_1997">Bird, Jones, and Moor (<a href="#ref-bird_more_1997">1997</a>)</span> then produced an algorithm that could solve the problem in linear time, by using laziness. So, in some cases, laziness will give you asymptotics you can’t get without it (if you want to stay pure).<a href="#fnref2" class="footnote-back">↩</a></p></li>
+<li id="fn3"><p>There’s actually a nicer version of the <code class="sourceCode haskell">buildTree</code> function which uses <code class="sourceCode haskell"><span class="dt">StateT</span> (<span class="dt">Heap</span> a) <span class="dt">Maybe</span></code>, but it’s equivalent to this one under the hood, and I though might be a little distracting.<a href="#fnref3" class="footnote-back">↩</a></p></li>
+<li id="fn4"><p>Something to notice about this function is that it’s going top-down and bottom-up at the same time. Combining the maps (with <code class="sourceCode haskell">(<span class="fu">.</span>)</code>) is done bottom-up, but building the codes is top-down. This means the codes are built in reverse order! That’s why the accumulating parameter (<code class="sourceCode haskell">k</code>) is a difference list, rather than a normal list. As it happens, if normal lists were used, the function would be slightly more efficient through sharing, but the codes would all be reversed.<a href="#fnref4" class="footnote-back">↩</a></p></li>
+</ol>
+</section>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

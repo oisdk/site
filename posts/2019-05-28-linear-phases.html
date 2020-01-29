@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Deriving a Linear-Time Applicative Traversal of a Rose Tree - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Deriving a Linear-Time Applicative Traversal of a Rose Tree</h2>
+
+            <div class="info">
+    Posted on May 28, 2019
+</div>
+<div class="info">
+    
+        Part 7 of a <a href="../series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<h1 id="the-story-so-far">The Story so Far</h1>
+<p>Currently, we have several different ways to enumerate a tree in breadth-first order. The typical solution (which is the usual recommended approach in imperative programming as well) uses a <em>queue</em>, as described by <span class="citation" data-cites="okasaki_breadth-first_2000">Okasaki (<a href="#ref-okasaki_breadth-first_2000">2000</a>)</span>. If we take the simplest possible queue (a list), we get a quadratic-time algorithm, with an albeit simple implementation. The next simplest version is to use a banker’s queue (which is just a pair of lists). From this version, if we inline and apply identities like the following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">foldr f b <span class="fu">.</span> reverse <span class="fu">=</span> foldl (flip f) b</a></code></pre></div>
+<p>We’ll get to the following definition:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">bfe ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">bfe ts <span class="fu">=</span> foldr f b ts []</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">    b qs <span class="fu">=</span> foldl (foldr f) b qs []</a></code></pre></div>
+<p>We can get from this function to others (like one which uses a corecursive queue, and so on) through a similar derivation. I might some day write a post on each derivation, starting from the simple version and demonstrating how to get to the more efficient at each step.</p>
+<p>For today, though, I’m interested in the <em>traversal</em> of a rose tree. Traversal, here, of course, is in the applicative sense.</p>
+<p>Thus far, I’ve managed to write linear-time traversals, but they’ve been unsatisfying. They work by enumerating the tree, traversing the effectful function over the list, and then rebuilding the tree. Since each of those steps only takes linear time, the whole thing is indeed a linear-time traversal, but I hadn’t been able to fuse away the intermediate step.</p>
+<h1 id="phases">Phases</h1>
+<p>The template for the algorithm I want comes from the <code>Phases</code> applicative <span class="citation" data-cites="easterly_functions_2019">(Easterly <a href="#ref-easterly_functions_2019">2019</a>)</span>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Phases</span> f a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="dt">Lift</span><span class="ot">   ::</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="ot">  (:&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f b</a></code></pre></div>
+<p>We can use it to write a breadth-first traversal like so:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (traverse go xs))</a></code></pre></div>
+<p>The key component that makes this work is that it combines applicative effects in parallel:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Phases</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">    fmap f (<span class="dt">Lift</span> x) <span class="fu">=</span> <span class="dt">Lift</span> (fmap f x)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">    fmap f (fs <span class="fu">:&lt;*&gt;</span> xs) <span class="fu">=</span> fmap (f<span class="fu">.</span>) fs <span class="fu">:&lt;*&gt;</span> xs</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">    </a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Phases</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    pure <span class="fu">=</span> <span class="dt">Lift</span> <span class="fu">.</span> pure</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    <span class="dt">Lift</span> fs      <span class="fu">&lt;*&gt;</span> <span class="dt">Lift</span> xs      <span class="fu">=</span> <span class="dt">Lift</span> (fs <span class="fu">&lt;*&gt;</span> xs)</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">    (fs <span class="fu">:&lt;*&gt;</span> gs) <span class="fu">&lt;*&gt;</span> <span class="dt">Lift</span> xs      <span class="fu">=</span> liftA2 flip fs xs <span class="fu">:&lt;*&gt;</span> gs</a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">    <span class="dt">Lift</span> fs      <span class="fu">&lt;*&gt;</span> (xs <span class="fu">:&lt;*&gt;</span> ys) <span class="fu">=</span> liftA2 (<span class="fu">.</span>)  fs xs <span class="fu">:&lt;*&gt;</span> ys</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">    (fs <span class="fu">:&lt;*&gt;</span> gs) <span class="fu">&lt;*&gt;</span> (xs <span class="fu">:&lt;*&gt;</span> ys) <span class="fu">=</span> liftA2 c    fs xs <span class="fu">:&lt;*&gt;</span> liftA2 (,) gs ys</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">        c f g <span class="fu">~</span>(x,y) <span class="fu">=</span> f x (g y)</a></code></pre></div>
+<p>We’re also using the following helper functions:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">runPhases ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">runPhases (<span class="dt">Lift</span> x) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">runPhases (fs <span class="fu">:&lt;*&gt;</span> xs) <span class="fu">=</span> fs <span class="fu">&lt;*&gt;</span> runPhases xs</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"><span class="ot">later ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Phases</span> f a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f a</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">later <span class="fu">=</span> (<span class="fu">:&lt;*&gt;</span>) (pure id)</a></code></pre></div>
+<p>The problem is that it’s quadratic: the <code>traverse</code> in:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1">go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (traverse go xs))</a></code></pre></div>
+<p>Hides some expensive calls to <code>&lt;*&gt;</code>.</p>
+<h1 id="a-roadmap-for-optimisation">A Roadmap for Optimisation</h1>
+<p>The problem with the <code>Phases</code> traversal is actually analogous to another function for enumeration: <code>levels</code> from <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015">2015</a>)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">levels (<span class="dt">Node</span> x xs) <span class="fu">=</span> [x] <span class="fu">:</span> foldr lzw [] (map levels xs)</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    lzw [] ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">    lzw xs [] <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">    lzw (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x <span class="fu">++</span> y) <span class="fu">:</span> lzw xs ys</a></code></pre></div>
+<p><code>lzw</code> takes the place of <code>&lt;*&gt;</code> here, but the overall issue is the same: we’re zipping at every point, making the whole thing quadratic.</p>
+<p>However, from the above function we <em>can</em> derive a linear time enumeration. It looks like this:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">levels ts <span class="fu">=</span> f ts []</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> (x<span class="fu">:</span>q) <span class="fu">:</span> foldr f qs xs</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">    f (<span class="dt">Node</span> x xs) []     <span class="fu">=</span> [x]   <span class="fu">:</span> foldr f [] xs</a></code></pre></div>
+<p>Our objective is clear, then: try to derive the linear-time implementation of <code>bft</code> from the quadratic, in a way analogous to the above two functions. This is actually relatively straightforward once the target is clear: the rest of this post is devoted to the derivation.</p>
+<h1 id="derivation">Derivation</h1>
+<p>First, we start off with the original <code>bft</code>.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (traverse go xs))</a></code></pre></div>
+<details>
+<p><summary> Inline <code>traverse</code>. </summary></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (go' xs))</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">    go' <span class="fu">=</span> foldr (liftA2 (<span class="fu">:</span>) <span class="fu">.</span> go) (pure [])</a></code></pre></div>
+</details>
+<details>
+<p><summary> Factor out <code>go''</code>. </summary></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (go' xs))</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">    go' <span class="fu">=</span> foldr go'' (pure [])</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">    go'' (<span class="dt">Node</span> x xs) ys <span class="fu">=</span> liftA2 (<span class="fu">:</span>) (liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (go' xs))) ys</a></code></pre></div>
+</details>
+<details>
+<p><summary> Inline <code>go'</code> (and rename <code>go''</code> to <code>go'</code>)</p>
+<p></summary></p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb13-5" data-line-number="5">    go' (<span class="dt">Node</span> x xs) ys <span class="fu">=</span> liftA2 (<span class="fu">:</span>) (liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))) ys</a></code></pre></div>
+</details>
+<details>
+<p><summary> Definition of <code>liftA2</code></p>
+<p></summary></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">    go' (<span class="dt">Node</span> x xs) ys <span class="fu">=</span> liftA2 (<span class="fu">:</span>) (fmap <span class="dt">Node</span> (f x) <span class="fu">:&lt;*&gt;</span> (foldr go' (pure []) xs)) ys</a></code></pre></div>
+</details>
+<details>
+<p><summary> Definition of <code>liftA2</code> (pattern-matching on <code>ys</code>)</p>
+<p></summary></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">    go' (<span class="dt">Node</span> x xs) (<span class="dt">Lift</span> ys)    <span class="fu">=</span> fmap (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>) (f x) <span class="fu">:&lt;*&gt;</span> (foldr go' (pure []) xs) <span class="fu">&lt;*&gt;</span> <span class="dt">Lift</span> ys</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">    go' (<span class="dt">Node</span> x xs) (ys <span class="fu">:&lt;*&gt;</span> zs) <span class="fu">=</span> fmap (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>) (f x) <span class="fu">:&lt;*&gt;</span> (foldr go' (pure []) xs) <span class="fu">&lt;*&gt;</span> ys <span class="fu">:&lt;*&gt;</span> zs</a></code></pre></div>
+</details>
+<details>
+<p><summary> Definition of <code>&lt;*&gt;</code>. </summary></p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5">    go' (<span class="dt">Node</span> x xs) (<span class="dt">Lift</span> ys)    <span class="fu">=</span> liftA2 flip (fmap (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>) (f x)) ys <span class="fu">:&lt;*&gt;</span> foldr go' (pure []) xs</a>
+<a class="sourceLine" id="cb16-6" data-line-number="6">    go' (<span class="dt">Node</span> x xs) (ys <span class="fu">:&lt;*&gt;</span> zs) <span class="fu">=</span> liftA2 c (fmap (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>) (f x)) ys <span class="fu">:&lt;*&gt;</span> liftA2 (,) (foldr go' (pure []) xs) zs</a>
+<a class="sourceLine" id="cb16-7" data-line-number="7">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-8" data-line-number="8">        c f g <span class="fu">~</span>(x,y) <span class="fu">=</span> f x (g y)</a></code></pre></div>
+</details>
+<details>
+<p><summary> Fuse <code>liftA2</code> with <code>fmap</code></p>
+<p></summary></p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">bft f <span class="fu">=</span> runPhases <span class="fu">.</span> go</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (<span class="dt">Lift</span> (f x)) (later (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5">    go' (<span class="dt">Node</span> x xs) (<span class="dt">Lift</span> ys)    <span class="fu">=</span> liftA2 (flip <span class="fu">.</span> (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>)) (f x) ys <span class="fu">:&lt;*&gt;</span> foldr go' (pure []) xs</a>
+<a class="sourceLine" id="cb17-6" data-line-number="6">    go' (<span class="dt">Node</span> x xs) (ys <span class="fu">:&lt;*&gt;</span> zs) <span class="fu">=</span> liftA2 (c <span class="fu">.</span> (((<span class="fu">:</span>)<span class="fu">.</span>) <span class="fu">.</span> <span class="dt">Node</span>)) (f x) ys <span class="fu">:&lt;*&gt;</span> liftA2 (,) (foldr go' (pure []) xs) zs</a>
+<a class="sourceLine" id="cb17-7" data-line-number="7">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb17-8" data-line-number="8">        c f g <span class="fu">~</span>(x,y) <span class="fu">=</span> f x (g y)</a></code></pre></div>
+</details>
+<details open>
+<p><summary> Beta-reduction. </summary></p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">bft f <span class="fu">=</span> go</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 <span class="dt">Node</span> (f x) (runPhases (foldr go' (pure []) xs))</a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">    </a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">    go' (<span class="dt">Node</span> x xs) (<span class="dt">Lift</span> ys)    <span class="fu">=</span> liftA2 (\y zs ys <span class="ot">-&gt;</span> <span class="dt">Node</span> y ys <span class="fu">:</span> zs) (f x) ys <span class="fu">:&lt;*&gt;</span> foldr go' (pure []) xs</a>
+<a class="sourceLine" id="cb18-7" data-line-number="7">    go' (<span class="dt">Node</span> x xs) (ys <span class="fu">:&lt;*&gt;</span> zs) <span class="fu">=</span> liftA2 c (f x) ys <span class="fu">:&lt;*&gt;</span> liftA2 (,) (foldr go' (pure []) xs) zs</a>
+<a class="sourceLine" id="cb18-8" data-line-number="8">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-9" data-line-number="9">        c y g <span class="fu">~</span>(ys,z) <span class="fu">=</span> <span class="dt">Node</span> y ys <span class="fu">:</span> g z</a></code></pre></div>
+</details>
+<p>At this point, we actually hit a wall: the expression</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1">liftA2 (,) (foldr go' (pure []) xs) zs</a></code></pre></div>
+<p>Is what makes the whole thing quadratic. We need to find a way to thread that <code>liftA2</code> along with the fold to get it to linear. This is the only real trick in the derivation: I’ll use polymorphic recursion to avoid the extra zip.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">bft ::</span> forall f a b<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">bft f <span class="fu">=</span> go</a>
+<a class="sourceLine" id="cb20-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb20-4" data-line-number="4">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 (\y (ys,_) <span class="ot">-&gt;</span> <span class="dt">Node</span> y ys) (f x) (runPhases (foldr go' (pure ([],())) xs))</a>
+<a class="sourceLine" id="cb20-5" data-line-number="5">    </a>
+<a class="sourceLine" id="cb20-6" data-line-number="6"><span class="ot">    go' ::</span> forall c<span class="fu">.</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Phases</span> f ([<span class="dt">Tree</span> b], c) <span class="ot">-&gt;</span> <span class="dt">Phases</span> f ([<span class="dt">Tree</span> b], c)</a>
+<a class="sourceLine" id="cb20-7" data-line-number="7">    go' (<span class="dt">Node</span> x xs) ys<span class="fu">@</span>(<span class="dt">Lift</span> _)  <span class="fu">=</span> fmap (\y <span class="ot">-&gt;</span> first (pure <span class="fu">.</span> <span class="dt">Node</span> y)) (f x) <span class="fu">:&lt;*&gt;</span> foldr go' ys xs</a>
+<a class="sourceLine" id="cb20-8" data-line-number="8">    go' (<span class="dt">Node</span> x xs) (ys <span class="fu">:&lt;*&gt;</span> zs) <span class="fu">=</span> liftA2 c (f x) ys <span class="fu">:&lt;*&gt;</span> foldr go' (fmap ((,) []) zs) xs</a>
+<a class="sourceLine" id="cb20-9" data-line-number="9">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb20-10" data-line-number="10">        c y g <span class="fu">~</span>(ys,z) <span class="fu">=</span> first (<span class="dt">Node</span> y ys<span class="fu">:</span>) (g z)</a></code></pre></div>
+<p>And that’s it!</p>
+<h1 id="avoiding-maps">Avoiding Maps</h1>
+<p>We can finally write a slightly different version that avoids some unnecessary <code>fmap</code>s by basing <code>Phases</code> on <code>liftA2</code> rather than <code>&lt;*&gt;</code>.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Levels</span> f a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">  <span class="dt">Now</span><span class="ot">   ::</span> a <span class="ot">-&gt;</span> <span class="dt">Levels</span> f a</a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">  <span class="dt">Later</span><span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Levels</span> f b <span class="ot">-&gt;</span> <span class="dt">Levels</span> f c</a>
+<a class="sourceLine" id="cb21-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb21-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Levels</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-6" data-line-number="6">    fmap f (<span class="dt">Now</span> x) <span class="fu">=</span> <span class="dt">Now</span> (f x)</a>
+<a class="sourceLine" id="cb21-7" data-line-number="7">    fmap f (<span class="dt">Later</span> c xs ys) <span class="fu">=</span> <span class="dt">Later</span> ((f<span class="fu">.</span>) <span class="fu">.</span> c) xs ys</a>
+<a class="sourceLine" id="cb21-8" data-line-number="8">            </a>
+<a class="sourceLine" id="cb21-9" data-line-number="9"><span class="ot">runLevels ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Levels</span> f a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb21-10" data-line-number="10">runLevels (<span class="dt">Now</span> x) <span class="fu">=</span> pure x</a>
+<a class="sourceLine" id="cb21-11" data-line-number="11">runLevels (<span class="dt">Later</span> f xs ys) <span class="fu">=</span> liftA2 f xs (runLevels ys)</a>
+<a class="sourceLine" id="cb21-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb21-13" data-line-number="13"><span class="ot">bft ::</span> forall f a b<span class="fu">.</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb21-14" data-line-number="14">bft f <span class="fu">=</span> go</a>
+<a class="sourceLine" id="cb21-15" data-line-number="15">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-16" data-line-number="16">    go (<span class="dt">Node</span> x xs) <span class="fu">=</span> liftA2 (\y (ys,_) <span class="ot">-&gt;</span> <span class="dt">Node</span> y ys) (f x) (runLevels (foldr go' (<span class="dt">Now</span> ([],())) xs))</a>
+<a class="sourceLine" id="cb21-17" data-line-number="17">    </a>
+<a class="sourceLine" id="cb21-18" data-line-number="18"><span class="ot">    go' ::</span> forall c<span class="fu">.</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Levels</span> f ([<span class="dt">Tree</span> b], c) <span class="ot">-&gt;</span> <span class="dt">Levels</span> f ([<span class="dt">Tree</span> b], c)</a>
+<a class="sourceLine" id="cb21-19" data-line-number="19">    go' (<span class="dt">Node</span> x xs) ys<span class="fu">@</span>(<span class="dt">Now</span> _)      <span class="fu">=</span> <span class="dt">Later</span> (\y <span class="ot">-&gt;</span> first (pure <span class="fu">.</span> <span class="dt">Node</span> y)) (f x) (foldr go' ys xs)</a>
+<a class="sourceLine" id="cb21-20" data-line-number="20">    go' (<span class="dt">Node</span> x xs) (<span class="dt">Later</span> k ys zs) <span class="fu">=</span> <span class="dt">Later</span> id (liftA2 c (f x) ys) (foldr go' (fmap ((,) []) zs) xs)</a>
+<a class="sourceLine" id="cb21-21" data-line-number="21">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-22" data-line-number="22">        c y g <span class="fu">~</span>(ys,z) <span class="fu">=</span> first (<span class="dt">Node</span> y ys<span class="fu">:</span>) (k g z)</a></code></pre></div>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-easterly_functions_2019">
+<p>Easterly, Noah. 2019. “Functions and newtype wrappers for traversing Trees: Rampion/tree-traversals.” <a href="https://github.com/rampion/tree-traversals" class="uri">https://github.com/rampion/tree-traversals</a>.</p>
+</div>
+<div id="ref-gibbons_breadth-first_2015">
+<p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/" class="uri">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
+</div>
+<div id="ref-okasaki_breadth-first_2000">
+<p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>. <a href="https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf" class="uri">https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

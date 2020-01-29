@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Probability Trees - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Probability Trees</h2>
+
+            <div class="info">
+    Posted on September 30, 2016
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Probability.html">Probability</a>
+    
+</div>
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{-# language DeriveFunctor, DeriveFoldable #-}</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">{-# language PatternSynonyms, ViewPatterns #-}</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="kw">module</span> <span class="dt">ProbTree</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="kw">import</span> <span class="dt">Data.Monoid</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="kw">import</span> <span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)</a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="kw">import</span> <span class="dt">Control.Arrow</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="kw">import</span> <span class="dt">Data.Ratio</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="kw">import</span> <span class="dt">Data.Foldable</span></a></code></pre></div>
+<p>Previously, I tried to figure out how to make the probability monad more “listy”. I read a little more about the topic <span class="citation" data-cites="erwig_functional_2006 kidd_build_2007">(especially Erwig and Kollmansberger <a href="#ref-erwig_functional_2006">2006</a>; and Kidd <a href="#ref-kidd_build_2007">2007</a>)</span>.</p>
+<p>I then thought about what a probability monad would look like if it was based on other data structures. I feel like the standard version really wants to be:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">ProperProb</span> a <span class="fu">=</span> <span class="dt">ProperProb</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">  {<span class="ot"> yes ::</span> <span class="dt">Map</span> a (<span class="dt">Product</span> <span class="dt">Rational</span>) }</a></code></pre></div>
+<p>But of course a monad instance isn’t allowed.</p>
+<p>Similar to a map, though, is a binary tree:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">BinaryTree</span> a <span class="fu">=</span> <span class="dt">Leaf</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">                  <span class="fu">|</span> <span class="dt">Node</span> (<span class="dt">BinaryTree</span> a) a (<span class="dt">BinaryTree</span> a)</a></code></pre></div>
+<p>And it feels better for probability - <em>flatter</em>, somehow. Transmuting it into a probability-thing:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Odds</span> a <span class="fu">=</span> <span class="dt">Certain</span> a</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">            <span class="fu">|</span> <span class="dt">Choice</span> (<span class="dt">Odds</span> a) <span class="dt">Rational</span> (<span class="dt">Odds</span> a)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">            <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Show</span>)</a></code></pre></div>
+<p>That looks good to me. A choice between two different branches feels more natural than a choice between a head and a tail.</p>
+<p>The fold is similar to before, with an unfold for good measure:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">foldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">foldOdds f b <span class="fu">=</span> r <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  r (<span class="dt">Certain</span> x) <span class="fu">=</span> b x</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">  r (<span class="dt">Choice</span> xs p ys) <span class="fu">=</span> f (r xs) p (r ys)</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">  </a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"><span class="ot">unfoldOdds ::</span> (b <span class="ot">-&gt;</span> <span class="dt">Either</span> a (b,<span class="dt">Rational</span>,b)) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Odds</span> a</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">unfoldOdds f <span class="fu">=</span> r <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8">  r b <span class="fu">=</span> <span class="kw">case</span> f b <span class="kw">of</span></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9">    <span class="dt">Left</span> a <span class="ot">-&gt;</span> <span class="dt">Certain</span> a</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">    <span class="dt">Right</span> (x,p,y) <span class="ot">-&gt;</span> <span class="dt">Choice</span> (r x) p (r y)</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">  </a>
+<a class="sourceLine" id="cb5-12" data-line-number="12"><span class="ot">fi ::</span> <span class="dt">Bool</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">fi <span class="dt">True</span>  t _ <span class="fu">=</span> t</a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">fi <span class="dt">False</span> _ f <span class="fu">=</span> f</a></code></pre></div>
+<p>I changed the pattern synonym a little:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="ot">unRatio ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> (a,a)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">unRatio <span class="fu">=</span> numerator   <span class="fu">&amp;&amp;&amp;</span> denominator </a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">      <span class="fu">&gt;&gt;&gt;</span> fromInteger <span class="fu">***</span> fromInteger</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">pattern n <span class="fu">:%</span> d <span class="ot">&lt;-</span> (unRatio <span class="ot">-&gt;</span> (n,d))</a></code></pre></div>
+<p>Then, the <code class="sourceCode haskell">probOf</code> function:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">probOf ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Rational</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">probOf e <span class="fu">=</span> foldOdds f b <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  b x <span class="fu">=</span> fi (e <span class="fu">==</span> x) <span class="dv">1</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">  f x (n<span class="fu">:%</span>d) y <span class="fu">=</span> (x <span class="fu">*</span> n <span class="fu">+</span> y <span class="fu">*</span> d) <span class="fu">/</span> (n <span class="fu">+</span> d)</a></code></pre></div>
+<p>This version doesn’t have the option for short-circuiting on the first value it finds.</p>
+<p>For generating from lists, you can try to evenly divide the list among each branch.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">fromListOdds ::</span> (([b], <span class="dt">Int</span>) <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> (b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">fromListOdds fr e <span class="fu">=</span> r <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  r [] <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">  r xs <span class="fu">=</span> <span class="dt">Just</span> (unfoldOdds f (xs, length xs))</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">  f ([x],_) <span class="fu">=</span> <span class="dt">Left</span> (e x)</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">  f (xs ,n) <span class="fu">=</span> <span class="dt">Right</span> ((ys,l), fr (ys,l) <span class="fu">%</span> fr (zs,r), (zs,r)) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">    l <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">    r <span class="fu">=</span> n <span class="fu">-</span> l</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">    (ys,zs) <span class="fu">=</span> splitAt l xs</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb8-11" data-line-number="11"><span class="ot">equalOdds ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">equalOdds <span class="fu">=</span> fromListOdds (fromIntegral <span class="fu">.</span> snd) id</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb8-14" data-line-number="14"><span class="ot">fromDistrib ::</span> [(a,<span class="dt">Integer</span>)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Odds</span> a)</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">fromDistrib <span class="fu">=</span> fromListOdds (sum <span class="fu">.</span> map snd <span class="fu">.</span> fst) fst</a></code></pre></div>
+<p>What’s really nice about this version is the fact that the old <code class="sourceCode haskell">append</code> is just the <code class="sourceCode haskell"><span class="dt">Choice</span></code> constructor, leaving the instances to be really nice:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">flatten ::</span> <span class="dt">Odds</span> (<span class="dt">Odds</span> a) <span class="ot">-&gt;</span> <span class="dt">Odds</span> a</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">flatten <span class="fu">=</span> foldOdds <span class="dt">Choice</span> id</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Odds</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  pure <span class="fu">=</span> <span class="dt">Certain</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">  fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> flatten (fmap (<span class="fu">&lt;$&gt;</span> xs) fs)</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">  </a>
+<a class="sourceLine" id="cb9-8" data-line-number="8"><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Odds</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">  x <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> flatten (f <span class="fu">&lt;$&gt;</span> x)</a></code></pre></div>
+<p>Finally, as a bonus, to remove duplicates:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">lcd ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">lcd <span class="fu">=</span> foldl' (\a e <span class="ot">-&gt;</span> lcm a (denominator e)) <span class="dv">1</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="ot">toDistrib ::</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> [(a,<span class="dt">Integer</span>)]</a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">toDistrib <span class="fu">=</span> factorOut <span class="fu">.</span> foldOdds f b <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">  b x <span class="fu">=</span> [(x,<span class="dv">1</span>)]</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">  f l p r <span class="fu">=</span> (map<span class="fu">.</span>fmap) (n<span class="fu">%</span>t<span class="fu">*</span>) l <span class="fu">++</span> (map<span class="fu">.</span>fmap) (d<span class="fu">%</span>t<span class="fu">*</span>) r <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">    n <span class="fu">=</span> numerator p</a>
+<a class="sourceLine" id="cb10-9" data-line-number="9">    d <span class="fu">=</span> denominator p</a>
+<a class="sourceLine" id="cb10-10" data-line-number="10">    t <span class="fu">=</span> n <span class="fu">+</span> d</a>
+<a class="sourceLine" id="cb10-11" data-line-number="11">  factorOut xs <span class="fu">=</span> (map<span class="fu">.</span>fmap) (numerator <span class="fu">.</span> (lcd'<span class="fu">*</span>)) xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-12" data-line-number="12">    lcd' <span class="fu">=</span> fromIntegral <span class="fu">.</span> lcd <span class="fu">.</span> map snd <span class="fu">$</span> xs</a>
+<a class="sourceLine" id="cb10-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb10-14" data-line-number="14"><span class="ot">counts ::</span> (<span class="dt">Ord</span> a, <span class="dt">Num</span> n) <span class="ot">=&gt;</span> [(a,n)] <span class="ot">-&gt;</span> [(a,n)]</a>
+<a class="sourceLine" id="cb10-15" data-line-number="15">counts <span class="fu">=</span> </a>
+<a class="sourceLine" id="cb10-16" data-line-number="16">  Map.assocs <span class="fu">.</span> </a>
+<a class="sourceLine" id="cb10-17" data-line-number="17">  Map.fromListWith (<span class="fu">+</span>)</a>
+<a class="sourceLine" id="cb10-18" data-line-number="18">      </a>
+<a class="sourceLine" id="cb10-19" data-line-number="19"><span class="ot">compress ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Odds</span> a <span class="ot">-&gt;</span> <span class="dt">Odds</span> a</a>
+<a class="sourceLine" id="cb10-20" data-line-number="20">compress xs <span class="fu">=</span> <span class="kw">let</span> <span class="dt">Just</span> ys <span class="fu">=</span> (fromDistrib <span class="fu">.</span> counts <span class="fu">.</span> toDistrib) xs <span class="kw">in</span> ys</a></code></pre></div>
+<p>After reading yet more on this, I found that the main issue with the monad is its performance. Two articles in particular: <span class="citation" data-cites="larsen_memory_2011">Larsen (<a href="#ref-larsen_memory_2011">2011</a>)</span>, and <span class="citation" data-cites="scibior_practical_2015">Ścibior, Ghahramani, and Gordon (<a href="#ref-scibior_practical_2015">2015</a>)</span>, refer to a GADT implementation of the monad which maximises laziness.</p>
+<h3 id="references" class="unnumbered">References</h3>
+<div id="refs" class="references">
+<div id="ref-erwig_functional_2006">
+<p>Erwig, Martin, and Steve Kollmansberger. 2006. “Functional pearls: Probabilistic functional programming in Haskell.” <em>Journal of Functional Programming</em> 16 (1): 21–34. doi:<a href="https://doi.org/10.1017/S0956796805005721">10.1017/S0956796805005721</a>.</p>
+</div>
+<div id="ref-kidd_build_2007">
+<p>Kidd, Eric. 2007. “Build your own probability monads.”</p>
+</div>
+<div id="ref-larsen_memory_2011">
+<p>Larsen, Ken Friis. 2011. “Memory Efficient Implementation of Probability Monads.”</p>
+</div>
+<div id="ref-scibior_practical_2015">
+<p>Ścibior, Adam, Zoubin Ghahramani, and Andrew D. Gordon. 2015. “Practical Probabilistic Programming with Monads.” In <em>Proceedings of the 2015 ACM SIGPLAN Symposium on Haskell</em>, 50:165–176. Haskell ’15. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2804302.2804317">10.1145/2804302.2804317</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

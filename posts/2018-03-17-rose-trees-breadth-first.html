@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Rose Trees, Breadth-First - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Rose Trees, Breadth-First</h2>
+
+            <div class="info">
+    Posted on March 17, 2018
+</div>
+<div class="info">
+    
+        Part 1 of a <a href="../series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>In contrast to the more common binary trees, in a rose tree every node can have any number of children.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">    <span class="fu">=</span> <span class="dt">Node</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">    {<span class="ot"> root   ::</span> a</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">    ,<span class="ot"> forest ::</span> <span class="dt">Forest</span> a</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">    }</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="kw">type</span> <span class="dt">Forest</span> a <span class="fu">=</span> [<span class="dt">Tree</span> a]</a></code></pre></div>
+<p>One of the important manipulations of this data structure, which forms the basis for several other algorithms, is a breadth-first traversal. I’d like to go through a couple of techniques for implementing it, and how more generally you can often get away with using much simpler data structures if you really pinpoint the API you need from them.</p>
+<p>As a general technique, <span class="citation" data-cites="okasaki_breadth-first_2000">Okasaki (<a href="#ref-okasaki_breadth-first_2000">2000</a>)</span> advises that a queue be used:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">breadthFirst tr <span class="fu">=</span> go (singleton tr)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    go q <span class="fu">=</span> <span class="kw">case</span> pop q <span class="kw">of</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> []</a>
+<a class="sourceLine" id="cb2-6" data-line-number="6">      <span class="dt">Just</span> (<span class="dt">Node</span> x xs,qs) <span class="ot">-&gt;</span> x <span class="fu">:</span> go (qs <span class="ot">`append`</span> xs)</a></code></pre></div>
+<p>There are three functions left undefined there: <code class="sourceCode haskell">singleton</code>, <code class="sourceCode haskell">pop</code>, and <code class="sourceCode haskell">append</code>. They represent the API of our as-of-yet unimplemented queue, and their complexity will dictate the complexity of the overall algorithm. As a (bad) first choice, we could use simple lists, with the functions defined thus:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1">singleton x <span class="fu">=</span> [x]</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">pop (x<span class="fu">:</span>xs) <span class="fu">=</span> <span class="dt">Just</span> (x,xs)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">pop [] <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">append <span class="fu">=</span> (<span class="fu">++</span>)</a></code></pre></div>
+<p>Those repeated appends are bad news. The queue needs to be able to support popping from one side and appending from the other, which is something lists absolutely <em>cannot</em> do well.</p>
+<p>We could swap in a more general queue implementation, possibly using Data.Sequence, or a pair of lists. But these are more complex and general than we need, so let’s try and pare down the requirements a little more.</p>
+<p>First, we don’t need a pop: the go function can be expressed as a fold instead. Second, we don’t need <em>every</em> append to be immediately stuck into the queue, we can batch them, first appending to a structure that’s efficient for appends, and then converting that to a structure which is efficient for folds. In code:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">breadthFirst ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">breadthFirst ts <span class="fu">=</span> foldr f b ts []</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    f (<span class="dt">Node</span> x xs) fw bw <span class="fu">=</span> x <span class="fu">:</span> fw (xs <span class="fu">:</span> bw)</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">    b [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">    b qs <span class="fu">=</span> foldl (foldr f) b qs []</a></code></pre></div>
+<p>We’re consing instead of appending, but the consumption is being done in the correct direction anyway, because of the <code class="sourceCode haskell">foldl</code>.</p>
+<h2 id="levels">Levels</h2>
+<p>So next step: to get the <code class="sourceCode haskell">levels</code> function from Data.Tree. Instead of doing a breadth-first traversal, it returns the nodes at each <em>level</em> of the tree. Conceptually, every time we did the reverse above (called <code class="sourceCode haskell">foldl</code>), we will do a cons as well:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">levels ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">levels ts <span class="fu">=</span> foldl f b ts [] []</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">    f k (<span class="dt">Node</span> x xs) ls qs <span class="fu">=</span> k (x <span class="fu">:</span> ls) (xs <span class="fu">:</span> qs)</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    b _ [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    b k qs <span class="fu">=</span> k <span class="fu">:</span> foldl (foldl f) b qs [] []</a></code></pre></div>
+<h2 id="unfolding">Unfolding</h2>
+<p>The original reason I started work on these problems was <a href="https://github.com/haskell/containers/issues/124">this</a> issue in containers. It concerns the <a href="https://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Tree.html#v:unfoldTreeM_BF"><code>unfoldTreeM_BF</code></a> function. An early go at rewriting it, inspired by levels above, looks like this:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode numberSource haskell numberLines"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (const id)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">    b [] k <span class="fu">=</span> pure (k [] [])</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">    b qs k <span class="fu">=</span> foldl (foldr t) b qs [] (\x <span class="ot">-&gt;</span> k [] <span class="fu">.</span> foldr (uncurry run) id x)</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">    t a fw bw k <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">        (x,cs) <span class="ot">&lt;-</span> f a</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">        <span class="kw">let</span> <span class="fu">!</span>n <span class="fu">=</span> length cs</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">        fw (cs <span class="fu">:</span> bw) (k <span class="fu">.</span> (<span class="fu">:</span>) (x, n))</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb6-12" data-line-number="12">    run x n xs ys <span class="fu">=</span></a>
+<a class="sourceLine" id="cb6-13" data-line-number="13">      <span class="kw">case</span> splitAt n ys <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-14" data-line-number="14">          (cs,zs) <span class="ot">-&gt;</span> <span class="dt">Node</span> x cs <span class="fu">:</span> xs zs</a></code></pre></div>
+<p>It basically performs the same this as the levels function, but builds the tree back up in the end using the <code class="sourceCode haskell">run</code> function. In order to do that, we store the length of each subforest on line 9, so that each node knows how much to take from each level.</p>
+<p>A possible optimization is to stop taking the length. Anything in list processing that takes a length screams “wrong” to me (although it’s not always true!) so I often try to find a way to avoid it. The first option would be to keep the <code class="sourceCode haskell">cs</code> on line 8 around, and use <em>it</em> as an indicator for the length. That keeps it around longer than strictly necessary, though. The other option is to add a third level: for <code class="sourceCode haskell">breadthFirst</code> above, we had one level; for <code class="sourceCode haskell">levels</code>, we added another, to indicate the structure of the nodes and their subtrees; here, we can add a third, to maintain that structure when building back up:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">unfoldForestM_BF ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> m (a, [b])) <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> m (<span class="dt">Forest</span> a)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">unfoldForestM_BF f ts <span class="fu">=</span> b [ts] (\ls <span class="ot">-&gt;</span> concat <span class="fu">.</span> ls)</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">    b [] k <span class="fu">=</span> pure (k id [])</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    b qs k <span class="fu">=</span> foldl g b qs [] (\ls <span class="ot">-&gt;</span> k id <span class="fu">.</span> ls)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">    g a xs qs k <span class="fu">=</span> foldr t (\ls ys <span class="ot">-&gt;</span> a ys (k <span class="fu">.</span> run ls)) xs [] qs</a>
+<a class="sourceLine" id="cb7-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">    t a fw xs bw <span class="fu">=</span> f a <span class="fu">&gt;&gt;=</span> \(x,cs) <span class="ot">-&gt;</span> fw (x<span class="fu">:</span>xs) (cs<span class="fu">:</span>bw)</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">    run x xs <span class="fu">=</span> uncurry (<span class="fu">:</span>) <span class="fu">.</span> foldl go ((,) [] <span class="fu">.</span> xs) x</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">        go ys y (z<span class="fu">:</span>zs) <span class="fu">=</span> (<span class="dt">Node</span> y z <span class="fu">:</span> ys', zs')</a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">          <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">            (ys',zs') <span class="fu">=</span> ys zs</a></code></pre></div>
+<p>This unfortunately <em>slows down</em> the code.</p>
+<div id="refs" class="references">
+<div id="ref-okasaki_breadth-first_2000">
+<p>Okasaki, Chris. 2000. “Breadth-first Numbering: Lessons from a Small Exercise in Algorithm Design.” In <em>Proceedings of the Fifth ACM SIGPLAN International Conference on Functional Programming</em>, 131–136. ICFP ’00. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/351240.351253">10.1145/351240.351253</a>. <a href="https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf" class="uri">https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

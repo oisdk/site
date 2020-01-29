@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Prime Sieves in Agda - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Prime Sieves in Agda</h2>
+
+            <div class="info">
+    Posted on December 14, 2018
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/Prime%20Sieves.html">2-part series on Prime Sieves</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Agda.html">Agda</a>
+    
+</div>
+
+<p>Prime numbers in Agda are <em>slow</em>. First, they’re Peano-based, so a huge chunk of optimizations we might make in other languages are out of the window. Second, we really often want to <em>prove</em> that they’re prime, so the generation code has to carry verification logic with it (I won’t do that today, though). And third, as always in Agda, you have to convince the compiler of termination. With all of that in mind, let’s try and write a (very slow, very basic) prime sieve in Agda.</p>
+<p>First, we can make an “array” of numbers that we cross off as we go.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1">primes <span class="ot">:</span> <span class="ot">∀</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">primes zero <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">primes <span class="ot">(</span>suc zero<span class="ot">)</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">primes <span class="ot">(</span>suc <span class="ot">(</span>suc zero<span class="ot">))</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb1-5" data-line-number="5">primes <span class="ot">(</span>suc <span class="ot">(</span>suc <span class="ot">(</span>suc m<span class="ot">)))</span> <span class="ot">=</span> sieve <span class="ot">(</span>tabulate <span class="ot">(</span>just ∘ Fin<span class="ot">.</span>suc<span class="ot">))</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7">  cross-off <span class="ot">:</span> Fin <span class="ot">_</span> <span class="ot">→</span> List <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">_))</span> <span class="ot">→</span> List <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">_))</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9">  sieve <span class="ot">:</span> List <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">_))</span> <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">_)</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">  sieve [] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11">  sieve <span class="ot">(</span>nothing ∷ xs<span class="ot">)</span> <span class="ot">=</span>         sieve xs</a>
+<a class="sourceLine" id="cb1-12" data-line-number="12">  sieve <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x ∷ sieve <span class="ot">(</span>cross-off x xs<span class="ot">)</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14">  cross-off p fs <span class="ot">=</span> foldr f <span class="ot">(</span>const []<span class="ot">)</span> fs p</a>
+<a class="sourceLine" id="cb1-15" data-line-number="15">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">    B <span class="ot">=</span> <span class="ot">∀</span> <span class="ot">{</span>i<span class="ot">}</span> <span class="ot">→</span> Fin i <span class="ot">→</span> List <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">    f <span class="ot">:</span> Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">))</span> <span class="ot">→</span> B <span class="ot">→</span> B</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">    f <span class="ot">_</span> xs zero    <span class="ot">=</span> nothing ∷ xs p</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20">    f x xs <span class="ot">(</span>suc y<span class="ot">)</span> <span class="ot">=</span> x       ∷ xs y</a></code></pre></div>
+<p>Very simple so far: we run through the list, filtering out the multiples of each prime as we see it. Unfortunately, this won’t pass the termination checker. This recursive call to <code>sieve</code> is the problem:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb2-1" data-line-number="1">sieve <span class="ot">(</span>just x ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x ∷ sieve <span class="ot">(</span>cross-off x xs<span class="ot">)</span></a></code></pre></div>
+<p>Agda finds if a function is terminating by checking that at least one argument gets (structurally) smaller on every recursive call. <code>sieve</code> only takes one argument (the input list), so that’s the one that needs to get smaller. In the line above, if we replaced it with the following:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb3-1" data-line-number="1">sieve <span class="ot">(</span>just x ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x ∷ sieve xs</a></code></pre></div>
+<p>We’d be good to go: <code>xs</code> is definitely smaller than <code>(just x ∷ xs)</code>. <code>cross-off x xs</code>, though? The thing is, <code>cross-off</code> returns a list of the same length that it’s given. But the function call is opaque: Agda can’t automatically see the fact that the length stays the same. Reaching for a proof here is the wrong move, though: you can get all of the same benefit by switching out the list for a length-indexed vector.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb4-1" data-line-number="1">primes <span class="ot">:</span> <span class="ot">∀</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">primes zero <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">primes <span class="ot">(</span>suc zero<span class="ot">)</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">primes <span class="ot">(</span>suc <span class="ot">(</span>suc zero<span class="ot">))</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">primes <span class="ot">(</span>suc <span class="ot">(</span>suc <span class="ot">(</span>suc m<span class="ot">)))</span> <span class="ot">=</span> sieve <span class="ot">(</span>tabulate <span class="ot">(</span>just ∘ Fin<span class="ot">.</span>suc<span class="ot">))</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">  cross-off <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Fin <span class="ot">_</span> <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">_)</span> n <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">_)</span> n</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">  sieve <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span>  Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">  sieve [] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">  sieve <span class="ot">(</span>nothing ∷ xs<span class="ot">)</span> <span class="ot">=</span>         sieve xs</a>
+<a class="sourceLine" id="cb4-12" data-line-number="12">  sieve <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x ∷ sieve <span class="ot">(</span>cross-off x xs<span class="ot">)</span></a>
+<a class="sourceLine" id="cb4-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb4-14" data-line-number="14">  cross-off p fs <span class="ot">=</span> foldr B f <span class="ot">(</span>const []<span class="ot">)</span> fs p</a>
+<a class="sourceLine" id="cb4-15" data-line-number="15">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-16" data-line-number="16">    B <span class="ot">=</span> <span class="ot">λ</span> n <span class="ot">→</span> <span class="ot">∀</span> <span class="ot">{</span>i<span class="ot">}</span> <span class="ot">→</span> Fin i <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n</a>
+<a class="sourceLine" id="cb4-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb4-18" data-line-number="18">    f <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">))</span> <span class="ot">→</span> B n <span class="ot">→</span> B <span class="ot">(</span>suc n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb4-19" data-line-number="19">    f <span class="ot">_</span> xs zero    <span class="ot">=</span> nothing ∷ xs p</a>
+<a class="sourceLine" id="cb4-20" data-line-number="20">    f x xs <span class="ot">(</span>suc y<span class="ot">)</span> <span class="ot">=</span> x       ∷ xs y</a></code></pre></div>
+<p>Actually, my explanation above is a little bit of a lie. Often, the way I think about dependently-typed programs has a lot to do with my intuition for “proofs” and so on. But this leads you down the wrong path (and it’s why writing a proof that <code>cross-off</code> returns a list of the same length is the wrong move).</p>
+<p>The actual termination checking algorithm is very simple, albeit strict: the argument passed recursively must be <em>structurally</em> smaller. That’s it. Basically, the recursive argument has to be contained in one of the arguments passed. It has nothing to do with Agda “seeing” inside the function <code>cross-off</code> or anything like that. What we’ve done above (to make it terminate) is add another argument to the function: the length of the vector. The argument is implicit, but if we were to make it explicit in the recursive call:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb5-1" data-line-number="1">sieve <span class="ot">{</span>suc n<span class="ot">}</span> <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x ∷ sieve <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">(</span>cross-off x xs<span class="ot">)</span></a></code></pre></div>
+<p>We can see that it does indeed get structurally smaller.</p>
+<h1 id="adding-the-squaring-optimization">Adding the Squaring Optimization</h1>
+<p>A simple improvement we should be able to make is stopping once we hit the square root of the limit. Since we don’t want to be squaring as we go, we’ll use the following identity:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>+</mo><mn>1</mn><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup><mo>=</mo><msup><mi>n</mi><mn>2</mn></msup><mo>+</mo><mn>2</mn><mi>n</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">(n + 1)^2 = n^2 + 2n + 1</annotation></semantics></math></p>
+<p>to figure out the square of the next number from the previous. In fact, we’ll just pass in the limit, and reduce it by <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mi>n</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">2n + 1</annotation></semantics></math> each time, until it reaches zero:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb6-1" data-line-number="1">primes <span class="ot">:</span> <span class="ot">∀</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">primes zero <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">primes <span class="ot">(</span>suc zero<span class="ot">)</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">primes <span class="ot">(</span>suc <span class="ot">(</span>suc zero<span class="ot">))</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">primes <span class="ot">(</span>suc <span class="ot">(</span>suc <span class="ot">(</span>suc m<span class="ot">)))</span> <span class="ot">=</span> sieve <span class="dv">1</span> m <span class="ot">(</span>Vec<span class="ot">.</span>tabulate <span class="ot">(</span>just ∘ Fin<span class="ot">.</span>suc ∘ Fin<span class="ot">.</span>suc<span class="ot">))</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">  cross-off <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ℕ <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">_)</span> n <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">_)</span> n</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">  sieve <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">)))</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">  sieve <span class="ot">_</span> zero <span class="ot">=</span> List<span class="ot">.</span>mapMaybe id ∘ Vec<span class="ot">.</span>toList</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11">  sieve <span class="ot">_</span> <span class="ot">(</span>suc <span class="ot">_)</span> [] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb6-12" data-line-number="12">  sieve i <span class="ot">(</span>suc l<span class="ot">)</span> <span class="ot">(</span>nothing ∷ xs<span class="ot">)</span> <span class="ot">=</span>     sieve <span class="ot">(</span>suc i<span class="ot">)</span> <span class="ot">(</span>l ∸ i ∸ i<span class="ot">)</span> xs</a>
+<a class="sourceLine" id="cb6-13" data-line-number="13">  sieve i <span class="ot">(</span>suc l<span class="ot">)</span> <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> x ∷ sieve <span class="ot">(</span>suc i<span class="ot">)</span> <span class="ot">(</span>l ∸ i ∸ i<span class="ot">)</span> <span class="ot">(</span>cross-off i xs<span class="ot">)</span></a>
+<a class="sourceLine" id="cb6-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb6-15" data-line-number="15">  cross-off p fs <span class="ot">=</span> Vec<span class="ot">.</span>foldr B f <span class="ot">(</span>const []<span class="ot">)</span> fs p</a>
+<a class="sourceLine" id="cb6-16" data-line-number="16">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-17" data-line-number="17">      B <span class="ot">=</span> <span class="ot">λ</span> n <span class="ot">→</span> ℕ <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">)))</span> n</a>
+<a class="sourceLine" id="cb6-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb6-19" data-line-number="19">      f <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>i<span class="ot">}</span> <span class="ot">→</span> Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span> <span class="ot">→</span> B i <span class="ot">→</span> B <span class="ot">(</span>suc i<span class="ot">)</span></a>
+<a class="sourceLine" id="cb6-20" data-line-number="20">      f <span class="ot">_</span> xs zero    <span class="ot">=</span> nothing ∷ xs p</a>
+<a class="sourceLine" id="cb6-21" data-line-number="21">      f x xs <span class="ot">(</span>suc y<span class="ot">)</span> <span class="ot">=</span> x       ∷ xs y</a></code></pre></div>
+<h1 id="finding-prime-factors">Finding Prime Factors</h1>
+<p>A slight variation on the code above (the first version) will give us the prime factors of a number:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb7-1" data-line-number="1">primeFactors <span class="ot">:</span> <span class="ot">∀</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">primeFactors zero <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">primeFactors <span class="ot">(</span>suc zero<span class="ot">)</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">primeFactors <span class="ot">(</span>suc <span class="ot">(</span>suc zero<span class="ot">))</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">primeFactors <span class="ot">(</span>suc <span class="ot">(</span>suc <span class="ot">(</span>suc m<span class="ot">)))</span> <span class="ot">=</span> sieve <span class="ot">(</span>Vec<span class="ot">.</span>tabulate <span class="ot">(</span>just ∘ Fin<span class="ot">.</span>suc<span class="ot">))</span></a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">  sieve <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">  sieve [] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">  sieve <span class="ot">(</span>nothing ∷ xs<span class="ot">)</span> <span class="ot">=</span> sieve xs</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10">  sieve <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> Vec<span class="ot">.</span>foldr B remove b xs sieve x</a>
+<a class="sourceLine" id="cb7-11" data-line-number="11">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-12" data-line-number="12">    B <span class="ot">=</span> <span class="ot">λ</span> n <span class="ot">→</span> <span class="ot">∀</span> <span class="ot">{</span>i<span class="ot">}</span></a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">            <span class="ot">→</span> <span class="ot">(</span>Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n</a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">            <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">)))</span></a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">            <span class="ot">→</span> Fin i</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16">            <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb7-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb7-18" data-line-number="18">    b <span class="ot">:</span> B <span class="dv">0</span></a>
+<a class="sourceLine" id="cb7-19" data-line-number="19">    b k zero    <span class="ot">=</span> suc x ∷ k []</a>
+<a class="sourceLine" id="cb7-20" data-line-number="20">    b k <span class="ot">(</span>suc <span class="ot">_)</span> <span class="ot">=</span>         k []</a>
+<a class="sourceLine" id="cb7-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb7-22" data-line-number="22">    remove <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">))</span> <span class="ot">→</span> B n <span class="ot">→</span> B <span class="ot">(</span>suc n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb7-23" data-line-number="23">    remove y ys k zero    <span class="ot">=</span> ys <span class="ot">(</span>k ∘ <span class="ot">(</span>nothing ∷<span class="ot">_))</span> x</a>
+<a class="sourceLine" id="cb7-24" data-line-number="24">    remove y ys k <span class="ot">(</span>suc j<span class="ot">)</span> <span class="ot">=</span> ys <span class="ot">(</span>k ∘ <span class="ot">(</span>y ∷<span class="ot">_))</span> j</a></code></pre></div>
+<p>Adding the squaring optimization complicates things significantly:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1">primeFactors <span class="ot">:</span> <span class="ot">∀</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">primeFactors zero <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">primeFactors <span class="ot">(</span>suc zero<span class="ot">)</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">primeFactors <span class="ot">(</span>suc <span class="ot">(</span>suc zero<span class="ot">))</span> <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">primeFactors <span class="ot">(</span>suc <span class="ot">(</span>suc <span class="ot">(</span>suc m<span class="ot">)))</span> <span class="ot">=</span> sqr <span class="ot">(</span>suc m<span class="ot">)</span> m suc sieve</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">  <span class="ot">_</span>2F-<span class="ot">_</span> <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ℕ <span class="ot">→</span> Fin n <span class="ot">→</span> ℕ</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">  x           2F- zero <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">  zero        2F- suc y <span class="ot">=</span> zero</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">  suc zero    2F- suc y <span class="ot">=</span> zero</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">  suc <span class="ot">(</span>suc x<span class="ot">)</span> 2F- suc y <span class="ot">=</span> x 2F- y</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">  sqr <span class="ot">:</span> <span class="ot">∀</span> n</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">      <span class="ot">→</span> ℕ</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">      <span class="ot">→</span> <span class="ot">(</span>Fin n <span class="ot">→</span> Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">      <span class="ot">→</span> <span class="ot">(∀</span> <span class="ot">{</span>i<span class="ot">}</span> <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> i <span class="ot">→</span> ℕ <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">)))</span></a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">      <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb8-18" data-line-number="18">  sqr n       zero    f k <span class="ot">=</span> k [] n</a>
+<a class="sourceLine" id="cb8-19" data-line-number="19">  sqr zero    <span class="ot">(</span>suc l<span class="ot">)</span> f k <span class="ot">=</span> k [] zero</a>
+<a class="sourceLine" id="cb8-20" data-line-number="20">  sqr <span class="ot">(</span>suc n<span class="ot">)</span> <span class="ot">(</span>suc l<span class="ot">)</span> f k <span class="ot">=</span></a>
+<a class="sourceLine" id="cb8-21" data-line-number="21">    <span class="kw">let</span> x <span class="ot">=</span> f zero</a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">    <span class="kw">in</span> sqr n <span class="ot">(</span>l 2F- x<span class="ot">)</span> <span class="ot">(</span>f ∘ suc<span class="ot">)</span> <span class="ot">(</span>k ∘ <span class="ot">(</span>just x ∷<span class="ot">_))</span></a>
+<a class="sourceLine" id="cb8-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb8-24" data-line-number="24">  sieve <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n <span class="ot">→</span> ℕ <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb8-25" data-line-number="25">  sieve xs′ i <span class="ot">=</span> go xs′</a>
+<a class="sourceLine" id="cb8-26" data-line-number="26">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-27" data-line-number="27">    go <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb8-28" data-line-number="28">    go [] <span class="ot">=</span> []</a>
+<a class="sourceLine" id="cb8-29" data-line-number="29">    go <span class="ot">(</span>nothing ∷ xs<span class="ot">)</span> <span class="ot">=</span> go xs</a>
+<a class="sourceLine" id="cb8-30" data-line-number="30">    go <span class="ot">(</span>just x  ∷ xs<span class="ot">)</span> <span class="ot">=</span> Vec<span class="ot">.</span>foldr B remove <span class="ot">(</span>b i<span class="ot">)</span> xs x go</a>
+<a class="sourceLine" id="cb8-31" data-line-number="31">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-32" data-line-number="32">      B <span class="ot">=</span> <span class="ot">λ</span> n <span class="ot">→</span> <span class="ot">∀</span> <span class="ot">{</span>i<span class="ot">}</span></a>
+<a class="sourceLine" id="cb8-33" data-line-number="33">              <span class="ot">→</span> Fin i</a>
+<a class="sourceLine" id="cb8-34" data-line-number="34">              <span class="ot">→</span> <span class="ot">(</span>Vec <span class="ot">(</span>Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">)))</span> n <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">)))</span></a>
+<a class="sourceLine" id="cb8-35" data-line-number="35">              <span class="ot">→</span> List <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">3</span> + m<span class="ot">))</span></a>
+<a class="sourceLine" id="cb8-36" data-line-number="36"></a>
+<a class="sourceLine" id="cb8-37" data-line-number="37">      b <span class="ot">:</span> ℕ <span class="ot">→</span> B <span class="dv">0</span></a>
+<a class="sourceLine" id="cb8-38" data-line-number="38">      b zero    zero    k <span class="ot">=</span> suc x ∷ k []</a>
+<a class="sourceLine" id="cb8-39" data-line-number="39">      b zero    <span class="ot">(</span>suc y<span class="ot">)</span> k <span class="ot">=</span> k []</a>
+<a class="sourceLine" id="cb8-40" data-line-number="40">      b <span class="ot">(</span>suc n<span class="ot">)</span> zero    k <span class="ot">=</span> b n x k</a>
+<a class="sourceLine" id="cb8-41" data-line-number="41">      b <span class="ot">(</span>suc n<span class="ot">)</span> <span class="ot">(</span>suc y<span class="ot">)</span> k <span class="ot">=</span> b n y k</a>
+<a class="sourceLine" id="cb8-42" data-line-number="42"></a>
+<a class="sourceLine" id="cb8-43" data-line-number="43">      remove <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> Maybe <span class="ot">(</span>Fin <span class="ot">(</span><span class="dv">2</span> + m<span class="ot">))</span> <span class="ot">→</span> B n <span class="ot">→</span> B <span class="ot">(</span>suc n<span class="ot">)</span></a>
+<a class="sourceLine" id="cb8-44" data-line-number="44">      remove y ys zero    k <span class="ot">=</span> ys x <span class="ot">(</span>k ∘ <span class="ot">(</span>nothing ∷<span class="ot">_))</span></a>
+<a class="sourceLine" id="cb8-45" data-line-number="45">      remove y ys <span class="ot">(</span>suc j<span class="ot">)</span> k <span class="ot">=</span> ys j <span class="ot">(</span>k ∘ <span class="ot">(</span>y ∷<span class="ot">_))</span></a></code></pre></div>
+<h1 id="infinitude">Infinitude</h1>
+<p>The above sieve aren’t “true” in that each <code>remove</code> is linear, so the performance is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math> overall. This is the same problem we ran into with the naive infinite sieve in Haskell.</p>
+<p>Since it bears such a similarity to the infinite sieve, we have to ask: can <em>this</em> sieve be infinite? Agda supports a notion of infinite data, so it would seem like it:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="ot">_</span>◂<span class="ot">_</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="kw">record</span> Stream <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  <span class="kw">constructor</span> <span class="ot">_</span>◂<span class="ot">_</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  <span class="kw">coinductive</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  <span class="kw">field</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    head <span class="ot">:</span> A</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">    tail <span class="ot">:</span> Stream A</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8"><span class="kw">open</span> Stream</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">primes <span class="ot">:</span> Stream ℕ</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">primes <span class="ot">=</span> sieve <span class="dv">1</span> nats</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">  nats <span class="ot">:</span> Stream ℕ</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14">  head nats <span class="ot">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb9-15" data-line-number="15">  tail nats <span class="ot">=</span> nats</a>
+<a class="sourceLine" id="cb9-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb9-17" data-line-number="17">  sieve <span class="ot">:</span> ℕ <span class="ot">→</span> Stream ℕ <span class="ot">→</span> Stream ℕ</a>
+<a class="sourceLine" id="cb9-18" data-line-number="18">  head <span class="ot">(</span>sieve i xs<span class="ot">)</span> <span class="ot">=</span> suc i</a>
+<a class="sourceLine" id="cb9-19" data-line-number="19">  tail <span class="ot">(</span>sieve i xs<span class="ot">)</span> <span class="ot">=</span> remove i <span class="ot">(</span>head xs<span class="ot">)</span> <span class="ot">(</span>tail xs<span class="ot">)</span> <span class="ot">(</span>sieve ∘ suc ∘ <span class="ot">(_</span>+ i<span class="ot">))</span></a>
+<a class="sourceLine" id="cb9-20" data-line-number="20">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-21" data-line-number="21">    remove <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> Stream ℕ <span class="ot">→</span> <span class="ot">(</span>ℕ <span class="ot">→</span> Stream ℕ <span class="ot">→</span> Stream ℕ<span class="ot">)</span> <span class="ot">→</span> Stream ℕ</a>
+<a class="sourceLine" id="cb9-22" data-line-number="22">    remove zero zero zs       k <span class="ot">=</span> remove i <span class="ot">(</span>head zs<span class="ot">)</span> <span class="ot">(</span>tail zs<span class="ot">)</span> <span class="ot">(</span>k ∘ suc<span class="ot">)</span></a>
+<a class="sourceLine" id="cb9-23" data-line-number="23">    remove zero <span class="ot">(</span>suc z<span class="ot">)</span> zs    k <span class="ot">=</span> remove i z zs <span class="ot">(</span>k ∘ suc<span class="ot">)</span></a>
+<a class="sourceLine" id="cb9-24" data-line-number="24">    remove <span class="ot">(</span>suc y<span class="ot">)</span> zero zs    k <span class="ot">=</span> k zero <span class="ot">(</span>remove y <span class="ot">(</span>head zs<span class="ot">)</span> <span class="ot">(</span>tail zs<span class="ot">)</span> <span class="ot">_</span>◂<span class="ot">_)</span></a>
+<a class="sourceLine" id="cb9-25" data-line-number="25">    remove <span class="ot">(</span>suc y<span class="ot">)</span> <span class="ot">(</span>suc z<span class="ot">)</span> zs k <span class="ot">=</span> remove y z zs <span class="ot">(</span>k ∘ suc<span class="ot">)</span></a></code></pre></div>
+<p>But this won’t pass the termination checker. What we actually need to prove to do so is that there are infinitely many primes: <a href="https://gist.github.com/copumpkin/1286093">a nontrivial task in Agda</a>.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

@@ -9,12 +9,12 @@
            <a id="277" class="Symbol">;</a> <a id="279" href="Agda.Builtin.Cubical.Id.html#440" class="Primitive">primIdFace</a> <a id="290" class="Symbol">to</a> <a id="293" href="Agda.Builtin.Cubical.Id.html#440" class="Primitive">faceId</a>  <a id="301" class="Comment">-- ∀ {ℓ} {A : Set ℓ} {x y : A} → Id x y → I</a>
            <a id="356" class="Symbol">;</a> <a id="358" href="Agda.Builtin.Cubical.Id.html#498" class="Primitive">primIdPath</a> <a id="369" class="Symbol">to</a> <a id="372" href="Agda.Builtin.Cubical.Id.html#498" class="Primitive">pathId</a>  <a id="380" class="Comment">-- ∀ {ℓ} {A : Set ℓ} {x y : A} → Id x y → Path A x y</a>
 
-           <a id="445" class="Symbol">;</a> <a id="447" href="Agda.Builtin.Cubical.Id.html#730" class="Primitive">primIdElim</a> <a id="458" class="Symbol">to</a> <a id="461" href="Agda.Builtin.Cubical.Id.html#730" class="Primitive">elimId</a>  <a id="469" class="Comment">-- ∀ {ℓ ℓ&#39;} {A : Set ℓ} {x : A}</a>
-                                   <a id="536" class="Comment">-- (P : ∀ (y : A) → x ≡ y → Set ℓ&#39;)</a>
+           <a id="445" class="Symbol">;</a> <a id="447" href="Agda.Builtin.Cubical.Id.html#730" class="Primitive">primIdElim</a> <a id="458" class="Symbol">to</a> <a id="461" href="Agda.Builtin.Cubical.Id.html#730" class="Primitive">elimId</a>  <a id="469" class="Comment">-- ∀ {ℓ ℓ'} {A : Set ℓ} {x : A}</a>
+                                   <a id="536" class="Comment">-- (P : ∀ (y : A) → x ≡ y → Set ℓ')</a>
                                    <a id="607" class="Comment">-- (h : ∀ (φ : I) (y : A [ φ ↦ (λ _ → x) ])</a>
                                    <a id="686" class="Comment">--        (w : (Path _ x (outS y)) [ φ ↦ (λ { (φ = i1) → λ _ → x}) ] ) →</a>
                                    <a id="794" class="Comment">--        P (outS y) ⟨ φ , outS w ⟩) →</a>
-                                   <a id="868" class="Comment">-- {y : A} (w&#39; : x ≡ y) → P y w&#39;</a>
+                                   <a id="868" class="Comment">-- {y : A} (w' : x ≡ y) → P y w'</a>
            <a id="912" class="Symbol">)</a>
   <a id="916" class="Keyword">hiding</a> <a id="923" class="Symbol">(</a> <a id="925" href="Agda.Builtin.Cubical.Id.html#573" class="Primitive">primIdJ</a> <a id="933" class="Symbol">)</a> <a id="935" class="Comment">-- this should not be used as it is using compCCHM</a>
 

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Folding Two Things at Once - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Folding Two Things at Once</h2>
+
+            <div class="info">
+    Posted on April 17, 2016
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Recursion%20Schemes.html">Recursion Schemes</a>
+    
+</div>
+
+<p>There’s a whole family of Haskell brainteasers surrounding one function: <code class="sourceCode haskell">foldr</code>. The general idea is to convert some function on lists which uses recursion into one that uses <code class="sourceCode haskell">foldr</code>. <code class="sourceCode haskell">map</code>, for instance:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">map<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">map f <span class="fu">=</span> foldr (\e a <span class="ot">-&gt;</span> f e <span class="fu">:</span> a) []</a></code></pre></div>
+<p>Some can get a little trickier. <code class="sourceCode haskell">dropWhile</code>, for instance. (See <a href="https://wiki.haskell.org/wikiupload/1/14/TMR-Issue6.pdf">here</a> and <a href="http://www.cs.nott.ac.uk/~pszgmh/fold.pdf">here</a> for interesting articles on that one in particular.)</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1">dropWhile<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">dropWhile p <span class="fu">=</span> fst <span class="fu">.</span> foldr f ([],[]) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  f e <span class="fu">~</span>(xs,ys) <span class="fu">=</span> (<span class="kw">if</span> p e <span class="kw">then</span> xs <span class="kw">else</span> zs, zs) <span class="kw">where</span> zs <span class="fu">=</span> e <span class="fu">:</span> ys</a></code></pre></div>
+<h2 id="zip">Zip</h2>
+<p>One function which was a little harder to convert than it first seemed was <code class="sourceCode haskell">zip</code>.</p>
+<p>Here’s the first (non) solution:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">zip <span class="fu">=</span> foldr f (const []) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  f x xs (y<span class="fu">:</span>ys) <span class="fu">=</span> (x,y) <span class="fu">:</span> xs ys</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  f _ _  [] <span class="fu">=</span> []</a></code></pre></div>
+<p>The problem with the above isn’t that it doesn’t work: it does. The problem is that it’s not <em>really</em> using <code class="sourceCode haskell">foldr</code>. It’s only using it on the first list: there’s still a manual uncons being performed on the second. Ideally, I would want the function to look something like this:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">zip xs ys <span class="fu">=</span> foldr f (\_ _ <span class="ot">-&gt;</span> []) xs (foldr g (const []) ys)</a></code></pre></div>
+<p>The best solution I found online only dealt with <code class="sourceCode haskell"><span class="dt">Fold</span></code>s, not <code class="sourceCode haskell"><span class="dt">Foldable</span></code>s. You can read it <a href="http://okmij.org/ftp/Haskell/zip-folds.lhs">here</a>.</p>
+<h2 id="recursive-types">Recursive Types</h2>
+<p>Reworking the solution online for <code class="sourceCode haskell"><span class="dt">Foldable</span></code>s, the initial intuition is to have the <code class="sourceCode haskell">foldr</code> on the <code class="sourceCode haskell">ys</code> produce a function which takes an element of the <code class="sourceCode haskell">xs</code>, and returns a function which takes an element of the <code class="sourceCode haskell">xs</code>, and so on, finally returning the created list. The <em>problem</em> with that approach is the types involved:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">zip xs <span class="fu">=</span> foldr f (const []) xs <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  g e2 r2 e1 r1 <span class="fu">=</span> (e1,e2) <span class="fu">:</span> (r1 r2)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">  f e r x <span class="fu">=</span> x e r</a></code></pre></div>
+<p>You get the error:</p>
+<blockquote>
+<p><code class="sourceCode haskell"><span class="dt">Occurs</span> check<span class="fu">:</span> cannot construct the infinite <span class="kw">type</span><span class="fu">:</span> t0 <span class="fu">~</span> a <span class="ot">-&gt;</span> (t0 <span class="ot">-&gt;</span> [(a, b)]) <span class="ot">-&gt;</span> [(a, b)]</code>.</p>
+</blockquote>
+<p>Haskell’s typechecker doesn’t allow for infinitely recursive types.</p>
+<p>You’ll be familiar with this problem if you’ve ever tried to encode the Y-combinator, or if you’ve fiddled around with the recursion-schemes package. You might also be familiar with the solution: a <code class="sourceCode haskell"><span class="kw">newtype</span></code>, encapsulating the recursion. In this case, the <code class="sourceCode haskell"><span class="kw">newtype</span></code> looks very similar to the signature for <code class="sourceCode haskell">foldr</code>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">RecFold</span> a b <span class="fu">=</span> </a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  <span class="dt">RecFold</span> {<span class="ot"> runRecFold ::</span> a <span class="ot">-&gt;</span> (<span class="dt">RecFold</span> a b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b }</a></code></pre></div>
+<p>Now you can insert and remove the <code class="sourceCode haskell"><span class="dt">RecFold</span></code> wrapper, helping the typechecker to understand the recursive types as it goes:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">zip xs <span class="fu">=</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  foldr f (const []) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">    g e2 r2 e1 r1 <span class="fu">=</span> (e1,e2) <span class="fu">:</span> (r1 (<span class="dt">RecFold</span> r2))</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">    f e r x <span class="fu">=</span> runRecFold x e r</a></code></pre></div>
+<p>As an aside, the performance characteristics of the <code class="sourceCode haskell"><span class="kw">newtype</span></code> wrapper are totally opaque to me. There may be significant improvements by using <code class="sourceCode haskell">coerce</code> from <a href="https://hackage.haskell.org/package/base-4.8.2.0/docs/Data-Coerce.html">Data.Coerce</a>, but I haven’t looked into it.</p>
+<h2 id="generalised-zips">Generalised Zips</h2>
+<p>The immediate temptation from the function above is to generalise it. First to <code class="sourceCode haskell">zipWith</code>, obviously:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">zipWith<span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [c]</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">zipWith c xs <span class="fu">=</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  foldr f (const []) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> []) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">    g e2 r2 e1 r1 <span class="fu">=</span> c e1 e2 <span class="fu">:</span> (r1 (<span class="dt">RecFold</span> r2))</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">    f e r x <span class="fu">=</span> runRecFold x e r</a></code></pre></div>
+<p>What’s maybe a little more interesting, though, would be a <code class="sourceCode haskell">foldr</code> on two lists. Something which folds through both at once, using a supplied combining function:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">foldr2 ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">       <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> c</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">foldr2 c i xs <span class="fu">=</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  foldr f (const i) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr g (\_ _ <span class="ot">-&gt;</span> i) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    g e2 r2 e1 r1 <span class="fu">=</span> c e1 e2 (r1 (<span class="dt">RecFold</span> r2))</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">    f e r x <span class="fu">=</span> runRecFold x e r</a></code></pre></div>
+<p>Of course, once you can do two, you can do three:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">foldr3 ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g, <span class="dt">Foldable</span> h)</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">       <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> d <span class="ot">-&gt;</span> d)</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">       <span class="ot">-&gt;</span> d <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> h c <span class="ot">-&gt;</span> d</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">foldr3 c i xs ys <span class="fu">=</span></a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">  foldr f (const i) xs <span class="fu">.</span> <span class="dt">RecFold</span> <span class="fu">.</span> foldr2 g (\_ _ <span class="ot">-&gt;</span> i) ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">    g e2 e3 r2 e1 r1 <span class="fu">=</span> c e1 e2 e3 (r1 (<span class="dt">RecFold</span> r2))</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">    f e r x <span class="fu">=</span> runRecFold x e r</a></code></pre></div>
+<p>And so on.</p>
+<p>There’s the added benefit that the above functions work on much more than just lists.</p>
+<h2 id="catamorphisms">Catamorphisms</h2>
+<p>Getting a little formal about the above functions, a <code class="sourceCode haskell">fold</code> can be described as a catamorphism. This is a name for a pattern of breaking down some recursive structure. There’s a bunch of them in the <a href="https://hackage.haskell.org/package/recursion-schemes-4.1.2/docs/Data-Functor-Foldable.html">recursion-schemes</a> package. The question is, then: can you express the above as a kind of catamorphism? Initially, using the same techniques as before, you can:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">RecF</span> f a <span class="fu">=</span> <span class="dt">RecF</span> {<span class="ot"> unRecF ::</span> <span class="dt">Base</span> f (<span class="dt">RecF</span> f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a }</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3"><span class="ot">zipo ::</span> (<span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> f, <span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> g)</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">     <span class="ot">=&gt;</span> (<span class="dt">Base</span> f (<span class="dt">RecF</span> g c) <span class="ot">-&gt;</span> <span class="dt">Base</span> g (<span class="dt">RecF</span> g c <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">     <span class="ot">-&gt;</span> f <span class="ot">-&gt;</span> g <span class="ot">-&gt;</span> c</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">zipo alg xs ys <span class="fu">=</span> cata (flip unRecF) ys (cata (<span class="dt">RecF</span> <span class="fu">.</span> alg) xs)</a></code></pre></div>
+<p>Then, coming full circle, you get a quite nice encoding of <code class="sourceCode haskell">zip</code>:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">zip <span class="fu">=</span> zipo alg <span class="kw">where</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">  alg <span class="dt">Nil</span> _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">  alg _ <span class="dt">Nil</span> <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">  alg (<span class="dt">Cons</span> x xs) (<span class="dt">Cons</span> y ys) <span class="fu">=</span> (x, y) <span class="fu">:</span> ys xs</a></code></pre></div>
+<p>However, the <code class="sourceCode haskell"><span class="dt">RecF</span></code> is a little ugly. In fact, it’s possible to write the above without any recursive types. (It’s possible that you could do the same with <code class="sourceCode haskell">foldr2</code> as well, but I haven’t figured it out yet)</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">zipo ::</span> (<span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> f, <span class="dt">Functor</span><span class="fu">.</span><span class="dt">Foldable</span> g)</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">     <span class="ot">=&gt;</span> (<span class="dt">Base</span> f (g <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> <span class="dt">Base</span> g g <span class="ot">-&gt;</span> c)</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">     <span class="ot">-&gt;</span> f <span class="ot">-&gt;</span> g <span class="ot">-&gt;</span> c</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">zipo alg <span class="fu">=</span> cata (\x <span class="ot">-&gt;</span> alg x <span class="fu">.</span> project)</a></code></pre></div>
+<p>And the new version of <code class="sourceCode haskell">zip</code> has a slightly more natural order of arguments:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1">zip<span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">zip <span class="fu">=</span> zipo alg <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  alg <span class="dt">Nil</span> _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">  alg _ <span class="dt">Nil</span> <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">  alg (<span class="dt">Cons</span> x xs) (<span class="dt">Cons</span> y ys) <span class="fu">=</span> (x,y) <span class="fu">:</span> xs ys</a></code></pre></div>
+<h2 id="zipping-into">Zipping Into</h2>
+<p>There’s one more issue, though, that’s slightly tangential. A lot of the time, the attraction of rewriting functions using folds and catamorphisms is that the function becomes more general: it no longer is restricted to lists. For <code class="sourceCode haskell">zip</code>, however, there’s still a pesky list left in the signature:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1">zip<span class="ot"> ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> [(a,b)]</a></code></pre></div>
+<p>It would be a little nicer to be able to zip through something <em>preserving</em> the structure of one of the things being zipped through. For no reason in particular, let’s assume we’ll preserve the structure of the first argument. The function will have to account for the second argument running out before the first, though. A <code class="sourceCode haskell"><span class="dt">Maybe</span></code> can account for that:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">zipInto ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Foldable</span> g) </a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) </a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">        <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> g b <span class="ot">-&gt;</span> f c</a></code></pre></div>
+<p>If the second argument runs out, <code class="sourceCode haskell"><span class="dt">Nothing</span></code> will be passed to the combining function.</p>
+<p>It’s clear that this isn’t a <em>fold</em> over the first argument, it’s a <em>traversal</em>. A first go at the function uses the state monad, but restricts the second argument to a list:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="ot">zipInto ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> f c</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">zipInto c xs ys <span class="fu">=</span> evalState (traverse f xs) ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb17-3" data-line-number="3">  f x <span class="fu">=</span> <span class="kw">do</span></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4">    h <span class="ot">&lt;-</span> gets uncons</a>
+<a class="sourceLine" id="cb17-5" data-line-number="5">    <span class="kw">case</span> h <span class="kw">of</span> </a>
+<a class="sourceLine" id="cb17-6" data-line-number="6">      <span class="dt">Just</span> (y,t) <span class="ot">-&gt;</span> <span class="kw">do</span> </a>
+<a class="sourceLine" id="cb17-7" data-line-number="7">        put t</a>
+<a class="sourceLine" id="cb17-8" data-line-number="8">        pure (c x (<span class="dt">Just</span> y))</a>
+<a class="sourceLine" id="cb17-9" data-line-number="9">      <span class="dt">Nothing</span> <span class="ot">-&gt;</span> pure (c x <span class="dt">Nothing</span>)</a></code></pre></div>
+<p>That code can be cleaned up a little:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="ot">zipInto ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> f c </a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">zipInto c <span class="fu">=</span> evalState <span class="fu">.</span> traverse (state <span class="fu">.</span> f <span class="fu">.</span> c) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">  f x [] <span class="fu">=</span> (x <span class="dt">Nothing</span>, [])</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">  f x (y<span class="fu">:</span>ys) <span class="fu">=</span> (x (<span class="dt">Just</span> y), ys)</a></code></pre></div>
+<p>But really, the uncons needs to go. Another <code class="sourceCode haskell"><span class="kw">newtype</span></code> wrapper is needed, and here’s the end result:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">RecAccu</span> a b <span class="fu">=</span></a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">  <span class="dt">RecAccu</span> {<span class="ot"> runRecAccu ::</span> a <span class="ot">-&gt;</span> (<span class="dt">RecAccu</span> a b, b) }</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">  </a>
+<a class="sourceLine" id="cb19-4" data-line-number="4"><span class="ot">zipInto ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Foldable</span> f)</a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">        <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> t c</a>
+<a class="sourceLine" id="cb19-6" data-line-number="6">zipInto f xs <span class="fu">=</span></a>
+<a class="sourceLine" id="cb19-7" data-line-number="7">  snd <span class="fu">.</span> flip (mapAccumL runRecAccu) xs <span class="fu">.</span> <span class="dt">RecAccu</span> <span class="fu">.</span> foldr h i <span class="kw">where</span></a>
+<a class="sourceLine" id="cb19-8" data-line-number="8">    i e <span class="fu">=</span> (<span class="dt">RecAccu</span> i, f e <span class="dt">Nothing</span>)</a>
+<a class="sourceLine" id="cb19-9" data-line-number="9">    h e2 a e1 <span class="fu">=</span> (<span class="dt">RecAccu</span> a, f e1 (<span class="dt">Just</span> e2))</a></code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
