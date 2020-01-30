@@ -1,0 +1,204 @@
+---
+title: 2048 in Python
+---
+
+A simple implementation of the game [2048](https://gabrielecirulli.github.io/2048/) in Python, using [ncurses](https://www.gnu.org/s/ncurses/).
+
+It supports different "bases" (other than 2) as well as colors, and uses a kind of Python-y functional style.
+
+Minus comments, the whole thing is 70 lines.
+
+```python
+#-----------------------------functional-helpers-------------------------#
+
+from functools import reduce, partial
+
+def compose(*funcs):
+
+  """
+  Mathematical function composition.
+  compose(h, g, f)(x) => h(g(f(x)))
+  """
+
+  return reduce(lambda a,e: lambda x: a(e(x)), funcs, lambda x: x)
+
+#-----------------------------------base---------------------------------#
+
+# The base determines three things:
+#  - The number of squares which need to be in a row to coalesce (= base)
+#  - The length of the side of the board (= base^2)
+#  - The number added to a random blank box on the board at the beginning
+#    of every turn. (The seed) (90% of the time, the number added will be
+#    the base, but 10% of the time, it will be the square of the base)
+#  - The number of seeds added at evey turn (= 2^(base - 2))
+#
+# Normal 2048 has a base of 2.
+
+base = int(input("Choose a base. (2 for normal 2048)\n> "))
+
+#-----------------------------------rand---------------------------------#
+
+def addn(board):
+
+  """
+  Inserts n seeds into random, empty positions in board. Returns board.
+  n = 2^(base - 2)
+  The  seed is equal to base 90% of the time. 10% of the time, it is
+  equal to the square of the base.
+  """
+
+  from random import randrange, sample
+
+  inds    = range(base**2)
+  empties = [(y,x) for y in inds for x in inds if not board[y][x]]
+  for y,x in sample(empties,2**(base-2)):
+    board[y][x] = base if randrange(10) else base**2
+  return board
+
+#----------------------------------squish--------------------------------#
+
+from itertools import count, groupby, starmap
+
+def squish(row):
+
+  """
+  Returns a list, the same length as row, with the contents
+  "squished" by the rules of 2048.
+  Boxes are coalesced by adding their values together.
+  Boxes will be coalesced iff:
+   - They are adjacent, or there are only empty boxes between them.
+   - The total number of boxes is equal to the base.
+   - All the values of the boxes are equal.
+  For base 2:
+  [2][2][ ][ ] -> [4][ ][ ][ ]
+  [2][2][2][2] -> [4][4][ ][ ]
+  [4][ ][4][2] -> [8][2][ ][ ]
+  [4][2][4][2] -> [4][2][4][2]
+  For base 3:
+  [3][ ][ ][3][ ][ ][3][ ][ ] -> [9][ ][ ][ ][ ][ ][ ][ ][ ]
+  [3][3][3][3][3][3][3][3][3] -> [9][9][9][ ][ ][ ][ ][ ][ ]
+  [3][3][3][9][9][ ][ ][ ][ ] -> [9][9][9][ ][ ][ ][ ][ ][ ]
+  Keyword arguments:
+  row -- A list, containing a combination of numbers and None
+  (representing empty boxes)
+  """
+
+  r = []
+  for n,x in starmap(lambda n, a: (n, sum(map(bool,a))),
+                     groupby(filter(bool, row))):
+    r += ([n*base] * (x//base)) + ([n] * (x%base))
+  return r + ([None] * (base**2 - len(r)))
+
+#----------------------------matrix-manipulation-------------------------#
+
+# Transposes an iterable of iterables
+# [[1, 2], -> [[1, 3],
+#  [3, 4]]     [2, 4]]
+
+def transpose(l): return [list(x) for x in zip(*l)]
+
+# Flips horizontally an iterable of lists
+# [[1, 2], -> [[2, 1],
+#  [3, 4]]     [4, 3]]
+
+flip = partial(map, reversed)
+
+# transforms an iterable of iterables into a list of lists
+
+thunk = compose(list, partial(map, list))
+
+#----------------------------------moves---------------------------------#
+
+# The move functions take a board as their argument, and return the board
+# "squished" in a given direction.
+
+moveLeft  = compose(thunk, partial(map, squish), thunk)
+moveRight = compose(thunk, flip, moveLeft, flip)
+moveUp    = compose(transpose, moveLeft, transpose)
+moveDown  = compose(transpose, moveRight, transpose)
+
+#-------------------------------curses-init------------------------------#
+try:
+    import curses
+
+    screen = curses.initscr()
+    curses.noecho()           # Don't print pressed keys
+    curses.cbreak()           # Don't wait for enter
+    screen.keypad(True)
+    curses.curs_set(False)    # Hide cursor
+
+#----------------------------------keymap--------------------------------#
+
+    # A map from the arrow keys to the movement functions
+
+    moves = {curses.KEY_RIGHT: moveRight,
+            curses.KEY_LEFT : moveLeft ,
+            curses.KEY_UP   : moveUp   ,
+            curses.KEY_DOWN : moveDown }
+
+#----------------------------------color---------------------------------#
+
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_WHITE, -1) # Border color
+
+    def colorfac():
+
+        """Initializes a color pair and returns it (skips black)"""
+
+        for i,c in zip(count(2),(c for c in count(1) if c!=curses.COLOR_BLACK)):
+            curses.init_pair(i, c, -1)
+            yield curses.color_pair(i)
+
+    colorgen = colorfac()
+
+    from collections import defaultdict
+
+    # A cache of colors, with the keys corresponding to numbers on the board.
+
+    colors = defaultdict(lambda: next(colorgen))
+
+#---------------------------printing-the-board---------------------------#
+
+    size = max(11 - base*2, 3) # box width
+
+    def printBoard(board):
+
+        def line(b,c): return b + b.join([c*(size)]*len(board)) + b
+        border, gap = line("+","-"), line("|"," ")
+        pad = "\n" + "\n".join([gap]*((size-2)//4)) if size > 5 else ""
+        screen.addstr(0, 0, border, curses.color_pair(1))
+        for row in board:
+            screen.addstr(pad + "\n|", curses.color_pair(1))
+            for e in row:
+                if e: screen.addstr(str(e).center(size), colors[e])
+                else: screen.addstr(" " * size)
+                screen.addstr("|", curses.color_pair(1))
+            screen.addstr(pad + "\n" + border, curses.color_pair(1))
+
+#----------------------------------board---------------------------------#
+
+    # The board is a list of n lists, each of length n, where n is the base
+    # squared. Empty boxes are represented by None. The starting board has
+    # one seed.
+    board = addn([[None for _ in range(base**2)] for _ in range(base**2)])
+    printBoard(board)
+
+#----------------------------------game-loop-----------------------------#
+    # The main game loop. Continues until there are not enough empty spaces
+    # on the board, or "q" is pressed.
+
+    for char in filter(moves.__contains__, iter(screen.getch, ord("q"))):
+        moved = moves[char](board)
+        if sum(not n for r in moved for n in r) < 2**(base-2): break
+        if moved != board: board = addn(moved)
+        printBoard(board)
+
+#--------------------------------clean-up--------------------------------#
+finally:
+    curses.nocbreak()     # Wait for enter
+    screen.keypad(0)      # Stop arrow-key handling
+    curses.echo()         # Print all keyboard input
+    curses.curs_set(True) # Show cursor
+    curses.endwin()       # Return to normal prompt
+```

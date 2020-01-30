@@ -1,0 +1,416 @@
+
+@inproceedings{okasaki_fast_1999,
+	title = {From {Fast} {Exponentiation} to {Square} {Matrices}: {An} {Adventure} in {Types}},
+	volume = {34},
+	shorttitle = {From {Fast} {Exponentiation} to {Square} {Matrices}},
+	url = {http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.456.357&rep=rep1&type=pdf},
+	booktitle = {Proceedings of the {ACM} {SIGPLAN} {International} {Conference} on {Functional} {Programming} ({ICFP}'99), {Paris}, {France}, {September} 27-29, 1999},
+	publisher = {ACM},
+	author = {Okasaki, Chris},
+	year = {1999},
+	keywords = {Data Structures, Haskell, Nested Types},
+	pages = {28},
+	file = {[PDF] from psu.edu:files/934/Okasaki - From Fast Exponentiation to Square Matrices An Ad.pdf:application/pdf;[PDF] from usma.edu:files/745/Okasaki - From Fast Exponentiation to Square Matrices An Ad.pdf:application/pdf;[PDF] from westpoint.edu:files/1101/Okasaki - From Fast Exponentiation to Square Matrices An Ad.pdf:application/pdf;[PDF] psu.edu:files/994/Okasaki - From Fast Exponentiation to Square Matrices An Ad.pdf:application/pdf;[PDF] semanticscholar.org:files/940/Okasaki - From Fast Exponentiation to Square Matrices An Ad.pdf:application/pdf;Snapshot:files/825/citation.html:text/html;Snapshot:files/908/summary.html:text/html;Snapshot:files/971/cat.inist.fr.html:text/html;Snapshot:files/1172/cat.inist.fr.html:text/html;Snapshot:files/1276/cat.inist.fr.html:text/html}
+}
+
+@article{hughes_novel_1986,
+	title = {A {Novel} {Representation} of {Lists} and {Its} {Application} to the {Function} "{Reverse}"},
+	volume = {22},
+	issn = {0020-0190},
+	url = {http://www.sciencedirect.com/science/article/pii/0020019086900591},
+	doi = {10.1016/0020-0190(86)90059-1},
+	abstract = {A representation of lists as first-class functions is proposed. Lists represented in this way can be appended together in constant time, and can be converted back into ordinary lists in time proportional to their length. Programs which construct lists using append can often be improved by using this representation. For example, naive reverse can be made to run in linear time, and the conventional ‘fast reverse’ can then be derived easily. Examples are given in KRC (Turner, 1982), the notation being explained as it is introduced. The method can be compared to Sleep and Holmström's proposal (1982) to achieve a similar effect by a change to the interpreter.},
+	number = {3},
+	urldate = {2017-03-29},
+	journal = {Information Processing Letters},
+	author = {Hughes, R. John Muir},
+	month = mar,
+	year = {1986},
+	keywords = {data representation, Functional programming, list processing, program transformation},
+	pages = {141--144},
+	file = {[PDF] tufts.edu:files/2225/HUGHES - 1986 - A NOVEL REPRESENTATION OF LISTS AND ITS APPLICATIO.pdf:application/pdf;ScienceDirect Snapshot:files/2235/0020019086900591.html:text/html;Snapshot:files/2229/0020019086900591.html:text/html;Snapshot:files/2230/80002852960.html:text/html;Snapshot:files/2231/12ab75d7ff381f78527f8856b21c8e08.html:text/html;Snapshot:files/2232/citation.html:text/html;Snapshot:files/2233/cat.inist.fr.html:text/html;Snapshot:files/2237/12ab75d7ff381f78527f8856b21c8e08.html:text/html}
+}
+
+@article{hinze_functional_1999,
+	title = {Functional {Pearls}: {Explaining} {Binomial} {Heaps}},
+	volume = {9},
+	issn = {1469-7653, 0956-7968},
+	shorttitle = {Functional {Pearls}},
+	url = {http://www.cs.ox.ac.uk/ralf.hinze/publications/#J1},
+	doi = {10.1017/S0956796899003317},
+	abstract = {Functional programming languages are an excellent tool for teaching algorithms and data structures. This paper explains binomial heaps, a beautiful data structure for priority queues, using the functional programming language Haskell (Peterson and Hammond, 1997). We largely follow a deductive approach: using the metaphor of a tennis tournament we show that binomial heaps arise naturally through a number of logical steps. Haskell supports the deductive style of presentation very well: new types are introduced at ease, algorithms can be expressed clearly and succinctly, and Haskell's type classes allow to capture common algorithmic patterns. The paper aims at the level of an undergraduate student who has experience in reading and writing Haskell programs, and who is familiar with the concept of a priority queue.},
+	number = {1},
+	urldate = {2017-04-05},
+	journal = {Journal of Functional Programming},
+	author = {Hinze, Ralf},
+	month = jan,
+	year = {1999},
+	pages = {93--104},
+	file = {BinHeap.pdf:files/2350/BinHeap.pdf:application/pdf;BinHeap.ps:files/2349/BinHeap.ps:application/postscript;Snapshot:files/2330/D53DC543F1EF73B158D1006AD25842E4.html:text/html;Snapshot:files/2339/publication1125-abstract.html:text/html;Snapshot:files/2340/publication1125-abstract.html:text/html;Snapshot:files/2341/D53DC543F1EF73B158D1006AD25842E4.html:text/html;Snapshot:files/2342/summary.html:text/html;Snapshot:files/2343/citation.html:text/html;Snapshot:files/2344/summary.html:text/html}
+}
+
+@inproceedings{danvy_there_2002,
+	address = {New York, NY, USA},
+	series = {{ICFP} '02},
+	title = {There and {Back} {Again}},
+	isbn = {978-1-58113-487-2},
+	url = {http://doi.acm.org/10.1145/581478.581500},
+	doi = {10.1145/581478.581500},
+	abstract = {We present a programming pattern where a recursive function traverses a data structure---typically a list---at return time. The idea is that the recursive calls get us there (typically to a base case) and the returns get us back again while traversing the data structure. We name this programming pattern of traversing a data structure at return time "There And Back Again" (TABA).The TABA pattern directly applies to computing a symbolic convolution. It also synergizes well with other programming patterns, e.g., dynamic programming and traversing a list at double speed. We illustrate TABA and dynamic programming with Catalan numbers. We illustrate TABA and traversing a list at double speed with palindromes and we obtain a novel solution to this traditional exercise.A TABA-based function written in direct style makes full use of an Algol-like control stack and needs no heap allocation. Conversely, in a TABA-based function written in continuation-passing style, the continuation acts as a list iterator. In general, the TABA pattern saves one from constructing intermediate lists in reverse order.},
+	urldate = {2017-04-06},
+	booktitle = {Proceedings of the {Seventh} {ACM} {SIGPLAN} {International} {Conference} on {Functional} {Programming}},
+	publisher = {ACM},
+	author = {Danvy, Olivier and Goldberg, Mayer},
+	year = {2002},
+	keywords = {Catalan numbers, continuation-based programming, palindrome detection, Symbolic convolutions},
+	pages = {230--234}
+}
+
+@article{danvy_there_2005,
+	title = {There and {Back} {Again}},
+	url = {http://brics.dk/RS/05/3/BRICS-RS-05-3.pdf},
+	urldate = {2017-04-06},
+	author = {Danvy, Olivier and Goldberg, Mayer},
+	year = {2005},
+	file = {[PDF] brics.dk:files/2358/Danvy and Goldberg - 2005 - There and Back Again.pdf:application/pdf}
+}
+
+@inproceedings{king_functional_1995,
+	title = {Functional {Binomial} {Queues}},
+	volume = {29},
+	url = {https://link.springer.com/chapter/10.1007/978-1-4471-3573-9_10},
+	abstract = {Efficient implementations of priority queues can often be clumsy beasts. We express a functional implementation of binomial queues which is both elegant and efficient. We also quantify some of the differences with other functional implementations. The operations decreaseKey and delete always pose a problem without destructive update, we show how our implementation may be extended to express these.},
+	language = {en},
+	urldate = {2017-04-07},
+	booktitle = {Functional {Programming}, {Glasgow} 1994},
+	publisher = {Springer, London},
+	author = {King, David J.},
+	year = {1995},
+	note = {DOI: 10.1007/978-1-4471-3573-9\_10},
+	pages = {141--150},
+	file = {[PDF] greyc.fr:files/2366/King - Functional Binomial Queues.pdf:application/pdf;[PDF] psu.edu:files/2364/King - Functional Binomial Queues.pdf:application/pdf;[PDF] semanticscholar.org:files/2368/King - Functional Binomial Queues.pdf:application/pdf;Snapshot:files/2370/978-1-4471-3573-9.html:text/html;Snapshot:files/2371/978-1-4471-3573-9_10.html:text/html;Snapshot:files/2372/books.html:text/html;Snapshot:files/2375/978-1-4471-3573-9_10.html:text/html}
+}
+
+@article{xi_dependently_1999,
+	title = {Dependently {Typed} {Data} {Structures}},
+	url = {http://cs-web.bu.edu/faculty/hwxi/academic/papers/DTDS.pdf},
+	urldate = {2017-04-07},
+	author = {Xi, Hongwei},
+	year = {1999},
+	file = {[PDF] 128.197.10.3:files/2381/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] bu.edu:files/2383/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] bu.edu:files/2387/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] bu.edu:files/2390/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] bu.edu:files/2399/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] bu.edu:files/2403/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] psu.edu:files/2385/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] psu.edu:files/2401/Xi - Dependently Typed Data Structures.pdf:application/pdf;[PDF] semanticscholar.org:files/2395/Xi - Dependently Typed Data Structures.pdf:application/pdf;Snapshot:files/2396/4848.html:text/html;Snapshot:files/2397/summary.html:text/html}
+}
+
+@inproceedings{bove_dependent_2009,
+	title = {Dependent {Types} at {Work}},
+	volume = {5520},
+	url = {https://books.google.nl/books?hl=en&lr=&id=YOqHiA5MYpEC&oi=fnd&pg=PA57&ots=CRpavZ6d4n&sig=_qeGVgrJK5UHZ_IV1Vq3b9jVywE},
+	urldate = {2017-04-07},
+	booktitle = {Language {Engineering} and {Rigorous} {Software} {Development}: {International} {LerNet} {ALFA} {Summer} {School} 2008, {Piriapolis}, {Uruguay}, {February} 24-{March} 1, 2008, {Revised}, {Selected} {Papers}},
+	publisher = {Springer-Verlag},
+	author = {Bove, Ana and Dybjer, Peter},
+	year = {2009},
+	pages = {57},
+	file = {[PDF] chalmers.se:files/2416/Bove and Dybjer - Dependent Types at Work.pdf:application/pdf;[PDF] psu.edu:files/2411/Bove and Dybjer - Dependent Types at Work.pdf:application/pdf;[PDF] semanticscholar.org:files/2413/Bove and Dybjer - Dependent Types at Work.pdf:application/pdf;Snapshot:files/2418/swepuboaiservices.scigloo.html:text/html;Snapshot:files/2419/books.html:text/html;Snapshot:files/2423/10.html:text/html;Snapshot:files/2424/citation.html:text/html;Snapshot:files/2426/103371-dependent-types-at-work.html:text/html;Snapshot:files/2431/swepuboaiservices.scigloo.html:text/html;Snapshot:files/2432/978-3-642-03153-3.html:text/html;Snapshot:files/2433/summary.html:text/html;Snapshot:files/2434/103371.html:text/html}
+}
+
+@incollection{bove_dependent_2009-1,
+	series = {Lecture {Notes} in {Computer} {Science}},
+	title = {Dependent {Types} at {Work}},
+	copyright = {©2009 Springer-Verlag Berlin Heidelberg},
+	isbn = {978-3-642-03152-6 978-3-642-03153-3},
+	url = {http://link.springer.com/chapter/10.1007/978-3-642-03153-3_2},
+	abstract = {In these lecture notes we give an introduction to functional programming with dependent types. We use the dependently typed programming language Agda which is an extension of Martin-Löf type theory. First we show how to do simply typed functional programming in the style of Haskell and ML. Some differences between Agda’s type system and the Hindley-Milner type system of Haskell and ML are also discussed. Then we show how to use dependent types for programming and we explain the basic ideas behind type-checking dependent types. We go on to explain the Curry-Howard identification of propositions and types. This is what makes Agda a programming logic and not only a programming language. According to Curry-Howard, we identify programs and proofs, something which is possible only by requiring that all program terminate. However, at the end of these notes we present a method for encoding partial and general recursive functions as total functions using dependent types.},
+	language = {en},
+	number = {5520},
+	urldate = {2017-04-07},
+	booktitle = {Language {Engineering} and {Rigorous} {Software} {Development}},
+	publisher = {Springer Berlin Heidelberg},
+	author = {Bove, Ana and Dybjer, Peter},
+	editor = {Bove, Ana and Barbosa, Luís Soares and Pardo, Alberto and Pinto, Jorge Sousa},
+	year = {2009},
+	note = {DOI: 10.1007/978-3-642-03153-3\_2},
+	keywords = {Management of Computing and Information Systems, Programming Languages, Compilers, Interpreters, Programming Techniques, Simulation and Modeling, Software Engineering},
+	pages = {57--99},
+	file = {Snapshot:files/2417/978-3-642-03153-3_2.html:text/html;Snapshot:files/2420/bwmeta1.element.html:text/html;Snapshot:files/2425/978-3-642-03153-3_2.html:text/html}
+}
+
+@inproceedings{hinze_simple_2001,
+	title = {A {Simple} {Implementation} {Technique} for {Priority} {Search} {Queues}},
+	isbn = {978-1-58113-415-5},
+	url = {https://www.cs.ox.ac.uk/people/ralf.hinze/publications/#P14},
+	doi = {10.1145/507635.507650},
+	abstract = {This paper presents a new implementation technique for priority search queues. This abstract data type is an amazing blend of finite maps and priority queues. Our implementation supports logarithmic access to a binding with a given key and constant access to a binding with the minimum value. Priority search queues can be used, for instance, to give a simple, purely functional implementation of Dijkstra's single-source shortest-paths algorithm.},
+	language = {en},
+	urldate = {2017-04-08},
+	booktitle = {Proceedings of the 2001 {International} {Conference} on {Functional} {Programming}},
+	publisher = {ACM Press},
+	author = {Hinze, Ralf},
+	year = {2001},
+	pages = {110--121},
+	file = {Citeseer - Snapshot:files/2438/summary.html:text/html;[PDF] ox.ac.uk:files/2442/HINZE - 2001 - A Simple Implementation Technique for Priority Sea.pdf:application/pdf}
+}
+
+@techreport{tarjan_unique_1989,
+	title = {Unique {Binary} {Search} {Tree} {Representations} and {Equality}-testing of {Sets} and {Sequences}},
+	url = {https://www.cs.princeton.edu/research/techreps/TR-267-90},
+	abstract = {Given an ordered universe U, we study the problem of representing each subset of U by a unique binary search tree so that dictionary operations can be performed efficiently. We exhibit representations that permit the execution of dictionary operations in optimal time when the dictionary is sufficiently sparse
+or sufficiently dense. We apply unique representations to obtain efficient data structures for maintaining a collection of sets/sequences under queries that test the equality of a pair of objects. In the process, we devise an interesting method for maintaining a dynamic, sparse array.},
+	language = {en},
+	number = {TR-267-90},
+	institution = {Princeton UNiversity},
+	author = {Tarjan, Robert E. and Sundar, Rajamani},
+	month = oct,
+	year = {1989},
+	pages = {15},
+	file = {267.pdf:files/2446/267.pdf:application/pdf}
+}
+
+@techreport{hinze_numerical_1998,
+	title = {Numerical {Representations} as {Higher}-{Order} {Nested} {Datatypes}},
+	url = {http://www.cs.ox.ac.uk/ralf.hinze/publications/#R5},
+	abstract = {Number systems serve admirably as templates for container types: a container object of size n is modelled after the representation of the number n and operations on container objects are modelled after their number-theoretic counterparts. Binomial queues are probably the first data structure that was designed with this analogy in mind. In this paper we show how to express these so-called numerical representations as higher-order nested datatypes. A nested datatype allows to capture the structural invariants of a numerical representation, so that the violation of an invariant can be detected at compile-time. We develop a programming method which allows to adapt algorithms to the new representation in a mostly straightforward manner. The framework is employed to implement three different container types: binary random-access lists, binomial queues, and 2-3 finger search trees. The latter data structure, which is treated in some depth, can be seen as the main innovation from a data-struct...},
+	number = {IAI-TR-98-12},
+	institution = {Institut für Informatik III, Universität Bonn},
+	author = {Hinze, Ralf},
+	month = dec,
+	year = {1998},
+	file = {Citeseer - Full Text PDF:files/2448/Hinze - 1998 - Numerical Representations as Higher-Order Nested D.pdf:application/pdf;Citeseer - Snapshot:files/2449/summary.html:text/html}
+}
+
+@article{bird_bruijn_1999,
+	title = {de {Bruijn} {Notation} as a {Nested} {Datatype}},
+	volume = {9},
+	issn = {1469-7653, 0956-7968},
+	url = {http://www.cs.ox.ac.uk/people/richard.bird/online/BirdPaterson99DeBruijn.pdf},
+	doi = {10.1017/S0956796899003366},
+	abstract = {“I have no data yet. It is a capital mistake to
+theorise before one has data.”
+Sir Arthur Conan Doyle The Adventures of Sherlock Holmesde Bruijn notation is a coding of lambda terms in which each occurrence of a bound variable
+x is replaced by a natural number, indicating the ‘distance’
+from the occurrence to the abstraction
+that introduced x. One might suppose that in any datatype for representing de Bruijn terms,
+the distance restriction on numbers would have to be maintained as an explicit datatype invariant.
+However, by using a nested (or non-regular) datatype, we can define a representation in which
+all terms are well-formed, so that the invariant is enforced automatically by the type system.
+Programming with nested types is only a little more difficult than programming with regular
+types, provided we stick to well-established structuring techniques. These involve expressing
+inductively defined functions in terms of an appropriate fold function for the type, and using
+fusion laws to establish their properties. In particular, the definition of lambda abstraction
+and beta reduction is particularly simple, and the proof of their associated properties is
+entirely mechanical.},
+	number = {1},
+	urldate = {2017-04-08},
+	journal = {Journal of Functional Programming},
+	author = {Bird, Richard S. and Paterson, Ross},
+	month = jan,
+	year = {1999},
+	pages = {77--91},
+	file = {BirdPaterson99DeBruijn.pdf:files/2457/BirdPaterson99DeBruijn.pdf:application/pdf;Snapshot:files/2452/D8BFA383FDA7EA3DC443B4C42A168F30.html:text/html}
+}
+
+@book{bird_pearls_2010,
+	address = {Cambridge ; New York},
+	title = {Pearls of functional algorithm design},
+	isbn = {978-0-521-51338-8},
+	url = {http://www.cambridge.org/gb/knowledge/isbn/item5600469},
+	publisher = {Cambridge University Press},
+	author = {Bird, Richard},
+	year = {2010},
+	note = {OCLC: ocn643322214},
+	keywords = {Computer algorithms, Functional programming (Computer science)}
+}
+
+@article{hinze_purely_2009,
+	title = {Purely {Functional} 1-2 {Brother} {Trees}},
+	volume = {19},
+	issn = {1469-7653, 0956-7968},
+	url = {http://www.cs.ox.ac.uk/ralf.hinze/publications/#J18},
+	doi = {10.1017/S0956796809007333},
+	abstract = {Enter the computing arboretum and you will find a variety of well-studied trees: AVL trees (Adel'son-Vel'skiĭ \& Landis 1962), symmetric binary B-trees (Bayer 1972), Hopcroft's 2-3 trees (Aho et al. 1974), the bushy finger trees (Guibas et al. 1977) and the colourful red-black trees (Guibas \& Sedgewick 1978). In this pearl, we look at a more exotic species of balanced search trees, 1-2 brother trees (Ottmann et al. 1979), which deserves to be better known. Brother trees lend themselves well to a functional implementation with deletion (Section 5) as straightforward as insertion (Section 3), both running in logarithmic time. Furthermore, brother trees can be constructed from ordered lists in linear time (Section 4). With some simple optimisations in place, this implementation of search trees is one of the fastest around. So, fasten your seat belts.},
+	number = {6},
+	urldate = {2017-04-08},
+	journal = {Journal of Functional Programming},
+	author = {Hinze, Ralf},
+	month = nov,
+	year = {2009},
+	pages = {633--644},
+	file = {Brother12.pdf:files/2465/Brother12.pdf:application/pdf;Snapshot:files/2464/874BB3A6CB664718275D40FA9ECBDFB4.html:text/html}
+}
+
+@article{hinze_manufacturing_2001,
+	title = {Manufacturing datatypes},
+	volume = {11},
+	issn = {1469-7653, 0956-7968},
+	url = {http://www.cs.ox.ac.uk/ralf.hinze/publications/#J6},
+	doi = {10.1017/S095679680100404X},
+	abstract = {This article describes a general framework for designing purely functional datatypes that
+automatically satisfy given size or structural constraints. Using the framework we develop
+implementations of different matrix types (for example, square matrices) and implementations
+of several tree types (for example, Braun trees and 2-3 trees). Consider representing square
+n×n matrices. The usual representation using lists of lists fails to meet the structural constraints:
+there is no way to ensure that the outer list and the inner lists have the same length. The
+main idea of our approach is to solve in a first step a related, but simpler problem, namely
+to generate the multiset of all square numbers. To describe this multiset we employ recursion
+equations involving finite multisets, multiset union, addition and multiplication lifted to
+multisets. In a second step we mechanically derive from these recursion equations datatype
+definitions that enforce the ‘squareness’ constraint. The transformation makes essential use of
+parameterized types.},
+	number = {5},
+	urldate = {2017-04-08},
+	journal = {Journal of Functional Programming},
+	author = {Hinze, Ralf},
+	month = sep,
+	year = {2001},
+	pages = {493--524},
+	file = {DSDesign-2.ps:files/2471/DSDesign-2.ps:application/postscript;Snapshot:files/2470/5F23278226F73D01110E6E5A130D36A3.html:text/html}
+}
+
+@article{neumann_functional_2010,
+	title = {Functional {Binomial} {Queues}},
+	issn = {2150-914x},
+	abstract = {Priority queues are an important data structure and efficient implementations of them are crucial. We implement a functional variant of binomial queues in Isabelle/HOL and show its functional correctness. A verification against an abstract reference specification of priority queues has also been attempted, but could not be achieved to the full extent.},
+	journal = {Archive of Formal Proofs},
+	author = {Neumann, René},
+	month = oct,
+	year = {2010}
+}
+
+@inproceedings{pettie_towards_2005,
+	address = {Washington, DC, USA},
+	series = {{FOCS} '05},
+	title = {Towards a {Final} {Analysis} of {Pairing} {Heaps}},
+	isbn = {978-0-7695-2468-9},
+	url = {http://web.eecs.umich.edu/~pettie/papers/focs05.pdf},
+	doi = {10.1109/SFCS.2005.75},
+	abstract = {Fredman, Sedgewick, Sleator, and Tarjan proposed the pairing heap as a self-adjusting, streamlined version of the Fibonacci heap. It provably supports all priority queue operations in logarithmic time and is known to be extremely efficient in practice. However, despite its simplicity and empirical superiority, the pairing heap is one of the few popular data structures whose basic complexity remains open. In this paper we prove that pairing heaps support the deletemin operation in optimal logarithmic time and all other operations (insert, meld, and decreasekey) in time O(2{\textasciicircum}2 {\textbackslash}sqrt \{{\textbackslash}log {\textbackslash}log n\} ) This result gives the first sub-logarithmic time bound for decreasekey and comes close to the lower bound of {\textbackslash}Omega ({\textbackslash}log {\textbackslash}log n) established by Fredman.},
+	urldate = {2017-04-08},
+	booktitle = {Proceedings of the 46th {Annual} {IEEE} {Symposium} on {Foundations} of {Computer} {Science}},
+	publisher = {IEEE Computer Society},
+	author = {Pettie, Seth},
+	year = {2005},
+	keywords = {computational complexity, Computer science, Costs, Data Structures, deletemin operation, Fibonacci heap, Information analysis, Information theory, Libraries, logarithmic time bound, pairing heaps, priority queue, Queueing analysis, splay trees, Tree graphs, trees (mathematics)},
+	pages = {174--183},
+	file = {focs05.pdf:files/2480/focs05.pdf:application/pdf;IEEE Xplore Abstract Record:files/2477/1530712.html:text/html}
+}
+
+@inproceedings{eisenberg_dependently_2012,
+	address = {New York, NY, USA},
+	series = {Haskell '12},
+	title = {Dependently {Typed} {Programming} with {Singletons}},
+	isbn = {978-1-4503-1574-6},
+	url = {http://cs.brynmawr.edu/~rae/papers/2012/singletons/paper.pdf},
+	doi = {10.1145/2364506.2364522},
+	abstract = {Haskell programmers have been experimenting with dependent types for at least a decade, using clever encodings that push the limits of the Haskell type system. However, the cleverness of these encodings is also their main drawback. Although the ideas are inspired by dependently typed programs, the code looks significantly different. As a result, GHC implementors have responded with extensions to Haskell's type system, such as GADTs, type families, and datatype promotion. However, there remains a significant difference between programming in Haskell and in full-spectrum dependently typed languages. Haskell enforces a phase separation between runtime values and compile-time types. Therefore, singleton types are necessary to express the dependency between values and types. These singleton types introduce overhead and redundancy for the programmer. This paper presents the singletons library, which generates the boilerplate code necessary for dependently typed programming using GHC. To compare with full-spectrum languages, we present an extended example based on an Agda interface for safe database access. The paper concludes with a detailed discussion on the current capabilities of GHC for dependently typed programming and suggestions for future extensions to better support this style of programming.},
+	urldate = {2017-04-08},
+	booktitle = {Proceedings of the 2012 {Haskell} {Symposium}},
+	publisher = {ACM},
+	author = {Eisenberg, Richard A. and Weirich, Stephanie},
+	year = {2012},
+	keywords = {dependently typed programming, gadts, HASKELL, singletons},
+	pages = {117--130},
+	file = {paper.pdf:files/2484/paper.pdf:application/pdf}
+}
+
+@inproceedings{diatchki_improving_2015,
+	address = {New York, NY, USA},
+	series = {Haskell '15},
+	title = {Improving {Haskell} {Types} with {SMT}},
+	isbn = {978-1-4503-3808-0},
+	url = {http://yav.github.io/publications/improving-smt-types.pdf},
+	doi = {10.1145/2804302.2804307},
+	abstract = {We present a technique for integrating GHC's type-checker with an SMT solver. The technique was developed to add support for reasoning about type-level functions on natural numbers, and so our implementation uses the theory of linear arithmetic. However, the approach is not limited to this theory, and makes it possible to experiment with other external decision procedures, such as reasoning about type-level booleans, bit-vectors, or any other theory supported by SMT solvers.},
+	urldate = {2017-04-08},
+	booktitle = {Proceedings of the 2015 {ACM} {SIGPLAN} {Symposium} on {Haskell}},
+	publisher = {ACM},
+	author = {Diatchki, Iavor S.},
+	year = {2015},
+	keywords = {constraint solving, SMT, Type systems},
+	pages = {1--10},
+	file = {[PDF] github.io:files/2488/Diatchki - Improving Haskell Types with SMT.pdf:application/pdf;Snapshot:files/2489/citation.html:text/html}
+}
+
+@article{okasaki_three_1997,
+	title = {Three {Algorithms} on {Braun} {Trees}},
+	volume = {7},
+	issn = {0956-7968},
+	url = {https://www.cambridge.org/core/journals/journal-of-functional-programming/article/three-algorithms-on-braun-trees/59CF6B17F75EC216EBCA8A08E8780DFF},
+	doi = {10.1017/S0956796897002876},
+	abstract = {Among the many flavours of balanced binary trees, Braun trees (Braun and Rem, 1983) are perhaps the most circumscribed. For any given node of a Braun tree, the left subtree is either exactly the same size as the right subtree, or one element larger. Braun trees always have minimum height, and the shape of each Braun tree is completely determined by its size. In return for this rigor, algorithms that manipulate Braun trees are often exceptionally simple and elegant, and need not maintain any explicit balance information.Braun trees have been used to implement both flexible arrays (Braun and Rem, 1983; Hoogerwoord, 1992; Paulson, 1996) and priority queues (Paulson, 1996; Bird, 1996). Most operations involving a single element (e.g. adding, removing, inspecting or updating an element) take O(log n) time, since the trees are balanced. We consider three algorithmically interesting operations that manipulate entire trees. First, we give an O(log2 n) algorithm for calculating the size of a tree. Second, we show how to create a tree containing n copies of some element x in O(log n) time. Finally, we describe an order-preserving algorithm for converting a list to a tree in O(n) time. This last operation is not nearly as straightforward as it sounds!},
+	number = {6},
+	urldate = {2017-04-11},
+	journal = {Journal of Functional Programming},
+	author = {Okasaki, Chris},
+	month = nov,
+	year = {1997},
+	pages = {661--666},
+	file = {Snapshot:files/2494/59CF6B17F75EC216EBCA8A08E8780DFF.html:text/html;three-algorithms-on-braun-trees.pdf:files/2496/three-algorithms-on-braun-trees.pdf:application/pdf}
+}
+
+@inproceedings{anderson_faster_1991,
+	address = {Washington, DC, USA},
+	series = {{SFCS} '91},
+	title = {Faster {Uniquely} {Represented} {Dictionaries}},
+	isbn = {978-0-8186-2445-2},
+	url = {http://user.it.uu.se/~arnea/ps/fastun.ps},
+	doi = {10.1109/SFCS.1991.185430},
+	abstract = {The authors present a solution to the dictionary problem where each subset of size n of an ordered universe is represented by a unique structure, containing a (unique) binary search tree. The structure permits the execution of search, insert, and delete operations in O(n/sup 1/3/) time in the worst case. They also give a general lower bound, stating that for any unique representation of a set in a graph of, bounded outdegree, one of the operations search or update must require a cost of Omega (n/sup 1/3/) Therefore, the result sheds new light on previously claimed lower bounds for unique binary search tree representations.},
+	urldate = {2017-04-11},
+	booktitle = {Proceedings of the 32Nd {Annual} {Symposium} on {Foundations} of {Computer} {Science}},
+	publisher = {IEEE Computer Society},
+	author = {Anderson, Arne and Ottmann, Thomas},
+	year = {1991},
+	keywords = {binary search tree, Binary search trees, bounded outdegree graph, computational complexity, Computational modeling, Computer science, Costs, Data Structures, delete, Dictionaries, dictionary problem, insert, lower bound, ordered universe, search, search problems, Tree data structures, Tree graphs, trees (mathematics), update, worst case},
+	pages = {642--649},
+	file = {fastun.ps.pdf:files/2500/fastun.ps.pdf:application/pdf;IEEE Xplore Abstract Record:files/2498/185430.html:text/html}
+}
+
+@article{wasserman_playing_2010,
+	title = {Playing with {Priority} {Queues}},
+	volume = {16},
+	url = {https://themonadreader.files.wordpress.com/2010/05/issue16.pdf},
+	abstract = {We explore Haskell implementations of priority queues, ranging from the very sim- ple, suitable for beginner Haskell programmers, to a rich implementation of bino- mial queues with interesting mathematical connections, which will be entertaining for more experienced Haskellers. Many of these approaches were explored in the process of building a priority queue implementation intended for the Haskell Plat- form.},
+	language = {en},
+	number = {16},
+	journal = {The Monad.Reader},
+	author = {Wasserman, Louis},
+	month = may,
+	year = {2010},
+	pages = {37},
+	file = {issue16.pdf:files/2503/issue16.pdf:application/pdf}
+}
+
+@article{fredman_pairing_1986,
+	title = {The pairing heap: {A} new form of self-adjusting heap},
+	volume = {1},
+	issn = {0178-4617, 1432-0541},
+	shorttitle = {The pairing heap},
+	url = {http://www.cs.princeton.edu/courses/archive/fall09/cos521/Handouts/pairingheaps.pdf},
+	doi = {10.1007/BF01840439},
+	abstract = {Recently, Fredman and Tarjan invented a new, especially efficient form of heap (priority queue) called theFibonacci heap. Although theoretically efficient, Fibonacci heaps are complicated to implement and not as fast in practice as other kinds of heaps. In this paper we describe a new form of heap, called thepairing heap, intended to be competitive with the Fibonacci heap in theory and easy to implement and fast in practice. We provide a partial complexity analysis of pairing heaps. Complete analysis remains an open problem.},
+	language = {en},
+	number = {1-4},
+	urldate = {2017-04-21},
+	journal = {Algorithmica},
+	author = {Fredman, Michael L. and Sedgewick, Robert and Sleator, Daniel D. and Tarjan, Robert E.},
+	month = jan,
+	year = {1986},
+	pages = {111--129},
+	file = {pairingheaps.pdf:files/2543/pairingheaps.pdf:application/pdf;Snapshot:files/2541/10.html:text/html}
+}
+
+@article{brodal_optimal_1996,
+	title = {Optimal {Purely} {Functional} {Priority} {Queues}},
+	volume = {6},
+	issn = {1469-7653, 0956-7968},
+	url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.48.973},
+	doi = {10.1017/S095679680000201X},
+	abstract = {Brodal recently introduced the first implementation of imperative priority queues to support  findMin, insert, and meld in O(1) worst-case time, and deleteMin in O(log n) worstcase time. These bounds are asymptotically optimal among all comparison-based priority queues. In this paper, we adapt Brodal's data structure to a purely functional setting. In doing so, we both simplify the data structure and clarify its relationship to the binomial queues of Vuillemin, which support all four operations in O(log n) time. Specifically, we derive our implementation from binomial queues in three steps: first, we reduce the running time of insert to O(1) by eliminating the possibility of cascading links; second, we reduce the running time of findMin to O(1) by adding a global root to hold the minimum element; and finally, we reduce the running time of meld to O(1) by allowing priority queues to contain other priority queues. Each of these steps is expressed using ML-style functors. The last transfo...},
+	number = {6},
+	urldate = {2017-04-23},
+	journal = {Journal of Functional Programming},
+	author = {Brodal, Gerth Stølting and Okasaki, Chris},
+	month = nov,
+	year = {1996},
+	pages = {839--857},
+	file = {Citeseer - Full Text PDF:files/2546/Brodal et al. - 1996 - Optimal Purely Functional Priority Queues.pdf:application/pdf;Citeseer - Snapshot:files/2547/summary.html:text/html;Snapshot:files/2550/1A799209383FD6535F90715192863C13.html:text/html}
+}
