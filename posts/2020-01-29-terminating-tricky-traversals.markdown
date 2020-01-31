@@ -176,6 +176,7 @@ It certainly seems related to corecursive queues [@smith_lloyd_2009].
 Anyway, we can use the type to write the following lovely `toList` function on a
 Braun tree.
 
+<span id="toListImpl">
 ```haskell
 toList :: Tree a -> [a]
 toList t = unQ2 (f t b) id id
@@ -185,6 +186,7 @@ toList t = unQ2 (f t b) id id
 
     b = Q2 (\ls rs -> unQ2 (ls (rs b)) id id)
 ```
+</span>
 
 So can we convert it to Agda?
 
@@ -218,5 +220,146 @@ We can't even *write* the `Q2` type in Agda without getting in trouble.
 
 Apparently this problem of strict positivity for breadth-first traversals has
 come up before: @bergerMartinHofmannCase2019; @hofmannNonStrictlyPositive1993.
+
+# Wait---Where did Q2 Come From?
+
+Update 31/01/2020
+
+Daniel Peebles ([\@copumpkin](https://twitter.com/copumpkin) on twitter) replied
+to my tweet about this post with the following:
+
+> Interesting! Curious *how* you came up with that weird type at the end. It
+> doesn’t exactly feel like the first thing one might reach for and it would be
+> interesting to see some writing on the thought process that led to it
+>
+> [Dan P (\@copumpkin), Jan 30, 2020.](https://twitter.com/copumpkin/status/1222681927854936065)
+
+So that's what I'm going to add here!
+
+Let's take the Braun tree of the numbers 1 to 15:
+
+```
+     ┌8
+   ┌4┤
+   │ └12
+ ┌2┤
+ │ │ ┌10
+ │ └6┤
+ │   └14
+1┤
+ │   ┌9
+ │ ┌5┤
+ │ │ └13
+ └3┤
+   │ ┌11
+   └7┤
+     └15
+```
+
+Doing a normal breadth-first traversal for the first two levels is fine (1, 2,
+3): it starts to fall apart at the third level (4, 6, 5, 7).
+Here's the way we should traverse it: "all of the left branches, and then all of
+the right branches".
+So, we will have a queue of trees.
+We take the root element of each tree in the queue, and emit it, and then we
+add all of the *left* children of the trees in the queue to one queue, and then
+all the *right* children to another, and then concatenate them into a new queue
+and we start again.
+We can stop whenever we hit an empty tree because of the structure of the Braun
+tree.
+Here's an ascii diagram to show what's going on:
+
+```
+     ┌8   |     ┌8    |     ┌8     |       8
+   ┌4┤    |   ┌4┤     |    4┤      |
+   │ └12  |   │ └12   |     └12    |       9
+ ┌2┤      |  2┤       |            |
+ │ │ ┌10  |   │ ┌10   |     ┌9     |       10
+ │ └6┤    |   └6┤     |    5┤      |
+ │   └14  |     └14   |     └13    |       11
+1┤       -->        ----->      -------->
+ │   ┌9   |     ┌9    |     ┌10    |       12
+ │ ┌5┤    |   ┌5┤     |    6┤      |
+ │ │ └13  |   │ └13   |     └14    |       13
+ └3┤      |  3┤       |            |
+   │ ┌11  |   │ ┌11   |     ┌11    |       14
+   └7┤    |   └7┤     |    7┤      |
+     └15  |     └15   |     └15    |       15
+
+         1,         2, 3,       4, 5, 6, 7,   8, 9, 10, 11, 12, 13, 14, 15
+```
+
+If we want to do this in Haskell, we have a number of options for how we would
+represent queues: as ever, though, I much prefer to use vanilla lists and time
+the reversals so that they stay linear.
+Here's what that looks like:
+
+```haskell
+toList :: Tree a -> [a]
+toList t = f t b [] []
+  where
+    f (Node x l r) xs ls rs = x : xs (l : ls) (r : rs)
+    f Leaf         _ _  _  = []
+
+    b ls rs = foldr f b (reverse ls ++ reverse rs) [] []
+```
+
+Any place we see a `foldr` being run after a reverse or a concatenation, we know
+that we can remove a pass (in actual fact rewrite rules will likely do this
+automatically for us).
+
+```haskell
+toList :: Tree a -> [a]
+toList t = f b t [] []
+  where
+    f (Node x l r) xs ls rs = x : xs (l : ls) (r : rs)
+    f Leaf         _  _  _  = []
+
+    b ls rs = foldl (flip f) (foldl (flip f) b rs) ls [] []
+```
+
+Finally, since we're building up the lists with `:` (in a linear way, i.e. we
+will not use the intermediate queues more than once), and we're immediately
+consuming them with a fold, we can deforest the intermediate list, replacing
+every `:` with `f` (actually, it's a little more tricky than that, since we
+replace the `:` with the *reversed* version of `f`, i.e. the one you would pass
+to `foldr` if you wanted it to act like `foldl`. This trick is explained in more
+detail in [this post](2019-05-08-list-manipulation-tricks.html)).
+
+```haskell
+toList :: Tree a -> [a]
+toList t = f t b id id
+  where
+    f (Node x l r) xs ls rs = x : xs (ls . f l) (rs . f r)
+    f Leaf         _ _ _ = []
+
+    b ls rs = ls (rs b) id id
+```
+
+Once you do that, however, you run into the "cannot construct the infinite type"
+error.
+To be precise:
+
+> ```
+> • Occurs check: cannot construct the infinite type:
+>     a3 ~ (a3 -> c0) -> (a3 -> c1) -> [a2]
+> ```
+
+And this gives us the template for our newtype!
+It requires some trial and error, but you can see where some of the recursive
+calls are, and what you eventually get is the following:
+
+```haskell
+newtype Q2 a
+  = Q2
+  { unQ2 :: (Q2 a -> Q2 a) -> (Q2 a -> Q2 a) -> [a]
+  }
+```
+
+(You can remove the list type constructor at the end, I did as I thought it made
+it slightly more general).
+And from there we get back to [the `toList` function](#toListImpl).
+
+
 
 # References
