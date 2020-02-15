@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Typing TABA - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+                <a href="../snippets.html">Snippets</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Typing TABA</h2>
+
+            <div class="info">
+    Posted on February 15, 2020
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>Just a short one again today!</p>
+<p>There’s an <a href="https://www.youtube.com/watch?v=u_OsUlwkmBQ">excellent talk</a> by Kenneth Foner at Compose from 2016 which goes through a paper by <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005">2005</a>)</span> called “There and Back Again” (or TABA). You should watch the talk and read the paper if you’re in any way excited by the weird and wonderful algorithms we use in functional languages to do simple things like reversing a list.</p>
+<p>The function focused on in the paper is one which does the following:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">zipRev xs ys <span class="fu">=</span> zip xs (reverse ys)</a></code></pre></div>
+<p>But does it in one pass, <em>without</em> reversing the second list. It uses a not-insignificant bit of cleverness to do it, but you can actually arrive at the same solution in a pretty straightforward way by aggressively converting everything you can to a fold. The result is the following:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">zipRev xs ys <span class="fu">=</span> foldl f b ys xs</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    b _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">    f k y (x<span class="fu">:</span>xs) <span class="fu">=</span> (x,y) <span class="fu">:</span> k xs</a></code></pre></div>
+<p>I have written a little more on this function and the general technique <a href="2019-05-08-list-manipulation-tricks.html#there-and-back-again">before</a>.</p>
+<p>The talk goes through the same stuff, but takes a turn then to proving the function total: our version above won’t work correctly if the lists don’t have the same length, so it would be nice to provide that guarantee in the types somehow. Directly translating the version from the TABA paper into one which uses length-indexed vectors will require some nasty, expensive proofs, though, which end up making the whole function quadratic. The solution in the talk is to call out to an external solver which gives some extremely slick proofs (and a very nice interface). However, yesterday I realised you needn’t use a solver at all: you can type the Haskell version just fine, and you don’t even need the fanciest of type-level features.</p>
+<p>As ever, the solution is another fold. To demonstrate this rather short solution, we’ll first need the regular toolbox of types:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Nat</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Nat</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">data</span> <span class="dt">Vec</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Vec</span> a <span class="dt">Z</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="ot">  (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a (<span class="dt">S</span> n)</a></code></pre></div>
+<p>And now we will write a length-indexed left fold on this vector. The key trick here is that the type passed in the recursive call changes, by composition:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">newtype</span> (<span class="fu">:.:</span>) (<span class="ot">f ::</span> b <span class="ot">-&gt;</span> <span class="dt">Type</span>) (<span class="ot">g ::</span> a <span class="ot">-&gt;</span> b) (<span class="ot">x ::</span> a) <span class="fu">=</span> <span class="dt">Comp</span> {<span class="ot"> unComp ::</span> f (g x) }</a></code></pre></div>
+<p>Safe coercions will let us use the above type safely without a performance hit, resulting in the following linear-time function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">foldlVec ::</span> forall a b n<span class="fu">.</span> (forall m<span class="fu">.</span> a <span class="ot">-&gt;</span> b m <span class="ot">-&gt;</span> b (<span class="dt">S</span> m)) <span class="ot">-&gt;</span> b <span class="dt">Z</span> <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> b n</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">foldlVec f b <span class="dt">Nil</span> <span class="fu">=</span> b</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">foldlVec f b (x <span class="fu">:-</span> xs) <span class="fu">=</span> unComp (foldlVec (c f) (<span class="dt">Comp</span> (f x b)) xs)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="ot">    c ::</span> (a <span class="ot">-&gt;</span> b (<span class="dt">S</span> m) <span class="ot">-&gt;</span> b (<span class="dt">S</span> (<span class="dt">S</span> m))) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> (b <span class="fu">:.:</span> <span class="dt">S</span>) m <span class="ot">-&gt;</span> (b <span class="fu">:.:</span> <span class="dt">S</span>) (<span class="dt">S</span> m))</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    c <span class="fu">=</span> coerce</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    <span class="ot">{-# INLINE c #-}</span></a></code></pre></div>
+<p>Now, to write the reversing zip, we need another newtype to put the parameter in the right place, but it is straightforward other than that.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">VecCont</span> a b n <span class="fu">=</span> <span class="dt">VecCont</span> {<span class="ot"> runVecCont ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n }</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="ot">revZip ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> b n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">revZip <span class="fu">=</span> flip <span class="fu">$</span> runVecCont <span class="fu">.</span> </a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  foldlVec</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">      (\y k <span class="ot">-&gt;</span> <span class="dt">VecCont</span> (\(x <span class="fu">:-</span> xs) <span class="ot">-&gt;</span> (x,y) <span class="fu">:-</span> runVecCont k xs))</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">      (<span class="dt">VecCont</span> (const <span class="dt">Nil</span>))</a></code></pre></div>
+<div id="refs" class="references">
+<div id="ref-danvy_there_2005">
+<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869" class="uri">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
