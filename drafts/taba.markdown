@@ -76,7 +76,7 @@ the right place, but it is straightforward other than that.
 newtype VecCont a b n = VecCont { runVecCont :: Vec a n -> Vec (a,b) n }
 
 revZip :: Vec a n -> Vec b n -> Vec (a,b) n
-revZip = runVecCont . 
+revZip = flip $ runVecCont . 
   foldlVec
       (\y k -> VecCont (\(x :- xs) -> (x,y) :- runVecCont k xs))
       (VecCont (const Nil))
