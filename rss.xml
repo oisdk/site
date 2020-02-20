@@ -7,8 +7,75 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sat, 15 Feb 2020 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Thu, 20 Feb 2020 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Another Breadth-First Traversal</title>
+    <link>https://doisinkidney.com/posts/2020-02-20-final-bft.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on February 20, 2020
+</div>
+<div class="info">
+    
+        Part 9 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>This post will be quite light on details: I’m trying to gather up all of the material in this series to be a chapter in my Master’s thesis, so I’m going to leave the heavy-duty explanations and theory for that. Once finished I will probably do a short write up on this blog.</p>
+<p>That said, the reason I’m writing this post is that in writing my thesis I figured out a nice way to solve the problem I first wrote about in <a href="2018-06-03-breadth-first-traversals-in-too-much-detail.html">this</a> post. I won’t restate it in its entirety, but basically we’re looking for a function with the following signature:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a></code></pre></div>
+<p>Seasoned Haskellers will recognise it as a “traversal”. However, this shouldn’t be an ordinary traversal: that, after all, can be derived automatically by the compiler these days. Instead, the Applicative effects should be evaluated in <em>breadth-first</em> order. To put it another way, if we have a function which lists the elements of a tree in breadth-first order:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">bfs ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a></code></pre></div>
+<p>Then we should have the following identity:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1">bft (\x <span class="ot">-&gt;</span> ([x], x)) t <span class="fu">=</span> (bfs t, t)</a></code></pre></div>
+<p>Using the writer Applicative with the list monoid here as a way to talk about ordering of effects.</p>
+<p>There are many solutions to the puzzle <span class="citation" data-cites="gibbons_breadth-first_2015 easterly_functions_2019">(see Gibbons <a href="#ref-gibbons_breadth-first_2015">2015</a>; or Easterly <a href="#ref-easterly_functions_2019">2019</a>, or any of the posts in this series)</span>, but I had found them mostly unsatisfying. They basically relied on enumerating the tree in breadth-first order, running the traversal on the intermediate list, and then rebuilding the tree. It has the correct time complexity and so on, but it would be nice to deforest the intermediate structure a little bit more.</p>
+<p>Anyways, the function I finally managed to get is the following:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">bft f (x <span class="fu">:&amp;</span> xs) <span class="fu">=</span> liftA2 (<span class="fu">:&amp;</span>) (f x) (bftF f xs)</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"><span class="ot">bftF ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> a] <span class="ot">-&gt;</span> f [<span class="dt">Tree</span> b]</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5">bftF t <span class="fu">=</span> fmap head <span class="fu">.</span> foldr (<span class="fu">&lt;*&gt;</span>) (pure []) <span class="fu">.</span> foldr f [pure ([]<span class="fu">:</span>)]</a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">    f (x <span class="fu">:&amp;</span> xs) (q <span class="fu">:</span> qs) <span class="fu">=</span> liftA2 c (t x) q <span class="fu">:</span> foldr f (p qs) xs</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">    </a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">    p []     <span class="fu">=</span> [pure ([]<span class="fu">:</span>)]</a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">    p (x<span class="fu">:</span>xs) <span class="fu">=</span> fmap (([]<span class="fu">:</span>)<span class="fu">.</span>) x <span class="fu">:</span> xs</a>
+<a class="sourceLine" id="cb4-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb4-12" data-line-number="12">    c x k (xs <span class="fu">:</span> ks) <span class="fu">=</span> ((x <span class="fu">:&amp;</span> xs) <span class="fu">:</span> y) <span class="fu">:</span> ys</a>
+<a class="sourceLine" id="cb4-13" data-line-number="13">      <span class="kw">where</span> (y <span class="fu">:</span> ys) <span class="fu">=</span> k ks</a></code></pre></div>
+<p>The <code class="sourceCode haskell"><span class="dt">Tree</span></code> is defined like so:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a <span class="fu">=</span> a <span class="fu">:&amp;</span> [<span class="dt">Tree</span> a]</a></code></pre></div>
+<p>It has all the right properties (complexity, etc.), and if you stick tildes before every irrefutable pattern-match it is also maximally lazy.</p>
+<hr />
+<p>As a bonus, here’s another small function I looked at for my thesis. It performs a topological sort of a graph.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">type</span> <span class="dt">Graph</span> a <span class="fu">=</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="ot">topoSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Graph</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">topoSort g <span class="fu">=</span> fst <span class="fu">.</span> foldr f ([], ∅)</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">    f x (xs,s) </a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">      <span class="fu">|</span> x ∈ s <span class="fu">=</span> (xs,s)</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">      <span class="fu">|</span> x ∉ s <span class="fu">=</span> first (x<span class="fu">:</span>) (foldr f (xs, {x} ∪ s) (g x)) </a></code></pre></div>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-easterly_functions_2019">
+<p>Easterly, Noah. 2019. “Functions and newtype wrappers for traversing Trees: Rampion/tree-traversals.” <a href="https://github.com/rampion/tree-traversals" class="uri">https://github.com/rampion/tree-traversals</a>.</p>
+</div>
+<div id="ref-gibbons_breadth-first_2015">
+<p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/" class="uri">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
+</div>
+</div>
+]]></description>
+    <pubDate>Thu, 20 Feb 2020 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2020-02-20-final-bft.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Typing TABA</title>
     <link>https://doisinkidney.com/posts/2020-02-15-taba.html</link>
     <description><![CDATA[<div class="info">
@@ -78,7 +145,7 @@
 </div>
 <div class="info">
     
-        Part 8 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 8 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -1925,7 +1992,7 @@ R =
 </div>
 <div class="info">
     
-        Part 7 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 7 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -2146,7 +2213,7 @@ R =
 </div>
 <div class="info">
     
-        Part 6 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 6 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -4623,7 +4690,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 <div class="info">
     
-        Part 5 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 5 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -6845,7 +6912,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 <div class="info">
     
-        Part 4 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 4 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -7169,7 +7236,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 <div class="info">
     
-        Part 3 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 3 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -7486,7 +7553,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 <div class="info">
     
-        Part 2 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 2 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
@@ -8521,7 +8588,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 <div class="info">
     
-        Part 1 of a <a href="/series/Breadth-First%20Traversals.html">8-part series on Breadth-First Traversals</a>
+        Part 1 of a <a href="/series/Breadth-First%20Traversals.html">9-part series on Breadth-First Traversals</a>
     
 </div>
 <div class="info">
