@@ -1,0 +1,95 @@
+---
+title: Another Breadth-First Traversal
+tags: Haskell
+series: Breadth-First Traversals
+bibliography: Rose Tree Traversals.bib
+---
+
+This post will be quite light on details: 
+I'm trying to gather up all of the material in this series to be a chapter in my
+Master's thesis,
+so I'm going to leave the heavy-duty explanations and theory for that.
+Once finished I will probably do a short write up on this blog.
+
+That said, the reason I'm writing this post is that in writing my thesis I
+figured out a nice way to solve the problem I first wrote about in
+[this](2018-06-03-breadth-first-traversals-in-too-much-detail.html) post.
+I won't restate it in its entirety, but basically we're looking for a function
+with the following signature:
+
+```haskell
+bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
+```
+
+Seasoned Haskellers will recognise it as a "traversal".
+However, this shouldn't be an ordinary traversal: that, after all, can be
+derived automatically by the compiler these days.
+Instead, the Applicative effects should be evaluated in *breadth-first* order.
+To put it another way, if we have a function which lists the elements of a tree
+in breadth-first order:
+
+```haskell
+bfs :: Tree a -> [a]
+```
+
+Then we should have the following identity:
+
+```haskell
+bft (\x -> ([x], x)) t = (bfs t, t)
+```
+
+Using the writer Applicative with the list monoid here as a way to talk about
+ordering of effects.
+
+There are many solutions to the puzzle [see @gibbons_breadth-first_2015; or
+@easterly_functions_2019, or any of the posts in this series], but I had found
+them mostly unsatisfying.
+They basically relied on enumerating the tree in breadth-first order, running
+the traversal on the intermediate list, and then rebuilding the tree.
+It has the correct time complexity and so on, but it would be nice to deforest
+the intermediate structure a little bit more.
+
+Anyways, the function I finally managed to get is the following:
+
+```haskell
+bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
+bft f (x :& xs) = liftA2 (:&) (f x) (bftF f xs)
+
+bftF :: Applicative f => (a -> f b) -> [Tree a] -> f [Tree b]
+bftF t = fmap head . foldr (<*>) (pure []) . foldr f [pure ([]:)]
+  where
+    f (x :& xs) (q : qs) = liftA2 c (t x) q : foldr f (p qs) xs
+    
+    p []     = [pure ([]:)]
+    p (x:xs) = fmap (([]:).) x : xs
+
+    c x k (xs : ks) = ((x :& xs) : y) : ys
+      where (y : ys) = k ks
+```
+
+The `Tree`{.haskell} is defined like so:
+
+```haskell
+data Tree a = a :& [Tree a]
+```
+
+It has all the right properties (complexity, etc.), and if you stick tildes
+before every irrefutable pattern-match it is also maximally lazy.
+
+---
+
+As a bonus, here's another small function I looked at for my thesis.
+It performs a topological sort of a graph.
+
+```haskell
+type Graph a = a -> [a]
+
+topoSort :: Ord a => Graph a -> [a] -> [a]
+topoSort g = fst . foldr f ([], ∅)
+  where
+    f x (xs,s) 
+      | x ∈ s = (xs,s)
+      | x ∉ s = first (x:) (foldr f (xs, {x} ∪ s) (g x)) 
+```
+
+# References
