@@ -26,7 +26,7 @@ We will first need to define a type for tries:
 
 ```haskell
 data Trie a
-  = Trie
+  = (:<)
   { _done :: Bool
   , _step :: Map a (Trie a)
   }
@@ -45,8 +45,8 @@ Lookup is certainly the easiest:
 
 ```haskell
 member :: Ord a => [a] -> Trie a -> Bool
-member []     (Trie y _ ) = y
-member (x:xs) (Trie _ ys) = maybe False (member xs) (Map.lookup x ys)
+member []     (y :< _ ) = y
+member (x:xs) (_ :< ys) = maybe False (member xs) (Map.lookup x ys)
 ```
 
 We're not using any fancy tricks here for explanatory purposes.
@@ -58,8 +58,8 @@ Best stick in a fold, then:
 member :: Ord a => [a] -> Trie a -> Bool
 member = foldr f b
   where
-    b (Trie y _) = y
-    f x xs (Trie _ ys) = maybe False xs (Map.lookup x ys)
+    b (y :< _) = y
+    f x xs (_ :< ys) = maybe False xs (Map.lookup x ys)
 ```
 
 Also it might be a little cleaner to just use field accessors instead of
@@ -84,11 +84,11 @@ Again, we will start with the very plain pattern-matching definition.
 
 ```haskell
 emptyTrie :: Trie a
-emptyTrie = Trie False Map.empty
+emptyTrie = False :< Map.empty
 
 insert :: Ord a => [a] -> Trie a -> Trie a
-insert []     (Trie _ ys) = Trie True ys
-insert (x:xs) (Trie y ys) = Trie y (Map.alter (Just . insert xs . fromMaybe emptyTrie) x ys)
+insert []     (_ :< ys) = True :< ys
+insert (x:xs) (y :< ys) = y    :< Map.alter (Just . insert xs . fromMaybe emptyTrie) x ys
 ```
 
 Again, first way we make this a little more slick is that we use a fold:
@@ -97,8 +97,8 @@ Again, first way we make this a little more slick is that we use a fold:
 insert :: Ord a => [a] -> Trie a -> Trie a
 insert = foldr f b
   where
-    b      (Trie y ys) = Trie True ys
-    f x xs (Trie y ys) = Trie y (Map.alter (Just . xs . fromMaybe emptyTrie) x ys)
+    b      (y :< ys) = True :< ys
+    f x xs (y :< ys) = y    :< Map.alter (Just . xs . fromMaybe emptyTrie) x ys
 ```
 
 The next move is not exactly the same as we had previously: we can't just use
@@ -122,8 +122,8 @@ Let's start again with the pattern-matching definition:
 
 ```haskell
 delete :: Ord a => [a] -> Trie a -> Trie a
-delete []     (Trie _ ys) = Trie False ys
-delete (x:xs) (Trie y ys) = Trie y (Map.alter (fmap (delete xs)) x ys)
+delete []     (_ :< ys) = False :< ys
+delete (x:xs) (y :< ys) = y     :< Map.alter (fmap (delete xs)) x ys
 ```
 
 This contains a subtle bug.
@@ -138,7 +138,7 @@ empty, in which case it should be removed from the map.
 
 ```haskell
 isEmpty :: Trie a -> Bool
-isEmpty (Trie x xs) = not x && Map.null xs
+isEmpty (x :< xs) = not x && Map.null xs
 
 ensure :: (a -> Bool) -> a -> Maybe a
 ensure p x
@@ -146,8 +146,8 @@ ensure p x
   | otherwise = Nothing
     
 delete :: Ord a => [a] -> Trie a -> Trie a
-delete []     (Trie _ ys) = Trie False ys
-delete (x:xs) (Trie y ys) = Trie y (Map.alter ((ensure (not . isEmpty) . delete xs) =<<) x ys)
+delete []     (_ :< ys) = False :< ys
+delete (x:xs) (y :< ys) = y     :< Map.alter ((ensure (not . isEmpty) . delete xs) =<<) x ys
 ```
 
 # Using Lenses
@@ -245,3 +245,4 @@ delete xs = string xs .~ False
 ```
 
 # Uses
+
