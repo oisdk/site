@@ -249,6 +249,7 @@ which does it for us, though.
 <summary>
 Interface for building indices.
 </summary>
+  
 ```haskell
 data Peano = Z | S Peano
 
@@ -298,6 +299,7 @@ Using this we can generate a nice string representation of the tree.
 <summary>
 Implementation of folding over tree and `Show` instance.
 </summary>
+  
 ```haskell
 type family All (c :: a -> Constraint) (xs :: Tree ns a) :: Constraint where
   All c Leaf = ()
