@@ -246,3 +246,44 @@ delete xs = string xs .~ False
 
 # Uses
 
+The first use for this structure is pretty obvious: string search.
+Storing strings in a map can be extremely inefficient, resulting in a huge
+number of extra comparisons on common prefixes.
+
+# Autocompletion
+
+Another interesting use is as a way to drive auto completion.
+Now, the resulting auto complete won't actually be very good, since it will not
+do any fuzzy matching, but it will give us all the suffixes to a given word.
+Here's the appropriate lens:
+
+```haskell
+suffixes :: Ord a => [a] -> Lens' (Trie a) (Trie a)
+suffixes = foldr (\x xs -> step . at x . anon emptyTrie isEmpty . xs) id
+```
+
+Now we want to get the strings out of this subtrie.
+Here's how we can do that:
+
+```haskell
+foldrTrie :: ([a] -> b -> b) -> b -> Trie a -> b
+foldrTrie f b ~(x :< xs) = (if x then f [] else id) 
+                         $ Map.foldrWithKey (\k -> flip (foldrTrie (f . (k:)))) b xs
+
+trieToList :: Trie a -> [[a]]
+trieToList = foldrTrie (:) []
+```
+
+Now we can build a dictionary from something like [the full text of the
+Adventures of Sherlock Holmes](http://www.gutenberg.org/ebooks/1661), and from
+there perform the following:
+
+```haskell
+complete :: String -> [String]
+complete xs = trieToList (dict ^. suffixes xs)
+
+>>> complete "ana"
+["lysis","lytical","tomy"]
+```
+
+# The Trie Monad
