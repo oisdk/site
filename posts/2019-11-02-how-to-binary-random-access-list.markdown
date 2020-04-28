@@ -2,6 +2,7 @@
 title: How to do Binary Random-Access Lists Simply
 bibliography: Arrays.bib
 tags: Agda
+series: Random Access Lists
 ---
 
 "Heterogeneous Random-Access Lists" by Wouter Swierstra
