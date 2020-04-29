@@ -5,6 +5,35 @@ tags: Haskell, Agda
 bibliography: Random Access Lists.bib
 ---
 
+<details>
+<summary>
+Imports and Pragmas
+</summary>
+
+```haskell
+{-# LANGUAGE DataKinds              #-}
+{-# LANGUAGE PolyKinds              #-}
+{-# LANGUAGE GADTs                  #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE ConstraintKinds        #-}
+{-# LANGUAGE TypeOperators          #-}
+{-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE RankNTypes             #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE AllowAmbiguousTypes    #-}
+{-# LANGUAGE TypeApplications       #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-unticked-promoted-constructors #-}
+
+import Data.Kind
+import Prelude hiding (lookup)
+import GHC.TypeLits
+```
+</details>
+
 # Numerical Representations
 
 One of the common techniques for building purely functional data structures is
@@ -66,14 +95,31 @@ of the zeroless binary numbers.
 # A Braun Tree
 
 Next, we'll build a tree indexed by these numbers.
+Now that we're jumping in to indexing, we'll need some singletons.
+Here's my preferred way to do them:
+
+```haskell
+type family The k = (s :: k -> Type) | s -> k
+
+class Known (x :: a) where sing :: The a x
+
+data SBit b where
+  SB1 :: SBit B1
+  SB2 :: SBit B2
+  
+type instance The Bit = SBit
+instance Known B1 where sing = SB1
+instance Known B2 where sing = SB2
+```
+
+The type family defines the singleton GADTs themselves.
+The class `Known` is for automatically generating singleton values.
+
+On to the tree.
 We're actually going to build a *Braun* tree here, as they are actually
 particularly clean to implement on the type level.
 
 ```haskell
-data SBit (x :: Bit) where
-  One :: SBit B1
-  Two :: SBit B2
-
 type family Carry (x :: Bit) (xs :: Star Bit) :: Star Bit where
   Carry B1 xs = xs
   Carry B2 xs = Some (Inc xs)
@@ -84,50 +130,58 @@ data Tree (xs :: Star Bit) a where
 
 data Forest (xs :: Plus Bit) a where
   Root :: a
-       -> SBit x 
+       -> The Bit x 
        -> Tree (Carry x xs) a 
        -> Tree xs a 
        -> Forest (x :- xs) a
 ```
 
-There's a bit going on here, so let's go through it: first, we have a singleton
-for bits.
-We'll need to pattern-match on the bit in a tree so this singleton is necessary
-unfortunately (future dependent Haskell will hopefully obfuscate this kind of thing).
-
-Next, we have a type family which increments a binary number if its first
+We first have a type family which increments a binary number if its first
 argument is `B2`: this will maintain the Braun tree's invariant.
 
-Finally, we have the tree definition itself, which is split into two mutual
+Next, we have the tree definition itself, which is split into two mutual
 definitions, in much the same way as the `Star` and `Plus` lists previously.
 Next, to `cons` something onto the tree:
 
 ```haskell
 type family Cons (x :: a) (xs :: Tree ns a) = (ys :: Forest (Inc ns) a) | ys -> x xs where
-  Cons x Leaf = Root x One Leaf Leaf
-  Cons x (Branch (Root y One ls rs)) = Root x Two (Branch (Cons y rs)) ls
-  Cons x (Branch (Root y Two ls rs)) = Root x One (Branch (Cons y rs)) ls
+  Cons x Leaf = Root x SB1 Leaf Leaf
+  Cons x (Branch (Root y SB1 ls rs)) = Root x SB2 (Branch (Cons y rs)) ls
+  Cons x (Branch (Root y SB2 ls rs)) = Root x SB1 (Branch (Cons y rs)) ls
 ```
 
 You'll notice that we can again annotate this type family with injectivity.
 
-# A Heterogeneous List
+# A Heterogeneous Tree
 
-The next step is to use this structure to build a heterogeneous list: what we
-have so far is just the type we will index the actual type by.
+So far all we have is a size-indexed tree.
+We want a *heterogeneous* tree, meaning that we must next construct a tree
+*indexed* by the previous tree.
+In order to do this, we'll first need singletons on the type level:
 
 ```haskell
-type family ToSBit (x :: Bit) = (y :: SBit x) | y -> x where
-  ToSBit B1 = One
-  ToSBit B2 = Two
+type family Sing (x :: a) = (y :: The a x) | y -> x
+type instance Sing B1 = SB1
+type instance Sing B2 = SB2
+```
 
+This kind of nonsense we're doing here is precisely the kind of thing obfuscated
+by dependent types, by the way.
+If you're already doing type-level heavy stuff (as we are here) the extra power
+afforded by full dependent types often means that hacky special cases just turn
+into standard functions, greatly simplifying things like the above type
+families.
+
+But anyway, back to the tree:
+
+```haskell
 data HTree (xs :: Tree ns Type) where
   HLeaf :: HTree Leaf
   HNode :: x 
-        -> !(SBit b) 
+        -> !(The Bit b) 
         -> !(HTree ls)
         -> !(HTree rs)
-        -> HTree (Branch (Root x (ToSBit b) ls rs))
+        -> HTree (Branch (Root x (Sing b) ls rs))
 ```
 
 And we can `cons` on an element in much the same way we did with the homogeneous
@@ -136,9 +190,9 @@ tree:
 ```haskell
 infixr 5 <:
 (<:) :: x -> HTree xs -> HTree (Branch (Cons x xs))
-x <: HLeaf = HNode x One HLeaf HLeaf
-x <: HNode y One yl yr = HNode x Two (y <: yr) yl
-x <: HNode y Two yl yr = HNode x One (y <: yr) yl
+x <: HLeaf = HNode x SB1 HLeaf HLeaf
+x <: HNode y SB1 yl yr = HNode x SB2 (y <: yr) yl
+x <: HNode y SB2 yl yr = HNode x SB1 (y <: yr) yl
 ```
 
 # Indexing
@@ -179,26 +233,41 @@ lookup (P2 i) (HNode _ _ _ rs) = lookup i rs
 Just having pointers isn't much use: we also need a way to build them.
 The key function here is `push`: this increments the index pointed to by one.
 
+<details>
+<summary>
+Singletons for lists
+</summary>
+
 ```haskell
-push :: KnownBits ys => Position xs ys -> Position (Some (Inc xs)) (Some (Inc ys))
-push p = go p bits
-  where
-    go :: Position xs ys -> SBits ys -> Position (Some (Inc xs)) (Some (Inc ys))
-    go P0     (Bn One _ ) = P1 P0
-    go P0     (Bn Two _ ) = P1 P0
-    go (P2 i) (Bn One ys) = P1 (go i ys)
-    go (P2 i) (Bn Two ys) = P1 (go i ys)
-    go (P1 i) (Bn One _ ) = P2 i
-    go (P1 i) (Bn Two _ ) = P2 i
-    
-data SBits (xs :: Star Bit) where
-  B0 :: SBits Nil
-  Bn :: SBit x -> SBits xs -> SBits (Some (x :- xs))
+infixr 5 ::-
+data SPlus xs where
+  (::-) :: The a x -> The (Star a) xs -> SPlus (x :- xs)
   
-class KnownBits (xs :: Star Bit) where bits :: SBits xs
-instance KnownBits Nil where bits = B0
-instance KnownBits xs => KnownBits (Some (B1 :- xs)) where bits = Bn One bits
-instance KnownBits xs => KnownBits (Some (B2 :- xs)) where bits = Bn Two bits
+data SStar xs where
+  Nily :: SStar Nil
+  Somy :: The (Plus a) xs -> SStar (Some xs)
+  
+type instance The (Plus a) = SPlus
+type instance The (Star a) = SStar
+
+instance Known Nil where sing = Nily
+instance Known xs => Known (Some xs) where sing = Somy sing
+instance (Known x, Known xs) => Known (x :- xs) where sing = sing ::- sing
+```
+
+</details>
+
+```haskell
+push :: Known ys => Position xs ys -> Position (Some (Inc xs)) (Some (Inc ys))
+push p = go p sing
+  where
+    go :: Position xs ys -> The (Star Bit) ys -> Position (Some (Inc xs)) (Some (Inc ys))
+    go P0     (Somy (SB1 ::- _ )) = P1 P0
+    go P0     (Somy (SB2 ::- _ )) = P1 P0
+    go (P2 i) (Somy (SB1 ::- ys)) = P1 (go i ys)
+    go (P2 i) (Somy (SB2 ::- ys)) = P1 (go i ys)
+    go (P1 i) (Somy (SB1 ::- _ )) = P2 i
+    go (P1 i) (Somy (SB2 ::- _ )) = P2 i
 ```
 
 # Building a Nice Interface
@@ -261,7 +330,7 @@ class Index (n :: Peano) (xs :: Star Bit) where
   index :: Position (FromPeano n) xs
   
 instance Index Z (Some xs) where index = P0
-instance (Index n xs, ys ~ Inc xs, KnownBits xs) => Index (S n) (Some ys) where index = push index
+instance (Index n xs, ys ~ Inc xs, Known xs) => Index (S n) (Some ys) where index = push index
 instance TypeError (Text "Index out of range") => Index n Nil where index = error "unreachable"
   
 type family FromLit (n :: Nat) :: Peano where
