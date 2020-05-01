@@ -1,5 +1,5 @@
 
-@techreport{hinzeNumericalRepresentationsHigherOrder1998,
+@techreport{hinze_numerical_1998,
   title = {Numerical {{Representations}} as {{Higher}}-{{Order Nested Datatypes}}},
   author = {Hinze, Ralf},
   year = {1998},
@@ -10,12 +10,28 @@
   number = {IAI-TR-98-12}
 }
 
-@book{hinzePerfectTreesBitreversal1999,
+@book{hinze_perfect_1999,
   title = {Perfect {{Trees}} and {{Bit}}-Reversal {{Permutations}}},
   author = {Hinze, Ralf},
   year = {1999},
   abstract = {A famous algorithm is the Fast Fourier Transform, or FFT. An efficient iterative version of the FFT algorithm performs as a first step a bit-reversal permutation of the input list. The bit-reversal permutation swaps elements whose indices have binary representations that are the reverse of each other. Using an amortized approach this operation can be made to run in linear time on a random-access machine. An intriguing question is whether a linear-time implementation is also feasible on a pointer machine, that is in a purely functional setting. We show that the answer to this question is in the affirmative. In deriving a solution we employ several advanced programming language concepts such as nested datatypes, associated fold and unfold operators, rank-2 types, and polymorphic recursion. 1 Introduction A bit-reversal permutation operates on lists whose length is n = 2 k for some natural number k and swaps elements whose indices have binary representations that are the reverse of eac...},
   file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/4YL437LK/Hinze - 1999 - Perfect Trees and Bit-reversal Permutations.pdf;/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/36WDN5QJ/summary.html}
+}
+
+@inproceedings{martinezJustItCompiling2013,
+  title = {Just Do It While Compiling!: Fast Extensible Records in Haskell},
+  shorttitle = {Just Do It While Compiling!},
+  booktitle = {Proceedings of the {{ACM SIGPLAN}} 2013 Workshop on {{Partial}} Evaluation and Program Manipulation - {{PEPM}} '13},
+  author = {Martinez, Bruno and Viera, Marcos and Pardo, Alberto},
+  year = {2013},
+  pages = {77},
+  publisher = {{ACM Press}},
+  address = {{Rome, Italy}},
+  doi = {10.1145/2426890.2426908},
+  abstract = {The library for strongly typed heterogeneous collections HList provides an implementation of extensible records in Haskell that needs only a few common extensions of the language. In HList, records are represented as linked lists of label-value pairs with a lookup operation that is linear-time in the number of fields. In this paper, we use type-level programming techniques to develop a more efficient representation of extensible records for HList. We propose two internal encodings for extensible records that improve lookup at runtime without needing a total order on the labels. One of the encodings performs lookup in constant time but at a cost of linear time insertion. The other one performs lookup in logarithmic time while preserving the fast insertion of simple linked lists. Through staged compilation, the required slow search for a field is moved to compile time in both cases.},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/7JMCAICP/Martinez et al. - 2013 - Just do it while compiling! fast extensible recor.pdf},
+  isbn = {978-1-4503-1842-6},
+  language = {en}
 }
 
 @article{okasakiThreeAlgorithmsBraun1997,
