@@ -401,3 +401,147 @@ instance All Show xs => Show (HTree xs) where
 >>> example
 (True,"True",1,(),"T")
 ```
+
+# As a Nested Datatype
+
+The approach I've taken here is actually a little unusual: in both
+@hinzeNumericalRepresentationsHigherOrder1998 and
+@swierstraHeterogeneousBinaryRandomaccess2020 the tree is defined as a *nested*
+data type.
+Let's take a look at that approach, while also switching to Agda. 
+
+```agda
+𝔹 : Set
+𝔹 = List Bool
+
+pattern 1ᵇ = false
+pattern 2ᵇ = true
+
+data When (A : Set a) : Bool → Set a where
+  O⟨⟩ : When A false
+  I⟨_⟩ : A → When A true
+
+infixl 4 _×2
+record _×2 (A : Set a) : Set a where
+  constructor _,_
+  field
+    fst snd : A
+open _×2
+
+infixr 5 ⟨_⟩+_+2×_
+data Array (A : Set a) : 𝔹 → Set a where
+  O : Array A []
+  ⟨_⟩+_+2×_ : ∀ {n ns} → A → When A n → Array (A ×2) ns → Array A (n ∷ ns)
+```
+
+The cons function here is really no more complex than the previous cons:
+
+```agda
+inc : 𝔹 → List Bool
+inc [] = 1ᵇ ∷ []
+inc (1ᵇ ∷ xs) = 2ᵇ ∷ xs
+inc (2ᵇ ∷ xs) = 1ᵇ ∷ inc xs
+
+cons : ∀ {ns} → A → Array A ns → Array A (inc ns)
+cons x O = ⟨ x ⟩+ O⟨⟩ +2× O
+cons x₁ (⟨ x₂ ⟩+ O⟨⟩ +2× xs) = ⟨ x₁ ⟩+ I⟨ x₂ ⟩ +2× xs
+cons x₁ (⟨ x₂ ⟩+ I⟨ x₃ ⟩ +2× xs) = ⟨ x₁ ⟩+ O⟨⟩ +2× cons (x₂ , x₃) xs
+```
+
+But what I'm really interested in, again, is *indexing*.
+In particular, I'm interested in using an actual binary number to index into
+this structure, rather than the weird GADT we had to use in Haskell.
+One of the advantages of using full dependent types is that we can write
+functions like the following:
+
+
+```agda
+lookup : ∀ is → Array A xs → is < xs → A
+lookup = {!!}
+```
+
+In other words, we can pass the proof term separately.
+This can help performance a little, but mainly it's nice to use the actual
+number type one intended to use along with all of the functions we might use on
+that term.
+
+So let's get writing!
+The first thing to define is the proof of `<`.
+I'm going to define it in terms of a boolean function on the bits themselves,
+i.e.:
+
+```agda
+_<ᴮ_ : 𝔹 → 𝔹 → Bool
+_<ᴮ_ = {!!}
+
+T : Bool → Set
+T true   = ⊤
+T false  = ⊥
+
+_<_ : 𝔹 → 𝔹 → Set
+x < y = T (x <ᴮ y)
+```
+
+This will mean the proofs themselves are easy to pass around without
+modification.
+In fact, we can go further and have the compiler *definitionally* understand
+that the proof of `x < y` is proof irrelevant, with Agda's
+[`Prop`](https://agda.readthedocs.io/en/v2.6.1/language/prop.html).
+
+```agda
+_<_ : 𝔹 → 𝔹 → Set
+x < y = T (x <ᴮ y)
+```
+
+Next, the actual function itself:
+
+```agda
+_&_≲ᵇ_ : Bool → Bool → Bool → Bool
+s & false ≲ᵇ y = s or  y
+s & true  ≲ᵇ y = s and y
+
+_&_≲ᴮ_ : Bool → 𝔹 → 𝔹 → Bool
+s & []       ≲ᴮ []       = s
+s & []       ≲ᴮ (y ∷ ys) = true
+s & (x ∷ xs) ≲ᴮ []       = false
+s & (x ∷ xs) ≲ᴮ (y ∷ ys) = (s & x ≲ᵇ y) & xs ≲ᴮ ys
+
+_<ᴮ_ _≤ᴮ_ : 𝔹 → 𝔹 → Bool
+_<ᴮ_ = false &_≲ᴮ_
+_≤ᴮ_ = true  &_≲ᴮ_
+```
+
+These functions combine the definitions of `≤` and `<`, and do them both at
+once.
+We pass whether the comparison is non-strict or not as the first parameter: this
+is worth doing since both `<` and `≤` can be defined in terms of each other:
+
+```agda
+(1ᵇ ∷ xs) < (2ᵇ ∷ ys) = xs ≤ ys
+(2ᵇ ∷ xs) ≤ (1ᵇ ∷ ys) = xs < ys
+...
+```
+
+Finally the function itself:
+
+```agda
+sel-bit : ∀ {b} → When A b → A ×2 → A
+sel-bit {b = 1ᵇ} _ = snd
+sel-bit {b = 2ᵇ} _ = fst
+
+mutual
+  index : ∀ xs {ys} → Array A ys → xs < ys → A
+  index []        (⟨ x ⟩+ _ +2× _ ) p = x
+  index (1ᵇ ∷ is) (⟨ _ ⟩+ x +2× xs) p = index₂ is x xs p
+  index (2ᵇ ∷ is) (⟨ _ ⟩+ x +2× xs) p = sel-bit x (index is xs p)
+
+  index₂ : ∀ xs {y ys} → When A y → Array (A ×2) ys → 1ᵇ ∷ xs < y ∷ ys → A
+  index₂ is       O⟨⟩    xs p = fst (index  is xs p)
+  index₂ []       I⟨ x ⟩ xs p = x
+  index₂ (i ∷ is) I⟨ _ ⟩ xs p = snd (index₃ i is xs p)
+
+  index₃ : ∀ x xs {ys} → Array A ys → x ∷ xs ≤ ys → A
+  index₃ 2ᵇ is       (⟨ _ ⟩+ x +2× xs) p = index₂ is x xs p
+  index₃ 1ᵇ []       (⟨ x ⟩+ _ +2× _ ) p = x
+  index₃ 1ᵇ (i ∷ is) (⟨ _ ⟩+ x +2× xs) p = sel-bit x (index₃ i is xs p)
+```
