@@ -37,8 +37,7 @@ import GHC.TypeLits
 # Numerical Representations
 
 One of the common techniques for building purely functional data structures is
-to base the structure on some numerical representation
-[@hinzeNumericalRepresentationsHigherOrder1998].
+to base the structure on some numerical representation [@hinze_numerical_1998].
 Most recently, I read @swierstraHeterogeneousBinaryRandomaccess2020, where the
 binary numbers were used to implement a heterogeneous random-access list
 (effectively a generic tuple).
@@ -270,7 +269,7 @@ push p = go p sing
     go (P1 i) (Somy (SB2 ::- _ )) = P2 i
 ```
 
-# Building a Nice Interface
+# Type-Level Lists for A Nicer Interface
 
 Everything above is pretty much all you need for many use cases, but it's pretty
 ugly stuff.
@@ -310,56 +309,9 @@ example :: Tuple [Bool,String,Int,(),String]
 example = True <: "True" <: 1 <: () <: "T" <: HLeaf
 ```
 
-Next, it's extremely cumbersome to build pointers into the tree manually.
-We can use GHC's type literals to give a nice syntax to an automated procedure
-which does it for us, though.
+# Folding
 
-<details>
-<summary>
-Interface for building indices.
-</summary>
-  
-```haskell
-data Peano = Z | S Peano
-
-type family FromPeano (n :: Peano) = (m :: Star Bit) | m -> n where
-  FromPeano Z     = Nil
-  FromPeano (S n) = Some (Inc (FromPeano n))
-  
-class Index (n :: Peano) (xs :: Star Bit) where
-  index :: Position (FromPeano n) xs
-  
-instance Index Z (Some xs) where index = P0
-instance (Index n xs, ys ~ Inc xs, Known xs) => Index (S n) (Some ys) where index = push index
-instance TypeError (Text "Index out of range") => Index n Nil where index = error "unreachable"
-  
-type family FromLit (n :: Nat) :: Peano where
-  FromLit 0 = Z
-  FromLit n = S (FromLit (n - 1))
-  
-pos :: forall n xs. Index (FromLit n) xs => Position (FromPeano (FromLit n)) xs
-pos = index
-```
-</details>
-
-```haskell
->>> lookup (pos @4) example
-"T"
-```
-
-You even get a type error for out-of-range indices:
-
-```haskell
->>> lookup (pos @7) example
-```
-```
-    • Index out of range
-    • In the first argument of ‘lookup’, namely ‘(pos @7)’
-      In the expression: lookup (pos @7) example
-      In an equation for ‘it’: it = lookup (pos @7) example
-```
-
-Finally, we can fold over the tree itself (using the Braun tree folding
+We can fold over the tree itself (using the Braun tree folding
 algorithm from a previous post) if every element in the tree conforms to some
 class.
 Using this we can generate a nice string representation of the tree.
@@ -402,10 +354,151 @@ instance All Show xs => Show (HTree xs) where
 (True,"True",1,(),"T")
 ```
 
+
+# Using a Different Approach For Building Indices
+
+The approach used in @swierstraHeterogeneousBinaryRandomaccess2020 had a
+specific goal in mind: using the heterogeneous list to implement a lookup table
+for evaluating lambda calculus.
+As such, efficiently being able to "increment" an index was vital.
+
+If we wanted to use the type as a generic tuple, though, we would have no such
+requirement.
+Instead, we might expect all accesses to be resolved and inlined at compile-time
+[as in @martinezJustItCompiling2013] (we also would need to add INLINE pragmas
+to every instance, which I haven't done here for readability's sake).
+We also would want a nice syntax for accessing parts of the tuple.
+
+We can accomplish all of this with some type classes, as it happens.
+If we replace pattern-matching on data types with typeclass resolution we can be
+all but guaranteed that the function calls and so on will be inlined entirely at
+compile-time.
+The main class we'll use is the following:
+
+```haskell
+class (xs :: Star Bit) < (ys :: Star Bit) where
+  pull :: forall (t :: Tree ys Type). HTree t -> Lookup xs t
+```
+
+<details>
+<summary>
+Interface for building indices.
+</summary>
+  
+```haskell
+instance Nil < Some ys where
+  pull (HNode x _ _ _) = x
+  
+instance xs < ys => Some (B1 :- xs) < Some (B1 :- ys) where
+  pull (HNode _ _ ls _) = pull @xs ls
+  
+instance xs < Some (Inc ys) => Some (B1 :- xs) < Some (B2 :- ys) where
+  pull (HNode _ _ ls _) = pull @xs ls
+
+instance xs < ys => Some (B2 :- xs) < Some (y :- ys) where
+  pull (HNode _ _ _ rs) = pull @xs rs
+
+instance TypeError (Text "Index out of range") => xs < Nil where 
+  pull = error "unreachable"
+
+data Peano = Z | S Peano
+
+type family FromPeano (n :: Peano) = (m :: Star Bit) | m -> n where
+  FromPeano Z     = Nil
+  FromPeano (S n) = Some (Inc (FromPeano n))
+  
+type family FromLit (n :: Nat) :: Peano where
+  FromLit 0 = Z
+  FromLit n = S (FromLit (n - 1))
+
+get :: forall n xs (t :: Tree xs Type). FromPeano (FromLit n) < xs
+    => HTree t -> Lookup (FromPeano (FromLit n)) t
+get = pull @(FromPeano (FromLit n))
+```
+</details>
+
+Some other details out of the way we get the following nice interface:
+
+```haskell
+>>> get @4 example
+"T"
+```
+
+You even get a type error for out-of-range indices:
+
+```haskell
+>>> get @7 example
+```
+```
+    • Index out of range
+    • In the expression: get @7 example
+      In an equation for ‘it’: it = get @7 example
+```
+
+Or we could even add a lens interface:
+
+<details>
+<summary>
+Implementation of Lenses for the Tuple
+</summary>
+
+```haskell
+type family Replace (i :: Star Bit) (x :: a) (xs :: Tree sz a) :: Tree sz a where
+  Replace Nil              x (Branch (Root _ b ls rs)) = Branch (Root x b ls rs)
+  Replace (Some (B1 :- i)) x (Branch (Root y b ls rs)) = Branch (Root y b (Replace i x ls) rs)
+  Replace (Some (B2 :- i)) x (Branch (Root y b ls rs)) = Branch (Root y b ls (Replace i x rs))
+
+class (xs :: Star Bit) <! (ys :: Star Bit) where
+  index :: forall (t :: Tree ys Type) b. Lens (HTree t) (HTree (Replace xs b t)) (Lookup xs t) b
+  
+instance Nil <! Some ys where
+  index f (HNode x b ls rs) = fmap (\x' -> HNode x' b ls rs) (f x)
+  
+instance xs <! ys => Some (B1 :- xs) <! Some (B1 :- ys) where
+  index f (HNode x b ls rs) = fmap (\ls' -> HNode x b ls' rs) (index @xs f ls)
+  
+instance xs <! Some (Inc ys) => Some (B1 :- xs) <! Some (B2 :- ys) where
+  index f (HNode x b ls rs) = fmap (\ls' -> HNode x b ls' rs) (index @xs f ls)
+
+instance xs <! ys => Some (B2 :- xs) <! Some (y :- ys) where
+  index f (HNode x b ls rs) = fmap (\rs' -> HNode x b ls rs') (index @xs f rs)
+
+instance TypeError (Text "Index out of range") => xs <! Nil where 
+  index = error "unreachable"
+
+ind :: forall n xs (t :: Tree xs Type) a. FromPeano (FromLit n) <! xs
+    => Lens (HTree t) (HTree (Replace (FromPeano (FromLit n)) a t)) (Lookup (FromPeano (FromLit n)) t) a
+ind = index @(FromPeano (FromLit n))
+```
+</details>
+
+```haskell
+>>> over (ind @1) reverse example
+(True,"eurT",1,(),"T")
+```
+
+# Usability
+
+I actually am a little ambivalent about the "compile-time" stuff:
+approaches like this one [and -@martinezJustItCompiling2013] tend to *really*
+blow up compile times, and generate ugly, complex error messages.
+@swierstraHeterogeneousBinaryRandomaccess2020 had a use case which actually
+required a fast heterogeneous list, but if you're just looking for a tuple with
+some fields and you need it to be fast you're probably better off with a one-off
+data type.
+
+That said, I do think Braun trees are excellent for this stuff, precisely
+because they tend to be a little more usable in practice.
+Their structure is uniquely determined by the number of elements they contain,
+so all of the type families are injective, there's not a huge amount of
+bookkeeping data, and they're just quite clean and simple.
+
+---
+
 # As a Nested Datatype
 
 The approach I've taken here is actually a little unusual: in both
-@hinzeNumericalRepresentationsHigherOrder1998 and
+@hinze_numerical_1998 and
 @swierstraHeterogeneousBinaryRandomaccess2020 the tree is defined as a *nested*
 data type.
 Let's take a look at that approach, while also switching to Agda. 
