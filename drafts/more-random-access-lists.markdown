@@ -3,6 +3,7 @@ title: More Random Access Lists
 series: Random Access Lists
 tags: Haskell, Agda
 bibliography: Random Access Lists.bib
+literate-haskell: true
 ---
 
 <details>
@@ -10,7 +11,7 @@ bibliography: Random Access Lists.bib
 Imports and Pragmas
 </summary>
 
-```haskell
+\begin{code}
 {-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE PolyKinds              #-}
 {-# LANGUAGE GADTs                  #-}
@@ -28,13 +29,16 @@ Imports and Pragmas
 
 {-# OPTIONS_GHC -Wall -fno-warn-unticked-promoted-constructors #-}
 
+module Post where
+
 import Data.Kind
 import Prelude hiding (lookup)
 import GHC.TypeLits
-```
+import Control.Lens hiding (Cons, index)
+\end{code}
 </details>
 
-# Numerical Representations
+= Numerical Representations
 
 One of the common techniques for building purely functional data structures is
 to base the structure on some numerical representation [@hinze_numerical_1998].
@@ -45,7 +49,7 @@ binary numbers were used to implement a heterogeneous random-access list
 I'm going to look today at using the zeroless binary system to implement a
 similar structure, and see what the differences are.
 
-# Zeroless Binary
+= Zeroless Binary
 
 I have talked about this representation before, so I won't go into it in huge
 depth, but put simply the zeroless binary system represents a binary number as a
@@ -59,30 +63,30 @@ extremely useful.
 Before we get started, we'll first define the peculiar type of lists we're going
 to use.
 
-```haskell
+\begin{code}
 infixr 5 :-
 data Plus a = a :- Star a
 data Star a
   = Nil
   | Some (Plus a)
-```
+\end{code}
 
-`Star a` is isomorphic to `[a]`, so we're not actually using something much
-different.
+`Star a` is isomorphic to `[a]`, so we've not lost any expressive power or
+anything like that.
 The usefulness of this definition is that we have a non-empty list type built
 in to our list type, so we don't have to do conversion back and forth which can
 be cumbersome.
 
 Next on to the number itself:
 
-```haskell
+\begin{code}
 data Bit = B1 | B2
 
 type family Inc (xs :: Star Bit) = (ys :: Plus Bit) | ys -> xs where
   Inc Nil = B1 :- Nil
   Inc (Some (B1 :- xs)) = B2 :- xs
   Inc (Some (B2 :- xs)) = B1 :- Some (Inc xs)
-```
+\end{code}
 
 We're straight into the type-level operations here, and there's an interesting
 bit of syntax worth pointing out before we move on.
@@ -91,13 +95,13 @@ bit of syntax worth pointing out before we move on.
 This is very handy for type inference and so on, and is perhaps the main benefit
 of the zeroless binary numbers.
 
-# A Braun Tree
+= A Braun Tree
 
 Next, we'll build a tree indexed by these numbers.
 Now that we're jumping in to indexing, we'll need some singletons.
 Here's my preferred way to do them:
 
-```haskell
+\begin{code}
 type family The k = (s :: k -> Type) | s -> k
 
 class Known (x :: a) where sing :: The a x
@@ -109,7 +113,7 @@ data SBit b where
 type instance The Bit = SBit
 instance Known B1 where sing = SB1
 instance Known B2 where sing = SB2
-```
+\end{code}
 
 The type family defines the singleton GADTs themselves.
 The class `Known` is for automatically generating singleton values.
@@ -118,7 +122,7 @@ On to the tree.
 We're actually going to build a *Braun* tree here, as they are actually
 particularly clean to implement on the type level.
 
-```haskell
+\begin{code}
 type family Carry (x :: Bit) (xs :: Star Bit) :: Star Bit where
   Carry B1 xs = xs
   Carry B2 xs = Some (Inc xs)
@@ -133,7 +137,7 @@ data Forest (xs :: Plus Bit) a where
        -> Tree (Carry x xs) a 
        -> Tree xs a 
        -> Forest (x :- xs) a
-```
+\end{code}
 
 We first have a type family which increments a binary number if its first
 argument is `B2`: this will maintain the Braun tree's invariant.
@@ -142,29 +146,29 @@ Next, we have the tree definition itself, which is split into two mutual
 definitions, in much the same way as the `Star` and `Plus` lists previously.
 Next, to `cons` something onto the tree:
 
-```haskell
+\begin{code}
 type family Cons (x :: a) (xs :: Tree ns a) = (ys :: Forest (Inc ns) a) | ys -> x xs where
   Cons x Leaf = Root x SB1 Leaf Leaf
   Cons x (Branch (Root y SB1 ls rs)) = Root x SB2 (Branch (Cons y rs)) ls
   Cons x (Branch (Root y SB2 ls rs)) = Root x SB1 (Branch (Cons y rs)) ls
-```
+\end{code}
 
 You'll notice that we can again annotate this type family with injectivity.
 
-# A Heterogeneous Tree
+= A Heterogeneous Tree
 
 So far all we have is a size-indexed tree.
 We want a *heterogeneous* tree, meaning that we must next construct a tree
 *indexed* by the previous tree.
 In order to do this, we'll first need singletons on the type level:
 
-```haskell
+\begin{code}
 type family Sing (x :: a) = (y :: The a x) | y -> x
 type instance Sing B1 = SB1
 type instance Sing B2 = SB2
-```
+\end{code}
 
-This kind of nonsense we're doing here is precisely the kind of thing obfuscated
+This kind of nonsense we're doing here is precisely the kind of thing obsolesced
 by dependent types, by the way.
 If you're already doing type-level heavy stuff (as we are here) the extra power
 afforded by full dependent types often means that hacky special cases just turn
@@ -173,7 +177,7 @@ families.
 
 But anyway, back to the tree:
 
-```haskell
+\begin{code}
 data HTree (xs :: Tree ns Type) where
   HLeaf :: HTree Leaf
   HNode :: x 
@@ -181,53 +185,53 @@ data HTree (xs :: Tree ns Type) where
         -> !(HTree ls)
         -> !(HTree rs)
         -> HTree (Branch (Root x (Sing b) ls rs))
-```
+\end{code}
 
 And we can `cons` on an element in much the same way we did with the homogeneous
 tree:
 
-```haskell
+\begin{code}
 infixr 5 <:
 (<:) :: x -> HTree xs -> HTree (Branch (Cons x xs))
 x <: HLeaf = HNode x SB1 HLeaf HLeaf
 x <: HNode y SB1 yl yr = HNode x SB2 (y <: yr) yl
 x <: HNode y SB2 yl yr = HNode x SB1 (y <: yr) yl
-```
+\end{code}
 
-# Indexing
+= Indexing
 
 The real use of this data structure is quick *indexing*.
 As with the previous functions, we will first need to construct the type-level
 version of what we want to do.
 
-```haskell
+\begin{code}
 type family Lookup (i :: Star Bit) (xs :: Tree sz a) :: a where
   Lookup Nil              (Branch (Root x _ _  _)) = x
   Lookup (Some (B1 :- i)) (Branch (Root _ _ ls _)) = Lookup i ls
   Lookup (Some (B2 :- i)) (Branch (Root _ _ _ rs)) = Lookup i rs
-```
+\end{code}
 
 While this function is partial, the value-level one should not be: it should be
 provably in-bounds for lookups.
 As a result we'll need a slightly complex type to represent the indices:
 
-```haskell
+\begin{code}
 data Position (xs :: Star Bit) (ys :: Star Bit) where
   P0 :: Position Nil (Some ys)
   P1 :: !(Position xs (Carry y ys)) -> Position (Some (B1 :- xs)) (Some (y :- ys))
   P2 :: !(Position xs ys) -> Position (Some (B2  :- xs)) (Some (y :- ys))
-```
+\end{code}
 
 A value of type `Position xs ys` is actually a proof that `xs` is smaller than
 `ys`, but we're using it here just as a pointer to an entry in the tree.
 Here's the actual lookup function itself.
 
-```haskell
+\begin{code}
 lookup :: forall is (ts :: Tree sz Type). Position is sz -> HTree ts -> Lookup is ts
 lookup P0     (HNode x _ _  _) = x
 lookup (P1 i) (HNode _ _ ls _) = lookup i ls
 lookup (P2 i) (HNode _ _ _ rs) = lookup i rs
-```
+\end{code}
 
 Just having pointers isn't much use: we also need a way to build them.
 The key function here is `push`: this increments the index pointed to by one.
@@ -237,7 +241,7 @@ The key function here is `push`: this increments the index pointed to by one.
 Singletons for lists
 </summary>
 
-```haskell
+\begin{code}
 infixr 5 ::-
 data SPlus xs where
   (::-) :: The a x -> The (Star a) xs -> SPlus (x :- xs)
@@ -252,11 +256,11 @@ type instance The (Star a) = SStar
 instance Known Nil where sing = Nily
 instance Known xs => Known (Some xs) where sing = Somy sing
 instance (Known x, Known xs) => Known (x :- xs) where sing = sing ::- sing
-```
+\end{code}
 
 </details>
 
-```haskell
+\begin{code}
 push :: Known ys => Position xs ys -> Position (Some (Inc xs)) (Some (Inc ys))
 push p = go p sing
   where
@@ -267,9 +271,9 @@ push p = go p sing
     go (P2 i) (Somy (SB2 ::- ys)) = P1 (go i ys)
     go (P1 i) (Somy (SB1 ::- _ )) = P2 i
     go (P1 i) (Somy (SB2 ::- _ )) = P2 i
-```
+\end{code}
 
-# Type-Level Lists for A Nicer Interface
+= Type-Level Lists for A Nicer Interface
 
 Everything above is pretty much all you need for many use cases, but it's pretty
 ugly stuff.
@@ -283,7 +287,7 @@ First of all, we should use type-level lists to indicate the tuple itself:
 Type families for building a tree from a list.
 </summary>
 
-```haskell
+\begin{code}
 type family Length (xs :: [a]) :: Star Bit where
   Length '[] = Nil
   Length (_ : xs) = Some (Inc (Length xs))
@@ -291,25 +295,25 @@ type family Length (xs :: [a]) :: Star Bit where
 type family FromList (xs :: [a]) = (ys :: Tree (Length xs) a) | ys -> xs where
   FromList '[] = Leaf
   FromList (x : xs) = Branch (Cons x (FromList xs))
-```
+\end{code}
 </details>
 
-```haskell
+\begin{code}
 type family Tuple (xs :: [Type]) = (ys :: Type) | ys -> xs where
   Tuple xs = HTree (FromList xs)
-```
+\end{code}
 
 Because the type family here is injective, we won't get any of the usual weird
 errors when we use the type `Tuple [Bool,String]`{.haskell} or whatever: passing
 that around will function almost exactly the same as passing around the tree
 representation itself directly.
 
-```haskell
+\begin{code}
 example :: Tuple [Bool,String,Int,(),String]
 example = True <: "True" <: 1 <: () <: "T" <: HLeaf
-```
+\end{code}
 
-# Folding
+= Folding
 
 We can fold over the tree itself (using the Braun tree folding
 algorithm from a previous post) if every element in the tree conforms to some
@@ -321,7 +325,7 @@ Using this we can generate a nice string representation of the tree.
 Implementation of folding over tree and `Show` instance.
 </summary>
   
-```haskell
+\begin{code}
 type family All (c :: a -> Constraint) (xs :: Tree ns a) :: Constraint where
   All c Leaf = ()
   All c (Branch (Root x _ ls rs)) = (c x, All c ls, All c rs)
@@ -346,7 +350,7 @@ instance All Show xs => Show (HTree xs) where
       go :: [ShowS] -> ShowS
       go []     = showChar ')'
       go (x:xs) = x . foldr (\y ys -> showChar ',' . y . ys)  (showChar ')') xs
-```
+\end{code}
 </details>
 
 ```haskell
@@ -355,7 +359,7 @@ instance All Show xs => Show (HTree xs) where
 ```
 
 
-# Using a Different Approach For Building Indices
+= Using a Different Approach For Building Indices
 
 The approach used in @swierstraHeterogeneousBinaryRandomaccess2020 had a
 specific goal in mind: using the heterogeneous list to implement a lookup table
@@ -365,27 +369,27 @@ As such, efficiently being able to "increment" an index was vital.
 If we wanted to use the type as a generic tuple, though, we would have no such
 requirement.
 Instead, we might expect all accesses to be resolved and inlined at compile-time
-[as in @martinezJustItCompiling2013] (we also would need to add INLINE pragmas
-to every instance, which I haven't done here for readability's sake).
+[as in @martinezJustItCompiling2013].
 We also would want a nice syntax for accessing parts of the tuple.
 
 We can accomplish all of this with some type classes, as it happens.
 If we replace pattern-matching on data types with typeclass resolution we can be
 all but guaranteed that the function calls and so on will be inlined entirely at
-compile-time.
+compile-time (we also would need to add INLINE pragmas to every instance, which
+I haven't done here for readability's sake).
 The main class we'll use is the following:
 
-```haskell
+\begin{code}
 class (xs :: Star Bit) < (ys :: Star Bit) where
   pull :: forall (t :: Tree ys Type). HTree t -> Lookup xs t
-```
+\end{code}
 
 <details>
 <summary>
 Interface for building indices.
 </summary>
   
-```haskell
+\begin{code}
 instance Nil < Some ys where
   pull (HNode x _ _ _) = x
   
@@ -414,7 +418,7 @@ type family FromLit (n :: Nat) :: Peano where
 get :: forall n xs (t :: Tree xs Type). FromPeano (FromLit n) < xs
     => HTree t -> Lookup (FromPeano (FromLit n)) t
 get = pull @(FromPeano (FromLit n))
-```
+\end{code}
 </details>
 
 Some other details out of the way we get the following nice interface:
@@ -442,7 +446,7 @@ Or we could even add a lens interface:
 Implementation of Lenses for the Tuple
 </summary>
 
-```haskell
+\begin{code}
 type family Replace (i :: Star Bit) (x :: a) (xs :: Tree sz a) :: Tree sz a where
   Replace Nil              x (Branch (Root _ b ls rs)) = Branch (Root x b ls rs)
   Replace (Some (B1 :- i)) x (Branch (Root y b ls rs)) = Branch (Root y b (Replace i x ls) rs)
@@ -469,7 +473,7 @@ instance TypeError (Text "Index out of range") => xs <! Nil where
 ind :: forall n xs (t :: Tree xs Type) a. FromPeano (FromLit n) <! xs
     => Lens (HTree t) (HTree (Replace (FromPeano (FromLit n)) a t)) (Lookup (FromPeano (FromLit n)) t) a
 ind = index @(FromPeano (FromLit n))
-```
+\end{code}
 </details>
 
 ```haskell
@@ -477,25 +481,10 @@ ind = index @(FromPeano (FromLit n))
 (True,"eurT",1,(),"T")
 ```
 
-# Usability
-
-I actually am a little ambivalent about the "compile-time" stuff:
-approaches like this one [and -@martinezJustItCompiling2013] tend to *really*
-blow up compile times, and generate ugly, complex error messages.
-@swierstraHeterogeneousBinaryRandomaccess2020 had a use case which actually
-required a fast heterogeneous list, but if you're just looking for a tuple with
-some fields and you need it to be fast you're probably better off with a one-off
-data type.
-
-That said, I do think Braun trees are excellent for this stuff, precisely
-because they tend to be a little more usable in practice.
-Their structure is uniquely determined by the number of elements they contain,
-so all of the type families are injective, there's not a huge amount of
-bookkeeping data, and they're just quite clean and simple.
 
 ---
 
-# As a Nested Datatype
+= As a Nested Datatype
 
 The approach I've taken here is actually a little unusual: in both
 @hinze_numerical_1998 and
@@ -638,3 +627,17 @@ mutual
   index₃ 1ᵇ []       (⟨ x ⟩+ _ +2× _ ) p = x
   index₃ 1ᵇ (i ∷ is) (⟨ _ ⟩+ x +2× xs) p = sel-bit x (index₃ i is xs p)
 ```
+
+---
+
+= Conclusion
+
+I think Braun trees are a fascinating data structure with lots of interesting
+aspects.
+In practice they tend to be much slower than other comparable structures, but
+they're extremely simple and have many properties which make them particularly
+well-suited to type-level programming.
+
+---
+
+= References

@@ -164,15 +164,22 @@ addLinkCitations (Pandoc meta a) =
       newMeta = Meta newMap
   in  Pandoc newMeta a
 
+pandocOptions :: Compiler ReaderOptions
+pandocOptions = do
+  item <- getUnderlying
+  getMetadataField item "literate-haskell" >>= \case
+    Nothing -> pure defaultHakyllReaderOptions
+    Just _ -> pure (defaultHakyllReaderOptions {readerExtensions = enableExtension Ext_literate_haskell (readerExtensions defaultHakyllReaderOptions)})
 
 readPandocOptionalBiblio :: Compiler (Item Pandoc)
 readPandocOptionalBiblio = do
   item <- getUnderlying
+  options <- pandocOptions
   getMetadataField item "bibliography" >>= \case
-    Nothing -> readPandocWith defaultHakyllReaderOptions =<< getResourceBody
+    Nothing -> readPandocWith options =<< getResourceBody
     Just bibFile -> do
       maybeCsl <- getMetadataField item "csl"
-      join $ readPandocBiblioLinkCit defaultHakyllReaderOptions
+      join $ readPandocBiblioLinkCit options
                           <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
                           <*> load (fromFilePath ("assets/bib/" ++ bibFile))
                           <*> getResourceBody
