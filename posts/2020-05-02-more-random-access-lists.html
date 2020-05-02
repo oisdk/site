@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>More Random Access Lists - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>More Random Access Lists</h2>
+
+            <div class="info">
+    Posted on May  2, 2020
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/Random%20Access%20Lists.html">2-part series on Random Access Lists</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Agda.html">Agda</a>
+    
+</div>
+
+<details>
+<p><summary> Imports and Pragmas </summary></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{-# LANGUAGE DataKinds              #-}</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">{-# LANGUAGE PolyKinds              #-}</span></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">{-# LANGUAGE GADTs                  #-}</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="ot">{-# LANGUAGE TypeFamilyDependencies #-}</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="ot">{-# LANGUAGE ConstraintKinds        #-}</span></a>
+<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="ot">{-# LANGUAGE TypeOperators          #-}</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="ot">{-# LANGUAGE UndecidableInstances   #-}</span></a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="ot">{-# LANGUAGE RankNTypes             #-}</span></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="ot">{-# LANGUAGE MultiParamTypeClasses  #-}</span></a>
+<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="ot">{-# LANGUAGE FlexibleInstances      #-}</span></a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"><span class="ot">{-# LANGUAGE FlexibleContexts       #-}</span></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="ot">{-# LANGUAGE AllowAmbiguousTypes    #-}</span></a>
+<a class="sourceLine" id="cb1-13" data-line-number="13"><span class="ot">{-# LANGUAGE TypeApplications       #-}</span></a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"><span class="ot">{-# LANGUAGE ScopedTypeVariables    #-}</span></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16"><span class="ot">{-# OPTIONS_GHC -Wall -fno-warn-unticked-promoted-constructors #-}</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18"><span class="kw">module</span> <span class="dt">Post</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-19" data-line-number="19"></a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="kw">import</span> <span class="dt">Data.Kind</span></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (lookup)</a>
+<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="kw">import</span> <span class="dt">GHC.TypeLits</span></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="kw">import</span> <span class="dt">Control.Lens</span> <span class="kw">hiding</span> (<span class="dt">Cons</span>, index)</a></code></pre></div>
+</details>
+<h1 id="numerical-representations">Numerical Representations</h1>
+<p>One of the common techniques for building purely functional data structures is to base the structure on some numerical representation <span class="citation" data-cites="hinze_numerical_1998">(Hinze <a href="#ref-hinze_numerical_1998">1998</a>)</span>. Most recently, I read <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span>, where the binary numbers were used to implement a heterogeneous random-access list (effectively a generic tuple).</p>
+<p>I’m going to look today at using the zeroless binary system to implement a similar structure, and see what the differences are.</p>
+<h1 id="zeroless-binary">Zeroless Binary</h1>
+<p>I have talked about this representation before, so I won’t go into it in huge depth, but put simply the zeroless binary system represents a binary number as a string of <code>1</code>s and <code>2</code>s (i.e. no zeroes). The vast majority of the normal binary operations (addition, multiplication, etc.) can be implemented with the same broad efficiency, but this system has one key advantage in that every single number is uniquely represented. Since we’re going to use these numbers to index our data types, this is actually extremely useful.</p>
+<p>Before we get started, we’ll first define the peculiar type of lists we’re going to use.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">:-</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw">data</span> <span class="dt">Plus</span> a <span class="fu">=</span> a <span class="fu">:-</span> <span class="dt">Star</span> a</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">data</span> <span class="dt">Star</span> a</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">  <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb2-5" data-line-number="5">  <span class="fu">|</span> <span class="dt">Some</span> (<span class="dt">Plus</span> a)</a></code></pre></div>
+<p><code>Star a</code> is isomorphic to <code>[a]</code>, so we’ve not lost any expressive power or anything like that. The usefulness of this definition is that we have a non-empty list type built in to our list type, so we don’t have to do conversion back and forth which can be cumbersome.</p>
+<p>Next on to the number itself:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Bit</span> <span class="fu">=</span> <span class="dt">B1</span> <span class="fu">|</span> <span class="dt">B2</span></a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">type</span> family <span class="dt">Inc</span> (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="fu">=</span> (<span class="ot">ys ::</span> <span class="dt">Plus</span> <span class="dt">Bit</span>) <span class="fu">|</span> ys <span class="ot">-&gt;</span> xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="dt">Inc</span> <span class="dt">Nil</span> <span class="fu">=</span> <span class="dt">B1</span> <span class="fu">:-</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">  <span class="dt">Inc</span> (<span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs)) <span class="fu">=</span> <span class="dt">B2</span> <span class="fu">:-</span> xs</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">  <span class="dt">Inc</span> (<span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> xs)) <span class="fu">=</span> <span class="dt">B1</span> <span class="fu">:-</span> <span class="dt">Some</span> (<span class="dt">Inc</span> xs)</a></code></pre></div>
+<p>We’re straight into the type-level operations here, and there’s an interesting bit of syntax worth pointing out before we move on. <code>ys -&gt; xs</code> is a type family dependency: it means that we can uniquely determine <code>xs</code> given <code>ys</code>. This is very handy for type inference and so on, and is perhaps the main benefit of the zeroless binary numbers.</p>
+<h1 id="a-braun-tree">A Braun Tree</h1>
+<p>Next, we’ll build a tree indexed by these numbers. Now that we’re jumping in to indexing, we’ll need some singletons. Here’s my preferred way to do them:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">The</span> k <span class="fu">=</span> (<span class="ot">s ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span>) <span class="fu">|</span> s <span class="ot">-&gt;</span> k</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="kw">class</span> <span class="dt">Known</span> (<span class="ot">x ::</span> a) <span class="kw">where</span><span class="ot"> sing ::</span> <span class="dt">The</span> a x</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"><span class="kw">data</span> <span class="dt">SBit</span> b <span class="kw">where</span></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6">  <span class="dt">SB1</span><span class="ot"> ::</span> <span class="dt">SBit</span> <span class="dt">B1</span></a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">  <span class="dt">SB2</span><span class="ot"> ::</span> <span class="dt">SBit</span> <span class="dt">B2</span></a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">  </a>
+<a class="sourceLine" id="cb4-9" data-line-number="9"><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Bit</span> <span class="fu">=</span> <span class="dt">SBit</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10"><span class="kw">instance</span> <span class="dt">Known</span> <span class="dt">B1</span> <span class="kw">where</span> sing <span class="fu">=</span> <span class="dt">SB1</span></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11"><span class="kw">instance</span> <span class="dt">Known</span> <span class="dt">B2</span> <span class="kw">where</span> sing <span class="fu">=</span> <span class="dt">SB2</span></a></code></pre></div>
+<p>The type family defines the singleton GADTs themselves. The class <code>Known</code> is for automatically generating singleton values.</p>
+<p>On to the tree. We’re actually going to build a <em>Braun</em> tree here, as they are actually particularly clean to implement on the type level.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Carry</span> (<span class="ot">x ::</span> <span class="dt">Bit</span>) (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>)<span class="ot"> ::</span> <span class="dt">Star</span> <span class="dt">Bit</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="dt">Carry</span> <span class="dt">B1</span> xs <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="dt">Carry</span> <span class="dt">B2</span> xs <span class="fu">=</span> <span class="dt">Some</span> (<span class="dt">Inc</span> xs)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="kw">data</span> <span class="dt">Tree</span> (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="dt">Leaf</span><span class="ot">   ::</span> <span class="dt">Tree</span> <span class="dt">Nil</span> a</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">  <span class="dt">Branch</span><span class="ot"> ::</span> <span class="dt">Forest</span> xs a <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">Some</span> xs) a</a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="kw">data</span> <span class="dt">Forest</span> (<span class="ot">xs ::</span> <span class="dt">Plus</span> <span class="dt">Bit</span>) a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">  <span class="dt">Root</span><span class="ot"> ::</span> a</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">       <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Bit</span> x </a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">       <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">Carry</span> x xs) a </a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">       <span class="ot">-&gt;</span> <span class="dt">Tree</span> xs a </a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">       <span class="ot">-&gt;</span> <span class="dt">Forest</span> (x <span class="fu">:-</span> xs) a</a></code></pre></div>
+<p>We first have a type family which increments a binary number if its first argument is <code>B2</code>: this will maintain the Braun tree’s invariant.</p>
+<p>Next, we have the tree definition itself, which is split into two mutual definitions, in much the same way as the <code>Star</code> and <code>Plus</code> lists previously. Next, to <code>cons</code> something onto the tree:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Cons</span> (<span class="ot">x ::</span> a) (<span class="ot">xs ::</span> <span class="dt">Tree</span> ns a) <span class="fu">=</span> (<span class="ot">ys ::</span> <span class="dt">Forest</span> (<span class="dt">Inc</span> ns) a) <span class="fu">|</span> ys <span class="ot">-&gt;</span> x xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  <span class="dt">Cons</span> x <span class="dt">Leaf</span> <span class="fu">=</span> <span class="dt">Root</span> x <span class="dt">SB1</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="dt">Cons</span> x (<span class="dt">Branch</span> (<span class="dt">Root</span> y <span class="dt">SB1</span> ls rs)) <span class="fu">=</span> <span class="dt">Root</span> x <span class="dt">SB2</span> (<span class="dt">Branch</span> (<span class="dt">Cons</span> y rs)) ls</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">  <span class="dt">Cons</span> x (<span class="dt">Branch</span> (<span class="dt">Root</span> y <span class="dt">SB2</span> ls rs)) <span class="fu">=</span> <span class="dt">Root</span> x <span class="dt">SB1</span> (<span class="dt">Branch</span> (<span class="dt">Cons</span> y rs)) ls</a></code></pre></div>
+<p>You’ll notice that we can again annotate this type family with injectivity.</p>
+<h1 id="a-heterogeneous-tree">A Heterogeneous Tree</h1>
+<p>So far all we have is a size-indexed tree. We want a <em>heterogeneous</em> tree, meaning that we must next construct a tree <em>indexed</em> by the previous tree. In order to do this, we’ll first need singletons on the type level:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Sing</span> (<span class="ot">x ::</span> a) <span class="fu">=</span> (<span class="ot">y ::</span> <span class="dt">The</span> a x) <span class="fu">|</span> y <span class="ot">-&gt;</span> x</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">Sing</span> <span class="dt">B1</span> <span class="fu">=</span> <span class="dt">SB1</span></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">Sing</span> <span class="dt">B2</span> <span class="fu">=</span> <span class="dt">SB2</span></a></code></pre></div>
+<p>This kind of nonsense we’re doing here is precisely the kind of thing obsolesced by dependent types, by the way. If you’re already doing type-level heavy stuff (as we are here) the extra power afforded by full dependent types often means that hacky special cases just turn into standard functions, greatly simplifying things like the above type families.</p>
+<p>But anyway, back to the tree:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">data</span> <span class="dt">HTree</span> (<span class="ot">xs ::</span> <span class="dt">Tree</span> ns <span class="dt">Type</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="dt">HLeaf</span><span class="ot"> ::</span> <span class="dt">HTree</span> <span class="dt">Leaf</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="dt">HNode</span><span class="ot"> ::</span> x </a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">        <span class="ot">-&gt;</span> <span class="fu">!</span>(<span class="dt">The</span> <span class="dt">Bit</span> b) </a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">        <span class="ot">-&gt;</span> <span class="fu">!</span>(<span class="dt">HTree</span> ls)</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">        <span class="ot">-&gt;</span> <span class="fu">!</span>(<span class="dt">HTree</span> rs)</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">        <span class="ot">-&gt;</span> <span class="dt">HTree</span> (<span class="dt">Branch</span> (<span class="dt">Root</span> x (<span class="dt">Sing</span> b) ls rs))</a></code></pre></div>
+<p>And we can <code>cons</code> on an element in much the same way we did with the homogeneous tree:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="fu">&lt;:</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2"><span class="ot">(&lt;:) ::</span> x <span class="ot">-&gt;</span> <span class="dt">HTree</span> xs <span class="ot">-&gt;</span> <span class="dt">HTree</span> (<span class="dt">Branch</span> (<span class="dt">Cons</span> x xs))</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">x <span class="fu">&lt;:</span> <span class="dt">HLeaf</span> <span class="fu">=</span> <span class="dt">HNode</span> x <span class="dt">SB1</span> <span class="dt">HLeaf</span> <span class="dt">HLeaf</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">x <span class="fu">&lt;:</span> <span class="dt">HNode</span> y <span class="dt">SB1</span> yl yr <span class="fu">=</span> <span class="dt">HNode</span> x <span class="dt">SB2</span> (y <span class="fu">&lt;:</span> yr) yl</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">x <span class="fu">&lt;:</span> <span class="dt">HNode</span> y <span class="dt">SB2</span> yl yr <span class="fu">=</span> <span class="dt">HNode</span> x <span class="dt">SB1</span> (y <span class="fu">&lt;:</span> yr) yl</a></code></pre></div>
+<h1 id="indexing">Indexing</h1>
+<p>The real use of this data structure is quick <em>indexing</em>. As with the previous functions, we will first need to construct the type-level version of what we want to do.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Lookup</span> (<span class="ot">i ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) (<span class="ot">xs ::</span> <span class="dt">Tree</span> sz a)<span class="ot"> ::</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">  <span class="dt">Lookup</span> <span class="dt">Nil</span>              (<span class="dt">Branch</span> (<span class="dt">Root</span> x _ _  _)) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">  <span class="dt">Lookup</span> (<span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> i)) (<span class="dt">Branch</span> (<span class="dt">Root</span> _ _ ls _)) <span class="fu">=</span> <span class="dt">Lookup</span> i ls</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">  <span class="dt">Lookup</span> (<span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> i)) (<span class="dt">Branch</span> (<span class="dt">Root</span> _ _ _ rs)) <span class="fu">=</span> <span class="dt">Lookup</span> i rs</a></code></pre></div>
+<p>While this function is partial, the value-level one should not be: it should be provably in-bounds for lookups. As a result we’ll need a slightly complex type to represent the indices:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Position</span> (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) (<span class="ot">ys ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="dt">P0</span><span class="ot"> ::</span> <span class="dt">Position</span> <span class="dt">Nil</span> (<span class="dt">Some</span> ys)</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  <span class="dt">P1</span><span class="ot"> ::</span> <span class="fu">!</span>(<span class="dt">Position</span> xs (<span class="dt">Carry</span> y ys)) <span class="ot">-&gt;</span> <span class="dt">Position</span> (<span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs)) (<span class="dt">Some</span> (y <span class="fu">:-</span> ys))</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="dt">P2</span><span class="ot"> ::</span> <span class="fu">!</span>(<span class="dt">Position</span> xs ys) <span class="ot">-&gt;</span> <span class="dt">Position</span> (<span class="dt">Some</span> (<span class="dt">B2</span>  <span class="fu">:-</span> xs)) (<span class="dt">Some</span> (y <span class="fu">:-</span> ys))</a></code></pre></div>
+<p>A value of type <code>Position xs ys</code> is actually a proof that <code>xs</code> is smaller than <code>ys</code>, but we’re using it here just as a pointer to an entry in the tree. Here’s the actual lookup function itself.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1">lookup<span class="ot"> ::</span> forall is (<span class="ot">ts ::</span> <span class="dt">Tree</span> sz <span class="dt">Type</span>)<span class="fu">.</span> <span class="dt">Position</span> is sz <span class="ot">-&gt;</span> <span class="dt">HTree</span> ts <span class="ot">-&gt;</span> <span class="dt">Lookup</span> is ts</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">lookup <span class="dt">P0</span>     (<span class="dt">HNode</span> x _ _  _) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">lookup (<span class="dt">P1</span> i) (<span class="dt">HNode</span> _ _ ls _) <span class="fu">=</span> lookup i ls</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">lookup (<span class="dt">P2</span> i) (<span class="dt">HNode</span> _ _ _ rs) <span class="fu">=</span> lookup i rs</a></code></pre></div>
+<p>Just having pointers isn’t much use: we also need a way to build them. The key function here is <code>push</code>: this increments the index pointed to by one.</p>
+<details>
+<p><summary> Singletons for lists </summary></p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="kw">infixr</span> <span class="dv">5</span> <span class="ot">::</span><span class="fu">-</span></a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="kw">data</span> <span class="dt">SPlus</span> xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"><span class="ot">  (::-) ::</span> <span class="dt">The</span> a x <span class="ot">-&gt;</span> <span class="dt">The</span> (<span class="dt">Star</span> a) xs <span class="ot">-&gt;</span> <span class="dt">SPlus</span> (x <span class="fu">:-</span> xs)</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"><span class="kw">data</span> <span class="dt">SStar</span> xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-6" data-line-number="6">  <span class="dt">Nily</span><span class="ot"> ::</span> <span class="dt">SStar</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb13-7" data-line-number="7">  <span class="dt">Somy</span><span class="ot"> ::</span> <span class="dt">The</span> (<span class="dt">Plus</span> a) xs <span class="ot">-&gt;</span> <span class="dt">SStar</span> (<span class="dt">Some</span> xs)</a>
+<a class="sourceLine" id="cb13-8" data-line-number="8">  </a>
+<a class="sourceLine" id="cb13-9" data-line-number="9"><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">The</span> (<span class="dt">Plus</span> a) <span class="fu">=</span> <span class="dt">SPlus</span></a>
+<a class="sourceLine" id="cb13-10" data-line-number="10"><span class="kw">type</span> <span class="kw">instance</span> <span class="dt">The</span> (<span class="dt">Star</span> a) <span class="fu">=</span> <span class="dt">SStar</span></a>
+<a class="sourceLine" id="cb13-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb13-12" data-line-number="12"><span class="kw">instance</span> <span class="dt">Known</span> <span class="dt">Nil</span> <span class="kw">where</span> sing <span class="fu">=</span> <span class="dt">Nily</span></a>
+<a class="sourceLine" id="cb13-13" data-line-number="13"><span class="kw">instance</span> <span class="dt">Known</span> xs <span class="ot">=&gt;</span> <span class="dt">Known</span> (<span class="dt">Some</span> xs) <span class="kw">where</span> sing <span class="fu">=</span> <span class="dt">Somy</span> sing</a>
+<a class="sourceLine" id="cb13-14" data-line-number="14"><span class="kw">instance</span> (<span class="dt">Known</span> x, <span class="dt">Known</span> xs) <span class="ot">=&gt;</span> <span class="dt">Known</span> (x <span class="fu">:-</span> xs) <span class="kw">where</span> sing <span class="fu">=</span> sing <span class="ot">::</span><span class="fu">-</span> sing</a></code></pre></div>
+</details>
+<div class="sourceCode" id="cb14"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="ot">push ::</span> <span class="dt">Known</span> ys <span class="ot">=&gt;</span> <span class="dt">Position</span> xs ys <span class="ot">-&gt;</span> <span class="dt">Position</span> (<span class="dt">Some</span> (<span class="dt">Inc</span> xs)) (<span class="dt">Some</span> (<span class="dt">Inc</span> ys))</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">push p <span class="fu">=</span> go p sing</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb14-4" data-line-number="4"><span class="ot">    go ::</span> <span class="dt">Position</span> xs ys <span class="ot">-&gt;</span> <span class="dt">The</span> (<span class="dt">Star</span> <span class="dt">Bit</span>) ys <span class="ot">-&gt;</span> <span class="dt">Position</span> (<span class="dt">Some</span> (<span class="dt">Inc</span> xs)) (<span class="dt">Some</span> (<span class="dt">Inc</span> ys))</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">    go <span class="dt">P0</span>     (<span class="dt">Somy</span> (<span class="dt">SB1</span> <span class="ot">::</span><span class="fu">-</span> _ )) <span class="fu">=</span> <span class="dt">P1</span> <span class="dt">P0</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">    go <span class="dt">P0</span>     (<span class="dt">Somy</span> (<span class="dt">SB2</span> <span class="ot">::</span><span class="fu">-</span> _ )) <span class="fu">=</span> <span class="dt">P1</span> <span class="dt">P0</span></a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">    go (<span class="dt">P2</span> i) (<span class="dt">Somy</span> (<span class="dt">SB1</span> <span class="ot">::</span><span class="fu">-</span> ys)) <span class="fu">=</span> <span class="dt">P1</span> (go i ys)</a>
+<a class="sourceLine" id="cb14-8" data-line-number="8">    go (<span class="dt">P2</span> i) (<span class="dt">Somy</span> (<span class="dt">SB2</span> <span class="ot">::</span><span class="fu">-</span> ys)) <span class="fu">=</span> <span class="dt">P1</span> (go i ys)</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">    go (<span class="dt">P1</span> i) (<span class="dt">Somy</span> (<span class="dt">SB1</span> <span class="ot">::</span><span class="fu">-</span> _ )) <span class="fu">=</span> <span class="dt">P2</span> i</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10">    go (<span class="dt">P1</span> i) (<span class="dt">Somy</span> (<span class="dt">SB2</span> <span class="ot">::</span><span class="fu">-</span> _ )) <span class="fu">=</span> <span class="dt">P2</span> i</a></code></pre></div>
+<h1 id="type-level-lists-for-a-nicer-interface">Type-Level Lists for A Nicer Interface</h1>
+<p>Everything above is pretty much all you need for many use cases, but it’s pretty ugly stuff. To actually use this thing as a generic tuple we’ll need a lot of quality-of-life improvements.</p>
+<p>First of all, we should use type-level lists to indicate the tuple itself:</p>
+<details>
+<p><summary> Type families for building a tree from a list. </summary></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Length</span> (<span class="ot">xs ::</span> [a])<span class="ot"> ::</span> <span class="dt">Star</span> <span class="dt">Bit</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">  <span class="dt">Length</span> <span class="ch">'[] = Nil</span></a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  <span class="dt">Length</span> (_ <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">Some</span> (<span class="dt">Inc</span> (<span class="dt">Length</span> xs))</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="kw">type</span> family <span class="dt">FromList</span> (<span class="ot">xs ::</span> [a]) <span class="fu">=</span> (<span class="ot">ys ::</span> <span class="dt">Tree</span> (<span class="dt">Length</span> xs) a) <span class="fu">|</span> ys <span class="ot">-&gt;</span> xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb15-6" data-line-number="6">  <span class="dt">FromList</span> <span class="ch">'[] = Leaf</span></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">  <span class="dt">FromList</span> (x <span class="fu">:</span> xs) <span class="fu">=</span> <span class="dt">Branch</span> (<span class="dt">Cons</span> x (<span class="dt">FromList</span> xs))</a></code></pre></div>
+</details>
+<div class="sourceCode" id="cb16"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Tuple</span> (<span class="ot">xs ::</span> [<span class="dt">Type</span>]) <span class="fu">=</span> (<span class="ot">ys ::</span> <span class="dt">Type</span>) <span class="fu">|</span> ys <span class="ot">-&gt;</span> xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">  <span class="dt">Tuple</span> xs <span class="fu">=</span> <span class="dt">HTree</span> (<span class="dt">FromList</span> xs)</a></code></pre></div>
+<p>Because the type family here is injective, we won’t get any of the usual weird errors when we use the type <code class="sourceCode haskell"><span class="dt">Tuple</span> [<span class="dt">Bool</span>,<span class="dt">String</span>]</code> or whatever: passing that around will function almost exactly the same as passing around the tree representation itself directly.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="ot">example ::</span> <span class="dt">Tuple</span> [<span class="dt">Bool</span>,<span class="dt">String</span>,<span class="dt">Int</span>,(),<span class="dt">String</span>]</a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">example <span class="fu">=</span> <span class="dt">True</span> <span class="fu">&lt;:</span> <span class="st">&quot;True&quot;</span> <span class="fu">&lt;:</span> <span class="dv">1</span> <span class="fu">&lt;:</span> () <span class="fu">&lt;:</span> <span class="st">&quot;T&quot;</span> <span class="fu">&lt;:</span> <span class="dt">HLeaf</span></a></code></pre></div>
+<h1 id="folding">Folding</h1>
+<p>We can fold over the tree itself (using the Braun tree folding algorithm from a previous post) if every element in the tree conforms to some class. Using this we can generate a nice string representation of the tree.</p>
+<details>
+<p><summary> Implementation of folding over tree and <code>Show</code> instance. </summary></p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">All</span> (<span class="ot">c ::</span> a <span class="ot">-&gt;</span> <span class="dt">Constraint</span>) (<span class="ot">xs ::</span> <span class="dt">Tree</span> ns a)<span class="ot"> ::</span> <span class="dt">Constraint</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">  <span class="dt">All</span> c <span class="dt">Leaf</span> <span class="fu">=</span> ()</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3">  <span class="dt">All</span> c (<span class="dt">Branch</span> (<span class="dt">Root</span> x _ ls rs)) <span class="fu">=</span> (c x, <span class="dt">All</span> c ls, <span class="dt">All</span> c rs)</a>
+<a class="sourceLine" id="cb18-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb18-5" data-line-number="5"><span class="kw">newtype</span> <span class="dt">Q2</span> a</a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">  <span class="fu">=</span> <span class="dt">Q2</span></a>
+<a class="sourceLine" id="cb18-7" data-line-number="7">  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb18-8" data-line-number="8">  }</a>
+<a class="sourceLine" id="cb18-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb18-10" data-line-number="10"><span class="ot">foldrTree ::</span> forall c xs b<span class="fu">.</span> <span class="dt">All</span> c xs <span class="ot">=&gt;</span> (forall x<span class="fu">.</span> c x <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">HTree</span> xs <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb18-11" data-line-number="11">foldrTree g' n' t <span class="fu">=</span> unQ2 (f <span class="fu">@</span>c g' n' t b) id id</a>
+<a class="sourceLine" id="cb18-12" data-line-number="12">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-13" data-line-number="13"><span class="ot">    f ::</span> forall c' ys b'<span class="fu">.</span> <span class="dt">All</span> c' ys <span class="ot">=&gt;</span> (forall x<span class="fu">.</span> c' x <span class="ot">=&gt;</span> x <span class="ot">-&gt;</span> b' <span class="ot">-&gt;</span> b') <span class="ot">-&gt;</span> b' <span class="ot">-&gt;</span> <span class="dt">HTree</span> ys <span class="ot">-&gt;</span> <span class="dt">Q2</span> b' <span class="ot">-&gt;</span> <span class="dt">Q2</span> b'</a>
+<a class="sourceLine" id="cb18-14" data-line-number="14">    f g n (<span class="dt">HNode</span> x _ l r) xs <span class="fu">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> g x (unQ2 xs (ls <span class="fu">.</span> f <span class="fu">@</span>c' g n l) (rs <span class="fu">.</span> f <span class="fu">@</span>c' g n r)))</a>
+<a class="sourceLine" id="cb18-15" data-line-number="15">    f _ n <span class="dt">HLeaf</span>           _  <span class="fu">=</span> <span class="dt">Q2</span> (\_  _  <span class="ot">-&gt;</span> n)</a>
+<a class="sourceLine" id="cb18-16" data-line-number="16"></a>
+<a class="sourceLine" id="cb18-17" data-line-number="17">    b <span class="fu">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> unQ2 (ls (rs b)) id id)</a>
+<a class="sourceLine" id="cb18-18" data-line-number="18"></a>
+<a class="sourceLine" id="cb18-19" data-line-number="19"><span class="kw">instance</span> <span class="dt">All</span> <span class="dt">Show</span> xs <span class="ot">=&gt;</span> <span class="dt">Show</span> (<span class="dt">HTree</span> xs) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-20" data-line-number="20">  showsPrec _ tr <span class="fu">=</span> showChar <span class="ch">'('</span> <span class="fu">.</span> go (foldrTree <span class="fu">@</span><span class="dt">Show</span> (\x xs <span class="ot">-&gt;</span> shows x <span class="fu">:</span> xs) [] tr)</a>
+<a class="sourceLine" id="cb18-21" data-line-number="21">    <span class="kw">where</span></a>
+<a class="sourceLine" id="cb18-22" data-line-number="22"><span class="ot">      go ::</span> [<span class="dt">ShowS</span>] <span class="ot">-&gt;</span> <span class="dt">ShowS</span></a>
+<a class="sourceLine" id="cb18-23" data-line-number="23">      go []     <span class="fu">=</span> showChar <span class="ch">')'</span></a>
+<a class="sourceLine" id="cb18-24" data-line-number="24">      go (x<span class="fu">:</span>xs) <span class="fu">=</span> x <span class="fu">.</span> foldr (\y ys <span class="ot">-&gt;</span> showChar <span class="ch">','</span> <span class="fu">.</span> y <span class="fu">.</span> ys)  (showChar <span class="ch">')'</span>) xs</a></code></pre></div>
+</details>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> example</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2">(<span class="dt">True</span>,<span class="st">&quot;True&quot;</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
+<h1 id="using-a-different-approach-for-building-indices">Using a Different Approach For Building Indices</h1>
+<p>The approach used in <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span> had a specific goal in mind: using the heterogeneous list to implement a lookup table for evaluating lambda calculus. As such, efficiently being able to “increment” an index was vital.</p>
+<p>If we wanted to use the type as a generic tuple, though, we would have no such requirement. Instead, we might expect all accesses to be resolved and inlined at compile-time <span class="citation" data-cites="martinezJustItCompiling2013">(as in Martinez, Viera, and Pardo <a href="#ref-martinezJustItCompiling2013">2013</a>)</span>. We also would want a nice syntax for accessing parts of the tuple.</p>
+<p>We can accomplish all of this with some type classes, as it happens. If we replace pattern-matching on data types with typeclass resolution we can be all but guaranteed that the function calls and so on will be inlined entirely at compile-time (we also would need to add INLINE pragmas to every instance, which I haven’t done here for readability’s sake). The main class we’ll use is the following:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">class</span> (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="fu">&lt;</span> (<span class="ot">ys ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb20-2" data-line-number="2"><span class="ot">  pull ::</span> forall (<span class="ot">t ::</span> <span class="dt">Tree</span> ys <span class="dt">Type</span>)<span class="fu">.</span> <span class="dt">HTree</span> t <span class="ot">-&gt;</span> <span class="dt">Lookup</span> xs t</a></code></pre></div>
+<details>
+<p><summary> Interface for building indices. </summary></p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Nil</span> <span class="fu">&lt;</span> <span class="dt">Some</span> ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">  pull (<span class="dt">HNode</span> x _ _ _) <span class="fu">=</span> x</a>
+<a class="sourceLine" id="cb21-3" data-line-number="3">  </a>
+<a class="sourceLine" id="cb21-4" data-line-number="4"><span class="kw">instance</span> xs <span class="fu">&lt;</span> ys <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs) <span class="fu">&lt;</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-5" data-line-number="5">  pull (<span class="dt">HNode</span> _ _ ls _) <span class="fu">=</span> pull <span class="fu">@</span>xs ls</a>
+<a class="sourceLine" id="cb21-6" data-line-number="6">  </a>
+<a class="sourceLine" id="cb21-7" data-line-number="7"><span class="kw">instance</span> xs <span class="fu">&lt;</span> <span class="dt">Some</span> (<span class="dt">Inc</span> ys) <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs) <span class="fu">&lt;</span> <span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-8" data-line-number="8">  pull (<span class="dt">HNode</span> _ _ ls _) <span class="fu">=</span> pull <span class="fu">@</span>xs ls</a>
+<a class="sourceLine" id="cb21-9" data-line-number="9"></a>
+<a class="sourceLine" id="cb21-10" data-line-number="10"><span class="kw">instance</span> xs <span class="fu">&lt;</span> ys <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> xs) <span class="fu">&lt;</span> <span class="dt">Some</span> (y <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-11" data-line-number="11">  pull (<span class="dt">HNode</span> _ _ _ rs) <span class="fu">=</span> pull <span class="fu">@</span>xs rs</a>
+<a class="sourceLine" id="cb21-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb21-13" data-line-number="13"><span class="kw">instance</span> <span class="dt">TypeError</span> (<span class="dt">Text</span> <span class="st">&quot;Index out of range&quot;</span>) <span class="ot">=&gt;</span> xs <span class="fu">&lt;</span> <span class="dt">Nil</span> <span class="kw">where</span> </a>
+<a class="sourceLine" id="cb21-14" data-line-number="14">  pull <span class="fu">=</span> error <span class="st">&quot;unreachable&quot;</span></a>
+<a class="sourceLine" id="cb21-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb21-16" data-line-number="16"><span class="kw">data</span> <span class="dt">Peano</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Peano</span></a>
+<a class="sourceLine" id="cb21-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb21-18" data-line-number="18"><span class="kw">type</span> family <span class="dt">FromPeano</span> (<span class="ot">n ::</span> <span class="dt">Peano</span>) <span class="fu">=</span> (<span class="ot">m ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="fu">|</span> m <span class="ot">-&gt;</span> n <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-19" data-line-number="19">  <span class="dt">FromPeano</span> <span class="dt">Z</span>     <span class="fu">=</span> <span class="dt">Nil</span></a>
+<a class="sourceLine" id="cb21-20" data-line-number="20">  <span class="dt">FromPeano</span> (<span class="dt">S</span> n) <span class="fu">=</span> <span class="dt">Some</span> (<span class="dt">Inc</span> (<span class="dt">FromPeano</span> n))</a>
+<a class="sourceLine" id="cb21-21" data-line-number="21">  </a>
+<a class="sourceLine" id="cb21-22" data-line-number="22"><span class="kw">type</span> family <span class="dt">FromLit</span> (<span class="ot">n ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Peano</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb21-23" data-line-number="23">  <span class="dt">FromLit</span> <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Z</span></a>
+<a class="sourceLine" id="cb21-24" data-line-number="24">  <span class="dt">FromLit</span> n <span class="fu">=</span> <span class="dt">S</span> (<span class="dt">FromLit</span> (n <span class="fu">-</span> <span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb21-25" data-line-number="25"></a>
+<a class="sourceLine" id="cb21-26" data-line-number="26"><span class="ot">get ::</span> forall n xs (<span class="ot">t ::</span> <span class="dt">Tree</span> xs <span class="dt">Type</span>)<span class="fu">.</span> <span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n) <span class="fu">&lt;</span> xs</a>
+<a class="sourceLine" id="cb21-27" data-line-number="27">    <span class="ot">=&gt;</span> <span class="dt">HTree</span> t <span class="ot">-&gt;</span> <span class="dt">Lookup</span> (<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n)) t</a>
+<a class="sourceLine" id="cb21-28" data-line-number="28">get <span class="fu">=</span> pull <span class="fu">@</span>(<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n))</a></code></pre></div>
+</details>
+<p>Some other details out of the way we get the following nice interface:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> get <span class="fu">@</span><span class="dv">4</span> example</a>
+<a class="sourceLine" id="cb22-2" data-line-number="2"><span class="st">&quot;T&quot;</span></a></code></pre></div>
+<p>You even get a type error for out-of-range indices:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> get <span class="fu">@</span><span class="dv">7</span> example</a></code></pre></div>
+<pre><code>    • Index out of range
+    • In the expression: get @7 example
+      In an equation for ‘it’: it = get @7 example</code></pre>
+<p>Or we could even add a lens interface:</p>
+<details>
+<p><summary> Implementation of Lenses for the Tuple </summary></p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">type</span> family <span class="dt">Replace</span> (<span class="ot">i ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) (<span class="ot">x ::</span> a) (<span class="ot">xs ::</span> <span class="dt">Tree</span> sz a)<span class="ot"> ::</span> <span class="dt">Tree</span> sz a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">  <span class="dt">Replace</span> <span class="dt">Nil</span>              x (<span class="dt">Branch</span> (<span class="dt">Root</span> _ b ls rs)) <span class="fu">=</span> <span class="dt">Branch</span> (<span class="dt">Root</span> x b ls rs)</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3">  <span class="dt">Replace</span> (<span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> i)) x (<span class="dt">Branch</span> (<span class="dt">Root</span> y b ls rs)) <span class="fu">=</span> <span class="dt">Branch</span> (<span class="dt">Root</span> y b (<span class="dt">Replace</span> i x ls) rs)</a>
+<a class="sourceLine" id="cb25-4" data-line-number="4">  <span class="dt">Replace</span> (<span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> i)) x (<span class="dt">Branch</span> (<span class="dt">Root</span> y b ls rs)) <span class="fu">=</span> <span class="dt">Branch</span> (<span class="dt">Root</span> y b ls (<span class="dt">Replace</span> i x rs))</a>
+<a class="sourceLine" id="cb25-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="kw">class</span> (<span class="ot">xs ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="fu">&lt;!</span> (<span class="ot">ys ::</span> <span class="dt">Star</span> <span class="dt">Bit</span>) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-7" data-line-number="7"><span class="ot">  index ::</span> forall (<span class="ot">t ::</span> <span class="dt">Tree</span> ys <span class="dt">Type</span>) b<span class="fu">.</span> <span class="dt">Lens</span> (<span class="dt">HTree</span> t) (<span class="dt">HTree</span> (<span class="dt">Replace</span> xs b t)) (<span class="dt">Lookup</span> xs t) b</a>
+<a class="sourceLine" id="cb25-8" data-line-number="8">  </a>
+<a class="sourceLine" id="cb25-9" data-line-number="9"><span class="kw">instance</span> <span class="dt">Nil</span> <span class="fu">&lt;!</span> <span class="dt">Some</span> ys <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-10" data-line-number="10">  index f (<span class="dt">HNode</span> x b ls rs) <span class="fu">=</span> fmap (\x' <span class="ot">-&gt;</span> <span class="dt">HNode</span> x' b ls rs) (f x)</a>
+<a class="sourceLine" id="cb25-11" data-line-number="11">  </a>
+<a class="sourceLine" id="cb25-12" data-line-number="12"><span class="kw">instance</span> xs <span class="fu">&lt;!</span> ys <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs) <span class="fu">&lt;!</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-13" data-line-number="13">  index f (<span class="dt">HNode</span> x b ls rs) <span class="fu">=</span> fmap (\ls' <span class="ot">-&gt;</span> <span class="dt">HNode</span> x b ls' rs) (index <span class="fu">@</span>xs f ls)</a>
+<a class="sourceLine" id="cb25-14" data-line-number="14">  </a>
+<a class="sourceLine" id="cb25-15" data-line-number="15"><span class="kw">instance</span> xs <span class="fu">&lt;!</span> <span class="dt">Some</span> (<span class="dt">Inc</span> ys) <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B1</span> <span class="fu">:-</span> xs) <span class="fu">&lt;!</span> <span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-16" data-line-number="16">  index f (<span class="dt">HNode</span> x b ls rs) <span class="fu">=</span> fmap (\ls' <span class="ot">-&gt;</span> <span class="dt">HNode</span> x b ls' rs) (index <span class="fu">@</span>xs f ls)</a>
+<a class="sourceLine" id="cb25-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb25-18" data-line-number="18"><span class="kw">instance</span> xs <span class="fu">&lt;!</span> ys <span class="ot">=&gt;</span> <span class="dt">Some</span> (<span class="dt">B2</span> <span class="fu">:-</span> xs) <span class="fu">&lt;!</span> <span class="dt">Some</span> (y <span class="fu">:-</span> ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb25-19" data-line-number="19">  index f (<span class="dt">HNode</span> x b ls rs) <span class="fu">=</span> fmap (\rs' <span class="ot">-&gt;</span> <span class="dt">HNode</span> x b ls rs') (index <span class="fu">@</span>xs f rs)</a>
+<a class="sourceLine" id="cb25-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb25-21" data-line-number="21"><span class="kw">instance</span> <span class="dt">TypeError</span> (<span class="dt">Text</span> <span class="st">&quot;Index out of range&quot;</span>) <span class="ot">=&gt;</span> xs <span class="fu">&lt;!</span> <span class="dt">Nil</span> <span class="kw">where</span> </a>
+<a class="sourceLine" id="cb25-22" data-line-number="22">  index <span class="fu">=</span> error <span class="st">&quot;unreachable&quot;</span></a>
+<a class="sourceLine" id="cb25-23" data-line-number="23"></a>
+<a class="sourceLine" id="cb25-24" data-line-number="24"><span class="ot">ind ::</span> forall n xs (<span class="ot">t ::</span> <span class="dt">Tree</span> xs <span class="dt">Type</span>) a<span class="fu">.</span> <span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n) <span class="fu">&lt;!</span> xs</a>
+<a class="sourceLine" id="cb25-25" data-line-number="25">    <span class="ot">=&gt;</span> <span class="dt">Lens</span> (<span class="dt">HTree</span> t) (<span class="dt">HTree</span> (<span class="dt">Replace</span> (<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n)) a t)) (<span class="dt">Lookup</span> (<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n)) t) a</a>
+<a class="sourceLine" id="cb25-26" data-line-number="26">ind <span class="fu">=</span> index <span class="fu">@</span>(<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n))</a></code></pre></div>
+</details>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> over (ind <span class="fu">@</span><span class="dv">1</span>) reverse example</a>
+<a class="sourceLine" id="cb26-2" data-line-number="2">(<span class="dt">True</span>,<span class="st">&quot;eurT&quot;</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
+<hr />
+<h1 id="as-a-nested-datatype">As a Nested Datatype</h1>
+<p>The approach I’ve taken here is actually a little unusual: in both <span class="citation" data-cites="hinze_numerical_1998">Hinze (<a href="#ref-hinze_numerical_1998">1998</a>)</span> and <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span> the tree is defined as a <em>nested</em> data type. Let’s take a look at that approach, while also switching to Agda.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb27-1" data-line-number="1">𝔹 <span class="ot">:</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb27-2" data-line-number="2">𝔹 <span class="ot">=</span> List Bool</a>
+<a class="sourceLine" id="cb27-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb27-4" data-line-number="4"><span class="kw">pattern</span> 1ᵇ <span class="ot">=</span> false</a>
+<a class="sourceLine" id="cb27-5" data-line-number="5"><span class="kw">pattern</span> 2ᵇ <span class="ot">=</span> true</a>
+<a class="sourceLine" id="cb27-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb27-7" data-line-number="7"><span class="kw">data</span> When <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb27-8" data-line-number="8">  O⟨⟩ <span class="ot">:</span> When A false</a>
+<a class="sourceLine" id="cb27-9" data-line-number="9">  I⟨<span class="ot">_</span>⟩ <span class="ot">:</span> A <span class="ot">→</span> When A true</a>
+<a class="sourceLine" id="cb27-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb27-11" data-line-number="11"><span class="kw">infixl</span> <span class="dv">4</span> <span class="ot">_</span>×2</a>
+<a class="sourceLine" id="cb27-12" data-line-number="12"><span class="kw">record</span> <span class="ot">_</span>×2 <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb27-13" data-line-number="13">  <span class="kw">constructor</span> <span class="ot">_</span>,<span class="ot">_</span></a>
+<a class="sourceLine" id="cb27-14" data-line-number="14">  <span class="kw">field</span></a>
+<a class="sourceLine" id="cb27-15" data-line-number="15">    fst snd <span class="ot">:</span> A</a>
+<a class="sourceLine" id="cb27-16" data-line-number="16"><span class="kw">open</span> <span class="ot">_</span>×2</a>
+<a class="sourceLine" id="cb27-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb27-18" data-line-number="18"><span class="kw">infixr</span> <span class="dv">5</span> ⟨<span class="ot">_</span>⟩+<span class="ot">_</span>+2×<span class="ot">_</span></a>
+<a class="sourceLine" id="cb27-19" data-line-number="19"><span class="kw">data</span> Array <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb27-20" data-line-number="20">  O <span class="ot">:</span> Array A []</a>
+<a class="sourceLine" id="cb27-21" data-line-number="21">  ⟨<span class="ot">_</span>⟩+<span class="ot">_</span>+2×<span class="ot">_</span> <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n ns<span class="ot">}</span> <span class="ot">→</span> A <span class="ot">→</span> When A n <span class="ot">→</span> Array <span class="ot">(</span>A ×2<span class="ot">)</span> ns <span class="ot">→</span> Array A <span class="ot">(</span>n ∷ ns<span class="ot">)</span></a></code></pre></div>
+<p>The cons function here is really no more complex than the previous cons:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb28-1" data-line-number="1">inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> List Bool</a>
+<a class="sourceLine" id="cb28-2" data-line-number="2">inc [] <span class="ot">=</span> 1ᵇ ∷ []</a>
+<a class="sourceLine" id="cb28-3" data-line-number="3">inc <span class="ot">(</span>1ᵇ ∷ xs<span class="ot">)</span> <span class="ot">=</span> 2ᵇ ∷ xs</a>
+<a class="sourceLine" id="cb28-4" data-line-number="4">inc <span class="ot">(</span>2ᵇ ∷ xs<span class="ot">)</span> <span class="ot">=</span> 1ᵇ ∷ inc xs</a>
+<a class="sourceLine" id="cb28-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb28-6" data-line-number="6">cons <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>ns<span class="ot">}</span> <span class="ot">→</span> A <span class="ot">→</span> Array A ns <span class="ot">→</span> Array A <span class="ot">(</span>inc ns<span class="ot">)</span></a>
+<a class="sourceLine" id="cb28-7" data-line-number="7">cons x O <span class="ot">=</span> ⟨ x ⟩+ O⟨⟩ +2× O</a>
+<a class="sourceLine" id="cb28-8" data-line-number="8">cons x₁ <span class="ot">(</span>⟨ x₂ ⟩+ O⟨⟩ +2× xs<span class="ot">)</span> <span class="ot">=</span> ⟨ x₁ ⟩+ I⟨ x₂ ⟩ +2× xs</a>
+<a class="sourceLine" id="cb28-9" data-line-number="9">cons x₁ <span class="ot">(</span>⟨ x₂ ⟩+ I⟨ x₃ ⟩ +2× xs<span class="ot">)</span> <span class="ot">=</span> ⟨ x₁ ⟩+ O⟨⟩ +2× cons <span class="ot">(</span>x₂ , x₃<span class="ot">)</span> xs</a></code></pre></div>
+<p>But what I’m really interested in, again, is <em>indexing</em>. In particular, I’m interested in using an actual binary number to index into this structure, rather than the weird GADT we had to use in Haskell. One of the advantages of using full dependent types is that we can write functions like the following:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb29-1" data-line-number="1">lookup <span class="ot">:</span> <span class="ot">∀</span> is <span class="ot">→</span> Array A xs <span class="ot">→</span> is &lt; xs <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb29-2" data-line-number="2">lookup <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<p>In other words, we can pass the proof term separately. This can help performance a little, but mainly it’s nice to use the actual number type one intended to use along with all of the functions we might use on that term.</p>
+<p>So let’s get writing! The first thing to define is the proof of <code>&lt;</code>. I’m going to define it in terms of a boolean function on the bits themselves, i.e.:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb30-1" data-line-number="1"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb30-2" data-line-number="2"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">=</span> <span class="ot">{!!}</span></a>
+<a class="sourceLine" id="cb30-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb30-4" data-line-number="4">T <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb30-5" data-line-number="5">T true   <span class="ot">=</span> ⊤</a>
+<a class="sourceLine" id="cb30-6" data-line-number="6">T false  <span class="ot">=</span> ⊥</a>
+<a class="sourceLine" id="cb30-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb30-8" data-line-number="8"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb30-9" data-line-number="9">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
+<p>This will mean the proofs themselves are easy to pass around without modification. In fact, we can go further and have the compiler <em>definitionally</em> understand that the proof of <code>x &lt; y</code> is proof irrelevant, with Agda’s <a href="https://agda.readthedocs.io/en/v2.6.1/language/prop.html"><code>Prop</code></a>.</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb31-2" data-line-number="2">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
+<p>Next, the actual function itself:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="ot">_</span>&amp;<span class="ot">_</span>≲ᵇ<span class="ot">_</span> <span class="ot">:</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb32-2" data-line-number="2">s &amp; false ≲ᵇ y <span class="ot">=</span> s or  y</a>
+<a class="sourceLine" id="cb32-3" data-line-number="3">s &amp; true  ≲ᵇ y <span class="ot">=</span> s and y</a>
+<a class="sourceLine" id="cb32-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb32-5" data-line-number="5"><span class="ot">_</span>&amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span> <span class="ot">:</span> Bool <span class="ot">→</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb32-6" data-line-number="6">s &amp; []       ≲ᴮ []       <span class="ot">=</span> s</a>
+<a class="sourceLine" id="cb32-7" data-line-number="7">s &amp; []       ≲ᴮ <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> true</a>
+<a class="sourceLine" id="cb32-8" data-line-number="8">s &amp; <span class="ot">(</span>x ∷ xs<span class="ot">)</span> ≲ᴮ []       <span class="ot">=</span> false</a>
+<a class="sourceLine" id="cb32-9" data-line-number="9">s &amp; <span class="ot">(</span>x ∷ xs<span class="ot">)</span> ≲ᴮ <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> <span class="ot">(</span>s &amp; x ≲ᵇ y<span class="ot">)</span> &amp; xs ≲ᴮ ys</a>
+<a class="sourceLine" id="cb32-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb32-11" data-line-number="11"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">_</span>≤ᴮ<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb32-12" data-line-number="12"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">=</span> false &amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span></a>
+<a class="sourceLine" id="cb32-13" data-line-number="13"><span class="ot">_</span>≤ᴮ<span class="ot">_</span> <span class="ot">=</span> true  &amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span></a></code></pre></div>
+<p>These functions combine the definitions of <code>≤</code> and <code>&lt;</code>, and do them both at once. We pass whether the comparison is non-strict or not as the first parameter: this is worth doing since both <code>&lt;</code> and <code>≤</code> can be defined in terms of each other:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb33-1" data-line-number="1"><span class="ot">(</span>1ᵇ ∷ xs<span class="ot">)</span> &lt; <span class="ot">(</span>2ᵇ ∷ ys<span class="ot">)</span> <span class="ot">=</span> xs ≤ ys</a>
+<a class="sourceLine" id="cb33-2" data-line-number="2"><span class="ot">(</span>2ᵇ ∷ xs<span class="ot">)</span> ≤ <span class="ot">(</span>1ᵇ ∷ ys<span class="ot">)</span> <span class="ot">=</span> xs &lt; ys</a>
+<a class="sourceLine" id="cb33-3" data-line-number="3"><span class="ot">...</span></a></code></pre></div>
+<p>Finally the function itself:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb34-1" data-line-number="1">sel-bit <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>b<span class="ot">}</span> <span class="ot">→</span> When A b <span class="ot">→</span> A ×2 <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb34-2" data-line-number="2">sel-bit <span class="ot">{</span>b <span class="ot">=</span> 1ᵇ<span class="ot">}</span> <span class="ot">_</span> <span class="ot">=</span> snd</a>
+<a class="sourceLine" id="cb34-3" data-line-number="3">sel-bit <span class="ot">{</span>b <span class="ot">=</span> 2ᵇ<span class="ot">}</span> <span class="ot">_</span> <span class="ot">=</span> fst</a>
+<a class="sourceLine" id="cb34-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb34-5" data-line-number="5"><span class="kw">mutual</span></a>
+<a class="sourceLine" id="cb34-6" data-line-number="6">  index <span class="ot">:</span> <span class="ot">∀</span> xs <span class="ot">{</span>ys<span class="ot">}</span> <span class="ot">→</span> Array A ys <span class="ot">→</span> xs &lt; ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb34-7" data-line-number="7">  index []        <span class="ot">(</span>⟨ x ⟩+ <span class="ot">_</span> +2× <span class="ot">_</span> <span class="ot">)</span> p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb34-8" data-line-number="8">  index <span class="ot">(</span>1ᵇ ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> index₂ is x xs p</a>
+<a class="sourceLine" id="cb34-9" data-line-number="9">  index <span class="ot">(</span>2ᵇ ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> sel-bit x <span class="ot">(</span>index is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb34-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb34-11" data-line-number="11">  index₂ <span class="ot">:</span> <span class="ot">∀</span> xs <span class="ot">{</span>y ys<span class="ot">}</span> <span class="ot">→</span> When A y <span class="ot">→</span> Array <span class="ot">(</span>A ×2<span class="ot">)</span> ys <span class="ot">→</span> 1ᵇ ∷ xs &lt; y ∷ ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb34-12" data-line-number="12">  index₂ is       O⟨⟩    xs p <span class="ot">=</span> fst <span class="ot">(</span>index  is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb34-13" data-line-number="13">  index₂ []       I⟨ x ⟩ xs p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb34-14" data-line-number="14">  index₂ <span class="ot">(</span>i ∷ is<span class="ot">)</span> I⟨ <span class="ot">_</span> ⟩ xs p <span class="ot">=</span> snd <span class="ot">(</span>index₃ i is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb34-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb34-16" data-line-number="16">  index₃ <span class="ot">:</span> <span class="ot">∀</span> x xs <span class="ot">{</span>ys<span class="ot">}</span> <span class="ot">→</span> Array A ys <span class="ot">→</span> x ∷ xs ≤ ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb34-17" data-line-number="17">  index₃ 2ᵇ is       <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> index₂ is x xs p</a>
+<a class="sourceLine" id="cb34-18" data-line-number="18">  index₃ 1ᵇ []       <span class="ot">(</span>⟨ x ⟩+ <span class="ot">_</span> +2× <span class="ot">_</span> <span class="ot">)</span> p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb34-19" data-line-number="19">  index₃ 1ᵇ <span class="ot">(</span>i ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> sel-bit x <span class="ot">(</span>index₃ i is xs p<span class="ot">)</span></a></code></pre></div>
+<hr />
+<h1 id="conclusion">Conclusion</h1>
+<p>I think Braun trees are a fascinating data structure with lots of interesting aspects. In practice they tend to be much slower than other comparable structures, but they’re extremely simple and have many properties which make them particularly well-suited to type-level programming.</p>
+<hr />
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-hinze_numerical_1998">
+<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn.</p>
+</div>
+<div id="ref-martinezJustItCompiling2013">
+<p>Martinez, Bruno, Marcos Viera, and Alberto Pardo. 2013. “Just do it while compiling!: Fast extensible records in haskell.” In <em>Proceedings of the ACM SIGPLAN 2013 workshop on Partial evaluation and program manipulation - PEPM ’13</em>, 77. Rome, Italy: ACM Press. doi:<a href="https://doi.org/10.1145/2426890.2426908">10.1145/2426890.2426908</a>.</p>
+</div>
+<div id="ref-swierstraHeterogeneousBinaryRandomaccess2020">
+<p>Swierstra, Wouter. 2020. “Heterogeneous binary random-access lists.” <em>Journal of Functional Programming</em> 30: e10. doi:<a href="https://doi.org/10.1017/S0956796820000064">10.1017/S0956796820000064</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
