@@ -436,7 +436,6 @@ You even get a type error for out-of-range indices:
 ```
     • Index out of range
     • In the expression: get @7 example
-      In an equation for ‘it’: it = get @7 example
 ```
 
 Or we could even add a lens interface:
@@ -477,8 +476,8 @@ ind = index @(FromPeano (FromLit n))
 </details>
 
 ```haskell
->>> over (ind @1) reverse example
-(True,"eurT",1,(),"T")
+>>> over (ind @1) length example
+(True,4,1,(),"T")
 ```
 
 
@@ -571,11 +570,18 @@ that the proof of `x < y` is proof irrelevant, with Agda's
 [`Prop`](https://agda.readthedocs.io/en/v2.6.1/language/prop.html).
 
 ```agda
-_<_ : 𝔹 → 𝔹 → Set
+record ⊤ : Prop where constructor tt
+data   ⊥ : Prop where
+
+T : Bool → Prop
+T true   = ⊤
+T false  = ⊥
+
+_<_ : 𝔹 → 𝔹 → Prop
 x < y = T (x <ᴮ y)
 ```
 
-Next, the actual function itself:
+Next, the functions which compute the actual comparison.
 
 ```agda
 _&_≲ᵇ_ : Bool → Bool → Bool → Bool
