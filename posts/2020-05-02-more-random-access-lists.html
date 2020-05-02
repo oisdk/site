@@ -274,8 +274,7 @@
 <p>You even get a type error for out-of-range indices:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> get <span class="fu">@</span><span class="dv">7</span> example</a></code></pre></div>
 <pre><code>    • Index out of range
-    • In the expression: get @7 example
-      In an equation for ‘it’: it = get @7 example</code></pre>
+    • In the expression: get @7 example</code></pre>
 <p>Or we could even add a lens interface:</p>
 <details>
 <p><summary> Implementation of Lenses for the Tuple </summary></p>
@@ -306,8 +305,8 @@
 <a class="sourceLine" id="cb25-25" data-line-number="25">    <span class="ot">=&gt;</span> <span class="dt">Lens</span> (<span class="dt">HTree</span> t) (<span class="dt">HTree</span> (<span class="dt">Replace</span> (<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n)) a t)) (<span class="dt">Lookup</span> (<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n)) t) a</a>
 <a class="sourceLine" id="cb25-26" data-line-number="26">ind <span class="fu">=</span> index <span class="fu">@</span>(<span class="dt">FromPeano</span> (<span class="dt">FromLit</span> n))</a></code></pre></div>
 </details>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> over (ind <span class="fu">@</span><span class="dv">1</span>) reverse example</a>
-<a class="sourceLine" id="cb26-2" data-line-number="2">(<span class="dt">True</span>,<span class="st">&quot;eurT&quot;</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> over (ind <span class="fu">@</span><span class="dv">1</span>) length example</a>
+<a class="sourceLine" id="cb26-2" data-line-number="2">(<span class="dt">True</span>,<span class="dv">4</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
 <hr />
 <h1 id="as-a-nested-datatype">As a Nested Datatype</h1>
 <p>The approach I’ve taken here is actually a little unusual: in both <span class="citation" data-cites="hinze_numerical_1998">Hinze (<a href="#ref-hinze_numerical_1998">1998</a>)</span> and <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span> the tree is defined as a <em>nested</em> data type. Let’s take a look at that approach, while also switching to Agda.</p>
@@ -357,9 +356,16 @@
 <a class="sourceLine" id="cb30-8" data-line-number="8"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span></a>
 <a class="sourceLine" id="cb30-9" data-line-number="9">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
 <p>This will mean the proofs themselves are easy to pass around without modification. In fact, we can go further and have the compiler <em>definitionally</em> understand that the proof of <code>x &lt; y</code> is proof irrelevant, with Agda’s <a href="https://agda.readthedocs.io/en/v2.6.1/language/prop.html"><code>Prop</code></a>.</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span></a>
-<a class="sourceLine" id="cb31-2" data-line-number="2">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
-<p>Next, the actual function itself:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb31-1" data-line-number="1"><span class="kw">record</span> ⊤ <span class="ot">:</span> <span class="dt">Prop</span> <span class="kw">where</span> <span class="kw">constructor</span> tt</a>
+<a class="sourceLine" id="cb31-2" data-line-number="2"><span class="kw">data</span>   ⊥ <span class="ot">:</span> <span class="dt">Prop</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb31-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb31-4" data-line-number="4">T <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Prop</span></a>
+<a class="sourceLine" id="cb31-5" data-line-number="5">T true   <span class="ot">=</span> ⊤</a>
+<a class="sourceLine" id="cb31-6" data-line-number="6">T false  <span class="ot">=</span> ⊥</a>
+<a class="sourceLine" id="cb31-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb31-8" data-line-number="8"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Prop</span></a>
+<a class="sourceLine" id="cb31-9" data-line-number="9">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
+<p>Next, the functions which compute the actual comparison.</p>
 <div class="sourceCode" id="cb32"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb32-1" data-line-number="1"><span class="ot">_</span>&amp;<span class="ot">_</span>≲ᵇ<span class="ot">_</span> <span class="ot">:</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool</a>
 <a class="sourceLine" id="cb32-2" data-line-number="2">s &amp; false ≲ᵇ y <span class="ot">=</span> s or  y</a>
 <a class="sourceLine" id="cb32-3" data-line-number="3">s &amp; true  ≲ᵇ y <span class="ot">=</span> s and y</a>
