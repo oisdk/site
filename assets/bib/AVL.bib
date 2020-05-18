@@ -1,0 +1,59 @@
+
+@inproceedings{mcbride_how_2014,
+  address = {New York, NY, USA},
+  series = {{{ICFP}} '14},
+  title = {How to {{Keep Your Neighbours}} in {{Order}}},
+  isbn = {978-1-4503-2873-9},
+  abstract = {I present a datatype-generic treatment of recursive container types whose elements are guaranteed to be stored in increasing order, with the ordering invariant rolled out systematically. Intervals, lists and binary search trees are instances of the generic treatment. On the journey to this treatment, I report a variety of failed experiments and the transferable learning experiences they triggered. I demonstrate that a total element ordering is enough to deliver insertion and flattening algorithms, and show that (with care about the formulation of the types) the implementations remain as usual. Agda's instance arguments and pattern synonyms maximize the proof search done by the typechecker and minimize the appearance of proofs in program text, often eradicating them entirely. Generalizing to indexed recursive container types, invariants such as size and balance can be expressed in addition to ordering. By way of example, I implement insertion and deletion for 2-3 trees, ensuring both order and balance by the discipline of type checking.},
+  booktitle = {Proceedings of the 19th {{ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  doi = {10.1145/2628136.2628163},
+  author = {McBride, Conor Thomas},
+  year = {2014},
+  keywords = {dependent types,sorting,agda,balancing,ordering},
+  pages = {297--309},
+  file = {/Users/doisinkidney/Zotero/storage/T8BXF2WX/McBride - How to Keep Your Neighbours in Order.pdf}
+}
+
+@misc{danielsson_agda_2018,
+  title = {The {{Agda}} Standard Library},
+  author = {Danielsson, Nils Anders},
+  collaborator = {Abel, Andreas and Andjelkovic, Stevan and Bernardy, Jean-Philippe and Berry, Peter and Hardy, Bradley and Breitner, Joachim and Bronson, Samuel and Brown, Daniel and Chapman, James and Chen, Liang-Ting and Daggitt, Matthew and Devriese, Dominique and Doel, Dan and Gerg{\H o}, \'Erdi and Grohne, Helmut and Foster, Simon and Hu, Liyang and Hu, Jason and Jansson, Patrik and Jeffrey, Alan and Kokke, Wen and Kotelnikov, Evgeny and Meshveliani, Sergei and Mertens, Eric and Morrison, Darin and Moulin, Guilhem and Mu, Shin-Cheng and Norell, Ulf and Ohkawa, Noriyuki and Pouillard, Nicolas and {Sicard-Ram\'irez}, Andr\'es and Zeilberger, Noam},
+  month = jun,
+  year = {2018}
+}
+
+@inproceedings{weirich_depending_2014,
+  address = {New York, NY, USA},
+  series = {{{ICFP}} '14},
+  title = {Depending on {{Types}}},
+  isbn = {978-1-4503-2873-9},
+  abstract = {Is Haskell a dependently typed programming language? Should it be? GHC's many type-system features, such as Generalized Algebraic Datatypes (GADTs), datatype promotion, multiparameter type classes, and type families, give programmers the ability to encode domain-specific invariants in their types. Clever Haskell programmers have used these features to enhance the reasoning capabilities of static type checking. But really, how far have we come? Could we do more? In this talk, I will discuss dependently typed programming in Haskell, through examples, analysis and comparisons with modern full-spectrum dependently typed languages, such as Coq, Agda and Idris. What sorts of dependently typed programming can be done in Haskell now? What could GHC learn from these languages? Conversely, what lessons can GHC offer in return?},
+  booktitle = {Proceedings of the 19th {{ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  doi = {10.1145/2628136.2631168},
+  author = {Weirich, Stephanie},
+  year = {2014},
+  keywords = {dependent types,haskell},
+  pages = {241--241},
+  file = {/Users/doisinkidney/Zotero/storage/D7QDGRXG/Weirich - 2014 - Depending on Types.pdf;/Users/doisinkidney/Zotero/storage/HNU7MRHG/icfp14.pdf}
+}
+
+@inproceedings{pfaff_performance_2004,
+  address = {New York, NY, USA},
+  series = {{{SIGMETRICS}} '04/{{Performance}} '04},
+  title = {Performance {{Analysis}} of {{BSTs}} in {{System Software}}},
+  isbn = {978-1-58113-873-3},
+  abstract = {Binary search tree (BST) based data structures, such as AVL trees, red-black trees, and splay trees, are often used in system software, such as operating system kernels. Choosing the right kind of tree can impact performance significantly, but the literature offers few empirical studies for guidance. We compare 20 BST variants using three experiments in real-world scenarios with real and artificial workloads. The results indicate that when input is expected to be randomly ordered with occasional runs of sorted order, red-black trees are preferred; when insertions often occur in sorted order, AVL trees excel for later random access, whereas splay trees perform best for later sequential or clustered access. For node representations, use of parent pointers is shown to be the fastest choice, with threaded nodes a close second choice that saves memory; nodes without parent pointers or threads suffer when traversal and modification are combined; maintaining a in-order doubly linked list is advantageous when traversal is very common; and right-threaded nodes perform poorly.},
+  language = {en},
+  booktitle = {Proceedings of the {{Joint International Conference}} on {{Measurement}} and {{Modeling}} of {{Computer Systems}}},
+  publisher = {{ACM}},
+  doi = {10.1145/1005686.1005742},
+  author = {Pfaff, Ben},
+  year = {2004},
+  keywords = {binary search tree,AVL tree,BST,red-black tree,splay tree,threaded tree},
+  pages = {410--411},
+  file = {/Users/doisinkidney/Zotero/storage/75V4WPKQ/Pfaﬀ - Performance Analysis of BSTs in System Software∗.pdf;/Users/doisinkidney/Zotero/storage/ERMAGWUW/Pfaff - 2004 - Performance Analysis of BSTs in System Software.pdf}
+}
+
+

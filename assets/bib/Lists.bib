@@ -1,0 +1,82 @@
+
+@article{okasaki_three_1997,
+  title = {Three {{Algorithms}} on {{Braun Trees}}},
+  volume = {7},
+  issn = {0956-7968},
+  abstract = {Among the many flavours of balanced binary trees, Braun trees (Braun and Rem, 1983) are perhaps the most circumscribed. For any given node of a Braun tree, the left subtree is either exactly the same size as the right subtree, or one element larger. Braun trees always have minimum height, and the shape of each Braun tree is completely determined by its size. In return for this rigor, algorithms that manipulate Braun trees are often exceptionally simple and elegant, and need not maintain any explicit balance information.Braun trees have been used to implement both flexible arrays (Braun and Rem, 1983; Hoogerwoord, 1992; Paulson, 1996) and priority queues (Paulson, 1996; Bird, 1996). Most operations involving a single element (e.g. adding, removing, inspecting or updating an element) take O(log n) time, since the trees are balanced. We consider three algorithmically interesting operations that manipulate entire trees. First, we give an O(log2 n) algorithm for calculating the size of a tree. Second, we show how to create a tree containing n copies of some element x in O(log n) time. Finally, we describe an order-preserving algorithm for converting a list to a tree in O(n) time. This last operation is not nearly as straightforward as it sounds!},
+  number = {6},
+  urldate = {2017-04-11},
+  journal = {Journal of Functional Programming},
+  doi = {10.1017/S0956796897002876},
+  url = {https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf},
+  author = {Okasaki, Chris},
+  month = nov,
+  year = {1997},
+  pages = {661--666},
+  file = {/Users/doisinkidney/Zotero/storage/BZAMGNE6/three-algorithms-on-braun-trees.pdf;/Users/doisinkidney/Zotero/storage/7C5PEIN4/59CF6B17F75EC216EBCA8A08E8780DFF.html}
+}
+
+@article{bird_using_1984,
+  title = {Using {{Circular Programs}} to {{Eliminate Multiple Traversals}} of {{Data}}},
+  volume = {21},
+  issn = {0001-5903},
+  abstract = {This paper describes a technique for transforming functional programs that repeatedly traverse a data structure into more efficient alternatives that do not. The transformation makes essential use of lazy evaluation and local recursion (such as provided by letrec, or its equivalent) to build a circular program that, on one pass over the structure, determines the effects of the individual traversals and then combines them.},
+  language = {en},
+  number = {3},
+  urldate = {2018-02-16},
+  journal = {Acta Inf.},
+  doi = {10.1007/BF00264249},
+  url = {http://dx.doi.org/10.1007/BF00264249},
+  author = {Bird, R. S.},
+  month = oct,
+  year = {1984},
+  pages = {239--250},
+  file = {/Users/doisinkidney/Zotero/storage/FZFAJ4GR/Bird - 1984 - Using Circular Programs to Eliminate Multiple Trav;/Users/doisinkidney/Zotero/storage/G6BIMLQW/10.1007%2Fbf00264249.pdf;/Users/doisinkidney/Zotero/storage/4J63WDGR/citation.html;/Users/doisinkidney/Zotero/storage/PGZWKVZ7/BF00264249.html;/Users/doisinkidney/Zotero/storage/PVTF3PEY/uuid9191f071-e3ef-4d40-9ed3-277648774b67.html;/Users/doisinkidney/Zotero/storage/SJWPV95W/BF00264249.html}
+}
+
+@inproceedings{danvy_there_2002,
+  address = {New York, NY, USA},
+  series = {{{ICFP}} '02},
+  title = {There and {{Back Again}}},
+  isbn = {978-1-58113-487-2},
+  abstract = {We present a programming pattern where a recursive function traverses a data structure---typically a list---at return time. The idea is that the recursive calls get us there (typically to a base case) and the returns get us back again while traversing the data structure. We name this programming pattern of traversing a data structure at return time "There And Back Again" (TABA).The TABA pattern directly applies to computing a symbolic convolution. It also synergizes well with other programming patterns, e.g., dynamic programming and traversing a list at double speed. We illustrate TABA and dynamic programming with Catalan numbers. We illustrate TABA and traversing a list at double speed with palindromes and we obtain a novel solution to this traditional exercise.A TABA-based function written in direct style makes full use of an Algol-like control stack and needs no heap allocation. Conversely, in a TABA-based function written in continuation-passing style, the continuation acts as a list iterator. In general, the TABA pattern saves one from constructing intermediate lists in reverse order.},
+  urldate = {2018-02-19},
+  booktitle = {Proceedings of the {{Seventh ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  publisher = {{ACM}},
+  doi = {10.1145/581478.581500},
+  url = {http://doi.acm.org/10.1145/581478.581500},
+  author = {Danvy, Olivier and Goldberg, Mayer},
+  year = {2002},
+  keywords = {Catalan numbers,continuation-based programming,palindrome detection,Symbolic convolutions},
+  pages = {230--234},
+  file = {/Users/doisinkidney/Zotero/storage/J7EVJ6WW/Danvy and Goldberg - 2002 - There and Back Again.pdf}
+}
+
+@article{danvy_there_2005,
+  title = {There and {{Back Again}}},
+  volume = {12},
+  issn = {1601-5355},
+  abstract = {We present a programming pattern where a recursive function defined over a data structure traverses another data structure at return time. The idea is that the recursive calls get us `there' by traversing the first data structure and the returns get us `back again' while traversing the second data structure. We name this programming pattern of traversing a data structure at call time and another data structure at return time ``There And Back Again'' (TABA). The TABA pattern directly applies to computing symbolic convolutions and to multiplying polynomials. It also blends well with other programming patterns such as dynamic programming and traversing a list at double speed. We illustrate TABA and dynamic programming with Catalan numbers. We illustrate TABA and traversing a list at double speed with palindromes and we obtain a novel solution to this traditional exercise. Finally, through a variety of tree traversals, we show how to apply TABA to other data structures than lists. A TABA-based function written in direct style makes full use of an ALGOL-like control stack and needs no heap allocation. Conversely, in a TABA-based function written in continuation-passing style and recursively defined over a data structure (traversed at call time), the continuation acts as an iterator over a second data structure (traversed at return time). In general, the TABA pattern saves one from accumulating intermediate data structures at call time.},
+  number = {3},
+  journal = {BRICS Report Series},
+  doi = {10.7146/brics.v12i3.21869},
+  url = {https://tidsskrift.dk/brics/article/view/21869},
+  author = {Danvy, Olivier and Goldberg, Mayer},
+  year = {2005},
+  file = {/Users/doisinkidney/Zotero/storage/2ZS4MQX3/Danvy and Goldberg - 2005 - There and Back Again.pdf}
+}
+
+@misc{sible_how_2019,
+  title = {How Can Two Continuations Cancel Each Other Out?},
+  language = {en},
+  urldate = {2019-05-14},
+  journal = {Stack Overflow},
+  url = {https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out},
+  author = {Sible, Joseph},
+  collaborator = {Ness, Will and Kaseorg, Anders and {user11228628}},
+  month = may,
+  year = {2019},
+  file = {/Users/doisinkidney/Zotero/storage/98843I55/how-can-two-continuations-cancel-each-other-out.html}
+}
+
+

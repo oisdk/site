@@ -1,0 +1,65 @@
+
+@techreport{hinze_numerical_1998,
+  title = {Numerical {{Representations}} as {{Higher}}-{{Order Nested Datatypes}}},
+  author = {Hinze, Ralf},
+  year = {1998},
+  month = dec,
+  institution = {{Institut f{\"u}r Informatik III, Universit{\"a}t Bonn}},
+  abstract = {Number systems serve admirably as templates for container types: a container object of size n is modelled after the representation of the number n and operations on container objects are modelled after their number-theoretic counterparts. Binomial queues are probably the first data structure that was designed with this analogy in mind. In this paper we show how to express these so-called numerical representations as higher-order nested datatypes. A nested datatype allows to capture the structural invariants of a numerical representation, so that the violation of an invariant can be detected at compile-time. We develop a programming method which allows to adapt algorithms to the new representation in a mostly straightforward manner. The framework is employed to implement three different container types: binary random-access lists, binomial queues, and 2-3 finger search trees. The latter data structure, which is treated in some depth, can be seen as the main innovation from a data-struct...},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/PHIN9HWW/Hinze - 1998 - Numerical Representations as Higher-Order Nested D.pdf;/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/EDDJFGES/summary.html},
+  number = {IAI-TR-98-12}
+}
+
+@book{hinze_perfect_1999,
+  title = {Perfect {{Trees}} and {{Bit}}-Reversal {{Permutations}}},
+  author = {Hinze, Ralf},
+  year = {1999},
+  abstract = {A famous algorithm is the Fast Fourier Transform, or FFT. An efficient iterative version of the FFT algorithm performs as a first step a bit-reversal permutation of the input list. The bit-reversal permutation swaps elements whose indices have binary representations that are the reverse of each other. Using an amortized approach this operation can be made to run in linear time on a random-access machine. An intriguing question is whether a linear-time implementation is also feasible on a pointer machine, that is in a purely functional setting. We show that the answer to this question is in the affirmative. In deriving a solution we employ several advanced programming language concepts such as nested datatypes, associated fold and unfold operators, rank-2 types, and polymorphic recursion. 1 Introduction A bit-reversal permutation operates on lists whose length is n = 2 k for some natural number k and swaps elements whose indices have binary representations that are the reverse of eac...},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/4YL437LK/Hinze - 1999 - Perfect Trees and Bit-reversal Permutations.pdf;/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/36WDN5QJ/summary.html}
+}
+
+@inproceedings{martinezJustItCompiling2013,
+  title = {Just Do It While Compiling!: Fast Extensible Records in Haskell},
+  shorttitle = {Just Do It While Compiling!},
+  booktitle = {Proceedings of the {{ACM SIGPLAN}} 2013 Workshop on {{Partial}} Evaluation and Program Manipulation - {{PEPM}} '13},
+  author = {Martinez, Bruno and Viera, Marcos and Pardo, Alberto},
+  year = {2013},
+  pages = {77},
+  publisher = {{ACM Press}},
+  address = {{Rome, Italy}},
+  doi = {10.1145/2426890.2426908},
+  abstract = {The library for strongly typed heterogeneous collections HList provides an implementation of extensible records in Haskell that needs only a few common extensions of the language. In HList, records are represented as linked lists of label-value pairs with a lookup operation that is linear-time in the number of fields. In this paper, we use type-level programming techniques to develop a more efficient representation of extensible records for HList. We propose two internal encodings for extensible records that improve lookup at runtime without needing a total order on the labels. One of the encodings performs lookup in constant time but at a cost of linear time insertion. The other one performs lookup in logarithmic time while preserving the fast insertion of simple linked lists. Through staged compilation, the required slow search for a field is moved to compile time in both cases.},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/7JMCAICP/Martinez et al. - 2013 - Just do it while compiling! fast extensible recor.pdf},
+  isbn = {978-1-4503-1842-6},
+  language = {en}
+}
+
+@article{okasakiThreeAlgorithmsBraun1997,
+  title = {Three {{Algorithms}} on {{Braun Trees}}},
+  author = {Okasaki, Chris},
+  year = {1997},
+  month = nov,
+  volume = {7},
+  pages = {661--666},
+  issn = {0956-7968},
+  doi = {10.1017/S0956796897002876},
+  abstract = {Among the many flavours of balanced binary trees, Braun trees (Braun and Rem, 1983) are perhaps the most circumscribed. For any given node of a Braun tree, the left subtree is either exactly the same size as the right subtree, or one element larger. Braun trees always have minimum height, and the shape of each Braun tree is completely determined by its size. In return for this rigor, algorithms that manipulate Braun trees are often exceptionally simple and elegant, and need not maintain any explicit balance information.Braun trees have been used to implement both flexible arrays (Braun and Rem, 1983; Hoogerwoord, 1992; Paulson, 1996) and priority queues (Paulson, 1996; Bird, 1996). Most operations involving a single element (e.g. adding, removing, inspecting or updating an element) take O(log n) time, since the trees are balanced. We consider three algorithmically interesting operations that manipulate entire trees. First, we give an O(log2 n) algorithm for calculating the size of a tree. Second, we show how to create a tree containing n copies of some element x in O(log n) time. Finally, we describe an order-preserving algorithm for converting a list to a tree in O(n) time. This last operation is not nearly as straightforward as it sounds!},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/BZAMGNE6/three-algorithms-on-braun-trees.pdf;/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/7C5PEIN4/59CF6B17F75EC216EBCA8A08E8780DFF.html},
+  journal = {Journal of Functional Programming},
+  number = {6}
+}
+
+@article{swierstraHeterogeneousBinaryRandomaccess2020,
+  title = {Heterogeneous Binary Random-Access Lists},
+  author = {Swierstra, Wouter},
+  year = {2020},
+  volume = {30},
+  pages = {e10},
+  issn = {0956-7968, 1469-7653},
+  doi = {10.1017/S0956796820000064},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/AMTD3WNH/Swierstra - 2020 - Heterogeneous binary random-access lists.pdf},
+  journal = {Journal of Functional Programming},
+  language = {en}
+}
+
+
