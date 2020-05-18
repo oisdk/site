@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Convolutions and Semirings - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Convolutions and Semirings</h2>
+
+            <div class="info">
+    Posted on October 13, 2017
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Semirings.html">Semirings</a>
+    
+</div>
+
+<p>I have been working a little more on my <a href="https://hackage.haskell.org/package/semiring-num">semirings library</a> recently, and I have come across some interesting functions in the process. First, a quick recap on the <code class="sourceCode haskell"><span class="dt">Semiring</span></code> class and some related functions:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Semiring</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">  one ::</span> a</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">  zero ::</span> a</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4">  <span class="kw">infixl</span> <span class="dv">6</span> <span class="fu">&lt;+&gt;</span></a>
+<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="ot">  (&lt;+&gt;) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb1-6" data-line-number="6">  <span class="kw">infixl</span> <span class="dv">7</span> <span class="fu">&lt;.&gt;</span></a>
+<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="ot">  (&lt;.&gt;) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb1-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="ot">add ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Semiring</span> a) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb1-10" data-line-number="10">add <span class="fu">=</span> foldl' (<span class="fu">&lt;+&gt;</span>) zero</a>
+<a class="sourceLine" id="cb1-11" data-line-number="11"></a>
+<a class="sourceLine" id="cb1-12" data-line-number="12"><span class="ot">mul ::</span> (<span class="dt">Foldable</span> f, <span class="dt">Semiring</span> a) <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb1-13" data-line-number="13">mul <span class="fu">=</span> foldl' (<span class="fu">&lt;.&gt;</span>) one</a>
+<a class="sourceLine" id="cb1-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb1-15" data-line-number="15"><span class="kw">instance</span> <span class="dt">Semiring</span> <span class="dt">Integer</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-16" data-line-number="16">  one <span class="fu">=</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb1-17" data-line-number="17">  zero <span class="fu">=</span> <span class="dv">0</span></a>
+<a class="sourceLine" id="cb1-18" data-line-number="18">  (<span class="fu">&lt;+&gt;</span>) <span class="fu">=</span> (<span class="fu">+</span>)</a>
+<a class="sourceLine" id="cb1-19" data-line-number="19">  (<span class="fu">&lt;.&gt;</span>) <span class="fu">=</span> (<span class="fu">*</span>)</a>
+<a class="sourceLine" id="cb1-20" data-line-number="20"></a>
+<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="kw">instance</span> <span class="dt">Semiring</span> <span class="dt">Bool</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb1-22" data-line-number="22">  one <span class="fu">=</span> <span class="dt">True</span></a>
+<a class="sourceLine" id="cb1-23" data-line-number="23">  zero <span class="fu">=</span> <span class="dt">False</span></a>
+<a class="sourceLine" id="cb1-24" data-line-number="24">  (<span class="fu">&lt;+&gt;</span>) <span class="fu">=</span> (<span class="fu">||</span>)</a>
+<a class="sourceLine" id="cb1-25" data-line-number="25">  (<span class="fu">&lt;.&gt;</span>) <span class="fu">=</span> (<span class="fu">&amp;&amp;</span>)</a></code></pre></div>
+<p>You can think of it as a replacement for <code class="sourceCode haskell"><span class="dt">Num</span></code>, but it turns out to be much more generally useful than that.</p>
+<h1 id="matrix-multiplication">Matrix Multiplication</h1>
+<p>The first interesting function is to do with matrix multiplication. Here’s the code for multiplying two matrices represented as nested lists:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">mulMatrix ::</span> <span class="dt">Semiring</span> a <span class="ot">=&gt;</span> [[a]] <span class="ot">-&gt;</span> [[a]] <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">mulMatrix xs ys <span class="fu">=</span> map (\row <span class="ot">-&gt;</span> map (add <span class="fu">.</span> zipWith (<span class="fu">&lt;.&gt;</span>) row) cs) xs</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-4" data-line-number="4">    cs <span class="fu">=</span> transpose ys</a></code></pre></div>
+<p>One of the issues with this code (other than its woeful performance) is that it seems needlessly list-specific. <code class="sourceCode haskell">zipWith</code> seems like the kind of thing that exists on a bunch of different structures. Indeed, the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Applicative.html#t:ZipList"><code class="sourceCode haskell"><span class="dt">ZipList</span></code> wrapper</a> uses <code class="sourceCode haskell">zipWith</code> as its <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> implementation. Let’s try that for now:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">mulMatrix ::</span> (<span class="dt">Semiring</span> a, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">mulMatrix xs ys <span class="fu">=</span> fmap (\row <span class="ot">-&gt;</span> fmap (add <span class="fu">.</span> liftA2 (<span class="fu">&lt;.&gt;</span>) row) cs) xs</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">    cs <span class="fu">=</span> transpose ys</a></code></pre></div>
+<p>Of course, now <code class="sourceCode haskell">add</code> needs to work on our <code class="sourceCode haskell">f</code>, so it should be <code class="sourceCode haskell"><span class="dt">Foldable</span></code></p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">mulMatrix </a>
+<a class="sourceLine" id="cb4-2" data-line-number="2"><span class="ot">  ::</span> (<span class="dt">Semiring</span> a, <span class="dt">Applicative</span> f, <span class="dt">Foldable</span> f) </a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="ot">=&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a)</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">mulMatrix <span class="fu">=</span> <span class="fu">...</span></a></code></pre></div>
+<p><code class="sourceCode haskell">transpose</code> is the missing piece now. A little bit of <code class="sourceCode haskell"><span class="dt">Applicative</span></code> magic can help us out again, though: <code class="sourceCode haskell">sequenceA</code> is <code class="sourceCode haskell">transpose</code> on <code class="sourceCode haskell"><span class="dt">ZipList</span></code>s <span class="citation" data-cites="mcbride_applicative_2008">(McBride and Paterson <a href="#ref-mcbride_applicative_2008">2008</a>)</span>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1">mulMatrix </a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="ot">  ::</span> (<span class="dt">Semiring</span> a, <span class="dt">Applicative</span> f, <span class="dt">Traversable</span> f) </a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="ot">=&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a) <span class="ot">-&gt;</span> f (f a)</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">mulMatrix xs ys <span class="fu">=</span> </a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    fmap (\row <span class="ot">-&gt;</span> fmap (add <span class="fu">.</span> liftA2 (<span class="fu">&lt;.&gt;</span>) row) cs) xs</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb5-7" data-line-number="7">    cs <span class="fu">=</span> sequenceA ys</a></code></pre></div>
+<p>One further generalization: The two <code class="sourceCode haskell">f</code>s don’t actually need to be the same:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1">mulMatrix</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2"><span class="ot">    ::</span> (<span class="dt">Applicative</span> n</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">       ,<span class="dt">Traversable</span> m</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">       ,<span class="dt">Applicative</span> m</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">       ,<span class="dt">Applicative</span> p</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">       ,<span class="dt">Semiring</span> a)</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">    <span class="ot">=&gt;</span> n (m a) <span class="ot">-&gt;</span> m (p a) <span class="ot">-&gt;</span> n (p a)</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">mulMatrix xs ys <span class="fu">=</span> fmap (\row <span class="ot">-&gt;</span> fmap (add <span class="fu">.</span> liftA2 (<span class="fu">&lt;.&gt;</span>) row) cs) xs</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">    cs <span class="fu">=</span> sequenceA ys</a></code></pre></div>
+<p>Happily, the way that the wrappers (<code class="sourceCode haskell">n</code>, <code class="sourceCode haskell">m</code>, and <code class="sourceCode haskell">p</code>) match up coincides precisely with how matrix dimensions match up in matrix multiplication. Quoting from the <a href="https://en.wikipedia.org/wiki/Matrix_multiplication">Wikipedia definition</a>:</p>
+<blockquote>
+<p>if <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>A</mi><annotation encoding="application/x-tex">A</annotation></semantics></math> is an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n \times m</annotation></semantics></math> matrix and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>B</mi><annotation encoding="application/x-tex">B</annotation></semantics></math> is an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">m \times p</annotation></semantics></math> matrix, their matrix product <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>B</mi></mrow><annotation encoding="application/x-tex">AB</annotation></semantics></math> is an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>p</mi></mrow><annotation encoding="application/x-tex">n \times p</annotation></semantics></math> matrix</p>
+</blockquote>
+<p>This function is present in the <a href="https://hackage.haskell.org/package/linear-1.20.7/docs/Linear-Matrix.html#v:-33--42--33-">linear package</a> with some different constraints. In fairness, <code class="sourceCode haskell"><span class="dt">Applicative</span></code> probably isn’t the best thing to use here since it doesn’t work for so many instances (<a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad-Zip.html"><code class="sourceCode haskell"><span class="dt">MonadZip</span></code></a> or something similar may be more suitable), but it’s very handy to have, and works out-of the box for types like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Three</span> a </a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Three</span> a a a </a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="kw">deriving</span> (<span class="dt">Functor</span>, <span class="dt">Foldable</span>, <span class="dt">Traversable</span>, <span class="dt">Eq</span>, <span class="dt">Ord</span>, <span class="dt">Show</span>)</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Three</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">  pure x <span class="fu">=</span> <span class="dt">Three</span> x x x</a>
+<a class="sourceLine" id="cb7-7" data-line-number="7">  <span class="dt">Three</span> fx fy fz <span class="fu">&lt;*&gt;</span> <span class="dt">Three</span> xx xy xz <span class="fu">=</span> <span class="dt">Three</span> (fx xx) (fy xy) (fz xz)</a></code></pre></div>
+<p>Which makes it (to my mind) useful enough to keep. Also, it hugely simplified the code for <a href="https://github.com/oisdk/Square/blob/master/src/Data/Square.hs#L183">matrix multiplication in square matrices</a> I had, from <span class="citation" data-cites="okasaki_fast_1999">Okasaki (<a href="#ref-okasaki_fast_1999">1999</a>)</span>.</p>
+<h1 id="convolutions">Convolutions</h1>
+<p>If you’re putting a general class in a library that you want people to use, and there exist sensible instances for common Haskell types, you should probably provide those instances in the library to avoid orphans. The meaning of “sensible” here is vague: generally speaking, if there is only one obvious or clear instance, then it’s sensible. For a list instance for the semiring class, for instance, I could figure out several law-abiding definitions for <code class="sourceCode haskell"><span class="fu">&lt;+&gt;</span></code>, <code class="sourceCode haskell">one</code> and <code class="sourceCode haskell">zero</code>, but only one for <code class="haskel">&lt;.&gt;</code>: polynomial multiplication. You know, where you multiply two polynomials like so:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><msup><mi>x</mi><mn>3</mn></msup><mo>+</mo><mn>2</mn><mi>x</mi><mo>+</mo><mn>3</mn><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><mn>5</mn><mi>x</mi><mo>+</mo><mn>3</mn><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>4</mn><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mn>9</mn><msup><mi>x</mi><mn>5</mn></msup><mo>+</mo><mn>15</mn><msup><mi>x</mi><mn>4</mn></msup><mo>+</mo><mn>18</mn><msup><mi>x</mi><mn>3</mn></msup><mo>+</mo><mn>28</mn><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>38</mn><mi>x</mi><mo>+</mo><mn>24</mn></mrow><annotation encoding="application/x-tex">(x^3 + 2x + 3)(5x + 3x^2 + 4) = 9x^5 + 15x^4 + 18x^3 + 28x^2 + 38x + 24</annotation></semantics></math></p>
+<p>A more general definition looks something like this:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mn>0</mn></msub><msup><mi>x</mi><mn>0</mn></msup><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><msup><mi>x</mi><mn>1</mn></msup><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><msup><mi>x</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>b</mi><mn>0</mn></msub><msup><mi>x</mi><mn>0</mn></msup><mo>+</mo><msub><mi>b</mi><mn>1</mn></msub><msup><mi>x</mi><mn>1</mn></msup><mo>+</mo><msub><mi>b</mi><mn>2</mn></msub><msup><mi>x</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo><mo>=</mo></mrow><annotation encoding="application/x-tex">(a_0x^0 + a_1x^1 + a_2x^2)(b_0x^0 + b_1x^1 + b_2x^2) =</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>a</mi><mn>0</mn></msub><msub><mi>b</mi><mn>0</mn></msub><msup><mi>x</mi><mn>0</mn></msup><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mn>0</mn></msub><msub><mi>b</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>b</mi><mn>0</mn></msub><mo stretchy="false" form="postfix">)</mo><msup><mi>x</mi><mn>1</mn></msup><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mn>0</mn></msub><msub><mi>b</mi><mn>2</mn></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>b</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><msub><mi>b</mi><mn>0</mn></msub><mo stretchy="false" form="postfix">)</mo><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>b</mi><mn>2</mn></msub><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><msub><mi>b</mi><mn>1</mn></msub><mo stretchy="false" form="postfix">)</mo><msup><mi>x</mi><mn>3</mn></msup><mo>+</mo><msub><mi>a</mi><mn>2</mn></msub><msub><mi>b</mi><mn>2</mn></msub><msup><mi>x</mi><mn>4</mn></msup></mrow><annotation encoding="application/x-tex">a_0b_0x^0 + (a_0b_1 + a_1b_0)x^1 + (a_0b_2 + a_1b_1 + a_2b_0)x^2 + (a_1b_2 + a_2b_1)x^3 + a_2b_2x^4</annotation></semantics></math></p>
+<p>Or, fully generalized:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>c</mi><mi>k</mi></msub><mo>=</mo><msub><mi>a</mi><mn>0</mn></msub><msub><mi>b</mi><mi>k</mi></msub><mo>+</mo><msub><mi>a</mi><mn>1</mn></msub><msub><mi>b</mi><mrow><mi>k</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mi>…</mi><mo>+</mo><msub><mi>a</mi><mrow><mi>k</mi><mo>−</mo><mn>1</mn></mrow></msub><msub><mi>b</mi><mn>1</mn></msub><mo>+</mo><msub><mi>a</mi><mi>k</mi></msub><msub><mi>b</mi><mn>0</mn></msub></mrow><annotation encoding="application/x-tex">c_k = a_0b_k + a_1b_{k-1} + \ldots + a_{k-1}b_1 + a_kb_0</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>×</mo><mi>g</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>n</mi><mo>+</mo><mi>m</mi></mrow></munderover><msub><mi>c</mi><mi>i</mi></msub><msup><mi>x</mi><mi>i</mi></msup></mrow><annotation encoding="application/x-tex">f(x) \times g(x) = \sum_{i=0}^{n+m}c_ix^i</annotation></semantics></math></p>
+<p>So it turns out that you can represent polynomials pretty elegantly as lists. Take an example from above:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>3</mn></msup><mo>+</mo><mn>2</mn><mi>x</mi><mo>+</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">x^3 + 2x + 3</annotation></semantics></math></p>
+<p>And rearrange it in order of the powers of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><msup><mi>x</mi><mn>0</mn></msup><mo>+</mo><mn>2</mn><msup><mi>x</mi><mn>1</mn></msup><mo>+</mo><msup><mi>x</mi><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">3x^0 + 2x^1 + x^3</annotation></semantics></math></p>
+<p>And fill in missing coefficients:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>3</mn><msup><mi>x</mi><mn>0</mn></msup><mo>+</mo><mn>2</mn><msup><mi>x</mi><mn>1</mn></msup><mo>+</mo><mn>0</mn><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><mn>1</mn><msup><mi>x</mi><mn>3</mn></msup></mrow><annotation encoding="application/x-tex">3x^0 + 2x^1 + 0x^2 + 1x^3</annotation></semantics></math></p>
+<p>And then the list representation of that polynomial is the list of those coefficients:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">[<span class="dv">3</span>, <span class="dv">2</span>, <span class="dv">0</span>, <span class="dv">1</span>]</a></code></pre></div>
+<p>For me, the definitions of multiplication above were pretty hard to understand. In Haskell, however, the definition is quite beautiful:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Semiring</span> a <span class="ot">=&gt;</span> <span class="dt">Semiring</span> [a] <span class="kw">where</span></a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">  one <span class="fu">=</span> [one]</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  zero <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  [] <span class="fu">&lt;+&gt;</span> ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  xs <span class="fu">&lt;+&gt;</span> [] <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">  (x<span class="fu">:</span>xs) <span class="fu">&lt;+&gt;</span> (y<span class="fu">:</span>ys) <span class="fu">=</span> x <span class="fu">&lt;+&gt;</span> y <span class="fu">:</span> (xs <span class="fu">&lt;+&gt;</span> ys)</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">  _ <span class="fu">&lt;.&gt;</span> [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">  [] <span class="fu">&lt;.&gt;</span> _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">  (x<span class="fu">:</span>xs) <span class="fu">&lt;.&gt;</span> (y<span class="fu">:</span>ys) <span class="fu">=</span> (x<span class="fu">&lt;.&gt;</span>y) <span class="fu">:</span> map (x<span class="fu">&lt;.&gt;</span>) ys <span class="fu">&lt;+&gt;</span> xs <span class="fu">&lt;.&gt;</span> (y<span class="fu">:</span>ys)</a></code></pre></div>
+<p>This definition for <code class="sourceCode haskell"><span class="fu">&lt;.&gt;</span></code> can be found on page 4 of <span class="citation" data-cites="mcilroy_power_1999">McIlroy (<a href="#ref-mcilroy_power_1999">1999</a>)</span>. Although there was a version of the paper with a slightly different definition:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">_ <span class="fu">&lt;.&gt;</span> [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">[] <span class="fu">&lt;.&gt;</span> _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">(x<span class="fu">:</span>xs) <span class="fu">&lt;.&gt;</span> (y<span class="fu">:</span>ys) </a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">  <span class="fu">=</span> (x<span class="fu">&lt;.&gt;</span>y) <span class="fu">:</span> (map (x<span class="fu">&lt;.&gt;</span>) ys <span class="fu">&lt;+&gt;</span> map (<span class="fu">&lt;.&gt;</span>y) xs <span class="fu">&lt;+&gt;</span> (zero <span class="fu">:</span> (xs <span class="fu">&lt;.&gt;</span> ys)))</a></code></pre></div>
+<p>Similar to one which appeared in <span class="citation" data-cites="dolan_fun_2013">Dolan (<a href="#ref-dolan_fun_2013">2013</a>)</span>.</p>
+<p>As it happens, I prefer the first definition. It’s shorter, and I figured out how to write it as a fold:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1">_ <span class="fu">&lt;.&gt;</span> [] <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">xs <span class="fu">&lt;.&gt;</span> ys <span class="fu">=</span> foldr f [] xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">  f x zs <span class="fu">=</span> map (x <span class="fu">&lt;.&gt;</span>) ys <span class="fu">&lt;+&gt;</span> (zero <span class="fu">:</span> zs)</a></code></pre></div>
+<p>And if you inline the <code class="sourceCode haskell"><span class="fu">&lt;+&gt;</span></code>, you get a reasonable speedup:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1">xs <span class="fu">&lt;.&gt;</span> ys <span class="fu">=</span> foldr f [] xs</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">    f x zs <span class="fu">=</span> foldr (g x) id ys (zero <span class="fu">:</span> zs)</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">    g x y a (z<span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">&lt;.&gt;</span> y <span class="fu">&lt;+&gt;</span> z <span class="fu">:</span> a zs</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5">    g x y a [] <span class="fu">=</span> x <span class="fu">&lt;.&gt;</span> y <span class="fu">:</span> a []</a></code></pre></div>
+<p>The definition of <code class="sourceCode haskell"><span class="fu">&lt;+&gt;</span></code> can also use a fold on either side for fusion purposes:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1">(<span class="fu">&lt;+&gt;</span>) <span class="fu">=</span> foldr f id <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">  f x xs (y<span class="fu">:</span>ys) <span class="fu">=</span> x <span class="fu">&lt;+&gt;</span> y <span class="fu">:</span> xs ys</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">  f x xs [] <span class="fu">=</span> x <span class="fu">:</span> xs []</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb13-5" data-line-number="5">(<span class="fu">&lt;+&gt;</span>) <span class="fu">=</span> flip (foldr f id) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb13-6" data-line-number="6">  f y ys (x<span class="fu">:</span>xs) <span class="fu">=</span> x <span class="fu">&lt;+&gt;</span> y <span class="fu">:</span> ys xs</a>
+<a class="sourceLine" id="cb13-7" data-line-number="7">  f y ys [] <span class="fu">=</span> y <span class="fu">:</span> ys []</a></code></pre></div>
+<p>There are rules in the library to choose one of the above definitions if fusion is available.</p>
+<p>This definition is much more widely useful than it may seem at first. Say, for instance, you wanted to search through pairs of things from two infinite lists. You can’t use the normal way to pair things for lists, the Cartesian product, because it will diverge:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1">[(x,y) <span class="fu">|</span> x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>], y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>]]</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2"><span class="co">-- [(1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10)...</span></a></code></pre></div>
+<p>You’ll never get beyond 1 in the first list. Zipping isn’t an option either, because you won’t really explore the search space, only corresponding pairs. <a href="https://byorgey.wordpress.com/2008/04/22/list-convolutions/">Brent Yorgey showed</a> that if you want a list like this:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1">[(y,x<span class="fu">-</span>y) <span class="fu">|</span> x <span class="ot">&lt;-</span> [<span class="dv">0</span><span class="fu">..</span>], y <span class="ot">&lt;-</span> [<span class="dv">0</span><span class="fu">..</span>x] ]</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2"><span class="co">-- [(0,0),(0,1),(1,0),(0,2),(1,1),(2,0),(0,3),(1,2),(2,1),(3,0)...</span></a></code></pre></div>
+<p>Then what you’re looking for is a convolution (the same thing as polynomial multiplication). <code class="sourceCode haskell"><span class="fu">&lt;.&gt;</span></code> above can be adapted readily:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">convolve ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [[(a,b)]]</a>
+<a class="sourceLine" id="cb16-2" data-line-number="2">convolve xs ys <span class="fu">=</span> foldr f [] xs</a>
+<a class="sourceLine" id="cb16-3" data-line-number="3">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb16-4" data-line-number="4">    f x zs <span class="fu">=</span> foldr (g x) id ys ([] <span class="fu">:</span> zs)</a>
+<a class="sourceLine" id="cb16-5" data-line-number="5">    g x y a (z<span class="fu">:</span>zs) <span class="fu">=</span> ((x, y) <span class="fu">:</span> z) <span class="fu">:</span> a zs</a>
+<a class="sourceLine" id="cb16-6" data-line-number="6">    g x y a [] <span class="fu">=</span> [(x, y)] <span class="fu">:</span> a []</a></code></pre></div>
+<p>Flatten out this result to get your ordering. This convolution is a little different from the one in the blog post. By inlining <code class="sourceCode haskell"><span class="fu">&lt;+&gt;</span></code> we can avoid the expensive <code class="sourceCode haskell"><span class="fu">++</span></code> function, without using difference lists.</p>
+<h1 id="long-multiplication">Long Multiplication</h1>
+<p>Here’s another cool use of lists as polynomials: they can be used as a <a href="https://en.Wikipedia.org/wiki/Positional_notation">positional numeral system</a>. Most common numeral systems are positional, including Arabic (the system you most likely use, where twenty-four is written as 24) and binary. Non-positional systems are things like Roman numerals. Looking at the Arabic system for now, we see that the way of writing down numbers:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1989</mn><annotation encoding="application/x-tex">1989</annotation></semantics></math></p>
+<p>Can be thought of the sum of each digit multiplied by ten to the power of its position:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1</mn><mo>×</mo><msup><mn>10</mn><mn>3</mn></msup><mo>+</mo><mn>9</mn><mo>×</mo><msup><mn>10</mn><mn>2</mn></msup><mo>+</mo><mn>8</mn><mo>×</mo><msup><mn>10</mn><mn>1</mn></msup><mo>+</mo><mn>9</mn><mo>×</mo><msup><mn>10</mn><mn>0</mn></msup></mrow><annotation encoding="application/x-tex">1989 = 1 \times 10^3 \plus 9 \times 10^2 \plus 8 \times 10^1 \plus 9 \times 10^0</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1</mn><mo>×</mo><mn>1000</mn><mo>+</mo><mn>9</mn><mo>×</mo><mn>100</mn><mo>+</mo><mn>8</mn><mo>×</mo><mn>10</mn><mo>+</mo><mn>9</mn><mo>×</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">1989 = 1 \times 1000 \plus 9 \times 100 \plus 8 \times 10 \plus 9 \times 1</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1000</mn><mo>+</mo><mn>900</mn><mo>+</mo><mn>80</mn><mo>+</mo><mn>9</mn></mrow><annotation encoding="application/x-tex">1989 = 1000 \plus 900 \plus 80 \plus 9</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1989</mn><mo>=</mo><mn>1989</mn></mrow><annotation encoding="application/x-tex">1989 = 1989</annotation></semantics></math></p>
+<p>Where the positions are numbered from the right. In other words, it’s our polynomial list from above in reverse. As well as that, the convolution is long multiplication.</p>
+<p>Now, taking this straight off we can try some examples:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="co">-- 12 + 15 = 27</span></a>
+<a class="sourceLine" id="cb17-2" data-line-number="2">[<span class="dv">2</span>, <span class="dv">1</span>] <span class="fu">&lt;+&gt;</span> [<span class="dv">5</span>, <span class="dv">1</span>] <span class="fu">==</span> [<span class="dv">7</span>, <span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb17-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb17-4" data-line-number="4"><span class="co">-- 23 * 2 = 46</span></a>
+<a class="sourceLine" id="cb17-5" data-line-number="5">[<span class="dv">3</span>, <span class="dv">2</span>] <span class="fu">&lt;.&gt;</span> [<span class="dv">2</span>] <span class="fu">==</span> [<span class="dv">6</span>, <span class="dv">4</span>]</a></code></pre></div>
+<p>The issue, of course, is that we’re not handling carrying properly:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1">[<span class="dv">6</span>] <span class="fu">&lt;+&gt;</span> [<span class="dv">6</span>] <span class="fu">==</span> [<span class="dv">12</span>]</a></code></pre></div>
+<p>No matter: we can perform all the carries after the addition, and everything works out fine:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1">carry</a>
+<a class="sourceLine" id="cb19-2" data-line-number="2"><span class="ot">    ::</span> <span class="dt">Integral</span> a</a>
+<a class="sourceLine" id="cb19-3" data-line-number="3">    <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb19-4" data-line-number="4">carry base xs <span class="fu">=</span> foldr f (toBase base) xs <span class="dv">0</span></a>
+<a class="sourceLine" id="cb19-5" data-line-number="5">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb19-6" data-line-number="6">    f e a cin <span class="fu">=</span> r <span class="fu">:</span> a q <span class="kw">where</span></a>
+<a class="sourceLine" id="cb19-7" data-line-number="7">      (q,r) <span class="fu">=</span> quotRem (cin <span class="fu">+</span> e) base</a>
+<a class="sourceLine" id="cb19-8" data-line-number="8">        </a>
+<a class="sourceLine" id="cb19-9" data-line-number="9"><span class="ot">toBase ::</span> <span class="dt">Integral</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]</a>
+<a class="sourceLine" id="cb19-10" data-line-number="10">toBase base <span class="fu">=</span> unfoldr f <span class="kw">where</span></a>
+<a class="sourceLine" id="cb19-11" data-line-number="11">  f <span class="dv">0</span> <span class="fu">=</span> <span class="dt">Nothing</span></a>
+<a class="sourceLine" id="cb19-12" data-line-number="12">  f n <span class="fu">=</span> <span class="dt">Just</span> (swap (quotRem n base))</a></code></pre></div>
+<p>Wrap the whole thing in a newtype and we can have a <code class="sourceCode haskell"><span class="dt">Num</span></code> instance:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Positional</span> </a>
+<a class="sourceLine" id="cb20-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Positional</span> </a>
+<a class="sourceLine" id="cb20-3" data-line-number="3">  {<span class="ot"> withBase ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>] </a>
+<a class="sourceLine" id="cb20-4" data-line-number="4">  } </a>
+<a class="sourceLine" id="cb20-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb20-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Positional</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb20-7" data-line-number="7">  <span class="dt">Positional</span> x <span class="fu">+</span> <span class="dt">Positional</span> y <span class="fu">=</span> <span class="dt">Positional</span> (carry <span class="fu">&lt;*&gt;</span> x <span class="fu">&lt;+&gt;</span> y)</a>
+<a class="sourceLine" id="cb20-8" data-line-number="8">  <span class="dt">Positional</span> x <span class="fu">*</span> <span class="dt">Positional</span> y <span class="fu">=</span> <span class="dt">Positional</span> (carry <span class="fu">&lt;*&gt;</span> x <span class="fu">&lt;.&gt;</span> y)</a>
+<a class="sourceLine" id="cb20-9" data-line-number="9">  fromInteger m <span class="fu">=</span> <span class="dt">Positional</span> (\base <span class="ot">-&gt;</span> toBase base m)</a>
+<a class="sourceLine" id="cb20-10" data-line-number="10">  abs <span class="fu">=</span> id</a>
+<a class="sourceLine" id="cb20-11" data-line-number="11">  signum <span class="fu">=</span> id</a>
+<a class="sourceLine" id="cb20-12" data-line-number="12">  negate <span class="fu">=</span> id</a>
+<a class="sourceLine" id="cb20-13" data-line-number="13">  </a>
+<a class="sourceLine" id="cb20-14" data-line-number="14"><span class="ot">toDigits ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Positional</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]</a>
+<a class="sourceLine" id="cb20-15" data-line-number="15">toDigits base p <span class="fu">=</span> reverse (withBase p base)</a></code></pre></div>
+<p>This also lets us choose our base after the fact:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1">sumHundred <span class="fu">=</span> (sum <span class="fu">.</span> map fromInteger) [<span class="dv">1</span><span class="fu">..</span><span class="dv">100</span>]</a>
+<a class="sourceLine" id="cb21-2" data-line-number="2">toDigits <span class="dv">10</span> sumHundred</a>
+<a class="sourceLine" id="cb21-3" data-line-number="3"><span class="co">-- [5,0,5,0]</span></a>
+<a class="sourceLine" id="cb21-4" data-line-number="4">toDigits <span class="dv">2</span> sumHundred</a>
+<a class="sourceLine" id="cb21-5" data-line-number="5"><span class="co">-- [1,0,0,1,1,1,0,1,1,1,0,1,0]</span></a></code></pre></div>
+<h1 id="vectors">Vectors</h1>
+<p>All the hand-optimizing, inlining, and fusion magic in the world won’t make a list-based implementation of convolution faster than a proper one on vectors, unfortunately. In particular, for larger vectors, a fast Fourier transform can be used. Also, usually code like this will be parallelized, rather than sequential. That said, it can be helpful to implement the slower version on vectors, in the usual indexed way, for comparison’s sake:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Semiring</span> a <span class="ot">=&gt;</span></a>
+<a class="sourceLine" id="cb22-2" data-line-number="2">         <span class="dt">Semiring</span> (<span class="dt">Vector</span> a) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb22-3" data-line-number="3">    one <span class="fu">=</span> Vector.singleton one</a>
+<a class="sourceLine" id="cb22-4" data-line-number="4">    zero <span class="fu">=</span> Vector.empty</a>
+<a class="sourceLine" id="cb22-5" data-line-number="5">    xs <span class="fu">&lt;+&gt;</span> ys <span class="fu">=</span></a>
+<a class="sourceLine" id="cb22-6" data-line-number="6">        <span class="kw">case</span> compare (Vector.length xs) (Vector.length ys) <span class="kw">of</span></a>
+<a class="sourceLine" id="cb22-7" data-line-number="7">            <span class="dt">EQ</span> <span class="ot">-&gt;</span> Vector.zipWith (<span class="fu">&lt;+&gt;</span>) xs ys</a>
+<a class="sourceLine" id="cb22-8" data-line-number="8">            <span class="dt">LT</span> <span class="ot">-&gt;</span> Vector.unsafeAccumulate (<span class="fu">&lt;+&gt;</span>) ys (Vector.indexed xs)</a>
+<a class="sourceLine" id="cb22-9" data-line-number="9">            <span class="dt">GT</span> <span class="ot">-&gt;</span> Vector.unsafeAccumulate (<span class="fu">&lt;+&gt;</span>) xs (Vector.indexed ys)</a>
+<a class="sourceLine" id="cb22-10" data-line-number="10">    signal <span class="fu">&lt;.&gt;</span> kernel</a>
+<a class="sourceLine" id="cb22-11" data-line-number="11">      <span class="fu">|</span> Vector.null signal <span class="fu">=</span> Vector.empty</a>
+<a class="sourceLine" id="cb22-12" data-line-number="12">      <span class="fu">|</span> Vector.null kernel <span class="fu">=</span> Vector.empty</a>
+<a class="sourceLine" id="cb22-13" data-line-number="13">      <span class="fu">|</span> otherwise <span class="fu">=</span> Vector.generate (slen <span class="fu">+</span> klen <span class="fu">-</span> <span class="dv">1</span>) f</a>
+<a class="sourceLine" id="cb22-14" data-line-number="14">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb22-15" data-line-number="15">        f n <span class="fu">=</span></a>
+<a class="sourceLine" id="cb22-16" data-line-number="16">            foldl'</a>
+<a class="sourceLine" id="cb22-17" data-line-number="17">                (\a k <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb22-18" data-line-number="18">                      a <span class="fu">&lt;+&gt;</span></a>
+<a class="sourceLine" id="cb22-19" data-line-number="19">                      Vector.unsafeIndex signal k <span class="fu">&lt;.&gt;</span></a>
+<a class="sourceLine" id="cb22-20" data-line-number="20">                      Vector.unsafeIndex kernel (n <span class="fu">-</span> k))</a>
+<a class="sourceLine" id="cb22-21" data-line-number="21">                zero</a>
+<a class="sourceLine" id="cb22-22" data-line-number="22">                [kmin <span class="fu">..</span> kmax]</a>
+<a class="sourceLine" id="cb22-23" data-line-number="23">          <span class="kw">where</span></a>
+<a class="sourceLine" id="cb22-24" data-line-number="24">            <span class="fu">!</span>kmin <span class="fu">=</span> max <span class="dv">0</span> (n <span class="fu">-</span> (klen <span class="fu">-</span> <span class="dv">1</span>))</a>
+<a class="sourceLine" id="cb22-25" data-line-number="25">            <span class="fu">!</span>kmax <span class="fu">=</span> min n (slen <span class="fu">-</span> <span class="dv">1</span>)</a>
+<a class="sourceLine" id="cb22-26" data-line-number="26">        <span class="fu">!</span>slen <span class="fu">=</span> Vector.length signal</a>
+<a class="sourceLine" id="cb22-27" data-line-number="27">        <span class="fu">!</span>klen <span class="fu">=</span> Vector.length kernel</a></code></pre></div>
+<h1 id="search">Search</h1>
+<p>As has been observed before <span class="citation" data-cites="rivas_monoids_2015">(Rivas, Jaskelioff, and Schrijvers <a href="#ref-rivas_monoids_2015">2015</a>)</span> there’s a pretty suggestive similarity between semirings and the <code class="sourceCode haskell"><span class="dt">Applicative</span></code>/<code class="sourceCode haskell"><span class="dt">Alternative</span></code> classes in Haskell:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Semiring</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="ot">  one ::</span> a</a>
+<a class="sourceLine" id="cb23-3" data-line-number="3"><span class="ot">  zero ::</span> a</a>
+<a class="sourceLine" id="cb23-4" data-line-number="4"><span class="ot">  (&lt;+&gt;) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb23-5" data-line-number="5"><span class="ot">  (&lt;.&gt;) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</a>
+<a class="sourceLine" id="cb23-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb23-7" data-line-number="7"><span class="kw">class</span> <span class="dt">Applicative</span> f <span class="kw">where</span></a>
+<a class="sourceLine" id="cb23-8" data-line-number="8"><span class="ot">  pure ::</span> a <span class="ot">-&gt;</span> f a</a>
+<a class="sourceLine" id="cb23-9" data-line-number="9"><span class="ot">  (&lt;*&gt;) ::</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</a>
+<a class="sourceLine" id="cb23-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb23-11" data-line-number="11"><span class="kw">class</span> <span class="dt">Alternative</span> f <span class="kw">where</span></a>
+<a class="sourceLine" id="cb23-12" data-line-number="12"><span class="ot">  empty ::</span> f a</a>
+<a class="sourceLine" id="cb23-13" data-line-number="13"><span class="ot">  (&lt;|&gt;) ::</span> f a <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f a</a></code></pre></div>
+<p>So can our implementation of convolution be used to implement the methods for these classes? Partially:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Search</span> f a <span class="fu">=</span> <span class="dt">Search</span> {<span class="ot"> runSearch ::</span> [f a] }</a>
+<a class="sourceLine" id="cb24-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb24-3" data-line-number="3"><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Search</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb24-4" data-line-number="4">  fmap f (<span class="dt">Search</span> xs) <span class="fu">=</span> <span class="dt">Search</span> ((fmap<span class="fu">.</span>fmap) f xs)</a>
+<a class="sourceLine" id="cb24-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb24-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Alternative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Search</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb24-7" data-line-number="7">  pure x <span class="fu">=</span> <span class="dt">Search</span> [pure x]</a>
+<a class="sourceLine" id="cb24-8" data-line-number="8">  _ <span class="fu">&lt;*&gt;</span> <span class="dt">Search</span> [] <span class="fu">=</span> <span class="dt">Search</span> []</a>
+<a class="sourceLine" id="cb24-9" data-line-number="9">  <span class="dt">Search</span> xs <span class="fu">&lt;*&gt;</span> <span class="dt">Search</span> ys <span class="fu">=</span> <span class="dt">Search</span> (foldr f [] xs) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb24-10" data-line-number="10">    f x zs <span class="fu">=</span> foldr (g x) id ys (empty <span class="fu">:</span> zs)</a>
+<a class="sourceLine" id="cb24-11" data-line-number="11">    g x y a (z<span class="fu">:</span>zs) <span class="fu">=</span> (x <span class="fu">&lt;*&gt;</span> y <span class="fu">&lt;|&gt;</span> z) <span class="fu">:</span> a zs</a>
+<a class="sourceLine" id="cb24-12" data-line-number="12">    g x y a [] <span class="fu">=</span> (x <span class="fu">&lt;*&gt;</span> y) <span class="fu">:</span> a []</a>
+<a class="sourceLine" id="cb24-13" data-line-number="13"></a>
+<a class="sourceLine" id="cb24-14" data-line-number="14"><span class="kw">instance</span> <span class="dt">Alternative</span> f <span class="ot">=&gt;</span> <span class="dt">Alternative</span> (<span class="dt">Search</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb24-15" data-line-number="15">  <span class="dt">Search</span> xs <span class="fu">&lt;|&gt;</span> <span class="dt">Search</span> ys <span class="fu">=</span> <span class="dt">Search</span> (go xs ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb24-16" data-line-number="16">    go [] ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb24-17" data-line-number="17">    go xs [] <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb24-18" data-line-number="18">    go (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x <span class="fu">&lt;|&gt;</span> y) <span class="fu">:</span> go xs ys</a>
+<a class="sourceLine" id="cb24-19" data-line-number="19">  empty <span class="fu">=</span> <span class="dt">Search</span> []</a></code></pre></div>
+<p>At first, this seems perfect: the types all match up, and the definitions seem sensible. The issue is with the laws: <code class="sourceCode haskell"><span class="dt">Applicative</span></code> and <code class="sourceCode haskell"><span class="dt">Alternative</span></code> are missing <em>four</em> that semirings require. In particular: commutativity of plus, annihilation by zero, and distributivity left and right:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1">xs <span class="fu">&lt;|&gt;</span> ys <span class="fu">=</span> ys <span class="fu">&lt;|&gt;</span> xs</a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">empty <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> fs <span class="fu">&lt;*&gt;</span> empty <span class="fu">=</span> empty</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3">fs <span class="fu">&lt;*&gt;</span> (xs <span class="fu">&lt;|&gt;</span> ys) <span class="fu">=</span> fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">&lt;|&gt;</span> fs <span class="fu">&lt;*&gt;</span> ys</a>
+<a class="sourceLine" id="cb25-4" data-line-number="4">(fs <span class="fu">&lt;|&gt;</span> gs) <span class="fu">&lt;*&gt;</span> xs <span class="fu">=</span> fs <span class="fu">&lt;*&gt;</span> xs <span class="fu">&lt;|&gt;</span> gs <span class="fu">&lt;*&gt;</span> ys</a></code></pre></div>
+<p>The vast majority of the instances of <code class="sourceCode haskell"><span class="dt">Alternative</span></code> today fail one or more of these laws. Taking lists as an example, <code class="sourceCode haskell"><span class="fu">++</span></code> obviously isn’t commutative, and <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> only distributes when it’s on the right.</p>
+<p>What’s the problem, though? Polynomial multiplication follows <em>more</em> laws than those required by <code class="sourceCode haskell"><span class="dt">Applicative</span></code>: why should that worry us? Unfortunately, in order for multiplication to follow those laws, it actually relies on the underlying semiring being law-abiding. And it <em>fails</em> the applicative laws when it isn’t.</p>
+<p>There are two angles from which we could come at this problem: either we relax the semiring laws and try and make our implementation of convolution rely on them as little as possible, or we find <code class="sourceCode haskell"><span class="dt">Alternative</span></code> instances which follow the semiring laws. Or we could meet in the middle, relaxing the laws as much as possible until we find some <code class="sourceCode haskell"><span class="dt">Alternative</span></code>s that meet our standards.</p>
+<p>This has actually been accomplished in several papers: the previously mentioned <span class="citation" data-cites="rivas_monoids_2015">Rivas, Jaskelioff, and Schrijvers (<a href="#ref-rivas_monoids_2015">2015</a>)</span> discusses near-semirings, defined as semiring-like structures with associativity, identity, and these two laws:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>×</mo><mi>x</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">0 \times x = 0</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>+</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>×</mo><mi>z</mi><mo>=</mo><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>×</mo><mi>z</mi><mo stretchy="false" form="postfix">)</mo><mo>+</mo><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo>×</mo><mi>z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x \plus y) \times z = (x \times z) \plus (y \times z)</annotation></semantics></math></p>
+<p>In contrast to normal semirings, zero only annihilates when it’s on the left, and multiplication only distributes over addition when it’s on the right. Addition is not required to be commutative.</p>
+<p>The lovely paper <span class="citation" data-cites="spivey_algebras_2009">Spivey (<a href="#ref-spivey_algebras_2009">2009</a>)</span> has a similar concept: a “bunch”.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb26-1" data-line-number="1"><span class="kw">class</span> <span class="dt">Bunch</span> m <span class="kw">where</span></a>
+<a class="sourceLine" id="cb26-2" data-line-number="2"><span class="ot">  return ::</span> a <span class="ot">-&gt;</span> m a</a>
+<a class="sourceLine" id="cb26-3" data-line-number="3"><span class="ot">  (&gt;&gt;=) ::</span> m a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b</a>
+<a class="sourceLine" id="cb26-4" data-line-number="4"><span class="ot">  zero ::</span> m a</a>
+<a class="sourceLine" id="cb26-5" data-line-number="5"><span class="ot">  (&lt;|&gt;) ::</span> m a <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m a</a>
+<a class="sourceLine" id="cb26-6" data-line-number="6"><span class="ot">  wrap ::</span> m a <span class="ot">-&gt;</span> m a</a></code></pre></div>
+<p>The laws are all the same (with <code class="sourceCode haskell"><span class="fu">&lt;*&gt;</span></code> implemented in terms of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code>), and the extra <code class="sourceCode haskell">wrap</code> operation can be expressed like so:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb27-1" data-line-number="1"><span class="ot">wrap ::</span> <span class="dt">Alternative</span> f <span class="ot">=&gt;</span> <span class="dt">Search</span> f a <span class="ot">-&gt;</span> <span class="dt">Search</span> f a</a>
+<a class="sourceLine" id="cb27-2" data-line-number="2">wrap (<span class="dt">Search</span> xs) <span class="fu">=</span> <span class="dt">Search</span> (empty <span class="fu">:</span> xs)</a></code></pre></div>
+<p>A definition of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> for our polynomials is also provided:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb28-1" data-line-number="1">[] <span class="fu">&gt;&gt;=</span> _ <span class="fu">=</span> []</a>
+<a class="sourceLine" id="cb28-2" data-line-number="2">(x<span class="fu">:</span>xs) <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> foldr (<span class="fu">&lt;|&gt;</span>) empty (fmap f x) <span class="fu">&lt;|&gt;</span> wrap (xs <span class="fu">&gt;&gt;=</span> f)</a></code></pre></div>
+<p>This will require the underlying <code class="sourceCode haskell">f</code> to be <code class="sourceCode haskell"><span class="dt">Foldable</span></code>. We can inline a little, and express the whole thing as a fold:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb29-1" data-line-number="1"><span class="kw">instance</span> (<span class="dt">Foldable</span> f, <span class="dt">Alternative</span> f) <span class="ot">=&gt;</span> <span class="dt">Monad</span> (<span class="dt">Search</span> f) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb29-2" data-line-number="2">  <span class="dt">Search</span> xs <span class="fu">&gt;&gt;=</span> k <span class="fu">=</span> foldr f empty xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb29-3" data-line-number="3">    f e a <span class="fu">=</span> foldr ((<span class="fu">&lt;|&gt;</span>) <span class="fu">.</span> k) (wrap a) e</a></code></pre></div>
+<p>For <code class="sourceCode haskell"><span class="dt">Search</span></code> to meet the requirements of a bunch, the paper notes that the <code class="sourceCode haskell">f</code> must be assumed to be a bag, i.e., the order of its elements must be ignored.</p>
+<p><span class="citation" data-cites="kiselyov_backtracking_2005">Kiselyov et al. (<a href="#ref-kiselyov_backtracking_2005">2005</a>)</span> kind of goes the other direction, defining a monad which has fair disjunction and conjunction. Unfortunately, the fair conjunction loses associativity.</p>
+<h1 id="distance">Distance</h1>
+<p>The end of the paper on algebras for combinatorial search wonders if notions of distance could be added to some of the algebras. I <em>think</em> that should be as simple as supplying a suitable near-semiring for <code class="sourceCode haskell">f</code>, but the definition of <code class="sourceCode haskell"><span class="fu">&gt;&gt;=</span></code> would need to be changed. The near-semiring I had in mind was the probability monad. It works correctly if inlined:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb30-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Search</span> s a <span class="fu">=</span> <span class="dt">Search</span> {<span class="ot"> runSearch ::</span> [[(a,s)]] }</a>
+<a class="sourceLine" id="cb30-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb30-3" data-line-number="3"><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">Search</span> s) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-4" data-line-number="4">  fmap f (<span class="dt">Search</span> xs) <span class="fu">=</span> <span class="dt">Search</span> ((fmap<span class="fu">.</span>fmap<span class="fu">.</span>first) f xs)</a>
+<a class="sourceLine" id="cb30-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb30-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Semiring</span> s <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Search</span> s) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-7" data-line-number="7">  pure x <span class="fu">=</span> <span class="dt">Search</span> [[(x,one)]]</a>
+<a class="sourceLine" id="cb30-8" data-line-number="8">  _ <span class="fu">&lt;*&gt;</span> <span class="dt">Search</span> [] <span class="fu">=</span> <span class="dt">Search</span> []</a>
+<a class="sourceLine" id="cb30-9" data-line-number="9">  <span class="dt">Search</span> xs <span class="fu">&lt;*&gt;</span> <span class="dt">Search</span> ys <span class="fu">=</span> <span class="dt">Search</span> (foldr f [] xs) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-10" data-line-number="10">    f x zs <span class="fu">=</span> foldr (g x) id ys (empty <span class="fu">:</span> zs)</a>
+<a class="sourceLine" id="cb30-11" data-line-number="11">    g x y a (z<span class="fu">:</span>zs) <span class="fu">=</span> (m x y <span class="fu">++</span> z) <span class="fu">:</span> a zs</a>
+<a class="sourceLine" id="cb30-12" data-line-number="12">    g x y a [] <span class="fu">=</span> (m x y) <span class="fu">:</span> a []</a>
+<a class="sourceLine" id="cb30-13" data-line-number="13">    m ls rs <span class="fu">=</span> [(l r, lp<span class="fu">&lt;.&gt;</span>rp) <span class="fu">|</span> (l,lp) <span class="ot">&lt;-</span> ls, (r,rp) <span class="ot">&lt;-</span> rs]</a>
+<a class="sourceLine" id="cb30-14" data-line-number="14"></a>
+<a class="sourceLine" id="cb30-15" data-line-number="15"><span class="kw">instance</span> <span class="dt">Semiring</span> s <span class="ot">=&gt;</span> <span class="dt">Alternative</span> (<span class="dt">Search</span> s) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-16" data-line-number="16">  <span class="dt">Search</span> xs <span class="fu">&lt;|&gt;</span> <span class="dt">Search</span> ys <span class="fu">=</span> <span class="dt">Search</span> (go xs ys) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-17" data-line-number="17">    go [] ys <span class="fu">=</span> ys</a>
+<a class="sourceLine" id="cb30-18" data-line-number="18">    go xs [] <span class="fu">=</span> xs</a>
+<a class="sourceLine" id="cb30-19" data-line-number="19">    go (x<span class="fu">:</span>xs) (y<span class="fu">:</span>ys) <span class="fu">=</span> (x <span class="fu">++</span> y) <span class="fu">:</span> go xs ys</a>
+<a class="sourceLine" id="cb30-20" data-line-number="20">  empty <span class="fu">=</span> <span class="dt">Search</span> []</a>
+<a class="sourceLine" id="cb30-21" data-line-number="21"></a>
+<a class="sourceLine" id="cb30-22" data-line-number="22"><span class="ot">wrap ::</span> <span class="dt">Search</span> s a <span class="ot">-&gt;</span> <span class="dt">Search</span> s a</a>
+<a class="sourceLine" id="cb30-23" data-line-number="23">wrap (<span class="dt">Search</span> xs) <span class="fu">=</span> <span class="dt">Search</span> ([] <span class="fu">:</span> xs)</a>
+<a class="sourceLine" id="cb30-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb30-25" data-line-number="25"><span class="kw">instance</span> <span class="dt">Semiring</span> s <span class="ot">=&gt;</span> <span class="dt">Monad</span> (<span class="dt">Search</span> s) <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-26" data-line-number="26">  <span class="dt">Search</span> xs <span class="fu">&gt;&gt;=</span> k <span class="fu">=</span> foldr f empty xs <span class="kw">where</span></a>
+<a class="sourceLine" id="cb30-27" data-line-number="27">    f e a <span class="fu">=</span> foldr ((<span class="fu">&lt;|&gt;</span>) <span class="fu">.</span> uncurry (mulIn <span class="fu">.</span> k)) (wrap a) e</a>
+<a class="sourceLine" id="cb30-28" data-line-number="28">    mulIn (<span class="dt">Search</span> x) xp <span class="fu">=</span> <span class="dt">Search</span> ((fmap<span class="fu">.</span>fmap<span class="fu">.</span>fmap) (xp<span class="fu">&lt;.&gt;</span>) x)</a></code></pre></div>
+<p>But I couldn’t figure out how to get it to work for a more generalized inner monad. The above could probably be sped up, or randomized, using the many well-known techniques for probability monad optimization.</p>
+<h1 id="references" class="unnumbered">References</h1>
+<div id="refs" class="references">
+<div id="ref-dolan_fun_2013">
+<p>Dolan, Stephen. 2013. “Fun with semirings: A functional pearl on the abuse of linear algebra.” In, 48:101. ACM Press. doi:<a href="https://doi.org/10.1145/2500365.2500613">10.1145/2500365.2500613</a>. <a href="https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf" class="uri">https://www.cl.cam.ac.uk/~sd601/papers/semirings.pdf</a>.</p>
+</div>
+<div id="ref-kiselyov_backtracking_2005">
+<p>Kiselyov, Oleg, Chung-chieh Shan, Daniel P Friedman, and Amr Sabry. 2005. “Backtracking, interleaving, and terminating monad transformers (functional pearl).” <em>ACM SIGPLAN Notices</em> 40 (9): 192–203. <a href="http://okmij.org/ftp/Computation/monads.html#LogicT" class="uri">http://okmij.org/ftp/Computation/monads.html#LogicT</a>.</p>
+</div>
+<div id="ref-mcbride_applicative_2008">
+<p>McBride, Conor, and Ross Paterson. 2008. “Applicative programming with effects.” <em>Journal of functional programming</em> 18 (01): 1–13. <a href="http://strictlypositive.org/Idiom.pdf" class="uri">http://strictlypositive.org/Idiom.pdf</a>.</p>
+</div>
+<div id="ref-mcilroy_power_1999">
+<p>McIlroy, M. Douglas. 1999. “Power Series, Power Serious.” <em>J. Funct. Program.</em> 9 (3) (May): 325–337. doi:<a href="https://doi.org/10.1017/S0956796899003299">10.1017/S0956796899003299</a>. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.333.3156&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.333.3156&amp;rep=rep1&amp;type=pdf</a>.</p>
+</div>
+<div id="ref-okasaki_fast_1999">
+<p>Okasaki, Chris. 1999. “From Fast Exponentiation to Square Matrices: An Adventure in Types.” In <em>Proceedings of the ACM SIGPLAN International Conference on Functional Programming (ICFP’99), Paris, France, September 27-29, 1999</em>, 34:28. ACM. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.456.357&amp;rep=rep1&amp;type=pdf" class="uri">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.456.357&amp;rep=rep1&amp;type=pdf</a>.</p>
+</div>
+<div id="ref-rivas_monoids_2015">
+<p>Rivas, Exequiel, Mauro Jaskelioff, and Tom Schrijvers. 2015. “From monoids to near-semirings: The essence of MonadPlus and Alternative.” In <em>Proceedings of the 17th International Symposium on Principles and Practice of Declarative Programming</em>, 196–207. ACM. doi:<a href="https://doi.org/10.1145/2790449.2790514">10.1145/2790449.2790514</a>. <a href="http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf" class="uri">http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf</a>.</p>
+</div>
+<div id="ref-spivey_algebras_2009">
+<p>Spivey, J. Michael. 2009. “Algebras for combinatorial search.” <em>Journal of Functional Programming</em> 19 (3-4) (July): 469–487. doi:<a href="https://doi.org/10.1017/S0956796809007321">10.1017/S0956796809007321</a>. <a href="https://pdfs.semanticscholar.org/db3e/373bb6e7e7837ebc524da0a25903958554ed.pdf" class="uri">https://pdfs.semanticscholar.org/db3e/373bb6e7e7837ebc524da0a25903958554ed.pdf</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

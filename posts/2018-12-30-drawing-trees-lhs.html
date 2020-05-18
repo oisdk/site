@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Drawing Trees - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Drawing Trees</h2>
+
+            <div class="info">
+    Posted on December 30, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>For a bunch of algorithms it’s handy to get a quick-and-dirty visualization of a tree. <a href="http://hackage.haskell.org/package/containers-0.6.0.1/docs/Data-Tree.html#v:drawTree">Data.Tree</a> has a tree-drawing function, but its output is too noisy for my taste, and so doesn’t really illustrate the underlying structure in a way I find helpful. This version uses the unicode box-drawing characters to give an output that’s midway between what is provided in <a href="http://hackage.haskell.org/package/containers-0.6.0.1/docs/Data-Tree.html#v:drawTree">Data.Tree</a> and a full-blown SVG diagram. This makes it perfect for debugging tree-based algorithms while you’re writing them.</p>
+<p>For the <a href="https://en.wikipedia.org/wiki/Breadth-first_search">example tree in Wikipedia’s article on breadth-first search</a>, it gives the following output:</p>
+<pre><code>     ┌─9
+   ┌5┤
+ ┌2┤ └10
+ │ └6
+1┼3
+ │   ┌11
+ │ ┌7┤
+ └4┤ └12
+   └8</code></pre>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">module</span> <span class="dt">TreeDrawing</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">import</span> <span class="dt">Data.Tree</span> (<span class="dt">Tree</span>(..))</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">import</span> <span class="dt">Data.List</span> (intercalate)</a>
+<a class="sourceLine" id="cb2-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="ot">drawTree ::</span> <span class="dt">Tree</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></a>
+<a class="sourceLine" id="cb2-7" data-line-number="7">drawTree tr <span class="fu">=</span> (unlines <span class="fu">.</span> filter content <span class="fu">.</span> flatten) (foldr go undefined maxLengths withLength)</a>
+<a class="sourceLine" id="cb2-8" data-line-number="8">  <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-9" data-line-number="9">    withLength <span class="fu">=</span> fmap (\x <span class="ot">-&gt;</span> (length x, x)) tr</a>
+<a class="sourceLine" id="cb2-10" data-line-number="10">    maxLengths <span class="fu">=</span> lwe withLength (repeat <span class="dv">0</span>)</a>
+<a class="sourceLine" id="cb2-11" data-line-number="11">    lwe (<span class="dt">Node</span> x xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> max (fst x) q <span class="fu">:</span> foldr lwe qs xs</a>
+<a class="sourceLine" id="cb2-12" data-line-number="12">    </a>
+<a class="sourceLine" id="cb2-13" data-line-number="13">    content <span class="fu">=</span> any (<span class="ot">`notElem`</span> <span class="st">&quot; │&quot;</span>)</a>
+<a class="sourceLine" id="cb2-14" data-line-number="14">    flatten (ls,x,rs) <span class="fu">=</span> ls <span class="fu">++</span> [x] <span class="fu">++</span> rs</a>
+<a class="sourceLine" id="cb2-15" data-line-number="15">    mapZipper lf f rf (ls,x,rs) <span class="fu">=</span> (map lf ls, f x, map rf rs)</a>
+<a class="sourceLine" id="cb2-16" data-line-number="16">    toZipper xs <span class="fu">=</span> <span class="kw">case</span> splitAt (length xs <span class="ot">`div`</span> <span class="dv">2</span>) xs <span class="kw">of</span> (ls,x<span class="fu">:</span>rs) <span class="ot">-&gt;</span> (ls,x,rs)</a>
+<a class="sourceLine" id="cb2-17" data-line-number="17">    </a>
+<a class="sourceLine" id="cb2-18" data-line-number="18">    go m ls (<span class="dt">Node</span> (l,x) []) <span class="fu">=</span> ([],replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x,[])</a>
+<a class="sourceLine" id="cb2-19" data-line-number="19">    go m ls (<span class="dt">Node</span> (l,x) [y]) <span class="fu">=</span> mapZipper pad link pad (ls y)</a>
+<a class="sourceLine" id="cb2-20" data-line-number="20">      <span class="kw">where</span></a>
+<a class="sourceLine" id="cb2-21" data-line-number="21">        padding <span class="fu">=</span> m <span class="fu">+</span> <span class="dv">1</span></a>
+<a class="sourceLine" id="cb2-22" data-line-number="22">        pad <span class="fu">=</span> (<span class="fu">++</span>) (replicate padding <span class="ch">' '</span>)</a>
+<a class="sourceLine" id="cb2-23" data-line-number="23">        link z <span class="fu">=</span> replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x <span class="fu">++</span> <span class="st">&quot;─&quot;</span> <span class="fu">++</span> z</a>
+<a class="sourceLine" id="cb2-24" data-line-number="24">    go m ls (<span class="dt">Node</span> (l,x') xs) <span class="fu">=</span> mapZipper pad link pad (toZipper (intercalate [<span class="st">&quot;│&quot;</span>] ([ysh] <span class="fu">++</span> ysm <span class="fu">++</span> [ysl])))</a>
+<a class="sourceLine" id="cb2-25" data-line-number="25">      <span class="kw">where</span> </a>
+<a class="sourceLine" id="cb2-26" data-line-number="26">        x <span class="fu">=</span> replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x'</a>
+<a class="sourceLine" id="cb2-27" data-line-number="27">        ys <span class="fu">=</span> map ls xs</a>
+<a class="sourceLine" id="cb2-28" data-line-number="28">        </a>
+<a class="sourceLine" id="cb2-29" data-line-number="29">        ysh <span class="fu">=</span> flatten (mapZipper (<span class="ch">' '</span><span class="fu">:</span>) (<span class="ch">'┌'</span> <span class="fu">:</span>) (<span class="ch">'│'</span><span class="fu">:</span>) (head ys))</a>
+<a class="sourceLine" id="cb2-30" data-line-number="30">        ysl <span class="fu">=</span> flatten (mapZipper (<span class="ch">'│'</span><span class="fu">:</span>) (<span class="ch">'└'</span> <span class="fu">:</span>) (<span class="ch">' '</span><span class="fu">:</span>) (last ys))</a>
+<a class="sourceLine" id="cb2-31" data-line-number="31">        ysm <span class="fu">=</span> map (flatten <span class="fu">.</span> mapZipper (<span class="ch">'│'</span><span class="fu">:</span>) (<span class="ch">'├'</span><span class="fu">:</span>) (<span class="ch">'│'</span><span class="fu">:</span>)) (init (tail ys))</a>
+<a class="sourceLine" id="cb2-32" data-line-number="32">        </a>
+<a class="sourceLine" id="cb2-33" data-line-number="33">        pad <span class="fu">=</span> (<span class="fu">++</span>) (replicate m <span class="ch">' '</span>)</a>
+<a class="sourceLine" id="cb2-34" data-line-number="34">        </a>
+<a class="sourceLine" id="cb2-35" data-line-number="35">        link (<span class="ch">'│'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┤&quot;</span> <span class="fu">++</span> zs</a>
+<a class="sourceLine" id="cb2-36" data-line-number="36">        link (<span class="ch">'├'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┼&quot;</span> <span class="fu">++</span> zs</a>
+<a class="sourceLine" id="cb2-37" data-line-number="37">        link (<span class="ch">'┌'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┬&quot;</span> <span class="fu">++</span> zs</a>
+<a class="sourceLine" id="cb2-38" data-line-number="38">        link (<span class="ch">'└'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┴&quot;</span> <span class="fu">++</span> zs</a></code></pre></div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

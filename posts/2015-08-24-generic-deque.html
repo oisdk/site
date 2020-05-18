@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Using Protocols to Build a (very) Generic Deque - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Using Protocols to Build a (very) Generic Deque</h2>
+
+            <div class="info">
+    Posted on August 24, 2015
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Swift.html">Swift</a>, <a href="../tags/Data%20Structures.html">Data Structures</a>
+    
+</div>
+
+<p>(Download the playground to use the code and see the outputs)</p>
+<p>This post is an update on a <a href="https://bigonotetaking.wordpress.com/2015/08/09/yet-another-root-of-all-evil/">previous implementation of a Deque</a>. A full implementation of this Deque is available <a href="https://github.com/oisdk/SwiftDataStructures/blob/master/SwiftDataStructures/Deque.swift">here</a>.</p>
+<p>A Deque is a data structure comprised of two stacks, facing opposite directions. In this way, operations at either end of the Deque have the same complexity as operations on one end of the underlying stack. This implementation uses two arrays, with the front reversed: appending, prepending, and removal of the first and last elements are all (amortized) O(1).</p>
+<p>The standard library has three <code class="sourceCode scala">Array</code> structs: <code class="sourceCode scala">Array</code>, <code class="sourceCode scala">ArraySlice</code>, and <code class="sourceCode scala">ContiguousArray</code>. They all have the same interface, with different underlying implementations. An <code class="sourceCode scala">Array</code> is a standard vector-like structure, which allows O(1) amortized appending, fast iteration, etc. A <code class="sourceCode scala">ContiguousArray</code> has stricter rules about contiguity, but it’s not bridged to Objective-C.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb1-1" data-line-number="1">let array  = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2">let cArray: ContiguousArray = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>, <span class="dv">9</span>]</a></code></pre></div>
+<p>An <code class="sourceCode scala">ArraySlice</code> is a reference into an <code class="sourceCode scala">Array</code> or <code class="sourceCode scala">ContiguousArray</code>, for more efficient slicing. All the information an <code class="sourceCode scala">ArraySlice</code> contains is the beginning and end points of the slice (as well as any changes made to the slice separate from the array)</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb2-1" data-line-number="1">let slice = array[<span class="dv">0</span>..&lt;<span class="dv">6</span>]</a></code></pre></div>
+<p>To replicate these semantics in a Deque requires three separate structs: one with an <code class="sourceCode scala">Array</code> as the stack, another with an <code class="sourceCode scala">ArraySlice</code> as the stack, and a third with a <code class="sourceCode scala">ContiguousArray</code>. The standard library seems to duplicate the structs, along with their methods and properties.</p>
+<p>It would be much nicer to just define a protocol that represented the <em>difference</em> between the deque types: then you could just write the methods and properties once, on top of it. Something like this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb3-1" data-line-number="1">protocol DequeType {</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">  typealias Container : RangeReplaceableCollectionType, MutableSliceable</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">  <span class="kw">var</span> front: Container { get set }</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="kw">var</span> back : Container { get set }</a>
+<a class="sourceLine" id="cb3-5" data-line-number="5">  <span class="fu">init</span>()</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">}</a></code></pre></div>
+<p>There’s one problem with this: both stacks need to be made public. It would be much nicer to hide the stacks (especially since an invariant needs to be checked and maintained on every mutation). If anyone has an idea of how to accomplish that, <a href="https://twitter.com/oisdk">tweet me</a>.</p>
+<p>The first method to implement is a subscript. Indexing is difficult, because the front stack will be reversed, so the index used to get in to the Deque will need to be translated into an equivalent index in the array.</p>
+<p>Any (valid) index will point into either the front or back queue, and the transformations applied to it in each case is different. If it’s in the front, the end result will look like <code class="sourceCode scala">front[front.<span class="fu">endIndex</span> - <span class="dv">1</span> - i]</code>, whereas if it’s in the back, it should be <code class="sourceCode scala">back[i - front.<span class="fu">endIndex</span>]</code>. There’s nothing specified about the Containers except that they’re <code class="sourceCode scala">RangeReplaceableCollectionType</code> and <code class="sourceCode scala">MutableSliceable</code>, so the index types will have to be as generic as possible. (you could specify <code class="sourceCode scala">where Index == Int</code>, but that’s more specific than needed, and not very extensible.)</p>
+<p>Both of those transformations are subtractions, an operation that’s possible on <code>RandomAccessIndexType</code>s with the <code class="sourceCode scala">advancedBy</code> method. <code class="sourceCode scala">advancedBy</code> takes the associated <code class="sourceCode scala">Distance</code> type of the <code class="sourceCode scala">RandomAccessIndexType</code>. That’s enough information to figure out that the Deque’s index type must be the same as the Distance of the Index of the Container.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb4-1" data-line-number="1">extension DequeType {</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">  typealias Index = Container.<span class="fu">Index</span>.<span class="fu">Distance</span></a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">}</a></code></pre></div>
+<p>The method that will translate an index into the relevant index in the stacks will return an enum:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb5-1" data-line-number="1">public enum IndexLocation&lt;I&gt; {</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="kw">case</span> <span class="fu">Front</span>(I), <span class="fu">Back</span>(I)</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">}</a></code></pre></div>
+<p>Then, the translate method itself:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb6-1" data-line-number="1">extension DequeType where</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  Container.<span class="fu">Index</span> : RandomAccessIndexType,</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">  <span class="kw">private</span> func <span class="fu">translate</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>)</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">    -&gt; IndexLocation&lt;Container.<span class="fu">Index</span>&gt; {</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">    <span class="kw">return</span> i &lt; front.<span class="fu">count</span> ?</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">      .<span class="fu">Front</span>(front.<span class="fu">endIndex</span>.<span class="fu">predecessor</span>().<span class="fu">advancedBy</span>(-i)) :</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">      .<span class="fu">Back</span>(back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i - front.<span class="fu">count</span>))</a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">  }</a>
+<a class="sourceLine" id="cb6-11" data-line-number="11">}</a></code></pre></div>
+<p>This performs two steps: 1. Check which stack it’s in. 2. Subtract in the appropriate order</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb7-1" data-line-number="1">let d: Deque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>] <span class="co">// [1, 2, 3 | 4, 5, 6]</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">d.<span class="fu">translate</span>(<span class="dv">0</span>) <span class="co">// Front: 2</span></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">d.<span class="fu">translate</span>(<span class="dv">4</span>) <span class="co">// Back: 1</span></a></code></pre></div>
+<p>This means that the logic for converting distance to index is separated from the logic for actual indexing. Great! Here’s the indexing:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb8-1" data-line-number="1">extension DequeType where</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  Container.<span class="fu">Index</span> : RandomAccessIndexType,</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : ForwardIndexType {</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">  <span class="kw">var</span> startIndex: Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> <span class="dv">0</span> }</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">  <span class="kw">var</span> endIndex  : Container.<span class="fu">Index</span>.<span class="fu">Distance</span> { <span class="kw">return</span> front.<span class="fu">count</span> + back.<span class="fu">count</span> }</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">  <span class="fu">subscript</span>(i: Container.<span class="fu">Index</span>.<span class="fu">Distance</span>) -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span> {</a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">    get {</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">      switch <span class="fu">translate</span>(i) {</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">      <span class="kw">case</span> let .<span class="fu">Front</span>(i): <span class="kw">return</span> front[i]</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">      <span class="kw">case</span> let .<span class="fu">Back</span>(i): <span class="kw">return</span> back[i]</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">      }</a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">    } set {</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">      switch <span class="fu">translate</span>(i) {</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">      <span class="kw">case</span> let .<span class="fu">Front</span>(i): front[i] = newValue</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">      <span class="kw">case</span> let .<span class="fu">Back</span>(i): back[i] = newValue</a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">      }</a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">    }</a>
+<a class="sourceLine" id="cb8-18" data-line-number="18">  }</a>
+<a class="sourceLine" id="cb8-19" data-line-number="19">}</a></code></pre></div>
+<p>This makes things much easier to test and debug.</p>
+<p>Here’s where the power of protocols becomes obvious. If you go back to the original definition of <code class="sourceCode scala">DequeType</code>, you can add <code class="sourceCode scala">Indexable</code>. It may seem like now only indexable things can conform, but what happens in practice is that when <code class="sourceCode scala">Indexable</code> looks for its requirements, <em>it can use the implementations in DequeType</em>. That means that we’ve just made anything that can conform to <code class="sourceCode scala">DequeType</code> indexable. That’s awesome.</p>
+<p>Next job is ranged indices. This is a good bit more complicated than the individual indices, so it definitely will benefit from being separated into a translate method:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb9-1" data-line-number="1">extension DequeType where</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">  Container.<span class="fu">Index</span> : RandomAccessIndexType,</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">  Container.<span class="fu">Index</span>.<span class="fu">Distance</span> : BidirectionalIndexType {</a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">  </a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">  <span class="kw">private</span> func translate</a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">    (i: Range&lt;Container.<span class="fu">Index</span>.<span class="fu">Distance</span>&gt;)</a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">    -&gt; IndexRangeLocation&lt;Container.<span class="fu">Index</span>&gt; {</a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">      <span class="kw">if</span> i.<span class="fu">endIndex</span> &lt;= front.<span class="fu">count</span> {</a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">        let s = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">endIndex</span>)</a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">        <span class="kw">if</span> s == front.<span class="fu">startIndex</span> &amp;&amp; i.<span class="fu">isEmpty</span> { <span class="kw">return</span> .<span class="fu">Between</span> }</a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">        let e = front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)</a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">        <span class="kw">return</span> .<span class="fu">Front</span>(s..&lt;e)</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13">      }</a>
+<a class="sourceLine" id="cb9-14" data-line-number="14">      <span class="kw">if</span> i.<span class="fu">startIndex</span> &gt;= front.<span class="fu">count</span> {</a>
+<a class="sourceLine" id="cb9-15" data-line-number="15">        let s = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">startIndex</span> - front.<span class="fu">count</span>)</a>
+<a class="sourceLine" id="cb9-16" data-line-number="16">        let e = back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)</a>
+<a class="sourceLine" id="cb9-17" data-line-number="17">        <span class="kw">return</span> .<span class="fu">Back</span>(s..&lt;e)</a>
+<a class="sourceLine" id="cb9-18" data-line-number="18">      }</a>
+<a class="sourceLine" id="cb9-19" data-line-number="19">      let f = front.<span class="fu">startIndex</span>..&lt;front.<span class="fu">endIndex</span>.<span class="fu">advancedBy</span>(-i.<span class="fu">startIndex</span>)</a>
+<a class="sourceLine" id="cb9-20" data-line-number="20">      let b = back.<span class="fu">startIndex</span>..&lt;back.<span class="fu">startIndex</span>.<span class="fu">advancedBy</span>(i.<span class="fu">endIndex</span> - front.<span class="fu">count</span>)</a>
+<a class="sourceLine" id="cb9-21" data-line-number="21">      <span class="kw">return</span> .<span class="fu">Over</span>(f, b)</a>
+<a class="sourceLine" id="cb9-22" data-line-number="22">  }</a>
+<a class="sourceLine" id="cb9-23" data-line-number="23">}</a>
+<a class="sourceLine" id="cb9-24" data-line-number="24"></a>
+<a class="sourceLine" id="cb9-25" data-line-number="25">let otherDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>] <span class="co">// [0, 1, 2 | 3, 4, 5]</span></a>
+<a class="sourceLine" id="cb9-26" data-line-number="26"></a>
+<a class="sourceLine" id="cb9-27" data-line-number="27">otherDeque.<span class="fu">translate</span>(<span class="dv">0</span>...<span class="dv">2</span>) <span class="co">// Front: 0..&lt;3</span></a>
+<a class="sourceLine" id="cb9-28" data-line-number="28">otherDeque.<span class="fu">translate</span>(<span class="dv">4</span>...<span class="dv">5</span>) <span class="co">// Back: 1..&lt;3</span></a>
+<a class="sourceLine" id="cb9-29" data-line-number="29">otherDeque.<span class="fu">translate</span>(<span class="dv">2</span>...<span class="dv">5</span>) <span class="co">// Over: 0..&lt;1, 0..&lt;3</span></a>
+<a class="sourceLine" id="cb9-30" data-line-number="30">otherDeque.<span class="fu">translate</span>(<span class="dv">3</span>..&lt;<span class="dv">3</span>) <span class="co">// Between</span></a></code></pre></div>
+<p>The invariant that must be maintained in the deque is this: if either stack has more than one element, the other cannot be empty. If the invariant is violated, the longer stack is reversed, and put in place of the shorter.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb10-1" data-line-number="1">public enum Balance {</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">  <span class="kw">case</span> FrontEmpty, BackEmpty, Balanced</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">}</a>
+<a class="sourceLine" id="cb10-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">extension DequeType {</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">  </a>
+<a class="sourceLine" id="cb10-7" data-line-number="7">  public <span class="kw">var</span> balance: Balance {</a>
+<a class="sourceLine" id="cb10-8" data-line-number="8">    <span class="fu">let</span> (f, b) = (front.<span class="fu">count</span>, back.<span class="fu">count</span>)</a>
+<a class="sourceLine" id="cb10-9" data-line-number="9">    <span class="kw">if</span> f == <span class="dv">0</span> {</a>
+<a class="sourceLine" id="cb10-10" data-line-number="10">      <span class="kw">if</span> b &gt; <span class="dv">1</span> {</a>
+<a class="sourceLine" id="cb10-11" data-line-number="11">        <span class="kw">return</span> .<span class="fu">FrontEmpty</span></a>
+<a class="sourceLine" id="cb10-12" data-line-number="12">      }</a>
+<a class="sourceLine" id="cb10-13" data-line-number="13">    } <span class="kw">else</span> <span class="kw">if</span> b == <span class="dv">0</span> {</a>
+<a class="sourceLine" id="cb10-14" data-line-number="14">      <span class="kw">if</span> f &gt; <span class="dv">1</span> {</a>
+<a class="sourceLine" id="cb10-15" data-line-number="15">        <span class="kw">return</span> .<span class="fu">BackEmpty</span></a>
+<a class="sourceLine" id="cb10-16" data-line-number="16">      }</a>
+<a class="sourceLine" id="cb10-17" data-line-number="17">    }</a>
+<a class="sourceLine" id="cb10-18" data-line-number="18">    <span class="kw">return</span> .<span class="fu">Balanced</span></a>
+<a class="sourceLine" id="cb10-19" data-line-number="19">  }</a>
+<a class="sourceLine" id="cb10-20" data-line-number="20">  </a>
+<a class="sourceLine" id="cb10-21" data-line-number="21">  public <span class="kw">var</span> isBalanced: Bool {</a>
+<a class="sourceLine" id="cb10-22" data-line-number="22">    <span class="kw">return</span> balance == .<span class="fu">Balanced</span></a>
+<a class="sourceLine" id="cb10-23" data-line-number="23">  }</a>
+<a class="sourceLine" id="cb10-24" data-line-number="24">}</a></code></pre></div>
+<p>A deque is a good data structure for certain uses, especially those that require popping and appending from either end. <code class="sourceCode scala"><span class="fu">popFirst</span>()</code> and <code class="sourceCode scala"><span class="fu">popLast</span>()</code> aren’t included in the standard <code class="sourceCode scala">RangeReplaceableCollectionType</code>, though, so we’ll have to add our own.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb11-1" data-line-number="1">extension RangeReplaceableCollectionType where Index : BidirectionalIndexType {</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="kw">private</span> mutating func <span class="fu">popLast</span>() -&gt; Generator.<span class="fu">Element</span>? {</a>
+<a class="sourceLine" id="cb11-3" data-line-number="3">    <span class="kw">return</span> isEmpty ? nil : <span class="fu">removeLast</span>()</a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">  }</a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">}</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb11-7" data-line-number="7"><span class="kw">var</span> mutableDeque: Deque = [<span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>]</a>
+<a class="sourceLine" id="cb11-8" data-line-number="8">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 5</span></a>
+<a class="sourceLine" id="cb11-9" data-line-number="9">mutableDeque           <span class="co">// [0, 1, 2 | 3, 4]</span></a>
+<a class="sourceLine" id="cb11-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb11-11" data-line-number="11">extension DequeType where Container.<span class="fu">Index</span> : BidirectionalIndexType {</a>
+<a class="sourceLine" id="cb11-12" data-line-number="12">  public mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {</a>
+<a class="sourceLine" id="cb11-13" data-line-number="13">    <span class="kw">return</span> back.<span class="fu">popLast</span>()</a>
+<a class="sourceLine" id="cb11-14" data-line-number="14">  }</a>
+<a class="sourceLine" id="cb11-15" data-line-number="15">}</a></code></pre></div>
+<p>The method needs to include <code class="sourceCode scala"><span class="fu">check</span>()</code>, which we can do with <code>defer</code></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb12-1" data-line-number="1">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">  defer { <span class="fu">check</span>() }</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">  <span class="kw">return</span> back.<span class="fu">popLast</span>()</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4">}</a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 4</span></a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">mutableDeque           <span class="co">// [0, 1, 2 | 3]</span></a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 3</span></a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">mutableDeque           <span class="co">// [0 | 1, 2]</span></a></code></pre></div>
+<p>You also can’t just pop from the back queue in <code class="sourceCode scala"><span class="fu">popLast</span>()</code>, because it may be the case that the front stack has one element left</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb13-1" data-line-number="1">mutating func <span class="fu">popLast</span>() -&gt; Container.<span class="fu">Generator</span>.<span class="fu">Element</span>? {</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2">  defer { <span class="fu">check</span>() }</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3">  <span class="kw">return</span> back.<span class="fu">popLast</span>() ?? front.<span class="fu">popLast</span>()</a>
+<a class="sourceLine" id="cb13-4" data-line-number="4">}</a>
+<a class="sourceLine" id="cb13-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb13-6" data-line-number="6">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 2</span></a>
+<a class="sourceLine" id="cb13-7" data-line-number="7">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 1</span></a>
+<a class="sourceLine" id="cb13-8" data-line-number="8">mutableDeque           <span class="co">// [0|]</span></a>
+<a class="sourceLine" id="cb13-9" data-line-number="9">mutableDeque.<span class="fu">popLast</span>() <span class="co">// 0</span></a>
+<a class="sourceLine" id="cb13-10" data-line-number="10">mutableDeque           <span class="co">// [|]</span></a>
+<a class="sourceLine" id="cb13-11" data-line-number="11">mutableDeque.<span class="fu">popLast</span>() <span class="co">// nil</span></a></code></pre></div>
+<p>The rest of the Deque was easy, with little to no repetition. Using protocols in this way was really surprisingly powerful: now, you can define a <code class="sourceCode scala">DequeType</code>, with full access to all of the collection methods, all the way up to <code class="sourceCode scala">RangeReplaceableCollectionType</code>, in five lines:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb14-1" data-line-number="1">public struct Deque&lt;Element&gt; : DequeType {</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">  public <span class="kw">var</span> front, back: [Element]</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">  public typealias SubSequence = DequeSlice&lt;Element&gt;</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4">  public <span class="fu">init</span>() { (front, back) = ([], []) }</a>
+<a class="sourceLine" id="cb14-5" data-line-number="5">}</a>
+<a class="sourceLine" id="cb14-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">public struct DequeSlice&lt;Element&gt; : DequeType {</a>
+<a class="sourceLine" id="cb14-8" data-line-number="8">  public <span class="kw">var</span> front, back: ArraySlice&lt;Element&gt;</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">  public typealias SubSequence = DequeSlice</a>
+<a class="sourceLine" id="cb14-10" data-line-number="10">  public <span class="fu">init</span>() { (front, back) = ([], []) }</a>
+<a class="sourceLine" id="cb14-11" data-line-number="11">}</a></code></pre></div>
+<p>There’s no performance hit, there’s no safety problems. I only have one version of code to test, one version to change, one version to read. It’s completely extensible: you could use any kind of stack for the front and back. Even another Deque, if you were so inclined:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb15-1" data-line-number="1">struct DequeDeque&lt;Element&gt; : DequeType {</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">  <span class="kw">var</span> front, back: Deque&lt;Element&gt;</a>
+<a class="sourceLine" id="cb15-3" data-line-number="3">  typealias SubSequence = DequeDequeSlice&lt;Element&gt;</a>
+<a class="sourceLine" id="cb15-4" data-line-number="4">  <span class="fu">init</span>() { front = <span class="fu">Deque</span>(); back = <span class="fu">Deque</span>() }</a>
+<a class="sourceLine" id="cb15-5" data-line-number="5">}</a>
+<a class="sourceLine" id="cb15-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb15-7" data-line-number="7">struct DequeDequeSlice&lt;Element&gt; : DequeType {</a>
+<a class="sourceLine" id="cb15-8" data-line-number="8">  <span class="kw">var</span> front, back: DequeSlice&lt;Element&gt;</a>
+<a class="sourceLine" id="cb15-9" data-line-number="9">  typealias SubSequence = DequeDequeSlice</a>
+<a class="sourceLine" id="cb15-10" data-line-number="10">  <span class="fu">init</span>() { front = <span class="fu">DequeSlice</span>(); back = <span class="fu">DequeSlice</span>() }</a>
+<a class="sourceLine" id="cb15-11" data-line-number="11">}</a>
+<a class="sourceLine" id="cb15-12" data-line-number="12"></a>
+<a class="sourceLine" id="cb15-13" data-line-number="13">let dd: DequeDeque = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>, <span class="dv">7</span>, <span class="dv">8</span>]</a>
+<a class="sourceLine" id="cb15-14" data-line-number="14">dd.<span class="fu">front</span> <span class="co">// [4 | 3, 2, 1]</span></a>
+<a class="sourceLine" id="cb15-15" data-line-number="15">dd.<span class="fu">back</span>  <span class="co">// [5 | 6, 7, 8]</span></a></code></pre></div>
+<p>Woo protocols!</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

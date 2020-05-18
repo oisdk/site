@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>More Random Access Lists - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>More Random Access Lists</h2>
+
+            <div class="info">
+    Posted on May  2, 2020
+</div>
+<div class="info">
+    
+        Part 2 of a <a href="../series/Random%20Access%20Lists.html">2-part series on Random Access Lists</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Agda.html">Agda</a>
+    
+</div>
+
+<details>
+<p><summary> Imports and Pragmas </summary></p>
+<p>\begin{code} {-# LANGUAGE DataKinds #-} {-# LANGUAGE PolyKinds #-} {-# LANGUAGE GADTs #-} {-# LANGUAGE TypeFamilyDependencies #-} {-# LANGUAGE ConstraintKinds #-} {-# LANGUAGE TypeOperators #-} {-# LANGUAGE UndecidableInstances #-} {-# LANGUAGE RankNTypes #-} {-# LANGUAGE MultiParamTypeClasses #-} {-# LANGUAGE FlexibleInstances #-} {-# LANGUAGE FlexibleContexts #-} {-# LANGUAGE AllowAmbiguousTypes #-} {-# LANGUAGE TypeApplications #-} {-# LANGUAGE ScopedTypeVariables #-}</p>
+<p>{-# OPTIONS_GHC -Wall -fno-warn-unticked-promoted-constructors #-}</p>
+<p>module Post where</p>
+import Data.Kind import Prelude hiding (lookup) import GHC.TypeLits import Control.Lens hiding (Cons, index) \end{code}
+</details>
+<p>= Numerical Representations</p>
+<p>One of the common techniques for building purely functional data structures is to base the structure on some numerical representation <span class="citation" data-cites="hinze_numerical_1998">(Hinze <a href="#ref-hinze_numerical_1998">1998</a>)</span>. Most recently, I read <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span>, where the binary numbers were used to implement a heterogeneous random-access list (effectively a generic tuple).</p>
+<p>I’m going to look today at using the zeroless binary system to implement a similar structure, and see what the differences are.</p>
+<p>= Zeroless Binary</p>
+<p>I have talked about this representation before, so I won’t go into it in huge depth, but put simply the zeroless binary system represents a binary number as a string of <code>1</code>s and <code>2</code>s (i.e. no zeroes). The vast majority of the normal binary operations (addition, multiplication, etc.) can be implemented with the same broad efficiency, but this system has one key advantage in that every single number is uniquely represented. Since we’re going to use these numbers to index our data types, this is actually extremely useful.</p>
+<p>Before we get started, we’ll first define the peculiar type of lists we’re going to use.</p>
+
+<p><code>Star a</code> is isomorphic to <code>[a]</code>, so we’ve not lost any expressive power or anything like that. The usefulness of this definition is that we have a non-empty list type built in to our list type, so we don’t have to do conversion back and forth which can be cumbersome.</p>
+<p>Next on to the number itself:</p>
+
+<p>We’re straight into the type-level operations here, and there’s an interesting bit of syntax worth pointing out before we move on. <code>ys -&gt; xs</code> is a type family dependency: it means that we can uniquely determine <code>xs</code> given <code>ys</code>. This is very handy for type inference and so on, and is perhaps the main benefit of the zeroless binary numbers.</p>
+<p>= A Braun Tree</p>
+<p>Next, we’ll build a tree indexed by these numbers. Now that we’re jumping in to indexing, we’ll need some singletons. Here’s my preferred way to do them:</p>
+
+<p>The type family defines the singleton GADTs themselves. The class <code>Known</code> is for automatically generating singleton values.</p>
+<p>On to the tree. We’re actually going to build a <em>Braun</em> tree here, as they are actually particularly clean to implement on the type level.</p>
+
+<p>We first have a type family which increments a binary number if its first argument is <code>B2</code>: this will maintain the Braun tree’s invariant.</p>
+<p>Next, we have the tree definition itself, which is split into two mutual definitions, in much the same way as the <code>Star</code> and <code>Plus</code> lists previously. Next, to <code>cons</code> something onto the tree:</p>
+
+<p>You’ll notice that we can again annotate this type family with injectivity.</p>
+<p>= A Heterogeneous Tree</p>
+<p>So far all we have is a size-indexed tree. We want a <em>heterogeneous</em> tree, meaning that we must next construct a tree <em>indexed</em> by the previous tree. In order to do this, we’ll first need singletons on the type level:</p>
+
+<p>This kind of nonsense we’re doing here is precisely the kind of thing obsolesced by dependent types, by the way. If you’re already doing type-level heavy stuff (as we are here) the extra power afforded by full dependent types often means that hacky special cases just turn into standard functions, greatly simplifying things like the above type families.</p>
+<p>But anyway, back to the tree:</p>
+
+<p>And we can <code>cons</code> on an element in much the same way we did with the homogeneous tree:</p>
+
+<p>= Indexing</p>
+<p>The real use of this data structure is quick <em>indexing</em>. As with the previous functions, we will first need to construct the type-level version of what we want to do.</p>
+<p>\begin{code} type family Lookup (i :: Star Bit) (xs :: Tree sz a) :: a where Lookup Nil (Branch (Root x _ _ <em>)) = x Lookup (Some (B1 :- i)) (Branch (Root </em> _ ls <em>)) = Lookup i ls Lookup (Some (B2 :- i)) (Branch (Root </em> _ _ rs)) = Lookup i rs \end{code}</p>
+<p>While this function is partial, the value-level one should not be: it should be provably in-bounds for lookups. As a result we’ll need a slightly complex type to represent the indices:</p>
+
+<p>A value of type <code>Position xs ys</code> is actually a proof that <code>xs</code> is smaller than <code>ys</code>, but we’re using it here just as a pointer to an entry in the tree. Here’s the actual lookup function itself.</p>
+<p>\begin{code} lookup :: forall is (ts :: Tree sz Type). Position is sz -&gt; HTree ts -&gt; Lookup is ts lookup P0 (HNode x _ _ <em>) = x lookup (P1 i) (HNode </em> _ ls <em>) = lookup i ls lookup (P2 i) (HNode </em> _ _ rs) = lookup i rs \end{code}</p>
+<p>Just having pointers isn’t much use: we also need a way to build them. The key function here is <code>push</code>: this increments the index pointed to by one.</p>
+<details>
+<p><summary> Singletons for lists </summary></p>
+
+</details>
+<p>\begin{code} push :: Known ys =&gt; Position xs ys -&gt; Position (Some (Inc xs)) (Some (Inc ys)) push p = go p sing where go :: Position xs ys -&gt; The (Star Bit) ys -&gt; Position (Some (Inc xs)) (Some (Inc ys)) go P0 (Somy (SB1 ::- _ )) = P1 P0 go P0 (Somy (SB2 ::- _ )) = P1 P0 go (P2 i) (Somy (SB1 ::- ys)) = P1 (go i ys) go (P2 i) (Somy (SB2 ::- ys)) = P1 (go i ys) go (P1 i) (Somy (SB1 ::- _ )) = P2 i go (P1 i) (Somy (SB2 ::- _ )) = P2 i \end{code}</p>
+<p>= Type-Level Lists for A Nicer Interface</p>
+<p>Everything above is pretty much all you need for many use cases, but it’s pretty ugly stuff. To actually use this thing as a generic tuple we’ll need a lot of quality-of-life improvements.</p>
+<p>First of all, we should use type-level lists to indicate the tuple itself:</p>
+<details>
+<p><summary> Type families for building a tree from a list. </summary></p>
+<p>\begin{code} type family Length (xs :: [a]) :: Star Bit where Length ’[] = Nil Length (_ : xs) = Some (Inc (Length xs))</p>
+type family FromList (xs :: [a]) = (ys :: Tree (Length xs) a) | ys -&gt; xs where FromList ’[] = Leaf FromList (x : xs) = Branch (Cons x (FromList xs)) \end{code}
+</details>
+
+<p>Because the type family here is injective, we won’t get any of the usual weird errors when we use the type <code class="sourceCode haskell"><span class="dt">Tuple</span> [<span class="dt">Bool</span>,<span class="dt">String</span>]</code> or whatever: passing that around will function almost exactly the same as passing around the tree representation itself directly.</p>
+
+<p>= Folding</p>
+<p>We can fold over the tree itself (using the Braun tree folding algorithm from a previous post) if every element in the tree conforms to some class. Using this we can generate a nice string representation of the tree.</p>
+<details>
+<p><summary> Implementation of folding over tree and <code>Show</code> instance. </summary></p>
+<p>\begin{code} type family All (c :: a -&gt; Constraint) (xs :: Tree ns a) :: Constraint where All c Leaf = () All c (Branch (Root x _ ls rs)) = (c x, All c ls, All c rs)</p>
+<p>newtype Q2 a = Q2 { unQ2 :: (Q2 a -&gt; Q2 a) -&gt; (Q2 a -&gt; Q2 a) -&gt; a }</p>
+<p>foldrTree :: forall c xs b. All c xs =&gt; (forall x. c x =&gt; x -&gt; b -&gt; b) -&gt; b -&gt; HTree xs -&gt; b foldrTree g’ n’ t = unQ2 (f <span class="citation" data-cites="c">(<span class="citeproc-not-found" data-reference-id="c"><strong>???</strong></span>)</span> g’ n’ t b) id id where f :: forall c’ ys b’. All c’ ys =&gt; (forall x. c’ x =&gt; x -&gt; b’ -&gt; b’) -&gt; b’ -&gt; HTree ys -&gt; Q2 b’ -&gt; Q2 b’ f g n (HNode x _ l r) xs = Q2 (rs -&gt; g x (unQ2 xs (ls . f <span class="citation" data-cites="c">(<span class="citeproc-not-found" data-reference-id="c"><strong>???</strong></span>)</span>‘g n l) (rs . f <span class="citation" data-cites="c">(<span class="citeproc-not-found" data-reference-id="c"><strong>???</strong></span>)</span>’ g n r))) f _ n HLeaf _ = Q2 (_ _ -&gt; n)</p>
+<pre><code>b = Q2 (\ls rs -&gt; unQ2 (ls (rs b)) id id)</code></pre>
+instance All Show xs =&gt; Show (HTree xs) where showsPrec _ tr = showChar ‘(’ . go (foldrTree <span class="citation" data-cites="Show">(<span class="citeproc-not-found" data-reference-id="Show"><strong>???</strong></span>)</span> (xs -&gt; shows x : xs) [] tr) where go :: [ShowS] -&gt; ShowS go [] = showChar ‘)’ go (x:xs) = x . foldr (ys -&gt; showChar ‘,’ . y . ys) (showChar ‘)’) xs \end{code}
+</details>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> example</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">(<span class="dt">True</span>,<span class="st">&quot;True&quot;</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
+<p>= Using a Different Approach For Building Indices</p>
+<p>The approach used in <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span> had a specific goal in mind: using the heterogeneous list to implement a lookup table for evaluating lambda calculus. As such, efficiently being able to “increment” an index was vital.</p>
+<p>If we wanted to use the type as a generic tuple, though, we would have no such requirement. Instead, we might expect all accesses to be resolved and inlined at compile-time <span class="citation" data-cites="martinezJustItCompiling2013">(as in Martinez, Viera, and Pardo <a href="#ref-martinezJustItCompiling2013">2013</a>)</span>. We also would want a nice syntax for accessing parts of the tuple.</p>
+<p>We can accomplish all of this with some type classes, as it happens. If we replace pattern-matching on data types with typeclass resolution we can be all but guaranteed that the function calls and so on will be inlined entirely at compile-time (we also would need to add INLINE pragmas to every instance, which I haven’t done here for readability’s sake). The main class we’ll use is the following:</p>
+
+<details>
+<p><summary> Interface for building indices. </summary></p>
+<p>\begin{code} instance Nil &lt; Some ys where pull (HNode x _ _ _) = x</p>
+<p>instance xs &lt; ys =&gt; Some (B1 :- xs) &lt; Some (B1 :- ys) where pull (HNode _ _ ls _) = pull <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> ls</p>
+<p>instance xs &lt; Some (Inc ys) =&gt; Some (B1 :- xs) &lt; Some (B2 :- ys) where pull (HNode _ _ ls _) = pull <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> ls</p>
+<p>instance xs &lt; ys =&gt; Some (B2 :- xs) &lt; Some (y :- ys) where pull (HNode _ _ _ rs) = pull <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> rs</p>
+<p>instance TypeError (Text “Index out of range”) =&gt; xs &lt; Nil where pull = error “unreachable”</p>
+<p>data Peano = Z | S Peano</p>
+<p>type family FromPeano (n :: Peano) = (m :: Star Bit) | m -&gt; n where FromPeano Z = Nil FromPeano (S n) = Some (Inc (FromPeano n))</p>
+<p>type family FromLit (n :: Nat) :: Peano where FromLit 0 = Z FromLit n = S (FromLit (n - 1))</p>
+get :: forall n xs (t :: Tree xs Type). FromPeano (FromLit n) &lt; xs =&gt; HTree t -&gt; Lookup (FromPeano (FromLit n)) t get = pull @(FromPeano (FromLit n)) \end{code}
+</details>
+<p>Some other details out of the way we get the following nice interface:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> get <span class="fu">@</span><span class="dv">4</span> example</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="st">&quot;T&quot;</span></a></code></pre></div>
+<p>You even get a type error for out-of-range indices:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> get <span class="fu">@</span><span class="dv">7</span> example</a></code></pre></div>
+<pre><code>    • Index out of range
+    • In the expression: get @7 example</code></pre>
+<p>Or we could even add a lens interface:</p>
+<details>
+<p><summary> Implementation of Lenses for the Tuple </summary></p>
+<p>\begin{code} type family Replace (i :: Star Bit) (x :: a) (xs :: Tree sz a) :: Tree sz a where Replace Nil x (Branch (Root _ b ls rs)) = Branch (Root x b ls rs) Replace (Some (B1 :- i)) x (Branch (Root y b ls rs)) = Branch (Root y b (Replace i x ls) rs) Replace (Some (B2 :- i)) x (Branch (Root y b ls rs)) = Branch (Root y b ls (Replace i x rs))</p>
+<p>class (xs :: Star Bit) &lt;! (ys :: Star Bit) where index :: forall (t :: Tree ys Type) b. Lens (HTree t) (HTree (Replace xs b t)) (Lookup xs t) b</p>
+<p>instance Nil &lt;! Some ys where index f (HNode x b ls rs) = fmap (‘-&gt; HNode x’ b ls rs) (f x)</p>
+<p>instance xs &lt;! ys =&gt; Some (B1 :- xs) &lt;! Some (B1 :- ys) where index f (HNode x b ls rs) = fmap (‘-&gt; HNode x b ls’ rs) (index <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> f ls)</p>
+<p>instance xs &lt;! Some (Inc ys) =&gt; Some (B1 :- xs) &lt;! Some (B2 :- ys) where index f (HNode x b ls rs) = fmap (‘-&gt; HNode x b ls’ rs) (index <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> f ls)</p>
+<p>instance xs &lt;! ys =&gt; Some (B2 :- xs) &lt;! Some (y :- ys) where index f (HNode x b ls rs) = fmap (‘-&gt; HNode x b ls rs’) (index <span class="citation" data-cites="xs">(<span class="citeproc-not-found" data-reference-id="xs"><strong>???</strong></span>)</span> f rs)</p>
+<p>instance TypeError (Text “Index out of range”) =&gt; xs &lt;! Nil where index = error “unreachable”</p>
+ind :: forall n xs (t :: Tree xs Type) a. FromPeano (FromLit n) &lt;! xs =&gt; Lens (HTree t) (HTree (Replace (FromPeano (FromLit n)) a t)) (Lookup (FromPeano (FromLit n)) t) a ind = index @(FromPeano (FromLit n)) \end{code}
+</details>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> over (ind <span class="fu">@</span><span class="dv">1</span>) length example</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">(<span class="dt">True</span>,<span class="dv">4</span>,<span class="dv">1</span>,(),<span class="st">&quot;T&quot;</span>)</a></code></pre></div>
+<hr />
+<p>= As a Nested Datatype</p>
+<p>The approach I’ve taken here is actually a little unusual: in both <span class="citation" data-cites="hinze_numerical_1998">Hinze (<a href="#ref-hinze_numerical_1998">1998</a>)</span> and <span class="citation" data-cites="swierstraHeterogeneousBinaryRandomaccess2020">Swierstra (<a href="#ref-swierstraHeterogeneousBinaryRandomaccess2020">2020</a>)</span> the tree is defined as a <em>nested</em> data type. Let’s take a look at that approach, while also switching to Agda.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb7-1" data-line-number="1">𝔹 <span class="ot">:</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">𝔹 <span class="ot">=</span> List Bool</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="kw">pattern</span> 1ᵇ <span class="ot">=</span> false</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5"><span class="kw">pattern</span> 2ᵇ <span class="ot">=</span> true</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="kw">data</span> When <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">  O⟨⟩ <span class="ot">:</span> When A false</a>
+<a class="sourceLine" id="cb7-9" data-line-number="9">  I⟨<span class="ot">_</span>⟩ <span class="ot">:</span> A <span class="ot">→</span> When A true</a>
+<a class="sourceLine" id="cb7-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb7-11" data-line-number="11"><span class="kw">infixl</span> <span class="dv">4</span> <span class="ot">_</span>×2</a>
+<a class="sourceLine" id="cb7-12" data-line-number="12"><span class="kw">record</span> <span class="ot">_</span>×2 <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-13" data-line-number="13">  <span class="kw">constructor</span> <span class="ot">_</span>,<span class="ot">_</span></a>
+<a class="sourceLine" id="cb7-14" data-line-number="14">  <span class="kw">field</span></a>
+<a class="sourceLine" id="cb7-15" data-line-number="15">    fst snd <span class="ot">:</span> A</a>
+<a class="sourceLine" id="cb7-16" data-line-number="16"><span class="kw">open</span> <span class="ot">_</span>×2</a>
+<a class="sourceLine" id="cb7-17" data-line-number="17"></a>
+<a class="sourceLine" id="cb7-18" data-line-number="18"><span class="kw">infixr</span> <span class="dv">5</span> ⟨<span class="ot">_</span>⟩+<span class="ot">_</span>+2×<span class="ot">_</span></a>
+<a class="sourceLine" id="cb7-19" data-line-number="19"><span class="kw">data</span> Array <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></a>
+<a class="sourceLine" id="cb7-20" data-line-number="20">  O <span class="ot">:</span> Array A []</a>
+<a class="sourceLine" id="cb7-21" data-line-number="21">  ⟨<span class="ot">_</span>⟩+<span class="ot">_</span>+2×<span class="ot">_</span> <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n ns<span class="ot">}</span> <span class="ot">→</span> A <span class="ot">→</span> When A n <span class="ot">→</span> Array <span class="ot">(</span>A ×2<span class="ot">)</span> ns <span class="ot">→</span> Array A <span class="ot">(</span>n ∷ ns<span class="ot">)</span></a></code></pre></div>
+<p>The cons function here is really no more complex than the previous cons:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1">inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> List Bool</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">inc [] <span class="ot">=</span> 1ᵇ ∷ []</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">inc <span class="ot">(</span>1ᵇ ∷ xs<span class="ot">)</span> <span class="ot">=</span> 2ᵇ ∷ xs</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">inc <span class="ot">(</span>2ᵇ ∷ xs<span class="ot">)</span> <span class="ot">=</span> 1ᵇ ∷ inc xs</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">cons <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>ns<span class="ot">}</span> <span class="ot">→</span> A <span class="ot">→</span> Array A ns <span class="ot">→</span> Array A <span class="ot">(</span>inc ns<span class="ot">)</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">cons x O <span class="ot">=</span> ⟨ x ⟩+ O⟨⟩ +2× O</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">cons x₁ <span class="ot">(</span>⟨ x₂ ⟩+ O⟨⟩ +2× xs<span class="ot">)</span> <span class="ot">=</span> ⟨ x₁ ⟩+ I⟨ x₂ ⟩ +2× xs</a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">cons x₁ <span class="ot">(</span>⟨ x₂ ⟩+ I⟨ x₃ ⟩ +2× xs<span class="ot">)</span> <span class="ot">=</span> ⟨ x₁ ⟩+ O⟨⟩ +2× cons <span class="ot">(</span>x₂ , x₃<span class="ot">)</span> xs</a></code></pre></div>
+<p>But what I’m really interested in, again, is <em>indexing</em>. In particular, I’m interested in using an actual binary number to index into this structure, rather than the weird GADT we had to use in Haskell. One of the advantages of using full dependent types is that we can write functions like the following:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb9-1" data-line-number="1">lookup <span class="ot">:</span> <span class="ot">∀</span> is <span class="ot">→</span> Array A xs <span class="ot">→</span> is &lt; xs <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">lookup <span class="ot">=</span> <span class="ot">{!!}</span></a></code></pre></div>
+<p>In other words, we can pass the proof term separately. This can help performance a little, but mainly it’s nice to use the actual number type one intended to use along with all of the functions we might use on that term.</p>
+<p>So let’s get writing! The first thing to define is the proof of <code>&lt;</code>. I’m going to define it in terms of a boolean function on the bits themselves, i.e.:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">=</span> <span class="ot">{!!}</span></a>
+<a class="sourceLine" id="cb10-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb10-4" data-line-number="4">T <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb10-5" data-line-number="5">T true   <span class="ot">=</span> ⊤</a>
+<a class="sourceLine" id="cb10-6" data-line-number="6">T false  <span class="ot">=</span> ⊥</a>
+<a class="sourceLine" id="cb10-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb10-8" data-line-number="8"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Set</span></a>
+<a class="sourceLine" id="cb10-9" data-line-number="9">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
+<p>This will mean the proofs themselves are easy to pass around without modification. In fact, we can go further and have the compiler <em>definitionally</em> understand that the proof of <code>x &lt; y</code> is proof irrelevant, with Agda’s <a href="https://agda.readthedocs.io/en/v2.6.1/language/prop.html"><code>Prop</code></a>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">record</span> ⊤ <span class="ot">:</span> <span class="dt">Prop</span> <span class="kw">where</span> <span class="kw">constructor</span> tt</a>
+<a class="sourceLine" id="cb11-2" data-line-number="2"><span class="kw">data</span>   ⊥ <span class="ot">:</span> <span class="dt">Prop</span> <span class="kw">where</span></a>
+<a class="sourceLine" id="cb11-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb11-4" data-line-number="4">T <span class="ot">:</span> Bool <span class="ot">→</span> <span class="dt">Prop</span></a>
+<a class="sourceLine" id="cb11-5" data-line-number="5">T true   <span class="ot">=</span> ⊤</a>
+<a class="sourceLine" id="cb11-6" data-line-number="6">T false  <span class="ot">=</span> ⊥</a>
+<a class="sourceLine" id="cb11-7" data-line-number="7"></a>
+<a class="sourceLine" id="cb11-8" data-line-number="8"><span class="ot">_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> <span class="dt">Prop</span></a>
+<a class="sourceLine" id="cb11-9" data-line-number="9">x &lt; y <span class="ot">=</span> T <span class="ot">(</span>x &lt;ᴮ y<span class="ot">)</span></a></code></pre></div>
+<p>Next, the functions which compute the actual comparison.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">_</span>&amp;<span class="ot">_</span>≲ᵇ<span class="ot">_</span> <span class="ot">:</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb12-2" data-line-number="2">s &amp; false ≲ᵇ y <span class="ot">=</span> s or  y</a>
+<a class="sourceLine" id="cb12-3" data-line-number="3">s &amp; true  ≲ᵇ y <span class="ot">=</span> s and y</a>
+<a class="sourceLine" id="cb12-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="ot">_</span>&amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span> <span class="ot">:</span> Bool <span class="ot">→</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb12-6" data-line-number="6">s &amp; []       ≲ᴮ []       <span class="ot">=</span> s</a>
+<a class="sourceLine" id="cb12-7" data-line-number="7">s &amp; []       ≲ᴮ <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> true</a>
+<a class="sourceLine" id="cb12-8" data-line-number="8">s &amp; <span class="ot">(</span>x ∷ xs<span class="ot">)</span> ≲ᴮ []       <span class="ot">=</span> false</a>
+<a class="sourceLine" id="cb12-9" data-line-number="9">s &amp; <span class="ot">(</span>x ∷ xs<span class="ot">)</span> ≲ᴮ <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> <span class="ot">(</span>s &amp; x ≲ᵇ y<span class="ot">)</span> &amp; xs ≲ᴮ ys</a>
+<a class="sourceLine" id="cb12-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb12-11" data-line-number="11"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">_</span>≤ᴮ<span class="ot">_</span> <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹 <span class="ot">→</span> Bool</a>
+<a class="sourceLine" id="cb12-12" data-line-number="12"><span class="ot">_</span>&lt;ᴮ<span class="ot">_</span> <span class="ot">=</span> false &amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span></a>
+<a class="sourceLine" id="cb12-13" data-line-number="13"><span class="ot">_</span>≤ᴮ<span class="ot">_</span> <span class="ot">=</span> true  &amp;<span class="ot">_</span>≲ᴮ<span class="ot">_</span></a></code></pre></div>
+<p>These functions combine the definitions of <code>≤</code> and <code>&lt;</code>, and do them both at once. We pass whether the comparison is non-strict or not as the first parameter: this is worth doing since both <code>&lt;</code> and <code>≤</code> can be defined in terms of each other:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">(</span>1ᵇ ∷ xs<span class="ot">)</span> &lt; <span class="ot">(</span>2ᵇ ∷ ys<span class="ot">)</span> <span class="ot">=</span> xs ≤ ys</a>
+<a class="sourceLine" id="cb13-2" data-line-number="2"><span class="ot">(</span>2ᵇ ∷ xs<span class="ot">)</span> ≤ <span class="ot">(</span>1ᵇ ∷ ys<span class="ot">)</span> <span class="ot">=</span> xs &lt; ys</a>
+<a class="sourceLine" id="cb13-3" data-line-number="3"><span class="ot">...</span></a></code></pre></div>
+<p>Finally the function itself:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb14-1" data-line-number="1">sel-bit <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>b<span class="ot">}</span> <span class="ot">→</span> When A b <span class="ot">→</span> A ×2 <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb14-2" data-line-number="2">sel-bit <span class="ot">{</span>b <span class="ot">=</span> 1ᵇ<span class="ot">}</span> <span class="ot">_</span> <span class="ot">=</span> snd</a>
+<a class="sourceLine" id="cb14-3" data-line-number="3">sel-bit <span class="ot">{</span>b <span class="ot">=</span> 2ᵇ<span class="ot">}</span> <span class="ot">_</span> <span class="ot">=</span> fst</a>
+<a class="sourceLine" id="cb14-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb14-5" data-line-number="5"><span class="kw">mutual</span></a>
+<a class="sourceLine" id="cb14-6" data-line-number="6">  index <span class="ot">:</span> <span class="ot">∀</span> xs <span class="ot">{</span>ys<span class="ot">}</span> <span class="ot">→</span> Array A ys <span class="ot">→</span> xs &lt; ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb14-7" data-line-number="7">  index []        <span class="ot">(</span>⟨ x ⟩+ <span class="ot">_</span> +2× <span class="ot">_</span> <span class="ot">)</span> p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb14-8" data-line-number="8">  index <span class="ot">(</span>1ᵇ ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> index₂ is x xs p</a>
+<a class="sourceLine" id="cb14-9" data-line-number="9">  index <span class="ot">(</span>2ᵇ ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> sel-bit x <span class="ot">(</span>index is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb14-10" data-line-number="10"></a>
+<a class="sourceLine" id="cb14-11" data-line-number="11">  index₂ <span class="ot">:</span> <span class="ot">∀</span> xs <span class="ot">{</span>y ys<span class="ot">}</span> <span class="ot">→</span> When A y <span class="ot">→</span> Array <span class="ot">(</span>A ×2<span class="ot">)</span> ys <span class="ot">→</span> 1ᵇ ∷ xs &lt; y ∷ ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb14-12" data-line-number="12">  index₂ is       O⟨⟩    xs p <span class="ot">=</span> fst <span class="ot">(</span>index  is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb14-13" data-line-number="13">  index₂ []       I⟨ x ⟩ xs p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb14-14" data-line-number="14">  index₂ <span class="ot">(</span>i ∷ is<span class="ot">)</span> I⟨ <span class="ot">_</span> ⟩ xs p <span class="ot">=</span> snd <span class="ot">(</span>index₃ i is xs p<span class="ot">)</span></a>
+<a class="sourceLine" id="cb14-15" data-line-number="15"></a>
+<a class="sourceLine" id="cb14-16" data-line-number="16">  index₃ <span class="ot">:</span> <span class="ot">∀</span> x xs <span class="ot">{</span>ys<span class="ot">}</span> <span class="ot">→</span> Array A ys <span class="ot">→</span> x ∷ xs ≤ ys <span class="ot">→</span> A</a>
+<a class="sourceLine" id="cb14-17" data-line-number="17">  index₃ 2ᵇ is       <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> index₂ is x xs p</a>
+<a class="sourceLine" id="cb14-18" data-line-number="18">  index₃ 1ᵇ []       <span class="ot">(</span>⟨ x ⟩+ <span class="ot">_</span> +2× <span class="ot">_</span> <span class="ot">)</span> p <span class="ot">=</span> x</a>
+<a class="sourceLine" id="cb14-19" data-line-number="19">  index₃ 1ᵇ <span class="ot">(</span>i ∷ is<span class="ot">)</span> <span class="ot">(</span>⟨ <span class="ot">_</span> ⟩+ x +2× xs<span class="ot">)</span> p <span class="ot">=</span> sel-bit x <span class="ot">(</span>index₃ i is xs p<span class="ot">)</span></a></code></pre></div>
+<hr />
+<p>= Conclusion</p>
+<p>I think Braun trees are a fascinating data structure with lots of interesting aspects. In practice they tend to be much slower than other comparable structures, but they’re extremely simple and have many properties which make them particularly well-suited to type-level programming.</p>
+<hr />
+<p>= References</p>
+<div id="refs" class="references">
+<div id="ref-hinze_numerical_1998">
+<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn.</p>
+</div>
+<div id="ref-martinezJustItCompiling2013">
+<p>Martinez, Bruno, Marcos Viera, and Alberto Pardo. 2013. “Just do it while compiling!: Fast extensible records in haskell.” In <em>Proceedings of the ACM SIGPLAN 2013 workshop on Partial evaluation and program manipulation - PEPM ’13</em>, 77. Rome, Italy: ACM Press. doi:<a href="https://doi.org/10.1145/2426890.2426908">10.1145/2426890.2426908</a>.</p>
+</div>
+<div id="ref-swierstraHeterogeneousBinaryRandomaccess2020">
+<p>Swierstra, Wouter. 2020. “Heterogeneous binary random-access lists.” <em>Journal of Functional Programming</em> 30: e10. doi:<a href="https://doi.org/10.1017/S0956796820000064">10.1017/S0956796820000064</a>.</p>
+</div>
+</div>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

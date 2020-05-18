@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Sorting Small Things in Haskell - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Sorting Small Things in Haskell</h2>
+
+            <div class="info">
+    Posted on May  6, 2018
+</div>
+<div class="info">
+    
+        Part 1 of a <a href="../series/Sorting.html">1-part series on Sorting</a>
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Algorithms.html">Algorithms</a>
+    
+</div>
+
+<p>I was working on some performance-intensive stuff recently, and I ran into the issue of sorting very small amounts of values (think 3, 4, 5).</p>
+<p>The standard way to do this is with <a href="https://en.wikipedia.org/wiki/Sorting_network">sorting networks</a>. The way I’ll be using doesn’t actually perform any parallelism (unfortunately), but it is a clean way to write the networks in Haskell without too much repetition.</p>
+<p><a href="http://pages.ripco.net/~jgamble/nw.html">This</a> website will generate an optimal sorting network for your given size, and the output (for 3) looks like this:</p>
+<pre><code>[[1,2]]
+[[0,2]]
+[[0,1]]</code></pre>
+<p>Each pair of indices represents a “compare-and-swap” operation: so the first line means “compare the value at 1 to the value at 2: if it’s bigger, swap them”. For 5, the network looks like this:</p>
+<pre><code>[[0,1],[2,3]]
+[[0,2],[1,3]]
+[[1,2],[0,4]]
+[[1,4]]
+[[2,4]]
+[[3,4]]</code></pre>
+<p>Pairs on the same line can be performed in parallel.</p>
+<p>For our case, I’m going to be looking at sorting tuples, but the technique can easily be generalized to vectors, etc.</p>
+<p>The first trick is to figure out how to do “swapping”: we don’t want mutation, so what we can do instead is swap the <em>reference</em> to some value, by shadowing its name. In other words:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a, a)</a>
+<a class="sourceLine" id="cb3-2" data-line-number="2">swap2 lte x y <span class="fu">|</span> lte x y <span class="fu">=</span> (x, y)</a>
+<a class="sourceLine" id="cb3-3" data-line-number="3">              <span class="fu">|</span> otherwise <span class="fu">=</span> (y, x)</a>
+<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</a>
+<a class="sourceLine" id="cb3-6" data-line-number="6">sort3 lte (_0,_1,_2)</a>
+<a class="sourceLine" id="cb3-7" data-line-number="7">    <span class="fu">=</span> <span class="kw">case</span> swap2 lte _1 _2 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb3-8" data-line-number="8">      (_1, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _2 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb3-9" data-line-number="9">        (_0, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _1 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb3-10" data-line-number="10">          (_0, _1) <span class="ot">-&gt;</span> (_0, _1, _2)</a></code></pre></div>
+<p>The indentation is hard to read, though, and wrapping-and-unwrapping tuples makes me nervous about the performance (although it may be inlined). The next step is to <em>church-encode</em> the pairs returned:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">swap2 lte x y k</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">    <span class="fu">|</span> lte x y <span class="fu">=</span> k x y</a>
+<a class="sourceLine" id="cb4-4" data-line-number="4">    <span class="fu">|</span> otherwise <span class="fu">=</span> k y x</a>
+<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</a>
+<a class="sourceLine" id="cb4-7" data-line-number="7">sort3 lte (_0,_1,_2)</a>
+<a class="sourceLine" id="cb4-8" data-line-number="8">    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb4-9" data-line-number="9">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb4-10" data-line-number="10">      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb4-11" data-line-number="11">      (_0,_1,_2)</a></code></pre></div>
+<p>Then, to get this to compile down to efficient code, we can make judicious use of <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/GHC-Exts.html#v:inline"><code class="sourceCode haskell">inline</code></a> from GHC.Exts:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">import</span> <span class="dt">GHC.Exts</span> (inline)</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">swap2 lte x y k</a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">    <span class="fu">|</span> inline lte x y <span class="fu">=</span> inline k x y</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">    <span class="fu">|</span> otherwise <span class="fu">=</span> inline k y x</a>
+<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="ot">{-# INLINE swap2 #-}</span></a>
+<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
+<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a, a, a) <span class="ot">-&gt;</span> (a, a, a)</a>
+<a class="sourceLine" id="cb5-10" data-line-number="10">sort3 lte (_0,_1,_2)</a>
+<a class="sourceLine" id="cb5-11" data-line-number="11">    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb5-12" data-line-number="12">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb5-13" data-line-number="13">      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb5-14" data-line-number="14">      (_0,_1,_2)</a>
+<a class="sourceLine" id="cb5-15" data-line-number="15"><span class="ot">{-# INLINE sort3 #-}</span></a></code></pre></div>
+<p>And to see if this really does make efficient code, let’s look at the core (cleaned up):</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1">sort3</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">  <span class="fu">=</span> \ (<span class="ot">lte ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">      (<span class="ot">ds ::</span> (a, a, a)) <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">      <span class="kw">case</span> ds <span class="kw">of</span> wild_X8 (_0, _1, _2) <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">      <span class="kw">case</span> lte _1 _2 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">        <span class="dt">False</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">          <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-8" data-line-number="8">            <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _1, _0)</a>
+<a class="sourceLine" id="cb6-9" data-line-number="9">            <span class="dt">True</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-10" data-line-number="10">              <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-11" data-line-number="11">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _0, _1)</a>
+<a class="sourceLine" id="cb6-12" data-line-number="12">                <span class="dt">True</span> <span class="ot">-&gt;</span> (_0, _2, _1)</a>
+<a class="sourceLine" id="cb6-13" data-line-number="13">        <span class="dt">True</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-14" data-line-number="14">          <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-15" data-line-number="15">            <span class="dt">False</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-16" data-line-number="16">              <span class="kw">case</span> lte _2 _1 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-17" data-line-number="17">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _2, _0)</a>
+<a class="sourceLine" id="cb6-18" data-line-number="18">                <span class="dt">True</span> <span class="ot">-&gt;</span> (_2, _1, _0)</a>
+<a class="sourceLine" id="cb6-19" data-line-number="19">            <span class="dt">True</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-20" data-line-number="20">              <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></a>
+<a class="sourceLine" id="cb6-21" data-line-number="21">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _0, _2)</a>
+<a class="sourceLine" id="cb6-22" data-line-number="22">                <span class="dt">True</span> <span class="ot">-&gt;</span> wild_X8</a></code></pre></div>
+<p>Fantastic! When we specialize to <code class="sourceCode haskell"><span class="dt">Int</span></code>, we get all of the proper unpacking:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">sort3Int ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>) <span class="ot">-&gt;</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">sort3Int <span class="fu">=</span> inline sort3 (<span class="fu">&lt;=</span>)</a></code></pre></div>
+<p>Core (with just the variable names cleaned up this time):</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">sort3Int</a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="fu">=</span> \ (<span class="ot">w ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)) <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">      <span class="kw">case</span> w <span class="kw">of</span> w_X { (_0, _1, _2) <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">      <span class="kw">case</span> _0 <span class="kw">of</span> w_0 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _0U <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-5" data-line-number="5">      <span class="kw">case</span> _1 <span class="kw">of</span> w_1 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _1U <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">      <span class="kw">case</span> _2 <span class="kw">of</span> w_2 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _2U <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7">      <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _1U _2U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-8" data-line-number="8">        __DEFAULT <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-9" data-line-number="9">          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-10" data-line-number="10">            __DEFAULT <span class="ot">-&gt;</span> (w_2, w_1, w_0);</a>
+<a class="sourceLine" id="cb8-11" data-line-number="11">            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-12" data-line-number="12">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-13" data-line-number="13">                __DEFAULT <span class="ot">-&gt;</span> (w_2, w_0, w_1);</a>
+<a class="sourceLine" id="cb8-14" data-line-number="14">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_0, w_2, w_1)</a>
+<a class="sourceLine" id="cb8-15" data-line-number="15">              }</a>
+<a class="sourceLine" id="cb8-16" data-line-number="16">          };</a>
+<a class="sourceLine" id="cb8-17" data-line-number="17">        <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-18" data-line-number="18">          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-19" data-line-number="19">            __DEFAULT <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-20" data-line-number="20">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _2U _1U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-21" data-line-number="21">                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_2, w_0);</a>
+<a class="sourceLine" id="cb8-22" data-line-number="22">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_2, w_1, w_0)</a>
+<a class="sourceLine" id="cb8-23" data-line-number="23">              };</a>
+<a class="sourceLine" id="cb8-24" data-line-number="24">            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb8-25" data-line-number="25">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</a>
+<a class="sourceLine" id="cb8-26" data-line-number="26">                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_0, w_2);</a>
+<a class="sourceLine" id="cb8-27" data-line-number="27">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> w_X</a>
+<a class="sourceLine" id="cb8-28" data-line-number="28">              }</a>
+<a class="sourceLine" id="cb8-29" data-line-number="29">          }</a>
+<a class="sourceLine" id="cb8-30" data-line-number="30">      }</a>
+<a class="sourceLine" id="cb8-31" data-line-number="31">      }</a>
+<a class="sourceLine" id="cb8-32" data-line-number="32">      }</a>
+<a class="sourceLine" id="cb8-33" data-line-number="33">      }</a>
+<a class="sourceLine" id="cb8-34" data-line-number="34">      }</a></code></pre></div>
+<p>Now, for the real test: sorting 5-tuples, using the network above.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">sort5 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a,a,a) <span class="ot">-&gt;</span> (a,a,a,a,a)</a>
+<a class="sourceLine" id="cb9-2" data-line-number="2">sort5 lte (_0,_1,_2,_3,_4)</a>
+<a class="sourceLine" id="cb9-3" data-line-number="3">    <span class="fu">=</span> swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-4" data-line-number="4">      swap2 lte _2 _3 <span class="fu">$</span> \ _2 _3 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-5" data-line-number="5">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-6" data-line-number="6">      swap2 lte _1 _3 <span class="fu">$</span> \ _1 _3 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-7" data-line-number="7">      swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-8" data-line-number="8">      swap2 lte _0 _4 <span class="fu">$</span> \ _0 _4 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-9" data-line-number="9">      swap2 lte _1 _4 <span class="fu">$</span> \ _1 _4 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-10" data-line-number="10">      swap2 lte _2 _4 <span class="fu">$</span> \ _2 _4 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-11" data-line-number="11">      swap2 lte _3 _4 <span class="fu">$</span> \ _3 _4 <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb9-12" data-line-number="12">      (_0,_1,_2,_3,_4)</a>
+<a class="sourceLine" id="cb9-13" data-line-number="13"><span class="ot">{-# INLINE sort5 #-}</span></a></code></pre></div>
+<p>The core output from this is over 1000 lines long: you can see it (with the variable names cleaned up) <a href="https://gist.github.com/oisdk/ec25d76d918135c4c28777e1b84ead5f">here</a>.</p>
+<p>In my benchmarks, these functions are indeed quicker than their counterparts in vector, but I’m not confident in my knowledge of Haskell performance to make much of a strong statement about them.</p>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>

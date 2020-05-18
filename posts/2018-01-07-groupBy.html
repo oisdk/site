@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>groupBy - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:14px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:600px}math{font-size:13px}img{max-width:600px}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>groupBy</h2>
+
+            <div class="info">
+    Posted on January  7, 2018
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Folds.html">Folds</a>
+    
+</div>
+
+<p>Here’s a useful function from <a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-List.html#v:groupBy">Data.List</a>:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
+<a class="sourceLine" id="cb1-3" data-line-number="3">groupBy (<span class="fu">==</span>) <span class="st">&quot;aabcdda&quot;</span></a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co">-- [&quot;aa&quot;,&quot;b&quot;,&quot;c&quot;,&quot;dd&quot;,&quot;a&quot;]</span></a></code></pre></div>
+<p>However, as has been pointed out before<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, <code class="sourceCode haskell">groupBy</code> expects an equivalence relation, and can exhibit surprising behavior when it doesn’t get one. Let’s say, for instance, that we wanted to group numbers that were close together:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">groupClose ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> [[<span class="dt">Integer</span>]]</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2">groupClose <span class="fu">=</span> groupBy (\x y <span class="ot">-&gt;</span> abs (x <span class="fu">-</span> y) <span class="fu">&lt;</span> <span class="dv">3</span>)</a></code></pre></div>
+<p>What would you expect on the list <code>[1, 2, 3, 4, 5]</code>? All in the same group? Well, what you actually get is:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1">[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">4</span>,<span class="dv">5</span>]]</a></code></pre></div>
+<p>This is because the implementation of <code class="sourceCode haskell">groupBy</code> only compares to the first element in each group:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">groupBy _  []           <span class="fu">=</span>  []</a>
+<a class="sourceLine" id="cb4-2" data-line-number="2">groupBy eq (x<span class="fu">:</span>xs)       <span class="fu">=</span>  (x<span class="fu">:</span>ys) <span class="fu">:</span> groupBy eq zs</a>
+<a class="sourceLine" id="cb4-3" data-line-number="3">                           <span class="kw">where</span> (ys,zs) <span class="fu">=</span> span (eq x) xs</a></code></pre></div>
+<p>Brandon Simmons gave a <a href="http://brandon.si/code/an-alternative-definition-for-datalistgroupby/">definition</a> of <code class="sourceCode haskell">groupBy</code> that is perhaps more useful, but it used explicit recursion, rather than a fold.</p>
+<p>A definition with <code class="sourceCode haskell">foldr</code> turned out to be trickier than I expected. I found some of the laziness properties especially difficult:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> head (groupBy (<span class="fu">==</span>) (<span class="dv">1</span><span class="fu">:</span><span class="dv">2</span><span class="fu">:</span>undefined))</a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">[<span class="dv">1</span>]</a>
+<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="fu">&gt;&gt;&gt;</span> (head <span class="fu">.</span> head) (groupBy (<span class="fu">==</span>) (<span class="dv">1</span><span class="fu">:</span>undefined))</a>
+<a class="sourceLine" id="cb5-4" data-line-number="4"><span class="dv">1</span></a>
+<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="fu">&gt;&gt;&gt;</span> (head <span class="fu">.</span> head <span class="fu">.</span> tail) (groupBy (<span class="fu">==</span>) (<span class="dv">1</span><span class="fu">:</span><span class="dv">2</span><span class="fu">:</span>undefined))</a>
+<a class="sourceLine" id="cb5-6" data-line-number="6"><span class="dv">2</span></a></code></pre></div>
+<p>Here’s the definition I came up with, after some deliberation:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">groupBy p xs <span class="fu">=</span> build (\c n <span class="ot">-&gt;</span></a>
+<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="kw">let</span> f x a q</a>
+<a class="sourceLine" id="cb6-4" data-line-number="4">        <span class="fu">|</span> q x <span class="fu">=</span> (x <span class="fu">:</span> ys, zs)</a>
+<a class="sourceLine" id="cb6-5" data-line-number="5">        <span class="fu">|</span> otherwise <span class="fu">=</span> ([], c (x <span class="fu">:</span> ys) zs)</a>
+<a class="sourceLine" id="cb6-6" data-line-number="6">        <span class="kw">where</span> (ys,zs) <span class="fu">=</span> a (p x)</a>
+<a class="sourceLine" id="cb6-7" data-line-number="7">  <span class="kw">in</span> snd (foldr f (const ([], n)) xs (const <span class="dt">False</span>)))</a>
+<a class="sourceLine" id="cb6-8" data-line-number="8"><span class="ot">{-# INLINE groupBy #-}</span></a></code></pre></div>
+<p>Seemingly benign changes to the function will break one or more of the above tests. In particular, the laziness of a “where” binding needs to be taken into account. Here’s an early attempt which failed:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">groupBy p xs <span class="fu">=</span> build (\c n <span class="ot">-&gt;</span> </a>
+<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="kw">let</span> f x a q d</a>
+<a class="sourceLine" id="cb7-4" data-line-number="4">        <span class="fu">|</span> q x <span class="fu">=</span> a (p x) (d <span class="fu">.</span> (<span class="fu">:</span>) x)</a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">        <span class="fu">|</span> otherwise <span class="fu">=</span> d [] (a (p x) (c <span class="fu">.</span> (<span class="fu">:</span>) x))</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6">  <span class="kw">in</span> foldr f (\_ d <span class="ot">-&gt;</span> d [] n) xs (const <span class="dt">False</span>) (\ _ y <span class="ot">-&gt;</span> y))</a></code></pre></div>
+<p>Once done, though, it works as expected:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> groupBy (<span class="fu">==</span>) <span class="st">&quot;aaabcccdda&quot;</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2">[<span class="st">&quot;aaa&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ccc&quot;</span>,<span class="st">&quot;dd&quot;</span>,<span class="st">&quot;a&quot;</span>]</a>
+<a class="sourceLine" id="cb8-3" data-line-number="3"><span class="fu">&gt;&gt;&gt;</span> groupBy (<span class="fu">==</span>) []</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">[]</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"><span class="fu">&gt;&gt;&gt;</span> groupBy (<span class="fu">&lt;=</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>]</a>
+<a class="sourceLine" id="cb8-6" data-line-number="6">[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>],[<span class="dv">2</span>]]</a></code></pre></div>
+<p>It’s the fastest version I could find that obeyed the above laziness properties.</p>
+<p>The <a href="https://ghc.haskell.org/trac/ghc/ticket/13593">GHC page on the issue</a> unfortunately seems to indicate the implementation won’t be changed. Ah, well. Regardless, I have a <a href="https://github.com/oisdk/groupBy">repository</a> with the implementation above (with extra fusion machinery added) and comparisons to other implementations.</p>
+<section class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>There are several threads on the libraries mailing list on this topic:</p>
+<dl>
+<dt>2006</dt>
+<dd><a href="http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html">mapAccumL - find max in-sequence subsequence</a>
+</dd>
+<dt>2007</dt>
+<dd><a href="https://mail.haskell.org/pipermail/libraries/2007-August/008028.html">Data.List.groupBy with non-transitive equality predicate</a> (this is the longest discussion on the topic)
+</dd>
+<dt>2008</dt>
+<dd><a href="https://mail.haskell.org/pipermail/libraries/2008-September/010629.html">Generalize groupBy in a useful way?</a>
+</dd>
+<dt>2009</dt>
+<dd><a href="https://mail.haskell.org/pipermail/libraries/2009-June/011866.html">nubBy seems broken in recent GHCs</a>
+</dd>
+</dl>
+<a href="#fnref1" class="footnote-back">↩</a></li>
+</ol>
+</section>
+
+        </div>
+        <div id="footer">
+            Site proudly generated by
+            <a href="http://jaspervdj.be/hakyll">Hakyll</a>
+        </div>
+    </body>
+</html>
