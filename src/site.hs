@@ -2,7 +2,6 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-
 import           Control.Monad
 
 import           Data.Char           (toUpper)
