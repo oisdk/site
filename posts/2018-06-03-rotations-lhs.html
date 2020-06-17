@@ -30,28 +30,28 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
     
 </div>
 
 <p>This is just some cool-looking stuff I figure out when I was trying to figure out zipper-like algorithms. When I do get around to doing a deep dive on zippers (especially comonadic zippers) I’ll probably be able to write a full post on some of the underlying theory (with maybe some more efficient implementations).</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">{-# LANGUAGE FlexibleContexts #-}</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">module</span> <span class="dt">Rotations</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="kw">import</span> <span class="dt">Control.Monad.Tardis</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="kw">import</span> <span class="dt">Control.Applicative</span> ((&lt;**&gt;))</a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8"><span class="co">-- | &gt;&gt;&gt; rotations &quot;abcd&quot;</span></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9"><span class="co">-- [&quot;abcd&quot;,&quot;bcda&quot;,&quot;cdab&quot;,&quot;dabc&quot;]</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="ot">rotations ::</span> [a] <span class="ot">-&gt;</span> [[a]]</a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">rotations <span class="fu">=</span> flip evalTardis (id,id) <span class="fu">.</span> traverse f</a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">    f x <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb1-14" data-line-number="14">      xs <span class="ot">&lt;-</span> pure [] <span class="fu">&lt;**&gt;</span> getPast <span class="fu">&lt;**&gt;</span> getFuture</a>
-<a class="sourceLine" id="cb1-15" data-line-number="15">      modifyBackwards ((<span class="fu">:</span>) x <span class="fu">.</span>)</a>
-<a class="sourceLine" id="cb1-16" data-line-number="16">      modifyForwards  (<span class="fu">.</span> (<span class="fu">:</span>) x)</a>
-<a class="sourceLine" id="cb1-17" data-line-number="17">      pure xs</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleContexts #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Rotations</span> <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad.Tardis</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Applicative</span> ((&lt;**&gt;))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="co">-- | &gt;&gt;&gt; rotations &quot;abcd&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="co">-- [&quot;abcd&quot;,&quot;bcda&quot;,&quot;cdab&quot;,&quot;dabc&quot;]</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="ot">rotations ::</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>rotations <span class="ot">=</span> <span class="fu">flip</span> evalTardis (<span class="fu">id</span>,<span class="fu">id</span>) <span class="op">.</span> <span class="fu">traverse</span> f</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>    f x <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>      xs <span class="ot">&lt;-</span> <span class="fu">pure</span> [] <span class="op">&lt;**&gt;</span> getPast <span class="op">&lt;**&gt;</span> getFuture</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>      modifyBackwards ((<span class="op">:</span>) x <span class="op">.</span>)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>      modifyForwards  (<span class="op">.</span> (<span class="op">:</span>) x)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>      <span class="fu">pure</span> xs</span></code></pre></div>
 
         </div>
         <div id="footer">

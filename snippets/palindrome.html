@@ -23,13 +23,13 @@
             <h2>Palindrome Test</h2>
 
             <p>Test if a list is a palindrome, in an unnecessarily complicated way.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">module</span> <span class="dt">Palindrome</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">isPal xs <span class="fu">=</span> go xs xs (const <span class="dt">True</span>)  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">  go (y<span class="fu">:</span>ys) (_<span class="fu">:</span>_<span class="fu">:</span>zs) k <span class="fu">=</span> go ys zs (\(z<span class="fu">:</span>zzs) <span class="ot">-&gt;</span> y <span class="fu">==</span> z <span class="fu">&amp;&amp;</span> k zzs)</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">  go (_<span class="fu">:</span>ys) [_] k <span class="fu">=</span> k ys</a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">  go ys [] k <span class="fu">=</span> k ys</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Palindrome</span> <span class="kw">where</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>isPal xs <span class="ot">=</span> go xs xs (<span class="fu">const</span> <span class="dt">True</span>)  <span class="kw">where</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) k <span class="ot">=</span> go ys zs (\(z<span class="op">:</span>zzs) <span class="ot">-&gt;</span> y <span class="op">==</span> z <span class="op">&amp;&amp;</span> k zzs)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>  go (_<span class="op">:</span>ys) [_] k <span class="ot">=</span> k ys</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>  go ys [] k <span class="ot">=</span> k ys</span></code></pre></div>
 
         </div>
         <div id="footer">

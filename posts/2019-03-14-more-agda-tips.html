@@ -32,7 +32,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
     
 </div>
 
@@ -40,63 +40,63 @@
 <p>For including Agda code in LaTeX files, Agda’s built-in literate programming support is a great tool. It typesets code well, and ensures that it typechecks which can help avoid typos.</p>
 <h3 id="embedding-agda-code-in-latex">Embedding Agda Code in LaTeX</h3>
 <p>I write the LaTeX document in one file, and the Agda code in another <code>.lagda</code> file. Using the <a href="https://ctan.org/pkg/catchfilebetweentags?lang=en">catchfilebetweentags</a> LaTeX package, I can then embed snippets of the Agda code into the LaTeX document. For instance, in a file named <code>Lists.lagda</code> I can have the following:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb1-1" data-line-number="1">%&lt;*head-type&gt;</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">head <span class="ot">:</span> List A <span class="ot">→</span> Maybe A</a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">%&lt;/head-type&gt;</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">head [] <span class="ot">=</span> nothing</a>
-<a class="sourceLine" id="cb1-9" data-line-number="9">head <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">=</span> just x</a>
-<a class="sourceLine" id="cb1-10" data-line-number="10"><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>%&lt;*head-type&gt;</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>head <span class="ot">:</span> List A <span class="ot">→</span> Maybe A</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>%&lt;/head-type&gt;</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">\</span>begin<span class="ot">{</span>code<span class="ot">}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>head [] <span class="ot">=</span> nothing</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>head <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">=</span> just x</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="ot">\</span>end<span class="ot">{</span>code<span class="ot">}</span></span></code></pre></div>
 <p>Then, after compiling the Agda file with <code>agda --latex --output-dir=. Lists.lagda</code>, I can embed the snippet <code>head : List A → Maybe A</code> into the TeX file like so:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode latex"><code class="sourceCode latex"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="fu">\ExecuteMetaData</span>[Lists.tex]{head-type}</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode latex"><code class="sourceCode latex"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">\ExecuteMetaData</span>[Lists.tex]{head-type}</span></code></pre></div>
 <h3 id="dealing-with-unicode">Dealing with Unicode</h3>
 <p>Most Agda source code will be Unicode-heavy, which doesn’t work well in LaTeX. There are a few different ways to deal with this: you could use XeTeX, which handles Unicode better, for instance. I found it easier to use the <a href="https://ctan.org/pkg/ucs?lang=en">ucs</a> package, and write a declaration for each Unicode character as I came across it. For the <code>∷</code> character above, for instance, you can write:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode latex"><code class="sourceCode latex"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="bu">\usepackage</span>{<span class="ex">ucs</span>}</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"><span class="fu">\DeclareUnicodeCharacter</span>{8759}{<span class="ss">\ensuremath{</span><span class="sc">\squaredots</span><span class="ss">}</span>}</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode latex"><code class="sourceCode latex"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="bu">\usepackage</span>{<span class="ex">ucs</span>}</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="fu">\DeclareUnicodeCharacter</span>{8759}{<span class="ss">\ensuremath{</span><span class="sc">\squaredots</span><span class="ss">}</span>}</span></code></pre></div>
 <h3 id="live-reloading">Live Reloading</h3>
 <p>For plain LaTeX code, I use <a href="http://spacemacs.org/">Spacemacs</a> and <a href="https://skim-app.sourceforge.io/">Skim</a> to get live reloading. When I save the LaTeX source code, the Skim window refreshes and jumps to the point my editing cursor is at. I use elisp code from <a href="https://mssun.me/blog/spacemacs-and-latex.html">this</a> blog post.</p>
 <p>For Agda code, live reloading gets a little trickier. If I edit an Agda source file, the LaTeX won’t automatically recompile it. However, based on <a href="https://tex.stackexchange.com/questions/142540/configuring-latexmk-to-use-a-preprocessor-lhs2tex">this</a> stack exchange answer, you can put the following <code>.latexmkrc</code> file in the same directory as your <code>.lagda</code> files and your <code>.tex</code> file:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb4-1" data-line-number="1">add_cus_dep(<span class="kw">'</span><span class="st">lagda</span><span class="kw">'</span>,<span class="kw">'</span><span class="st">tex</span><span class="kw">'</span>,<span class="dv">0</span>,<span class="kw">'</span><span class="st">lagda2tex</span><span class="kw">'</span>);</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="kw">sub </span><span class="fu">lagda2tex</span> {</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">    <span class="kw">my</span> <span class="dt">$base</span> = <span class="fu">shift</span> <span class="dt">@_</span>;</a>
-<a class="sourceLine" id="cb4-5" data-line-number="5">    <span class="kw">return</span> <span class="fu">system</span>(<span class="kw">'</span><span class="st">agda</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex-dir=.</span><span class="kw">'</span>, <span class="kw">&quot;</span><span class="dt">$base</span><span class="st">.lagda</span><span class="kw">&quot;</span>);</a>
-<a class="sourceLine" id="cb4-6" data-line-number="6">}</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>add_cus_dep(<span class="kw">'</span><span class="st">lagda</span><span class="kw">'</span>,<span class="kw">'</span><span class="st">tex</span><span class="kw">'</span>,<span class="dv">0</span>,<span class="kw">'</span><span class="st">lagda2tex</span><span class="kw">'</span>);</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="kw">sub </span><span class="fu">lagda2tex</span> {</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    <span class="kw">my</span> <span class="dt">$base</span> = <span class="fu">shift</span> <span class="dt">@_</span>;</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">system</span>(<span class="kw">'</span><span class="st">agda</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex-dir=.</span><span class="kw">'</span>, <span class="kw">&quot;</span><span class="dt">$base</span><span class="st">.lagda</span><span class="kw">&quot;</span>);</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>}</span></code></pre></div>
 <p>This will recompile the literate Agda files whenever they’re changed. Unfortunately, it doesn’t automate it the <em>first</em> time you do it: it needs to see the <code>.tex</code> files to see the dependency. You can fix this yourself, by running <code>agda --latex --output-dir=.</code> when you add a new <code>.lagda</code> file (just once, after that the automation will take over), or you can use a script like the following:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="co">#!/bin/bash</span></a>
-<a class="sourceLine" id="cb5-2" data-line-number="2"><span class="fu">find</span> . -type f -name <span class="st">'*.lagda'</span> <span class="kw">|</span> <span class="kw">while</span> <span class="bu">read</span> -r <span class="va">code</span> ; <span class="kw">do</span></a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">    <span class="va">dir=$(</span><span class="fu">dirname</span> <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span><span class="va">)</span></a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">    <span class="va">file=$(</span><span class="fu">basename</span> <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span> .lagda<span class="va">)</span>.tex</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">    <span class="kw">if</span><span class="bu"> [</span> <span class="ot">!</span> <span class="ot">-e</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">/</span><span class="va">$file</span><span class="st">&quot;</span><span class="bu"> ]</span></a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">    <span class="kw">then</span></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">        <span class="ex">agda</span> --latex --latex-dir=. <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span></a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">    <span class="kw">fi</span></a>
-<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="kw">done</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="co">#!/bin/bash</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="fu">find</span> . -type f -name <span class="st">'*.lagda'</span> <span class="kw">|</span> <span class="kw">while</span> <span class="bu">read</span> -r <span class="va">code</span> ; <span class="kw">do</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="va">dir=$(</span><span class="fu">dirname</span> <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span><span class="va">)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="va">file=$(</span><span class="fu">basename</span> <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span> .lagda<span class="va">)</span>.tex</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    <span class="kw">if</span><span class="bu"> [</span> <span class="ot">!</span> <span class="ot">-e</span> <span class="st">&quot;</span><span class="va">$dir</span><span class="st">/</span><span class="va">$file</span><span class="st">&quot;</span><span class="bu"> ]</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="kw">then</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>        <span class="ex">agda</span> --latex --latex-dir=. <span class="st">&quot;</span><span class="va">$code</span><span class="st">&quot;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    <span class="kw">fi</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="kw">done</span></span></code></pre></div>
 <p>This will compile any <code>.lagda</code> file it finds that <em>doesn’t</em> have a corresponding <code>.tex</code> file (so it won’t slow things down). Then call that script on the first line of your <code>.latexmkrc</code>, like so:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">system</span>(<span class="kw">&quot;</span><span class="st">bash ./init-missing-lagda.sh</span><span class="kw">&quot;</span>);</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2">add_cus_dep(<span class="kw">'</span><span class="st">lagda</span><span class="kw">'</span>,<span class="kw">'</span><span class="st">tex</span><span class="kw">'</span>,<span class="dv">0</span>,<span class="kw">'</span><span class="st">lagda2tex</span><span class="kw">'</span>);</a>
-<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="kw">sub </span><span class="fu">lagda2tex</span> {</a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">    <span class="kw">my</span> <span class="dt">$base</span> = <span class="fu">shift</span> <span class="dt">@_</span>;</a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">    <span class="kw">return</span> <span class="fu">system</span>(<span class="kw">'</span><span class="st">agda</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex-dir=.</span><span class="kw">'</span>, <span class="kw">&quot;</span><span class="dt">$base</span><span class="st">.lagda</span><span class="kw">&quot;</span>);</a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">}</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode perl"><code class="sourceCode perl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="fu">system</span>(<span class="kw">&quot;</span><span class="st">bash ./init-missing-lagda.sh</span><span class="kw">&quot;</span>);</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>add_cus_dep(<span class="kw">'</span><span class="st">lagda</span><span class="kw">'</span>,<span class="kw">'</span><span class="st">tex</span><span class="kw">'</span>,<span class="dv">0</span>,<span class="kw">'</span><span class="st">lagda2tex</span><span class="kw">'</span>);</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="kw">sub </span><span class="fu">lagda2tex</span> {</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    <span class="kw">my</span> <span class="dt">$base</span> = <span class="fu">shift</span> <span class="dt">@_</span>;</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">system</span>(<span class="kw">'</span><span class="st">agda</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex</span><span class="kw">'</span>, <span class="kw">'</span><span class="st">--latex-dir=.</span><span class="kw">'</span>, <span class="kw">&quot;</span><span class="dt">$base</span><span class="st">.lagda</span><span class="kw">&quot;</span>);</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>}</span></code></pre></div>
 <h1 id="flags-for-debugging">Flags for Debugging</h1>
 <p>There are a number of undocumented flags you can pass to Agda which are absolutely invaluable when it comes to debugging. One of them <a href="http://oleg.fi/gists/posts/2018-08-29-agda-termination-checker.html">can tell you more about termination checking</a>, another reports on type checking (<code>tc</code>), another for profiling (<code>profile</code>), and so on. Set the verbosity level (<code>agda -v 100</code>) to get more or less info.</p>
 <h1 id="type-checking-order">Type Checking Order</h1>
 <p>Agda does type checking from left to right. This isn’t always desired: as an example, if we want to annotate a value with its type, we can use the following function:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb7-1" data-line-number="1">the <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">→</span> A <span class="ot">→</span> A</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">the <span class="ot">_</span> x <span class="ot">=</span> x</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">example <span class="ot">:</span> <span class="ot">_</span></a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">example <span class="ot">=</span> the ℕ <span class="dv">3</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>the <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">)</span> <span class="ot">→</span> A <span class="ot">→</span> A</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>the <span class="ot">_</span> x <span class="ot">=</span> x</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>example <span class="ot">:</span> <span class="ot">_</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>example <span class="ot">=</span> the ℕ <span class="dv">3</span></span></code></pre></div>
 <p>Coming from Haskell, though, this is the wrong way around. We usually prefer to write something like <code>3 :: Int</code>. We can’t write that as a simple function in Agda, though, so we instead use a syntax declaration:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">syntax</span> the ty x <span class="ot">=</span> x ∷ ty</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">example <span class="ot">:</span> <span class="ot">_</span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">example <span class="ot">=</span> <span class="dv">3</span> ∷ ℕ</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">syntax</span> the ty x <span class="ot">=</span> x ∷ ty</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>example <span class="ot">:</span> <span class="ot">_</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>example <span class="ot">=</span> <span class="dv">3</span> ∷ ℕ</span></code></pre></div>
 <p>Changing the order of type checking can also <a href="https://github.com/agda/agda-stdlib/issues/622#issue-411010875">speed up typechecking in some cases</a>. There’s more information about syntax declarations in <a href="https://agda.readthedocs.io/en/latest/language/syntax-declarations.html">Agda’s documentation</a>.</p>
 
         </div>

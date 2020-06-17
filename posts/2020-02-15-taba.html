@@ -30,50 +30,50 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
     
 </div>
 
 <p>Just a short one again today!</p>
-<p>There’s an <a href="https://www.youtube.com/watch?v=u_OsUlwkmBQ">excellent talk</a> by Kenneth Foner at Compose from 2016 which goes through a paper by <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005">2005</a>)</span> called “There and Back Again” (or TABA). You should watch the talk and read the paper if you’re in any way excited by the weird and wonderful algorithms we use in functional languages to do simple things like reversing a list.</p>
+<p>There’s an <a href="https://www.youtube.com/watch?v=u_OsUlwkmBQ">excellent talk</a> by Kenneth Foner at Compose from 2016 which goes through a paper by <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005" role="doc-biblioref">2005</a>)</span> called “There and Back Again” (or TABA). You should watch the talk and read the paper if you’re in any way excited by the weird and wonderful algorithms we use in functional languages to do simple things like reversing a list.</p>
 <p>The function focused on in the paper is one which does the following:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">zipRev xs ys <span class="fu">=</span> zip xs (reverse ys)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">zip</span> xs (<span class="fu">reverse</span> ys)</span></code></pre></div>
 <p>But does it in one pass, <em>without</em> reversing the second list. It uses a not-insignificant bit of cleverness to do it, but you can actually arrive at the same solution in a pretty straightforward way by aggressively converting everything you can to a fold. The result is the following:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">zipRev xs ys <span class="fu">=</span> foldl f b ys xs</a>
-<a class="sourceLine" id="cb2-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb2-4" data-line-number="4">    b _ <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5">    f k y (x<span class="fu">:</span>xs) <span class="fu">=</span> (x,y) <span class="fu">:</span> k xs</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldl</span> f b ys xs</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    b _ <span class="ot">=</span> []</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    f k y (x<span class="op">:</span>xs) <span class="ot">=</span> (x,y) <span class="op">:</span> k xs</span></code></pre></div>
 <p>I have written a little more on this function and the general technique <a href="2019-05-08-list-manipulation-tricks.html#there-and-back-again">before</a>.</p>
 <p>The talk goes through the same stuff, but takes a turn then to proving the function total: our version above won’t work correctly if the lists don’t have the same length, so it would be nice to provide that guarantee in the types somehow. Directly translating the version from the TABA paper into one which uses length-indexed vectors will require some nasty, expensive proofs, though, which end up making the whole function quadratic. The solution in the talk is to call out to an external solver which gives some extremely slick proofs (and a very nice interface). However, yesterday I realised you needn’t use a solver at all: you can type the Haskell version just fine, and you don’t even need the fanciest of type-level features.</p>
 <p>As ever, the solution is another fold. To demonstrate this rather short solution, we’ll first need the regular toolbox of types:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Nat</span> <span class="fu">=</span> <span class="dt">Z</span> <span class="fu">|</span> <span class="dt">S</span> <span class="dt">Nat</span></a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">data</span> <span class="dt">Vec</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">  <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Vec</span> a <span class="dt">Z</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="ot">  (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a (<span class="dt">S</span> n)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Vec</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  <span class="dt">Nil</span><span class="ot"> ::</span> <span class="dt">Vec</span> a <span class="dt">Z</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ot">  (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a (<span class="dt">S</span> n)</span></code></pre></div>
 <p>And now we will write a length-indexed left fold on this vector. The key trick here is that the type passed in the recursive call changes, by composition:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">newtype</span> (<span class="fu">:.:</span>) (<span class="ot">f ::</span> b <span class="ot">-&gt;</span> <span class="dt">Type</span>) (<span class="ot">g ::</span> a <span class="ot">-&gt;</span> b) (<span class="ot">x ::</span> a) <span class="fu">=</span> <span class="dt">Comp</span> {<span class="ot"> unComp ::</span> f (g x) }</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">newtype</span> (<span class="op">:.:</span>) (<span class="ot">f ::</span> b <span class="ot">-&gt;</span> <span class="dt">Type</span>) (<span class="ot">g ::</span> a <span class="ot">-&gt;</span> b) (<span class="ot">x ::</span> a) <span class="ot">=</span> <span class="dt">Comp</span> {<span class="ot"> unComp ::</span> f (g x) }</span></code></pre></div>
 <p>Safe coercions will let us use the above type safely without a performance hit, resulting in the following linear-time function:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="ot">foldlVec ::</span> forall a b n<span class="fu">.</span> (forall m<span class="fu">.</span> a <span class="ot">-&gt;</span> b m <span class="ot">-&gt;</span> b (<span class="dt">S</span> m)) <span class="ot">-&gt;</span> b <span class="dt">Z</span> <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> b n</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">foldlVec f b <span class="dt">Nil</span> <span class="fu">=</span> b</a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">foldlVec f b (x <span class="fu">:-</span> xs) <span class="fu">=</span> unComp (foldlVec (c f) (<span class="dt">Comp</span> (f x b)) xs)</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb5-5" data-line-number="5"><span class="ot">    c ::</span> (a <span class="ot">-&gt;</span> b (<span class="dt">S</span> m) <span class="ot">-&gt;</span> b (<span class="dt">S</span> (<span class="dt">S</span> m))) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> (b <span class="fu">:.:</span> <span class="dt">S</span>) m <span class="ot">-&gt;</span> (b <span class="fu">:.:</span> <span class="dt">S</span>) (<span class="dt">S</span> m))</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">    c <span class="fu">=</span> coerce</a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">    <span class="ot">{-# INLINE c #-}</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">foldlVec ::</span> <span class="kw">forall</span> a b n<span class="op">.</span> (<span class="kw">forall</span> m<span class="op">.</span> a <span class="ot">-&gt;</span> b m <span class="ot">-&gt;</span> b (<span class="dt">S</span> m)) <span class="ot">-&gt;</span> b <span class="dt">Z</span> <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> b n</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>foldlVec f b <span class="dt">Nil</span> <span class="ot">=</span> b</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>foldlVec f b (x <span class="op">:-</span> xs) <span class="ot">=</span> unComp (foldlVec (c f) (<span class="dt">Comp</span> (f x b)) xs)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="ot">    c ::</span> (a <span class="ot">-&gt;</span> b (<span class="dt">S</span> m) <span class="ot">-&gt;</span> b (<span class="dt">S</span> (<span class="dt">S</span> m))) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> (b <span class="op">:.:</span> <span class="dt">S</span>) m <span class="ot">-&gt;</span> (b <span class="op">:.:</span> <span class="dt">S</span>) (<span class="dt">S</span> m))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    c <span class="ot">=</span> coerce</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    <span class="ot">{-# INLINE c #-}</span></span></code></pre></div>
 <p>Now, to write the reversing zip, we need another newtype to put the parameter in the right place, but it is straightforward other than that.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">VecCont</span> a b n <span class="fu">=</span> <span class="dt">VecCont</span> {<span class="ot"> runVecCont ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n }</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb6-3" data-line-number="3"><span class="ot">revZip ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> b n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n</a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">revZip <span class="fu">=</span> flip <span class="fu">$</span> runVecCont <span class="fu">.</span> </a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">  foldlVec</a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">      (\y k <span class="ot">-&gt;</span> <span class="dt">VecCont</span> (\(x <span class="fu">:-</span> xs) <span class="ot">-&gt;</span> (x,y) <span class="fu">:-</span> runVecCont k xs))</a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">      (<span class="dt">VecCont</span> (const <span class="dt">Nil</span>))</a></code></pre></div>
-<div id="refs" class="references">
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">VecCont</span> a b n <span class="ot">=</span> <span class="dt">VecCont</span> {<span class="ot"> runVecCont ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n }</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="ot">revZip ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> b n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>revZip <span class="ot">=</span> <span class="fu">flip</span> <span class="op">$</span> runVecCont <span class="op">.</span> </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  foldlVec</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>      (\y k <span class="ot">-&gt;</span> <span class="dt">VecCont</span> (\(x <span class="op">:-</span> xs) <span class="ot">-&gt;</span> (x,y) <span class="op">:-</span> runVecCont k xs))</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>      (<span class="dt">VecCont</span> (<span class="fu">const</span> <span class="dt">Nil</span>))</span></code></pre></div>
+<div id="refs" class="references hanging-indent" role="doc-bibliography">
 <div id="ref-danvy_there_2005">
-<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869" class="uri">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
+<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
 </div>
 </div>
 

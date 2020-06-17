@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
     
 </div>
 
@@ -45,44 +45,44 @@
  │ ┌7┤
  └4┤ └12
    └8</code></pre>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">module</span> <span class="dt">TreeDrawing</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb2-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw">import</span> <span class="dt">Data.Tree</span> (<span class="dt">Tree</span>(..))</a>
-<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw">import</span> <span class="dt">Data.List</span> (intercalate)</a>
-<a class="sourceLine" id="cb2-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb2-6" data-line-number="6"><span class="ot">drawTree ::</span> <span class="dt">Tree</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></a>
-<a class="sourceLine" id="cb2-7" data-line-number="7">drawTree tr <span class="fu">=</span> (unlines <span class="fu">.</span> filter content <span class="fu">.</span> flatten) (foldr go undefined maxLengths withLength)</a>
-<a class="sourceLine" id="cb2-8" data-line-number="8">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb2-9" data-line-number="9">    withLength <span class="fu">=</span> fmap (\x <span class="ot">-&gt;</span> (length x, x)) tr</a>
-<a class="sourceLine" id="cb2-10" data-line-number="10">    maxLengths <span class="fu">=</span> lwe withLength (repeat <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb2-11" data-line-number="11">    lwe (<span class="dt">Node</span> x xs) (q<span class="fu">:</span>qs) <span class="fu">=</span> max (fst x) q <span class="fu">:</span> foldr lwe qs xs</a>
-<a class="sourceLine" id="cb2-12" data-line-number="12">    </a>
-<a class="sourceLine" id="cb2-13" data-line-number="13">    content <span class="fu">=</span> any (<span class="ot">`notElem`</span> <span class="st">&quot; │&quot;</span>)</a>
-<a class="sourceLine" id="cb2-14" data-line-number="14">    flatten (ls,x,rs) <span class="fu">=</span> ls <span class="fu">++</span> [x] <span class="fu">++</span> rs</a>
-<a class="sourceLine" id="cb2-15" data-line-number="15">    mapZipper lf f rf (ls,x,rs) <span class="fu">=</span> (map lf ls, f x, map rf rs)</a>
-<a class="sourceLine" id="cb2-16" data-line-number="16">    toZipper xs <span class="fu">=</span> <span class="kw">case</span> splitAt (length xs <span class="ot">`div`</span> <span class="dv">2</span>) xs <span class="kw">of</span> (ls,x<span class="fu">:</span>rs) <span class="ot">-&gt;</span> (ls,x,rs)</a>
-<a class="sourceLine" id="cb2-17" data-line-number="17">    </a>
-<a class="sourceLine" id="cb2-18" data-line-number="18">    go m ls (<span class="dt">Node</span> (l,x) []) <span class="fu">=</span> ([],replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x,[])</a>
-<a class="sourceLine" id="cb2-19" data-line-number="19">    go m ls (<span class="dt">Node</span> (l,x) [y]) <span class="fu">=</span> mapZipper pad link pad (ls y)</a>
-<a class="sourceLine" id="cb2-20" data-line-number="20">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb2-21" data-line-number="21">        padding <span class="fu">=</span> m <span class="fu">+</span> <span class="dv">1</span></a>
-<a class="sourceLine" id="cb2-22" data-line-number="22">        pad <span class="fu">=</span> (<span class="fu">++</span>) (replicate padding <span class="ch">' '</span>)</a>
-<a class="sourceLine" id="cb2-23" data-line-number="23">        link z <span class="fu">=</span> replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x <span class="fu">++</span> <span class="st">&quot;─&quot;</span> <span class="fu">++</span> z</a>
-<a class="sourceLine" id="cb2-24" data-line-number="24">    go m ls (<span class="dt">Node</span> (l,x') xs) <span class="fu">=</span> mapZipper pad link pad (toZipper (intercalate [<span class="st">&quot;│&quot;</span>] ([ysh] <span class="fu">++</span> ysm <span class="fu">++</span> [ysl])))</a>
-<a class="sourceLine" id="cb2-25" data-line-number="25">      <span class="kw">where</span> </a>
-<a class="sourceLine" id="cb2-26" data-line-number="26">        x <span class="fu">=</span> replicate (m<span class="fu">-</span>l) <span class="ch">'─'</span> <span class="fu">++</span> x'</a>
-<a class="sourceLine" id="cb2-27" data-line-number="27">        ys <span class="fu">=</span> map ls xs</a>
-<a class="sourceLine" id="cb2-28" data-line-number="28">        </a>
-<a class="sourceLine" id="cb2-29" data-line-number="29">        ysh <span class="fu">=</span> flatten (mapZipper (<span class="ch">' '</span><span class="fu">:</span>) (<span class="ch">'┌'</span> <span class="fu">:</span>) (<span class="ch">'│'</span><span class="fu">:</span>) (head ys))</a>
-<a class="sourceLine" id="cb2-30" data-line-number="30">        ysl <span class="fu">=</span> flatten (mapZipper (<span class="ch">'│'</span><span class="fu">:</span>) (<span class="ch">'└'</span> <span class="fu">:</span>) (<span class="ch">' '</span><span class="fu">:</span>) (last ys))</a>
-<a class="sourceLine" id="cb2-31" data-line-number="31">        ysm <span class="fu">=</span> map (flatten <span class="fu">.</span> mapZipper (<span class="ch">'│'</span><span class="fu">:</span>) (<span class="ch">'├'</span><span class="fu">:</span>) (<span class="ch">'│'</span><span class="fu">:</span>)) (init (tail ys))</a>
-<a class="sourceLine" id="cb2-32" data-line-number="32">        </a>
-<a class="sourceLine" id="cb2-33" data-line-number="33">        pad <span class="fu">=</span> (<span class="fu">++</span>) (replicate m <span class="ch">' '</span>)</a>
-<a class="sourceLine" id="cb2-34" data-line-number="34">        </a>
-<a class="sourceLine" id="cb2-35" data-line-number="35">        link (<span class="ch">'│'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┤&quot;</span> <span class="fu">++</span> zs</a>
-<a class="sourceLine" id="cb2-36" data-line-number="36">        link (<span class="ch">'├'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┼&quot;</span> <span class="fu">++</span> zs</a>
-<a class="sourceLine" id="cb2-37" data-line-number="37">        link (<span class="ch">'┌'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┬&quot;</span> <span class="fu">++</span> zs</a>
-<a class="sourceLine" id="cb2-38" data-line-number="38">        link (<span class="ch">'└'</span><span class="fu">:</span>zs) <span class="fu">=</span> x <span class="fu">++</span> <span class="st">&quot;┴&quot;</span> <span class="fu">++</span> zs</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">TreeDrawing</span> <span class="kw">where</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Tree</span> (<span class="dt">Tree</span>(..))</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List</span> (intercalate)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a><span class="ot">drawTree ::</span> <span class="dt">Tree</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>drawTree tr <span class="ot">=</span> (<span class="fu">unlines</span> <span class="op">.</span> <span class="fu">filter</span> content <span class="op">.</span> flatten) (<span class="fu">foldr</span> go <span class="fu">undefined</span> maxLengths withLength)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    withLength <span class="ot">=</span> <span class="fu">fmap</span> (\x <span class="ot">-&gt;</span> (<span class="fu">length</span> x, x)) tr</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>    maxLengths <span class="ot">=</span> lwe withLength (<span class="fu">repeat</span> <span class="dv">0</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>    lwe (<span class="dt">Node</span> x xs) (q<span class="op">:</span>qs) <span class="ot">=</span> <span class="fu">max</span> (<span class="fu">fst</span> x) q <span class="op">:</span> <span class="fu">foldr</span> lwe qs xs</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>    </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>    content <span class="ot">=</span> <span class="fu">any</span> (<span class="ot">`notElem`</span> <span class="st">&quot; │&quot;</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>    flatten (ls,x,rs) <span class="ot">=</span> ls <span class="op">++</span> [x] <span class="op">++</span> rs</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a>    mapZipper lf f rf (ls,x,rs) <span class="ot">=</span> (<span class="fu">map</span> lf ls, f x, <span class="fu">map</span> rf rs)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>    toZipper xs <span class="ot">=</span> <span class="kw">case</span> <span class="fu">splitAt</span> (<span class="fu">length</span> xs <span class="ot">`div`</span> <span class="dv">2</span>) xs <span class="kw">of</span> (ls,x<span class="op">:</span>rs) <span class="ot">-&gt;</span> (ls,x,rs)</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>    </span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a>    go m ls (<span class="dt">Node</span> (l,x) []) <span class="ot">=</span> ([],<span class="fu">replicate</span> (m<span class="op">-</span>l) <span class="ch">'─'</span> <span class="op">++</span> x,[])</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a>    go m ls (<span class="dt">Node</span> (l,x) [y]) <span class="ot">=</span> mapZipper pad link pad (ls y)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a>        padding <span class="ot">=</span> m <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>        pad <span class="ot">=</span> (<span class="op">++</span>) (<span class="fu">replicate</span> padding <span class="ch">' '</span>)</span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>        link z <span class="ot">=</span> <span class="fu">replicate</span> (m<span class="op">-</span>l) <span class="ch">'─'</span> <span class="op">++</span> x <span class="op">++</span> <span class="st">&quot;─&quot;</span> <span class="op">++</span> z</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a>    go m ls (<span class="dt">Node</span> (l,x') xs) <span class="ot">=</span> mapZipper pad link pad (toZipper (intercalate [<span class="st">&quot;│&quot;</span>] ([ysh] <span class="op">++</span> ysm <span class="op">++</span> [ysl])))</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a>      <span class="kw">where</span> </span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a>        x <span class="ot">=</span> <span class="fu">replicate</span> (m<span class="op">-</span>l) <span class="ch">'─'</span> <span class="op">++</span> x'</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a>        ys <span class="ot">=</span> <span class="fu">map</span> ls xs</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>        </span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a>        ysh <span class="ot">=</span> flatten (mapZipper (<span class="ch">' '</span><span class="op">:</span>) (<span class="ch">'┌'</span> <span class="op">:</span>) (<span class="ch">'│'</span><span class="op">:</span>) (<span class="fu">head</span> ys))</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a>        ysl <span class="ot">=</span> flatten (mapZipper (<span class="ch">'│'</span><span class="op">:</span>) (<span class="ch">'└'</span> <span class="op">:</span>) (<span class="ch">' '</span><span class="op">:</span>) (<span class="fu">last</span> ys))</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true"></a>        ysm <span class="ot">=</span> <span class="fu">map</span> (flatten <span class="op">.</span> mapZipper (<span class="ch">'│'</span><span class="op">:</span>) (<span class="ch">'├'</span><span class="op">:</span>) (<span class="ch">'│'</span><span class="op">:</span>)) (<span class="fu">init</span> (<span class="fu">tail</span> ys))</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true"></a>        </span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true"></a>        pad <span class="ot">=</span> (<span class="op">++</span>) (<span class="fu">replicate</span> m <span class="ch">' '</span>)</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true"></a>        </span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true"></a>        link (<span class="ch">'│'</span><span class="op">:</span>zs) <span class="ot">=</span> x <span class="op">++</span> <span class="st">&quot;┤&quot;</span> <span class="op">++</span> zs</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true"></a>        link (<span class="ch">'├'</span><span class="op">:</span>zs) <span class="ot">=</span> x <span class="op">++</span> <span class="st">&quot;┼&quot;</span> <span class="op">++</span> zs</span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true"></a>        link (<span class="ch">'┌'</span><span class="op">:</span>zs) <span class="ot">=</span> x <span class="op">++</span> <span class="st">&quot;┬&quot;</span> <span class="op">++</span> zs</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true"></a>        link (<span class="ch">'└'</span><span class="op">:</span>zs) <span class="ot">=</span> x <span class="op">++</span> <span class="st">&quot;┴&quot;</span> <span class="op">++</span> zs</span></code></pre></div>
 
         </div>
         <div id="footer">

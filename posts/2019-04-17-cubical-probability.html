@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Agda.html">Agda</a>, <a href="../tags/Probability.html">Probability</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>, <a title="All pages tagged 'Probability'." href="../tags/Probability.html">Probability</a>
     
 </div>
 
@@ -117,10 +117,10 @@ Now, when we write functions, we have to prove that those functions themselves a
 <p>With the preliminary stuff out of the way, let’s get on to the type I wanted to talk about:</p>
 <h1 id="probability">Probability</h1>
 <p>First things first, let’s remember the classic definition of the probability monad:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="fu">=</span> <span class="dt">Prob</span> {<span class="ot"> runProb ::</span> [(a, <span class="dt">Rational</span>)] }</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="ot">=</span> <span class="dt">Prob</span> {<span class="ot"> runProb ::</span> [(a, <span class="dt">Rational</span>)] }</span></code></pre></div>
 <p>Definitionally speaking, this doesn’t really represent what we’re talking about. For instance, the following two things express the same distribution, but have different representations:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="dt">Prob</span> [(<span class="dt">True</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">4</span>), (<span class="dt">True</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">4</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>)]</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="dt">Prob</span> [(<span class="dt">True</span> , <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="fu">/</span> <span class="dv">2</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="dt">Prob</span> [(<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="dt">Prob</span> [(<span class="dt">True</span> , <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span></code></pre></div>
 <p>So it’s the perfect candidate for an extra equality clause like we had above.</p>
 <p>Second, in an effort to generalise, we won’t deal specifically with <code>Rational</code>, and instead we’ll use any semiring. After all of that, we get the following definition:</p>
 <pre class="Agda"><a id="6634" class="Keyword">open</a> <a id="6639" href="../code/probability/ProbabilityModule.Semirings.html#125" class="Module">Semiring</a> <a id="6648" href="#1024" class="Bound">rng</a>

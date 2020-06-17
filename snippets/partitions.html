@@ -22,17 +22,17 @@
         <div id="content">
             <h2>Partitions of a List</h2>
 
-            <div class="sourceCode" id="cb1"><pre class="sourceCode literate haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw">module</span> <span class="dt">Partitions</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw">import</span> <span class="dt">Data.Foldable</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5"><span class="co">-- | &gt;&gt;&gt; partitions &quot;abc&quot;</span></a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"><span class="co">-- [[&quot;abc&quot;],[&quot;a&quot;,&quot;bc&quot;],[&quot;ab&quot;,&quot;c&quot;],[&quot;ac&quot;,&quot;b&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]]</span></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="ot">partitions ::</span> [a] <span class="ot">-&gt;</span> [[[a]]]</a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">partitions <span class="fu">=</span> foldrM f [] <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-9" data-line-number="9">  f x xs <span class="fu">=</span> go id xs <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">    go k [] <span class="fu">=</span> [[x] <span class="fu">:</span> k []]</a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">    go k (y<span class="fu">:</span>ys) <span class="fu">=</span> ((x<span class="fu">:</span>y) <span class="fu">:</span> k ys) <span class="fu">:</span> go (k <span class="fu">.</span> (<span class="fu">:</span>) y) ys</a></code></pre></div>
+            <div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Partitions</span> <span class="kw">where</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Foldable</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="co">-- | &gt;&gt;&gt; partitions &quot;abc&quot;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="co">-- [[&quot;abc&quot;],[&quot;a&quot;,&quot;bc&quot;],[&quot;ab&quot;,&quot;c&quot;],[&quot;ac&quot;,&quot;b&quot;],[&quot;a&quot;,&quot;b&quot;,&quot;c&quot;]]</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">partitions ::</span> [a] <span class="ot">-&gt;</span> [[[a]]]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>partitions <span class="ot">=</span> foldrM f [] <span class="kw">where</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>  f x xs <span class="ot">=</span> go <span class="fu">id</span> xs <span class="kw">where</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    go k [] <span class="ot">=</span> [[x] <span class="op">:</span> k []]</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>    go k (y<span class="op">:</span>ys) <span class="ot">=</span> ((x<span class="op">:</span>y) <span class="op">:</span> k ys) <span class="op">:</span> go (k <span class="op">.</span> (<span class="op">:</span>) y) ys</span></code></pre></div>
 
         </div>
         <div id="footer">

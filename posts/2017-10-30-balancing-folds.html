@@ -32,258 +32,258 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Folds.html">Folds</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Folds'." href="../tags/Folds.html">Folds</a>
     
 </div>
 
-<p>There are three main ways to fold things in Haskell: from the right, from the left, and from either side. Let’s look at the left vs right variants first. <code class="sourceCode haskell">foldr</code> works from the right:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1">foldr (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="dv">1</span> <span class="fu">+</span> (<span class="dv">2</span> <span class="fu">+</span> (<span class="dv">3</span> <span class="fu">+</span> <span class="dv">0</span>))</a></code></pre></div>
-<p>And <code class="sourceCode haskell">foldl</code> from the left:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1">foldl (<span class="fu">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">((<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span></a></code></pre></div>
-<p>As you’ll notice, the result of the two operations above is the same (6; although one may take much longer than the other). In fact, <em>whenever</em> the result of <code class="sourceCode haskell">foldr</code> and <code class="sourceCode haskell">foldl</code> is the same for a pair of arguments (in this case <code class="sourceCode haskell"><span class="fu">+</span></code> and <code class="sourceCode haskell"><span class="dv">0</span></code>), we say that that pair forms a <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Monoid"><code class="sourceCode haskell"><span class="dt">Monoid</span></code></a> for some type (well, there’s some extra stuff to do with <code class="sourceCode haskell"><span class="dv">0</span></code>, but I only care about associativity at the moment). In this case, the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Sum"><code class="sourceCode haskell"><span class="dt">Sum</span></code></a> monoid is formed:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Sum</span> a <span class="fu">=</span> <span class="dt">Sum</span> {<span class="ot"> getSum ::</span> a }</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb3-3" data-line-number="3"><span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Sum</span> a) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">  mempty <span class="fu">=</span> <span class="dt">Sum</span> <span class="dv">0</span></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">  mappend (<span class="dt">Sum</span> x) (<span class="dt">Sum</span> y) <span class="fu">=</span> <span class="dt">Sum</span> (x <span class="fu">+</span> y)</a></code></pre></div>
-<p>When you know that you have a monoid, you can use the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html#v:foldMap"><code class="sourceCode haskell">foldMap</code></a> function: this is the third kind of fold. It says that you don’t care which of <code class="sourceCode haskell">foldl</code> or <code class="sourceCode haskell">foldr</code> is used, so the implementer of <code class="sourceCode haskell">foldMap</code> can put the parentheses wherever they want:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1">foldMap <span class="dt">Sum</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">(<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> (<span class="dv">3</span> <span class="fu">+</span> <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3"><span class="dv">0</span> <span class="fu">+</span> ((<span class="dv">1</span> <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">((<span class="dv">0</span> <span class="fu">+</span> <span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span>) <span class="fu">+</span> <span class="dv">3</span></a></code></pre></div>
+<p>There are three main ways to fold things in Haskell: from the right, from the left, and from either side. Let’s look at the left vs right variants first. <code class="sourceCode haskell"><span class="fu">foldr</span></code> works from the right:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">2</span> <span class="op">+</span> (<span class="dv">3</span> <span class="op">+</span> <span class="dv">0</span>))</span></code></pre></div>
+<p>And <code class="sourceCode haskell"><span class="fu">foldl</span></code> from the left:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">foldl</span> (<span class="op">+</span>) <span class="dv">0</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>((<span class="dv">0</span> <span class="op">+</span> <span class="dv">1</span>) <span class="op">+</span> <span class="dv">2</span>) <span class="op">+</span> <span class="dv">3</span></span></code></pre></div>
+<p>As you’ll notice, the result of the two operations above is the same (6; although one may take much longer than the other). In fact, <em>whenever</em> the result of <code class="sourceCode haskell"><span class="fu">foldr</span></code> and <code class="sourceCode haskell"><span class="fu">foldl</span></code> is the same for a pair of arguments (in this case <code class="sourceCode haskell"><span class="op">+</span></code> and <code class="sourceCode haskell"><span class="dv">0</span></code>), we say that that pair forms a <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Monoid"><code class="sourceCode haskell"><span class="dt">Monoid</span></code></a> for some type (well, there’s some extra stuff to do with <code class="sourceCode haskell"><span class="dv">0</span></code>, but I only care about associativity at the moment). In this case, the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Monoid.html#t:Sum"><code class="sourceCode haskell"><span class="dt">Sum</span></code></a> monoid is formed:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Sum</span> a <span class="ot">=</span> <span class="dt">Sum</span> {<span class="ot"> getSum ::</span> a }</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Sum</span> a) <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  <span class="fu">mempty</span> <span class="ot">=</span> <span class="dt">Sum</span> <span class="dv">0</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>  <span class="fu">mappend</span> (<span class="dt">Sum</span> x) (<span class="dt">Sum</span> y) <span class="ot">=</span> <span class="dt">Sum</span> (x <span class="op">+</span> y)</span></code></pre></div>
+<p>When you know that you have a monoid, you can use the <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Foldable.html#v:foldMap"><code class="sourceCode haskell"><span class="fu">foldMap</span></code></a> function: this is the third kind of fold. It says that you don’t care which of <code class="sourceCode haskell"><span class="fu">foldl</span></code> or <code class="sourceCode haskell"><span class="fu">foldr</span></code> is used, so the implementer of <code class="sourceCode haskell"><span class="fu">foldMap</span></code> can put the parentheses wherever they want:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">foldMap</span> <span class="dt">Sum</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>(<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span>) <span class="op">+</span> (<span class="dv">3</span> <span class="op">+</span> <span class="dv">0</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="dv">0</span> <span class="op">+</span> ((<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span>) <span class="op">+</span> <span class="dv">3</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>((<span class="dv">0</span> <span class="op">+</span> <span class="dv">1</span>) <span class="op">+</span> <span class="dv">2</span>) <span class="op">+</span> <span class="dv">3</span></span></code></pre></div>
 <p>And we can’t tell the difference from the result. This is a pretty bare-bones introduction to folds and monoids: you won’t need to know more than that for the rest of this post, but the topic area is fascinating and deep, so don’t let me give you the impression that I’ve done anything more than scratched the surface.</p>
 <h1 id="other-ways-to-fold">Other Ways to Fold</h1>
 <p>Quite often, we <em>do</em> care about where the parentheses go. Take, for instance, a binary tree type, with values at the leaves:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Empty</span></a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">  <span class="fu">|</span> <span class="dt">Leaf</span> a</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">  <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb5-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb5-8" data-line-number="8">    show <span class="dt">Empty</span> <span class="fu">=</span> <span class="st">&quot;()&quot;</span></a>
-<a class="sourceLine" id="cb5-9" data-line-number="9">    show (<span class="dt">Leaf</span> x) <span class="fu">=</span> show x</a>
-<a class="sourceLine" id="cb5-10" data-line-number="10">    show (l <span class="fu">:*:</span> r) <span class="fu">=</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> show l <span class="fu">++</span> <span class="st">&quot;*&quot;</span> <span class="fu">++</span> show r <span class="fu">++</span> <span class="st">&quot;)&quot;</span></a></code></pre></div>
-<p>We can’t (well, shouldn’t) us <code class="sourceCode haskell">foldMap</code> here, because we would be able to tell the difference between different arrangements of parentheses:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> foldMap something [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb6-3" data-line-number="3">((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span>())) │ (()<span class="fu">*</span>((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span><span class="dv">3</span>)) │ (((()<span class="fu">*</span><span class="dv">1</span>)<span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span><span class="dv">3</span>)</a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">───────────────┼────────────────┼───────────────</a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">       ┌<span class="dv">1</span>      │      ┌()       │       ┌()</a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">      ┌┤       │      ┤         │      ┌┤</a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">      │└<span class="dv">2</span>      │      │ ┌<span class="dv">1</span>      │      │└<span class="dv">1</span></a>
-<a class="sourceLine" id="cb6-8" data-line-number="8">      ┤        │      │┌┤       │     ┌┤</a>
-<a class="sourceLine" id="cb6-9" data-line-number="9">      │┌<span class="dv">3</span>      │      ││└<span class="dv">2</span>      │     │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb6-10" data-line-number="10">      └┤       │      └┤        │     ┤</a>
-<a class="sourceLine" id="cb6-11" data-line-number="11">       └()     │       └<span class="dv">3</span>       │     └<span class="dv">3</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Empty</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Leaf</span> a</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:*:</span> <span class="dt">Tree</span> a</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    <span class="fu">show</span> <span class="dt">Empty</span> <span class="ot">=</span> <span class="st">&quot;()&quot;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    <span class="fu">show</span> (<span class="dt">Leaf</span> x) <span class="ot">=</span> <span class="fu">show</span> x</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    <span class="fu">show</span> (l <span class="op">:*:</span> r) <span class="ot">=</span> <span class="st">&quot;(&quot;</span> <span class="op">++</span> <span class="fu">show</span> l <span class="op">++</span> <span class="st">&quot;*&quot;</span> <span class="op">++</span> <span class="fu">show</span> r <span class="op">++</span> <span class="st">&quot;)&quot;</span></span></code></pre></div>
+<p>We can’t (well, shouldn’t) us <code class="sourceCode haskell"><span class="fu">foldMap</span></code> here, because we would be able to tell the difference between different arrangements of parentheses:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">foldMap</span> something [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>(<span class="dv">3</span><span class="op">*</span>())) │ (()<span class="op">*</span>((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span><span class="dv">3</span>)) │ (((()<span class="op">*</span><span class="dv">1</span>)<span class="op">*</span><span class="dv">2</span>)<span class="op">*</span><span class="dv">3</span>)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>───────────────┼────────────────┼───────────────</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>       ┌<span class="dv">1</span>      │      ┌()       │       ┌()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>      ┌┤       │      ┤         │      ┌┤</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>      │└<span class="dv">2</span>      │      │ ┌<span class="dv">1</span>      │      │└<span class="dv">1</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>      ┤        │      │┌┤       │     ┌┤</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>      │┌<span class="dv">3</span>      │      ││└<span class="dv">2</span>      │     │└<span class="dv">2</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>      └┤       │      └┤        │     ┤</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>       └()     │       └<span class="dv">3</span>       │     └<span class="dv">3</span></span></code></pre></div>
 <p>So we use one of the folds which lets us choose the arrangements of parentheses:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (foldr (<span class="fu">:*:</span>) <span class="dt">Empty</span> <span class="fu">.</span> map <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">(<span class="dv">1</span><span class="fu">*</span>(<span class="dv">2</span><span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span>(<span class="dv">4</span><span class="fu">*</span>(<span class="dv">5</span><span class="fu">*</span>(<span class="dv">6</span><span class="fu">*</span>()))))))</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">     ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">    ┌┤</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">    │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb7-6" data-line-number="6">   ┌┤</a>
-<a class="sourceLine" id="cb7-7" data-line-number="7">   │└<span class="dv">3</span></a>
-<a class="sourceLine" id="cb7-8" data-line-number="8">  ┌┤</a>
-<a class="sourceLine" id="cb7-9" data-line-number="9">  │└<span class="dv">4</span></a>
-<a class="sourceLine" id="cb7-10" data-line-number="10"> ┌┤</a>
-<a class="sourceLine" id="cb7-11" data-line-number="11"> │└<span class="dv">5</span></a>
-<a class="sourceLine" id="cb7-12" data-line-number="12">┌┤</a>
-<a class="sourceLine" id="cb7-13" data-line-number="13">│└<span class="dv">6</span></a>
-<a class="sourceLine" id="cb7-14" data-line-number="14">┤</a>
-<a class="sourceLine" id="cb7-15" data-line-number="15">└()</a>
-<a class="sourceLine" id="cb7-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb7-17" data-line-number="17"><span class="fu">&gt;&gt;&gt;</span> (foldl (<span class="fu">:*:</span>) <span class="dt">Empty</span> <span class="fu">.</span> map <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</a>
-<a class="sourceLine" id="cb7-18" data-line-number="18">((((((()<span class="fu">*</span><span class="dv">1</span>)<span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span><span class="dv">3</span>)<span class="fu">*</span><span class="dv">4</span>)<span class="fu">*</span><span class="dv">5</span>)<span class="fu">*</span><span class="dv">6</span>)</a>
-<a class="sourceLine" id="cb7-19" data-line-number="19">┌()</a>
-<a class="sourceLine" id="cb7-20" data-line-number="20">┤</a>
-<a class="sourceLine" id="cb7-21" data-line-number="21">│┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb7-22" data-line-number="22">└┤</a>
-<a class="sourceLine" id="cb7-23" data-line-number="23"> │┌<span class="dv">2</span></a>
-<a class="sourceLine" id="cb7-24" data-line-number="24"> └┤</a>
-<a class="sourceLine" id="cb7-25" data-line-number="25">  │┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb7-26" data-line-number="26">  └┤</a>
-<a class="sourceLine" id="cb7-27" data-line-number="27">   │┌<span class="dv">4</span></a>
-<a class="sourceLine" id="cb7-28" data-line-number="28">   └┤</a>
-<a class="sourceLine" id="cb7-29" data-line-number="29">    │┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb7-30" data-line-number="30">    └┤</a>
-<a class="sourceLine" id="cb7-31" data-line-number="31">     └<span class="dv">6</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">foldr</span> (<span class="op">:*:</span>) <span class="dt">Empty</span> <span class="op">.</span> <span class="fu">map</span> <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>(<span class="dv">1</span><span class="op">*</span>(<span class="dv">2</span><span class="op">*</span>(<span class="dv">3</span><span class="op">*</span>(<span class="dv">4</span><span class="op">*</span>(<span class="dv">5</span><span class="op">*</span>(<span class="dv">6</span><span class="op">*</span>()))))))</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>     ┌<span class="dv">1</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    ┌┤</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    │└<span class="dv">2</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>   ┌┤</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>   │└<span class="dv">3</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>  ┌┤</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>  │└<span class="dv">4</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a> ┌┤</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a> │└<span class="dv">5</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>┌┤</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a>│└<span class="dv">6</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a>┤</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true"></a>└()</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true"></a></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">foldl</span> (<span class="op">:*:</span>) <span class="dt">Empty</span> <span class="op">.</span> <span class="fu">map</span> <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true"></a>((((((()<span class="op">*</span><span class="dv">1</span>)<span class="op">*</span><span class="dv">2</span>)<span class="op">*</span><span class="dv">3</span>)<span class="op">*</span><span class="dv">4</span>)<span class="op">*</span><span class="dv">5</span>)<span class="op">*</span><span class="dv">6</span>)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true"></a>┌()</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true"></a>┤</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true"></a>│┌<span class="dv">1</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true"></a>└┤</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true"></a> │┌<span class="dv">2</span></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true"></a> └┤</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true"></a>  │┌<span class="dv">3</span></span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true"></a>  └┤</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true"></a>   │┌<span class="dv">4</span></span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true"></a>   └┤</span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true"></a>    │┌<span class="dv">5</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true"></a>    └┤</span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true"></a>     └<span class="dv">6</span></span></code></pre></div>
 <p>The issue is that neither of the trees generated are necessarily what we want: often, we want something more <em>balanced</em>.</p>
 <h2 id="treefold">TreeFold</h2>
 <p>To try and find a more balanced fold, let’s (for now) assume we’re always going to get non-empty input. This will let us simplify the <code class="sourceCode haskell"><span class="dt">Tree</span></code> type a little, to:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Leaf</span> a</a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="fu">|</span> <span class="dt">Tree</span> a <span class="fu">:*:</span> <span class="dt">Tree</span> a</a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">  <span class="kw">deriving</span> <span class="dt">Foldable</span></a>
-<a class="sourceLine" id="cb8-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span></a>
-<a class="sourceLine" id="cb8-7" data-line-number="7">         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb8-8" data-line-number="8">    show (<span class="dt">Leaf</span> x) <span class="fu">=</span> show x</a>
-<a class="sourceLine" id="cb8-9" data-line-number="9">    show (l <span class="fu">:*:</span> r) <span class="fu">=</span> <span class="st">&quot;(&quot;</span> <span class="fu">++</span> show l <span class="fu">++</span> <span class="st">&quot;*&quot;</span> <span class="fu">++</span> show r <span class="fu">++</span> <span class="st">&quot;)&quot;</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Leaf</span> a</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:*:</span> <span class="dt">Tree</span> a</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>  <span class="kw">deriving</span> <span class="dt">Foldable</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>         <span class="dt">Show</span> (<span class="dt">Tree</span> a) <span class="kw">where</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>    <span class="fu">show</span> (<span class="dt">Leaf</span> x) <span class="ot">=</span> <span class="fu">show</span> x</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    <span class="fu">show</span> (l <span class="op">:*:</span> r) <span class="ot">=</span> <span class="st">&quot;(&quot;</span> <span class="op">++</span> <span class="fu">show</span> l <span class="op">++</span> <span class="st">&quot;*&quot;</span> <span class="op">++</span> <span class="fu">show</span> r <span class="op">++</span> <span class="st">&quot;)&quot;</span></span></code></pre></div>
 <p>Then, we can use Jon Fairbairn’s fold described in <a href="http://www.mail-archive.com/haskell@haskell.org/msg01788.html">this</a> email, adapted a bit for our non-empty input:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="kw">import</span> <span class="dt">Data.List.NonEmpty</span> (<span class="dt">NonEmpty</span>(..))</a>
-<a class="sourceLine" id="cb9-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb9-3" data-line-number="3"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb9-4" data-line-number="4">treeFold f <span class="fu">=</span> go</a>
-<a class="sourceLine" id="cb9-5" data-line-number="5">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb9-6" data-line-number="6">    go (x <span class="fu">:|</span> []) <span class="fu">=</span> x</a>
-<a class="sourceLine" id="cb9-7" data-line-number="7">    go (a <span class="fu">:|</span> b<span class="fu">:</span>l) <span class="fu">=</span> go (f a b <span class="fu">:|</span> pairMap l)</a>
-<a class="sourceLine" id="cb9-8" data-line-number="8">    pairMap (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap rest</a>
-<a class="sourceLine" id="cb9-9" data-line-number="9">    pairMap xs <span class="fu">=</span> xs</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.List.NonEmpty</span> (<span class="dt">NonEmpty</span>(..))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>treeFold f <span class="ot">=</span> go</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>    go (x <span class="op">:|</span> []) <span class="ot">=</span> x</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>    go (a <span class="op">:|</span> b<span class="op">:</span>l) <span class="ot">=</span> go (f a b <span class="op">:|</span> pairMap l)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    pairMap (x<span class="op">:</span>y<span class="op">:</span>rest) <span class="ot">=</span> f x y <span class="op">:</span> pairMap rest</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>    pairMap xs <span class="ot">=</span> xs</span></code></pre></div>
 <p>There are two parts to this function: <code class="sourceCode haskell">pairMap</code> and the <code class="sourceCode haskell">go</code> helper. <code class="sourceCode haskell">pairMap</code> combines adjacent elements in the list using the combining function. As a top-level function it might look like this:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1">pairMap f (x<span class="fu">:</span>y<span class="fu">:</span>rest) <span class="fu">=</span> f x y <span class="fu">:</span> pairMap f rest</a>
-<a class="sourceLine" id="cb10-2" data-line-number="2">pairMap f xs <span class="fu">=</span> xs</a>
-<a class="sourceLine" id="cb10-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb10-4" data-line-number="4">pairMap (<span class="fu">++</span>) [<span class="st">&quot;a&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;c&quot;</span>,<span class="st">&quot;d&quot;</span>,<span class="st">&quot;e&quot;</span>]</a>
-<a class="sourceLine" id="cb10-5" data-line-number="5"><span class="co">-- [&quot;ab&quot;,&quot;cd&quot;,&quot;e&quot;]</span></a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>pairMap f (x<span class="op">:</span>y<span class="op">:</span>rest) <span class="ot">=</span> f x y <span class="op">:</span> pairMap f rest</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>pairMap f xs <span class="ot">=</span> xs</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>pairMap (<span class="op">++</span>) [<span class="st">&quot;a&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;c&quot;</span>,<span class="st">&quot;d&quot;</span>,<span class="st">&quot;e&quot;</span>]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="co">-- [&quot;ab&quot;,&quot;cd&quot;,&quot;e&quot;]</span></span></code></pre></div>
 <p>As you can see, it leaves any leftovers untouched at the end of the list.</p>
-<p>The <code class="sourceCode haskell">go</code> helper applies <code class="sourceCode haskell">pairMap</code> repeatedly to the list until it has only one element. This gives us much more balanced results that <code class="sourceCode haskell">foldl</code> or <code class="sourceCode haskell">foldr</code> (turn on <code class="sourceCode haskell"><span class="fu">-</span><span class="dt">XOverloadedLists</span></code> to write non-empty lists using this syntax):</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">(((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span><span class="dv">4</span>))<span class="fu">*</span>(<span class="dv">5</span><span class="fu">*</span><span class="dv">6</span>))</a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">  ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb11-4" data-line-number="4"> ┌┤</a>
-<a class="sourceLine" id="cb11-5" data-line-number="5"> │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">┌┤</a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">││┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb11-8" data-line-number="8">│└┤</a>
-<a class="sourceLine" id="cb11-9" data-line-number="9">│ └<span class="dv">4</span></a>
-<a class="sourceLine" id="cb11-10" data-line-number="10">┤</a>
-<a class="sourceLine" id="cb11-11" data-line-number="11">│┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb11-12" data-line-number="12">└┤</a>
-<a class="sourceLine" id="cb11-13" data-line-number="13"> └<span class="dv">6</span></a>
-<a class="sourceLine" id="cb11-14" data-line-number="14"></a>
-<a class="sourceLine" id="cb11-15" data-line-number="15"><span class="fu">&gt;&gt;&gt;</span> (treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]</a>
-<a class="sourceLine" id="cb11-16" data-line-number="16">(((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span><span class="dv">4</span>))<span class="fu">*</span>((<span class="dv">5</span><span class="fu">*</span><span class="dv">6</span>)<span class="fu">*</span>(<span class="dv">7</span><span class="fu">*</span><span class="dv">8</span>)))</a>
-<a class="sourceLine" id="cb11-17" data-line-number="17">  ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb11-18" data-line-number="18"> ┌┤</a>
-<a class="sourceLine" id="cb11-19" data-line-number="19"> │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb11-20" data-line-number="20">┌┤</a>
-<a class="sourceLine" id="cb11-21" data-line-number="21">││┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb11-22" data-line-number="22">│└┤</a>
-<a class="sourceLine" id="cb11-23" data-line-number="23">│ └<span class="dv">4</span></a>
-<a class="sourceLine" id="cb11-24" data-line-number="24">┤</a>
-<a class="sourceLine" id="cb11-25" data-line-number="25">│ ┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb11-26" data-line-number="26">│┌┤</a>
-<a class="sourceLine" id="cb11-27" data-line-number="27">││└<span class="dv">6</span></a>
-<a class="sourceLine" id="cb11-28" data-line-number="28">└┤</a>
-<a class="sourceLine" id="cb11-29" data-line-number="29"> │┌<span class="dv">7</span></a>
-<a class="sourceLine" id="cb11-30" data-line-number="30"> └┤</a>
-<a class="sourceLine" id="cb11-31" data-line-number="31">  └<span class="dv">8</span></a></code></pre></div>
+<p>The <code class="sourceCode haskell">go</code> helper applies <code class="sourceCode haskell">pairMap</code> repeatedly to the list until it has only one element. This gives us much more balanced results that <code class="sourceCode haskell"><span class="fu">foldl</span></code> or <code class="sourceCode haskell"><span class="fu">foldr</span></code> (turn on <code class="sourceCode haskell"><span class="op">-</span><span class="dt">XOverloadedLists</span></code> to write non-empty lists using this syntax):</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (treeFold (<span class="op">:*:</span>) <span class="op">.</span> <span class="fu">fmap</span> <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>(((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>(<span class="dv">3</span><span class="op">*</span><span class="dv">4</span>))<span class="op">*</span>(<span class="dv">5</span><span class="op">*</span><span class="dv">6</span>))</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  ┌<span class="dv">1</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a> ┌┤</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a> │└<span class="dv">2</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>┌┤</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>││┌<span class="dv">3</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a>│└┤</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>│ └<span class="dv">4</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>┤</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>│┌<span class="dv">5</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a>└┤</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true"></a> └<span class="dv">6</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (treeFold (<span class="op">:*:</span>) <span class="op">.</span> <span class="fu">fmap</span> <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>]</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true"></a>(((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>(<span class="dv">3</span><span class="op">*</span><span class="dv">4</span>))<span class="op">*</span>((<span class="dv">5</span><span class="op">*</span><span class="dv">6</span>)<span class="op">*</span>(<span class="dv">7</span><span class="op">*</span><span class="dv">8</span>)))</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true"></a>  ┌<span class="dv">1</span></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true"></a> ┌┤</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true"></a> │└<span class="dv">2</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true"></a>┌┤</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true"></a>││┌<span class="dv">3</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true"></a>│└┤</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true"></a>│ └<span class="dv">4</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true"></a>┤</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true"></a>│ ┌<span class="dv">5</span></span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true"></a>│┌┤</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true"></a>││└<span class="dv">6</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true"></a>└┤</span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true"></a> │┌<span class="dv">7</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true"></a> └┤</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true"></a>  └<span class="dv">8</span></span></code></pre></div>
 <p>However, there are still cases where one branch will be much larger than its sibling. The fold fills a balanced binary tree from the left, but any leftover elements are put at the top level. In other words:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]</a>
-<a class="sourceLine" id="cb12-2" data-line-number="2">((((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>(<span class="dv">3</span><span class="fu">*</span><span class="dv">4</span>))<span class="fu">*</span>((<span class="dv">5</span><span class="fu">*</span><span class="dv">6</span>)<span class="fu">*</span>(<span class="dv">7</span><span class="fu">*</span><span class="dv">8</span>)))<span class="fu">*</span><span class="dv">9</span>)</a>
-<a class="sourceLine" id="cb12-3" data-line-number="3">   ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb12-4" data-line-number="4">  ┌┤</a>
-<a class="sourceLine" id="cb12-5" data-line-number="5">  │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb12-6" data-line-number="6"> ┌┤</a>
-<a class="sourceLine" id="cb12-7" data-line-number="7"> ││┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb12-8" data-line-number="8"> │└┤</a>
-<a class="sourceLine" id="cb12-9" data-line-number="9"> │ └<span class="dv">4</span></a>
-<a class="sourceLine" id="cb12-10" data-line-number="10">┌┤</a>
-<a class="sourceLine" id="cb12-11" data-line-number="11">││ ┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb12-12" data-line-number="12">││┌┤</a>
-<a class="sourceLine" id="cb12-13" data-line-number="13">│││└<span class="dv">6</span></a>
-<a class="sourceLine" id="cb12-14" data-line-number="14">│└┤</a>
-<a class="sourceLine" id="cb12-15" data-line-number="15">│ │┌<span class="dv">7</span></a>
-<a class="sourceLine" id="cb12-16" data-line-number="16">│ └┤</a>
-<a class="sourceLine" id="cb12-17" data-line-number="17">│  └<span class="dv">8</span></a>
-<a class="sourceLine" id="cb12-18" data-line-number="18">┤</a>
-<a class="sourceLine" id="cb12-19" data-line-number="19">└<span class="dv">9</span></a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (treeFold (<span class="op">:*:</span>) <span class="op">.</span> <span class="fu">fmap</span> <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="op">..</span><span class="dv">9</span>]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>((((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>(<span class="dv">3</span><span class="op">*</span><span class="dv">4</span>))<span class="op">*</span>((<span class="dv">5</span><span class="op">*</span><span class="dv">6</span>)<span class="op">*</span>(<span class="dv">7</span><span class="op">*</span><span class="dv">8</span>)))<span class="op">*</span><span class="dv">9</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>   ┌<span class="dv">1</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>  ┌┤</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>  │└<span class="dv">2</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a> ┌┤</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a> ││┌<span class="dv">3</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a> │└┤</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a> │ └<span class="dv">4</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>┌┤</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>││ ┌<span class="dv">5</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>││┌┤</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>│││└<span class="dv">6</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a>│└┤</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true"></a>│ │┌<span class="dv">7</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true"></a>│ └┤</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true"></a>│  └<span class="dv">8</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true"></a>┤</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true"></a>└<span class="dv">9</span></span></code></pre></div>
 <p>That <code class="sourceCode haskell"><span class="dv">9</span></code> hanging out on its own there is a problem.</p>
 <h2 id="typewriters-and-slaloms">Typewriters and Slaloms</h2>
 <p>One observation we can make is that <code class="sourceCode haskell">pairMap</code> always starts from the same side on each iteration, like a typewriter moving from one line to the next. This has the consequence of building up the leftovers on one side, leaving them until the top level.</p>
 <p>We can improve the situation slightly by going back and forth, slalom-style, so we consume leftovers on each iteration:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb13-1" data-line-number="1"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb13-2" data-line-number="2">treeFold f <span class="fu">=</span> goTo <span class="kw">where</span></a>
-<a class="sourceLine" id="cb13-3" data-line-number="3">  </a>
-<a class="sourceLine" id="cb13-4" data-line-number="4">  goTo (y <span class="fu">:|</span> []) <span class="fu">=</span> y</a>
-<a class="sourceLine" id="cb13-5" data-line-number="5">  goTo (a <span class="fu">:|</span> b <span class="fu">:</span> rest) <span class="fu">=</span> goFro (pairMap f (f a b) rest)</a>
-<a class="sourceLine" id="cb13-6" data-line-number="6">  goFro (y <span class="fu">:|</span> []) <span class="fu">=</span> y</a>
-<a class="sourceLine" id="cb13-7" data-line-number="7">  goFro (a <span class="fu">:|</span> b <span class="fu">:</span> rest) <span class="fu">=</span> goTo (pairMap (flip f) (f b a) rest)</a>
-<a class="sourceLine" id="cb13-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb13-9" data-line-number="9">  pairMap f <span class="fu">=</span> go [] <span class="kw">where</span></a>
-<a class="sourceLine" id="cb13-10" data-line-number="10">    go ys y (a<span class="fu">:</span>b<span class="fu">:</span>rest) <span class="fu">=</span> go (y<span class="fu">:</span>ys) (f a b) rest</a>
-<a class="sourceLine" id="cb13-11" data-line-number="11">    go ys y [z] <span class="fu">=</span> z <span class="fu">:|</span> y <span class="fu">:</span> ys</a>
-<a class="sourceLine" id="cb13-12" data-line-number="12">    go ys y [] <span class="fu">=</span> y <span class="fu">:|</span> ys</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>treeFold f <span class="ot">=</span> goTo <span class="kw">where</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  goTo (y <span class="op">:|</span> []) <span class="ot">=</span> y</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>  goTo (a <span class="op">:|</span> b <span class="op">:</span> rest) <span class="ot">=</span> goFro (pairMap f (f a b) rest)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>  goFro (y <span class="op">:|</span> []) <span class="ot">=</span> y</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>  goFro (a <span class="op">:|</span> b <span class="op">:</span> rest) <span class="ot">=</span> goTo (pairMap (<span class="fu">flip</span> f) (f b a) rest)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>  pairMap f <span class="ot">=</span> go [] <span class="kw">where</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a>    go ys y (a<span class="op">:</span>b<span class="op">:</span>rest) <span class="ot">=</span> go (y<span class="op">:</span>ys) (f a b) rest</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>    go ys y [z] <span class="ot">=</span> z <span class="op">:|</span> y <span class="op">:</span> ys</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>    go ys y [] <span class="ot">=</span> y <span class="op">:|</span> ys</span></code></pre></div>
 <p>Notice that we have to flip the combining function to make sure the ordering is the same on output. For the earlier example, this solves the issue:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]</a>
-<a class="sourceLine" id="cb14-2" data-line-number="2">(((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>((<span class="dv">3</span><span class="fu">*</span><span class="dv">4</span>)<span class="fu">*</span>(<span class="dv">5</span><span class="fu">*</span><span class="dv">6</span>)))<span class="fu">*</span>((<span class="dv">7</span><span class="fu">*</span><span class="dv">8</span>)<span class="fu">*</span><span class="dv">9</span>))</a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">  ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb14-4" data-line-number="4"> ┌┤</a>
-<a class="sourceLine" id="cb14-5" data-line-number="5"> │└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb14-6" data-line-number="6">┌┤</a>
-<a class="sourceLine" id="cb14-7" data-line-number="7">││ ┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb14-8" data-line-number="8">││┌┤</a>
-<a class="sourceLine" id="cb14-9" data-line-number="9">│││└<span class="dv">4</span></a>
-<a class="sourceLine" id="cb14-10" data-line-number="10">│└┤</a>
-<a class="sourceLine" id="cb14-11" data-line-number="11">│ │┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb14-12" data-line-number="12">│ └┤</a>
-<a class="sourceLine" id="cb14-13" data-line-number="13">│  └<span class="dv">6</span></a>
-<a class="sourceLine" id="cb14-14" data-line-number="14">┤</a>
-<a class="sourceLine" id="cb14-15" data-line-number="15">│ ┌<span class="dv">7</span></a>
-<a class="sourceLine" id="cb14-16" data-line-number="16">│┌┤</a>
-<a class="sourceLine" id="cb14-17" data-line-number="17">││└<span class="dv">8</span></a>
-<a class="sourceLine" id="cb14-18" data-line-number="18">└┤</a>
-<a class="sourceLine" id="cb14-19" data-line-number="19"> └<span class="dv">9</span></a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (treeFold (<span class="op">:*:</span>) <span class="op">.</span> <span class="fu">fmap</span> <span class="dt">Leaf</span>) [<span class="dv">1</span><span class="op">..</span><span class="dv">9</span>]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>(((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>((<span class="dv">3</span><span class="op">*</span><span class="dv">4</span>)<span class="op">*</span>(<span class="dv">5</span><span class="op">*</span><span class="dv">6</span>)))<span class="op">*</span>((<span class="dv">7</span><span class="op">*</span><span class="dv">8</span>)<span class="op">*</span><span class="dv">9</span>))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  ┌<span class="dv">1</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a> ┌┤</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a> │└<span class="dv">2</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>┌┤</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>││ ┌<span class="dv">3</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>││┌┤</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>│││└<span class="dv">4</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>│└┤</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a>│ │┌<span class="dv">5</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a>│ └┤</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>│  └<span class="dv">6</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true"></a>┤</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true"></a>│ ┌<span class="dv">7</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true"></a>│┌┤</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true"></a>││└<span class="dv">8</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true"></a>└┤</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true"></a> └<span class="dv">9</span></span></code></pre></div>
 <p>It does <em>not</em> build up the tree as balanced as it possibly could, though:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="fu">&gt;&gt;&gt;</span> (treeFold (<span class="fu">:*:</span>) <span class="fu">.</span> fmap <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</a>
-<a class="sourceLine" id="cb15-2" data-line-number="2">((<span class="dv">1</span><span class="fu">*</span><span class="dv">2</span>)<span class="fu">*</span>((<span class="dv">3</span><span class="fu">*</span><span class="dv">4</span>)<span class="fu">*</span>(<span class="dv">5</span><span class="fu">*</span><span class="dv">6</span>)))</a>
-<a class="sourceLine" id="cb15-3" data-line-number="3"> ┌<span class="dv">1</span></a>
-<a class="sourceLine" id="cb15-4" data-line-number="4">┌┤</a>
-<a class="sourceLine" id="cb15-5" data-line-number="5">│└<span class="dv">2</span></a>
-<a class="sourceLine" id="cb15-6" data-line-number="6">┤</a>
-<a class="sourceLine" id="cb15-7" data-line-number="7">│ ┌<span class="dv">3</span></a>
-<a class="sourceLine" id="cb15-8" data-line-number="8">│┌┤</a>
-<a class="sourceLine" id="cb15-9" data-line-number="9">││└<span class="dv">4</span></a>
-<a class="sourceLine" id="cb15-10" data-line-number="10">└┤</a>
-<a class="sourceLine" id="cb15-11" data-line-number="11"> │┌<span class="dv">5</span></a>
-<a class="sourceLine" id="cb15-12" data-line-number="12"> └┤</a>
-<a class="sourceLine" id="cb15-13" data-line-number="13">  └<span class="dv">6</span></a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (treeFold (<span class="op">:*:</span>) <span class="op">.</span> <span class="fu">fmap</span> <span class="dt">Leaf</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>((<span class="dv">1</span><span class="op">*</span><span class="dv">2</span>)<span class="op">*</span>((<span class="dv">3</span><span class="op">*</span><span class="dv">4</span>)<span class="op">*</span>(<span class="dv">5</span><span class="op">*</span><span class="dv">6</span>)))</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a> ┌<span class="dv">1</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>┌┤</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>│└<span class="dv">2</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>┤</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>│ ┌<span class="dv">3</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>│┌┤</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>││└<span class="dv">4</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>└┤</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a> │┌<span class="dv">5</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a> └┤</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>  └<span class="dv">6</span></span></code></pre></div>
 <p>There’s four elements in the right branch, and two in the left in the above example. Three in each would be optimal.</p>
 <p>Wait—optimal in what sense, exactly? What do we mean when we say one tree is more balanced than another? Let’s say the “balance factor” is the largest difference in size of two sibling trees:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="ot">balFac ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Integer</span></a>
-<a class="sourceLine" id="cb16-2" data-line-number="2">balFac <span class="fu">=</span> fst <span class="fu">.</span> go <span class="kw">where</span></a>
-<a class="sourceLine" id="cb16-3" data-line-number="3"><span class="ot">  go ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> (<span class="dt">Integer</span>, <span class="dt">Integer</span>)</a>
-<a class="sourceLine" id="cb16-4" data-line-number="4">  go (<span class="dt">Leaf</span> _) <span class="fu">=</span> (<span class="dv">0</span>, <span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb16-5" data-line-number="5">  go (l <span class="fu">:*:</span> r) <span class="fu">=</span> (lb <span class="ot">`max`</span> rb <span class="ot">`max`</span> abs (rs <span class="fu">-</span> ls), rs <span class="fu">+</span> ls) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb16-6" data-line-number="6">    (lb,ls) <span class="fu">=</span> go l</a>
-<a class="sourceLine" id="cb16-7" data-line-number="7">    (rb,rs) <span class="fu">=</span> go r</a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">balFac ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>balFac <span class="ot">=</span> <span class="fu">fst</span> <span class="op">.</span> go <span class="kw">where</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a><span class="ot">  go ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> (<span class="dt">Integer</span>, <span class="dt">Integer</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>  go (<span class="dt">Leaf</span> _) <span class="ot">=</span> (<span class="dv">0</span>, <span class="dv">1</span>)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>  go (l <span class="op">:*:</span> r) <span class="ot">=</span> (lb <span class="ot">`max`</span> rb <span class="ot">`max`</span> <span class="fu">abs</span> (rs <span class="op">-</span> ls), rs <span class="op">+</span> ls) <span class="kw">where</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>    (lb,ls) <span class="ot">=</span> go l</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>    (rb,rs) <span class="ot">=</span> go r</span></code></pre></div>
 <p>And one tree is more balanced than another if it has a smaller balance factor.</p>
-<p>There’s effectively no limit on the balance factor for the typewriter method: when the input is one larger than a power of two, it’ll stick the one extra in one branch and the rest in another (as with <code class="sourceCode haskell">[<span class="dv">1</span><span class="fu">..</span><span class="dv">9</span>]</code> in the example above).</p>
+<p>There’s effectively no limit on the balance factor for the typewriter method: when the input is one larger than a power of two, it’ll stick the one extra in one branch and the rest in another (as with <code class="sourceCode haskell">[<span class="dv">1</span><span class="op">..</span><span class="dv">9</span>]</code> in the example above).</p>
 <p>For the slalom method, it looks like there’s something more interesting going on, limit-wise. I haven’t been able to verify this formally (yet), but from what I can tell, a tree of height <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> will have at most a balance factor of the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>th <a href="https://oeis.org/A001045">Jacobsthal number</a>. That’s (apparently) also the number of ways to tie a tie using <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>+</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">n + 2</annotation></semantics></math> turns.</p>
 <p>That was just gathered from some quick experiments and <a href="https://oeis.org/">oeis.org</a>, but it seems to make sense intuitively. Jacobsthal numbers are defined like this:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb17-1" data-line-number="1">j <span class="dv">0</span> <span class="fu">=</span> <span class="dv">0</span></a>
-<a class="sourceLine" id="cb17-2" data-line-number="2">j <span class="dv">1</span> <span class="fu">=</span> <span class="dv">1</span></a>
-<a class="sourceLine" id="cb17-3" data-line-number="3">j n <span class="fu">=</span> j (n<span class="fu">-</span><span class="dv">1</span>) <span class="fu">+</span> <span class="dv">2</span> <span class="fu">*</span> j (n<span class="fu">-</span><span class="dv">2</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>j <span class="dv">0</span> <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>j <span class="dv">1</span> <span class="ot">=</span> <span class="dv">1</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>j n <span class="ot">=</span> j (n<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> <span class="dv">2</span> <span class="op">*</span> j (n<span class="op">-</span><span class="dv">2</span>)</span></code></pre></div>
 <p>So, at the top level, there’s the imbalance caused by the second-last <code class="sourceCode haskell">pairFold</code>, plus the imbalance caused by the third-to-last. However, the third-to-last imbalance is twice what it was at that level, because it is now working with an already-paired-up list. Why isn’t the second last imbalance also doubled? Because it’s counteracted by the fact that we turned around: the imbalance is in an element that’s a leftover element. At least that’s what my intuition is at this point.</p>
 <p>The minimum balance factor is, of course, one. Unfortunately, to achieve that, I lost some of the properties of the previous folds:</p>
 <h2 id="lengths">Lengths</h2>
 <p>Up until now, I have been avoiding taking the length of the incoming list. It would lose a lot of laziness, cause an extra traversal, and generally seems like an ugly solution. Nonetheless, it gives the most balanced results I could find so far:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb18-2" data-line-number="2">treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> go (length (x<span class="fu">:</span>xs)) (x<span class="fu">:</span>xs) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb18-3" data-line-number="3">  go <span class="dv">1</span> [y] <span class="fu">=</span> y</a>
-<a class="sourceLine" id="cb18-4" data-line-number="4">  go n ys <span class="fu">=</span> f (go m a) (go (n<span class="fu">-</span>m) b) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb18-5" data-line-number="5">    (a,b) <span class="fu">=</span> splitAt m ys </a>
-<a class="sourceLine" id="cb18-6" data-line-number="6">    m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></a></code></pre></div>
-<p><code class="sourceCode haskell">splitAt</code> is an inefficient operation, but if we let the left-hand call return its unused input from the list, we can avoid it:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> fst (go (length (x<span class="fu">:</span>xs)) (x<span class="fu">:</span>xs)) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb19-3" data-line-number="3">  go <span class="dv">1</span> (y<span class="fu">:</span>ys) <span class="fu">=</span> (y,ys)</a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">  go n ys <span class="fu">=</span> (f l r, rs) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb19-5" data-line-number="5">    (l,ls) <span class="fu">=</span> go m ys</a>
-<a class="sourceLine" id="cb19-6" data-line-number="6">    (r,rs) <span class="fu">=</span> go (n<span class="fu">-</span>m) ls</a>
-<a class="sourceLine" id="cb19-7" data-line-number="7">    m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>treeFold f (x<span class="op">:|</span>xs) <span class="ot">=</span> go (<span class="fu">length</span> (x<span class="op">:</span>xs)) (x<span class="op">:</span>xs) <span class="kw">where</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>  go <span class="dv">1</span> [y] <span class="ot">=</span> y</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>  go n ys <span class="ot">=</span> f (go m a) (go (n<span class="op">-</span>m) b) <span class="kw">where</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>    (a,b) <span class="ot">=</span> <span class="fu">splitAt</span> m ys </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>    m <span class="ot">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></span></code></pre></div>
+<p><code class="sourceCode haskell"><span class="fu">splitAt</span></code> is an inefficient operation, but if we let the left-hand call return its unused input from the list, we can avoid it:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>treeFold f (x<span class="op">:|</span>xs) <span class="ot">=</span> <span class="fu">fst</span> (go (<span class="fu">length</span> (x<span class="op">:</span>xs)) (x<span class="op">:</span>xs)) <span class="kw">where</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>  go <span class="dv">1</span> (y<span class="op">:</span>ys) <span class="ot">=</span> (y,ys)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>  go n ys <span class="ot">=</span> (f l r, rs) <span class="kw">where</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>    (l,ls) <span class="ot">=</span> go m ys</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>    (r,rs) <span class="ot">=</span> go (n<span class="op">-</span>m) ls</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>    m <span class="ot">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></span></code></pre></div>
 <p>Finally, you may have spotted the state monad in this last version. We can make the similarity explicit:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb20-2" data-line-number="2">treeFold f (x<span class="fu">:|</span>xs) <span class="fu">=</span> evalState (go (length (x<span class="fu">:</span>xs))) (x<span class="fu">:</span>xs) <span class="kw">where</span></a>
-<a class="sourceLine" id="cb20-3" data-line-number="3">  go <span class="dv">1</span> <span class="fu">=</span> state (\(y<span class="fu">:</span>ys) <span class="ot">-&gt;</span> (y,ys))</a>
-<a class="sourceLine" id="cb20-4" data-line-number="4">  go n <span class="fu">=</span> <span class="kw">do</span></a>
-<a class="sourceLine" id="cb20-5" data-line-number="5">    <span class="kw">let</span> m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></a>
-<a class="sourceLine" id="cb20-6" data-line-number="6">    l <span class="ot">&lt;-</span> go m</a>
-<a class="sourceLine" id="cb20-7" data-line-number="7">    r <span class="ot">&lt;-</span> go (n<span class="fu">-</span>m)</a>
-<a class="sourceLine" id="cb20-8" data-line-number="8">    return (f l r)</a></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>treeFold f (x<span class="op">:|</span>xs) <span class="ot">=</span> evalState (go (<span class="fu">length</span> (x<span class="op">:</span>xs))) (x<span class="op">:</span>xs) <span class="kw">where</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  go <span class="dv">1</span> <span class="ot">=</span> state (\(y<span class="op">:</span>ys) <span class="ot">-&gt;</span> (y,ys))</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>  go n <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>    <span class="kw">let</span> m <span class="ot">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>    l <span class="ot">&lt;-</span> go m</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a>    r <span class="ot">&lt;-</span> go (n<span class="op">-</span>m)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a>    <span class="fu">return</span> (f l r)</span></code></pre></div>
 <p>And there you have it: three different ways to fold in a more balanced way. Perhaps surprisingly, the first is the fastest in my tests. I’d love to hear if there’s a more balanced version (which is lazy, ideally) that is just as efficient as the first implementation.</p>
 <h1 id="stable-summation">Stable Summation</h1>
 <p>I have found two other uses for these folds other than simply constructing more balanced binary trees. The first is summation of floating-point numbers. If you sum floating-point numbers in the usual way with <code class="sourceCode haskell">foldl'</code> (or, indeed, with an accumulator in an imperative language), you will see an error growth of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>, where <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> is the number of floats you’re summing.</p>
@@ -291,31 +291,31 @@
 <p>For that reason, it’s often not used in practice: instead, floats are summed <em>pairwise</em>, in a manner often referred to as <a href="https://en.wikipedia.org/wiki/Pairwise_summation">cascade summation</a>. This is what’s used in <a href="https://github.com/numpy/numpy/pull/3685">NumPy</a>. The error growth isn’t quite as good—<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log{n})</annotation></semantics></math>—but it takes the exact same number of operations as normal summation. On top of that:</p>
 <h1 id="parallelization">Parallelization</h1>
 <p>Dividing a fold into roughly-equal chunks is exactly the kind of problem encountered when trying to parallelize certain algorithms. Adapting the folds above so that their work is performed in parallel is surprisingly easy:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb21-1" data-line-number="1"><span class="ot">splitPar ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">splitPar f <span class="fu">=</span> go</a>
-<a class="sourceLine" id="cb21-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb21-4" data-line-number="4">    go l r <span class="dv">0</span> <span class="fu">=</span> f (l <span class="dv">0</span>) (r <span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb21-5" data-line-number="5">    go l r n <span class="fu">=</span> lt <span class="ot">`par`</span> (rt <span class="ot">`pseq`</span> f lt rt)</a>
-<a class="sourceLine" id="cb21-6" data-line-number="6">      <span class="kw">where</span></a>
-<a class="sourceLine" id="cb21-7" data-line-number="7">        lt <span class="fu">=</span> l (n<span class="fu">-</span>m)</a>
-<a class="sourceLine" id="cb21-8" data-line-number="8">        rt <span class="fu">=</span> r m</a>
-<a class="sourceLine" id="cb21-9" data-line-number="9">        m <span class="fu">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></a>
-<a class="sourceLine" id="cb21-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb21-11" data-line-number="11"><span class="ot">treeFoldParallel ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb21-12" data-line-number="12">treeFoldParallel f xs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb21-13" data-line-number="13">    treeFold const (splitPar f) xs numCapabilities</a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">splitPar ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>splitPar f <span class="ot">=</span> go</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>    go l r <span class="dv">0</span> <span class="ot">=</span> f (l <span class="dv">0</span>) (r <span class="dv">0</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>    go l r n <span class="ot">=</span> lt <span class="ot">`par`</span> (rt <span class="ot">`pseq`</span> f lt rt)</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a>        lt <span class="ot">=</span> l (n<span class="op">-</span>m)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true"></a>        rt <span class="ot">=</span> r m</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true"></a>        m <span class="ot">=</span> n <span class="ot">`div`</span> <span class="dv">2</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true"></a><span class="ot">treeFoldParallel ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">NonEmpty</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true"></a>treeFoldParallel f xs <span class="ot">=</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true"></a>    treeFold <span class="fu">const</span> (splitPar f) xs numCapabilities</span></code></pre></div>
 <p>The above will split the fold into <code class="sourceCode haskell">numCapabilities</code> chunks, and perform each one in parallel. <code class="sourceCode haskell">numCapabilities</code> is a constant defined in <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/GHC-Conc.html">GHC.Conc</a>: it’s the number of threads which can be run simultaneously at any one time. Alternatively, you could the function include a parameter for how many chunks to split the computation into. You could also have the fold adapt as it went, choosing whether or not to spark based on how many sparks exist at any given time:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="ot">parseq ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb22-2" data-line-number="2">parseq a b <span class="fu">=</span></a>
-<a class="sourceLine" id="cb22-3" data-line-number="3">    runST</a>
-<a class="sourceLine" id="cb22-4" data-line-number="4">        (bool (par a b) (seq a b) <span class="fu">&lt;$&gt;</span></a>
-<a class="sourceLine" id="cb22-5" data-line-number="5">         unsafeIOToST (liftA2 (<span class="fu">&gt;</span>) numSparks getNumCapabilities))</a>
-<a class="sourceLine" id="cb22-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb22-7" data-line-number="7"><span class="ot">treeFoldAdaptive ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb22-8" data-line-number="8">treeFoldAdaptive f <span class="fu">=</span></a>
-<a class="sourceLine" id="cb22-9" data-line-number="9">    Lazy.treeFold</a>
-<a class="sourceLine" id="cb22-10" data-line-number="10">        (\l r <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb22-11" data-line-number="11">              r <span class="ot">`parseq`</span> (l <span class="ot">`parseq`</span> f l r))</a></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="ot">parseq ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>parseq a b <span class="ot">=</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>    runST</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a>        (bool (par a b) (<span class="fu">seq</span> a b) <span class="op">&lt;$&gt;</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a>         unsafeIOToST (liftA2 (<span class="op">&gt;</span>) numSparks getNumCapabilities))</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a></span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true"></a><span class="ot">treeFoldAdaptive ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true"></a>treeFoldAdaptive f <span class="ot">=</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true"></a>    Lazy.treeFold</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true"></a>        (\l r <span class="ot">-&gt;</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true"></a>              r <span class="ot">`parseq`</span> (l <span class="ot">`parseq`</span> f l r))</span></code></pre></div>
 <p>Adapted from <a href="https://www.reddit.com/r/haskell/comments/73umrw/another_parallelism_primitive_parseq/dnurduu/?utm_content=permalink&amp;utm_medium=front&amp;utm_source=reddit&amp;utm_name=haskell">this</a> comment by Edward Kmett. This is actually the fastest version of all the folds.</p>
 <p>All of this is provided in a <a href="https://hackage.haskell.org/package/treefold">library</a> I’ve put up on Hackage.</p>
 

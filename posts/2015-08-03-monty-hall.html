@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Swift.html">Swift</a>, <a href="../tags/Probability.html">Probability</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Swift'." href="../tags/Swift.html">Swift</a>, <a title="All pages tagged 'Probability'." href="../tags/Probability.html">Probability</a>
     
 </div>
 
@@ -42,192 +42,192 @@
 <p>Which makes it pretty clear what’s going on: since the host <em>has</em> to show a goat when he opens a door, if you’ve picked a goat, then the only door left after the host opens one is the car. That means that if you switch and pick a goat, you <em>have</em> to win. So if you decide to switch, then what you want to do is pick a <em>goat</em> first, and the chances of that are 2/3.</p>
 <p>It would be far cooler if you could get some representation of that diagram in code, though.</p>
 <p>Turns out we can! In Swift and Haskell (I’m branching out) you can represent probability in a list-like structure, with each element of the list being a tuple of some value and that value’s probability. All the probabilities in the list itself should add up to one. Here’s what it looks like in Swift:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb1-1" data-line-number="1">struct Prob&lt;Element&gt; {</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">  <span class="kw">private</span> let contents: [(Element, Double)]</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">}</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>struct Prob&lt;Element&gt; {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="kw">private</span> let contents: [(Element, Double)]</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>}</span></code></pre></div>
 <p>and Haskell:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="fu">=</span> <span class="dt">Prob</span> {<span class="ot"> getProb ::</span> [(a,<span class="dt">Rational</span>)] } <span class="kw">deriving</span> <span class="dt">Show</span>  </a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="ot">=</span> <span class="dt">Prob</span> {<span class="ot"> getProb ::</span> [(a,<span class="dt">Rational</span>)] } <span class="kw">deriving</span> <span class="dt">Show</span>  </span></code></pre></div>
 <p>Being a list kind of thing, ideally you’d want to be able to transform the elements, with a map kind of thing:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb3-1" data-line-number="1">extension Prob {</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">  func fmap&lt;T&gt;(f: Element -&gt; T) -&gt; Prob&lt;T&gt; {</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">    <span class="kw">return</span> Prob&lt;T&gt;(contents.<span class="fu">map</span> { (v,p) <span class="fu">in</span> (<span class="fu">f</span>(v), p) })</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">  }</a>
-<a class="sourceLine" id="cb3-5" data-line-number="5">}</a></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Prob</span> <span class="kw">where</span>  </a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">  fmap f (<span class="dt">Prob</span> xs) <span class="fu">=</span> <span class="dt">Prob</span> [(f x,p)<span class="fu">|</span>(x,p) <span class="ot">&lt;-</span> xs]</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>extension Prob {</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  func fmap&lt;T&gt;(f: Element -&gt; T) -&gt; Prob&lt;T&gt; {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    <span class="kw">return</span> Prob&lt;T&gt;(contents.<span class="fu">map</span> { (v,p) <span class="fu">in</span> (<span class="fu">f</span>(v), p) })</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  }</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Prob</span> <span class="kw">where</span>  </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="fu">fmap</span> f (<span class="dt">Prob</span> xs) <span class="ot">=</span> <span class="dt">Prob</span> [(f x,p)<span class="op">|</span>(x,p) <span class="ot">&lt;-</span> xs]</span></code></pre></div>
 <p>So far, though, the probability information is kind of superfluous. There’s not even a decent way to generate it. How about we get it from a list, where we assume all things in the list have equal chances of happening:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb5-1" data-line-number="1">extension CollectionType where Index.<span class="fu">Distance</span> == Int {</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">  <span class="kw">var</span> equalProbs: Prob&lt;Generator.<span class="fu">Element</span>&gt; {</a>
-<a class="sourceLine" id="cb5-3" data-line-number="3">    let p = <span class="fl">1.0</span> / Double(count)</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">    <span class="kw">return</span> Prob&lt;Generator.<span class="fu">Element</span>&gt;(map { v <span class="fu">in</span> (v,p) })</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">  }</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">}</a></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="ot">equalProbs ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Prob</span> a</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2">equalProbs x <span class="fu">=</span> <span class="dt">Prob</span> <span class="fu">$</span> map (flip (,) (<span class="dv">1</span><span class="fu">%</span>n))  x</a>
-<a class="sourceLine" id="cb6-3" data-line-number="3">  <span class="kw">where</span> n <span class="fu">=</span> fromIntegral (length x)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>extension CollectionType where Index.<span class="fu">Distance</span> == Int {</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="kw">var</span> equalProbs: Prob&lt;Generator.<span class="fu">Element</span>&gt; {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    let p = <span class="fl">1.0</span> / Double(count)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="kw">return</span> Prob&lt;Generator.<span class="fu">Element</span>&gt;(map { v <span class="fu">in</span> (v,p) })</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  }</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">equalProbs ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Prob</span> a</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>equalProbs x <span class="ot">=</span> <span class="dt">Prob</span> <span class="op">$</span> <span class="fu">map</span> (<span class="fu">flip</span> (,) (<span class="dv">1</span><span class="op">%</span>n))  x</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  <span class="kw">where</span> n <span class="ot">=</span> <span class="fu">fromIntegral</span> (<span class="fu">length</span> x)</span></code></pre></div>
 <p>Which is <em>fine</em>, I suppose, but still not very interesting. What we want is the idea of “branching” - like in the diagram. “If event A happens, then event B has X chance of happening, and event C has Y chance of happening”.</p>
 <p>The normal rules of probability apply: the <em>overall</em> probability of B happening is equal to the probability of A multiplied by X. You could have several layers of branching from B and C onwards, with this multiplication happening at each stage.</p>
 <p>You could represent this in code with a function <code>f</code>, which takes an event (A) and returns a new bunch of probabilities (B and C). Then, to get the overall probability of each, you’d have to <em>flatten</em> it. What you want, then, is a function that travels over a list of events and their probabilities, applying <code>f</code> to each, and flattening the result, by <em>multiplying</em> the probabilities of the inner lists by the probability of the event which generated it.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb7-1" data-line-number="1">extension Prob {</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">  func flatMap&lt;T&gt;(f: Element -&gt; Prob&lt;T&gt;) -&gt; Prob&lt;T&gt; {</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">    <span class="kw">return</span> Prob&lt;T&gt;(contents.<span class="fu">flatMap</span> { (v,p) in</a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">      <span class="fu">f</span>(v).<span class="fu">contents</span>.<span class="fu">map</span> { (x,ip) <span class="fu">in</span> (x,p*ip) }</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">    })</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6">  }</a>
-<a class="sourceLine" id="cb7-7" data-line-number="7">}</a></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Prob</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">  return <span class="fu">=</span> pure</a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="dt">Prob</span> xs <span class="fu">&gt;&gt;=</span> f <span class="fu">=</span> </a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">    <span class="dt">Prob</span> [(y,px<span class="fu">*</span>py)<span class="fu">|</span>(x,px) <span class="ot">&lt;-</span> xs, (y,py) <span class="ot">&lt;-</span> getProb(f x)]</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>extension Prob {</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>  func flatMap&lt;T&gt;(f: Element -&gt; Prob&lt;T&gt;) -&gt; Prob&lt;T&gt; {</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    <span class="kw">return</span> Prob&lt;T&gt;(contents.<span class="fu">flatMap</span> { (v,p) in</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>      <span class="fu">f</span>(v).<span class="fu">contents</span>.<span class="fu">map</span> { (x,ip) <span class="fu">in</span> (x,p*ip) }</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    })</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>  }</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Monad</span> <span class="dt">Prob</span> <span class="kw">where</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="fu">return</span> <span class="ot">=</span> <span class="fu">pure</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="dt">Prob</span> xs <span class="op">&gt;&gt;=</span> f <span class="ot">=</span> </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    <span class="dt">Prob</span> [(y,px<span class="op">*</span>py)<span class="op">|</span>(x,px) <span class="ot">&lt;-</span> xs, (y,py) <span class="ot">&lt;-</span> getProb(f x)]</span></code></pre></div>
 <p>Hey look! The M-word. Never mind that. Anyway…</p>
 <p>Now we have enough tools to stimulate some basic probabilities. Let’s say you’re playing a game, which begins with a coin flip. If you get heads on the coin flip, it confers some advantage, and you have a 70% chance of winning. Otherwise, you’ve a 50% chance.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb9-1" data-line-number="1">enum Coin: String   { <span class="kw">case</span> H, T }</a>
-<a class="sourceLine" id="cb9-2" data-line-number="2">enum Result: String { <span class="kw">case</span> Win, Lose }</a>
-<a class="sourceLine" id="cb9-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb9-4" data-line-number="4">func <span class="fu">play</span>(c: Coin) -&gt; Prob&lt;Result&gt; {</a>
-<a class="sourceLine" id="cb9-5" data-line-number="5">  switch c {</a>
-<a class="sourceLine" id="cb9-6" data-line-number="6">  <span class="kw">case</span> .<span class="fu">H</span>: <span class="kw">return</span> <span class="fu">Prob</span>([(.<span class="fu">Win</span>,<span class="fl">0.7</span>),(.<span class="fu">Lose</span>,<span class="fl">0.3</span>)])</a>
-<a class="sourceLine" id="cb9-7" data-line-number="7">  <span class="kw">case</span> .<span class="fu">T</span>: <span class="kw">return</span> [.<span class="fu">Win</span>,.<span class="fu">Lose</span>].<span class="fu">equalProbs</span></a>
-<a class="sourceLine" id="cb9-8" data-line-number="8">  }</a>
-<a class="sourceLine" id="cb9-9" data-line-number="9">}</a>
-<a class="sourceLine" id="cb9-10" data-line-number="10"></a>
-<a class="sourceLine" id="cb9-11" data-line-number="11">[Coin.<span class="fu">H</span>,.<span class="fu">T</span>]</a>
-<a class="sourceLine" id="cb9-12" data-line-number="12">  .<span class="fu">equalProbs</span></a>
-<a class="sourceLine" id="cb9-13" data-line-number="13">  .<span class="fu">flatMap</span>(play)</a>
-<a class="sourceLine" id="cb9-14" data-line-number="14"></a>
-<a class="sourceLine" id="cb9-15" data-line-number="15"><span class="co">// 0.35: Result.Win</span></a>
-<a class="sourceLine" id="cb9-16" data-line-number="16"><span class="co">// 0.15: Result.Lose</span></a>
-<a class="sourceLine" id="cb9-17" data-line-number="17"><span class="co">// 0.25: Result.Win</span></a>
-<a class="sourceLine" id="cb9-18" data-line-number="18"><span class="co">// 0.25: Result.Lose</span></a></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Coin</span>   <span class="fu">=</span> <span class="dt">H</span> <span class="fu">|</span> <span class="dt">T</span> <span class="kw">deriving</span> <span class="dt">Show</span></a>
-<a class="sourceLine" id="cb10-2" data-line-number="2"><span class="kw">data</span> <span class="dt">Result</span> <span class="fu">=</span> <span class="dt">Win</span> <span class="fu">|</span> <span class="dt">Lose</span> <span class="kw">deriving</span> <span class="dt">Show</span></a>
-<a class="sourceLine" id="cb10-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb10-4" data-line-number="4"><span class="kw">let</span> play <span class="dt">H</span> <span class="fu">=</span> <span class="dt">Prob</span> [(<span class="dt">Win</span>,<span class="dv">7</span><span class="fu">%</span><span class="dv">10</span>),(<span class="dt">Lose</span>,<span class="dv">3</span><span class="fu">%</span><span class="dv">10</span>)]</a>
-<a class="sourceLine" id="cb10-5" data-line-number="5">    play <span class="dt">T</span> <span class="fu">=</span> equalProbs [<span class="dt">Win</span>,<span class="dt">Lose</span>]</a>
-<a class="sourceLine" id="cb10-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb10-7" data-line-number="7">equalProbs [<span class="dt">H</span>,<span class="dt">T</span>] <span class="fu">&gt;&gt;=</span> play</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>enum Coin: String   { <span class="kw">case</span> H, T }</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>enum Result: String { <span class="kw">case</span> Win, Lose }</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>func <span class="fu">play</span>(c: Coin) -&gt; Prob&lt;Result&gt; {</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>  switch c {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>  <span class="kw">case</span> .<span class="fu">H</span>: <span class="kw">return</span> <span class="fu">Prob</span>([(.<span class="fu">Win</span>,<span class="fl">0.7</span>),(.<span class="fu">Lose</span>,<span class="fl">0.3</span>)])</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>  <span class="kw">case</span> .<span class="fu">T</span>: <span class="kw">return</span> [.<span class="fu">Win</span>,.<span class="fu">Lose</span>].<span class="fu">equalProbs</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>  }</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>}</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>[Coin.<span class="fu">H</span>,.<span class="fu">T</span>]</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>  .<span class="fu">equalProbs</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>  .<span class="fu">flatMap</span>(play)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a><span class="co">// 0.35: Result.Win</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a><span class="co">// 0.15: Result.Lose</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a><span class="co">// 0.25: Result.Win</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a><span class="co">// 0.25: Result.Lose</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Coin</span>   <span class="ot">=</span> <span class="dt">H</span> <span class="op">|</span> <span class="dt">T</span> <span class="kw">deriving</span> <span class="dt">Show</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Result</span> <span class="ot">=</span> <span class="dt">Win</span> <span class="op">|</span> <span class="dt">Lose</span> <span class="kw">deriving</span> <span class="dt">Show</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a><span class="kw">let</span> play <span class="dt">H</span> <span class="ot">=</span> <span class="dt">Prob</span> [(<span class="dt">Win</span>,<span class="dv">7</span><span class="op">%</span><span class="dv">10</span>),(<span class="dt">Lose</span>,<span class="dv">3</span><span class="op">%</span><span class="dv">10</span>)]</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    play <span class="dt">T</span> <span class="ot">=</span> equalProbs [<span class="dt">Win</span>,<span class="dt">Lose</span>]</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>equalProbs [<span class="dt">H</span>,<span class="dt">T</span>] <span class="op">&gt;&gt;=</span> play</span></code></pre></div>
 <p>There’s an obvious problem: duplicates. We need some way to <em>combine</em> the results by adding their probabilities together. To be honest, this was the least interesting part, so I’ll just dump the code here:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb11-1" data-line-number="1">public enum Ordering { <span class="kw">case</span> LT, EQ, GT }</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">extension SequenceType {</a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">  <span class="kw">private</span> typealias A = Generator.<span class="fu">Element</span></a>
-<a class="sourceLine" id="cb11-5" data-line-number="5">  public func <span class="fu">mergeBy</span>( comp: (A, A) -&gt; Ordering</a>
-<a class="sourceLine" id="cb11-6" data-line-number="6">                     , _ merge: (A, A) -&gt; A) -&gt; [A] {</a>
-<a class="sourceLine" id="cb11-7" data-line-number="7">    <span class="kw">var</span> result: [A] = []</a>
-<a class="sourceLine" id="cb11-8" data-line-number="8">    <span class="kw">for</span> h in <span class="fu">sort</span>({ e in <span class="fu">comp</span>(e) == .<span class="fu">LT</span> }) {</a>
-<a class="sourceLine" id="cb11-9" data-line-number="9">      <span class="kw">if</span> <span class="kw">case</span> .<span class="fu">EQ</span>? = result.<span class="fu">last</span>.<span class="fu">map</span>({e in <span class="fu">comp</span>(h,e)}) {</a>
-<a class="sourceLine" id="cb11-10" data-line-number="10">        result.<span class="fu">append</span>(<span class="fu">merge</span>(result.<span class="fu">removeLast</span>(),h))</a>
-<a class="sourceLine" id="cb11-11" data-line-number="11">      } <span class="kw">else</span> {</a>
-<a class="sourceLine" id="cb11-12" data-line-number="12">        result.<span class="fu">append</span>(h)</a>
-<a class="sourceLine" id="cb11-13" data-line-number="13">      }</a>
-<a class="sourceLine" id="cb11-14" data-line-number="14">    }</a>
-<a class="sourceLine" id="cb11-15" data-line-number="15">    <span class="kw">return</span> result</a>
-<a class="sourceLine" id="cb11-16" data-line-number="16">  }</a>
-<a class="sourceLine" id="cb11-17" data-line-number="17">}</a>
-<a class="sourceLine" id="cb11-18" data-line-number="18"></a>
-<a class="sourceLine" id="cb11-19" data-line-number="19">extension Prob {</a>
-<a class="sourceLine" id="cb11-20" data-line-number="20">  public func mergeProbs</a>
-<a class="sourceLine" id="cb11-21" data-line-number="21">    (comp: (Element,Element) -&gt; Ordering) -&gt; Prob {</a>
-<a class="sourceLine" id="cb11-22" data-line-number="22">      <span class="kw">return</span> <span class="fu">Prob</span>(contents:</a>
-<a class="sourceLine" id="cb11-23" data-line-number="23">        contents.<span class="fu">mergeBy</span>( {(a,b) in <span class="fu">comp</span>(a<span class="fl">.0</span>,b<span class="fl">.0</span>)}</a>
-<a class="sourceLine" id="cb11-24" data-line-number="24">                        , {(a,b) <span class="fu">in</span> (a<span class="fl">.0</span>,a<span class="fl">.1</span>+b<span class="fl">.1</span>)})</a>
-<a class="sourceLine" id="cb11-25" data-line-number="25">    )</a>
-<a class="sourceLine" id="cb11-26" data-line-number="26">  }</a>
-<a class="sourceLine" id="cb11-27" data-line-number="27">}</a></code></pre></div>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="ot">eqing ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Ordering</span>) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</a>
-<a class="sourceLine" id="cb12-2" data-line-number="2">eqing c <span class="fu">=</span> (\a b <span class="ot">-&gt;</span> <span class="kw">case</span> c a b <span class="kw">of</span> <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">True</span> </a>
-<a class="sourceLine" id="cb12-3" data-line-number="3">                                 _  <span class="ot">-&gt;</span> <span class="dt">False</span>)</a>
-<a class="sourceLine" id="cb12-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb12-5" data-line-number="5"><span class="ot">mergeBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Ordering</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb12-6" data-line-number="6">mergeBy m c <span class="fu">=</span> (foldl1' m <span class="fu">&lt;$&gt;</span>) <span class="fu">.</span> groupBy (eqing c) <span class="fu">.</span> sortBy c</a>
-<a class="sourceLine" id="cb12-7" data-line-number="7"></a>
-<a class="sourceLine" id="cb12-8" data-line-number="8"><span class="ot">mergeProbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Prob</span> a <span class="ot">-&gt;</span> <span class="dt">Prob</span> a</a>
-<a class="sourceLine" id="cb12-9" data-line-number="9">mergeProbs <span class="fu">=</span></a>
-<a class="sourceLine" id="cb12-10" data-line-number="10">  <span class="dt">Prob</span> <span class="fu">.</span> mergeBy (fmap <span class="fu">.</span> (<span class="fu">+</span>) <span class="fu">.</span> snd) (comparing fst) <span class="fu">.</span> getProb</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>public enum Ordering { <span class="kw">case</span> LT, EQ, GT }</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>extension SequenceType {</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  <span class="kw">private</span> typealias A = Generator.<span class="fu">Element</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>  public func <span class="fu">mergeBy</span>( comp: (A, A) -&gt; Ordering</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>                     , _ merge: (A, A) -&gt; A) -&gt; [A] {</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>    <span class="kw">var</span> result: [A] = []</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a>    <span class="kw">for</span> h in <span class="fu">sort</span>({ e in <span class="fu">comp</span>(e) == .<span class="fu">LT</span> }) {</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>      <span class="kw">if</span> <span class="kw">case</span> .<span class="fu">EQ</span>? = result.<span class="fu">last</span>.<span class="fu">map</span>({e in <span class="fu">comp</span>(h,e)}) {</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>        result.<span class="fu">append</span>(<span class="fu">merge</span>(result.<span class="fu">removeLast</span>(),h))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>      } <span class="kw">else</span> {</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a>        result.<span class="fu">append</span>(h)</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true"></a>      }</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true"></a>    }</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true"></a>    <span class="kw">return</span> result</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true"></a>  }</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true"></a>}</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true"></a></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true"></a>extension Prob {</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true"></a>  public func mergeProbs</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true"></a>    (comp: (Element,Element) -&gt; Ordering) -&gt; Prob {</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true"></a>      <span class="kw">return</span> <span class="fu">Prob</span>(contents:</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true"></a>        contents.<span class="fu">mergeBy</span>( {(a,b) in <span class="fu">comp</span>(a<span class="fl">.0</span>,b<span class="fl">.0</span>)}</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true"></a>                        , {(a,b) <span class="fu">in</span> (a<span class="fl">.0</span>,a<span class="fl">.1</span>+b<span class="fl">.1</span>)})</span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true"></a>    )</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true"></a>  }</span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">eqing ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Ordering</span>) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>eqing c <span class="ot">=</span> (\a b <span class="ot">-&gt;</span> <span class="kw">case</span> c a b <span class="kw">of</span> <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">True</span> </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>                                 _  <span class="ot">-&gt;</span> <span class="dt">False</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a><span class="ot">mergeBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Ordering</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>mergeBy m c <span class="ot">=</span> (foldl1' m <span class="op">&lt;$&gt;</span>) <span class="op">.</span> groupBy (eqing c) <span class="op">.</span> sortBy c</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a><span class="ot">mergeProbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Prob</span> a <span class="ot">-&gt;</span> <span class="dt">Prob</span> a</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>mergeProbs <span class="ot">=</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>  <span class="dt">Prob</span> <span class="op">.</span> mergeBy (<span class="fu">fmap</span> <span class="op">.</span> (<span class="op">+</span>) <span class="op">.</span> <span class="fu">snd</span>) (comparing <span class="fu">fst</span>) <span class="op">.</span> getProb</span></code></pre></div>
 <p>Now we get some nicer probabilities, though:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb13-1" data-line-number="1">func <span class="fu">comp</span>(a: Result, b:Result) -&gt; Ordering {</a>
-<a class="sourceLine" id="cb13-2" data-line-number="2">  <span class="fu">switch</span> (a,b) {</a>
-<a class="sourceLine" id="cb13-3" data-line-number="3">  <span class="kw">case</span> (.<span class="fu">Win</span>,.<span class="fu">Win</span>),(.<span class="fu">Lose</span>,.<span class="fu">Lose</span>): <span class="kw">return</span> .<span class="fu">EQ</span></a>
-<a class="sourceLine" id="cb13-4" data-line-number="4">  <span class="kw">case</span> (.<span class="fu">Lose</span>,.<span class="fu">Win</span>): <span class="kw">return</span> .<span class="fu">LT</span></a>
-<a class="sourceLine" id="cb13-5" data-line-number="5">  <span class="kw">case</span> (.<span class="fu">Win</span>,.<span class="fu">Lose</span>): <span class="kw">return</span> .<span class="fu">GT</span></a>
-<a class="sourceLine" id="cb13-6" data-line-number="6">  }</a>
-<a class="sourceLine" id="cb13-7" data-line-number="7">}</a>
-<a class="sourceLine" id="cb13-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb13-9" data-line-number="9">[Coin.<span class="fu">H</span>,.<span class="fu">T</span>]</a>
-<a class="sourceLine" id="cb13-10" data-line-number="10">  .<span class="fu">equalProbs</span></a>
-<a class="sourceLine" id="cb13-11" data-line-number="11">  .<span class="fu">flatMap</span>(play)</a>
-<a class="sourceLine" id="cb13-12" data-line-number="12">  .<span class="fu">mergeProbs</span>(comp)</a>
-<a class="sourceLine" id="cb13-13" data-line-number="13"></a>
-<a class="sourceLine" id="cb13-14" data-line-number="14"><span class="co">// 0.4: Result.Lose</span></a>
-<a class="sourceLine" id="cb13-15" data-line-number="15"><span class="co">// 0.6: Result.Win</span></a></code></pre></div>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb14-1" data-line-number="1"><span class="kw">instance</span> <span class="dt">Ord</span> <span class="dt">Result</span> <span class="kw">where</span></a>
-<a class="sourceLine" id="cb14-2" data-line-number="2">  compare <span class="dt">Win</span> <span class="dt">Lose</span> <span class="fu">=</span> <span class="dt">GT</span></a>
-<a class="sourceLine" id="cb14-3" data-line-number="3">  compare <span class="dt">Lose</span> <span class="dt">Win</span> <span class="fu">=</span> <span class="dt">LT</span></a>
-<a class="sourceLine" id="cb14-4" data-line-number="4">  compare _    _   <span class="fu">=</span> <span class="dt">EQ</span></a>
-<a class="sourceLine" id="cb14-5" data-line-number="5">  </a>
-<a class="sourceLine" id="cb14-6" data-line-number="6">mergeProbs ( equalProbs [<span class="dt">H</span>,<span class="dt">T</span>] <span class="fu">&gt;&gt;=</span> play )</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>func <span class="fu">comp</span>(a: Result, b:Result) -&gt; Ordering {</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>  <span class="fu">switch</span> (a,b) {</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  <span class="kw">case</span> (.<span class="fu">Win</span>,.<span class="fu">Win</span>),(.<span class="fu">Lose</span>,.<span class="fu">Lose</span>): <span class="kw">return</span> .<span class="fu">EQ</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  <span class="kw">case</span> (.<span class="fu">Lose</span>,.<span class="fu">Win</span>): <span class="kw">return</span> .<span class="fu">LT</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>  <span class="kw">case</span> (.<span class="fu">Win</span>,.<span class="fu">Lose</span>): <span class="kw">return</span> .<span class="fu">GT</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>  }</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>}</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>[Coin.<span class="fu">H</span>,.<span class="fu">T</span>]</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a>  .<span class="fu">equalProbs</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>  .<span class="fu">flatMap</span>(play)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>  .<span class="fu">mergeProbs</span>(comp)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a><span class="co">// 0.4: Result.Lose</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true"></a><span class="co">// 0.6: Result.Win</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Ord</span> <span class="dt">Result</span> <span class="kw">where</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="fu">compare</span> <span class="dt">Win</span> <span class="dt">Lose</span> <span class="ot">=</span> <span class="dt">GT</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="fu">compare</span> <span class="dt">Lose</span> <span class="dt">Win</span> <span class="ot">=</span> <span class="dt">LT</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>  <span class="fu">compare</span> _    _   <span class="ot">=</span> <span class="dt">EQ</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>  </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>mergeProbs ( equalProbs [<span class="dt">H</span>,<span class="dt">T</span>] <span class="op">&gt;&gt;=</span> play )</span></code></pre></div>
 <p>And you can see what effect a loaded coin would have on your chances:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb15-1" data-line-number="1"><span class="fu">Prob</span>([(Coin.<span class="fu">H</span>,<span class="fl">0.7</span>),(.<span class="fu">T</span>,<span class="fl">0.3</span>)])</a>
-<a class="sourceLine" id="cb15-2" data-line-number="2">  .<span class="fu">flatMap</span>(play)</a>
-<a class="sourceLine" id="cb15-3" data-line-number="3">  .<span class="fu">mergeProbs</span>(comp)</a>
-<a class="sourceLine" id="cb15-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb15-5" data-line-number="5"><span class="co">// 0.36: Result.Lose</span></a>
-<a class="sourceLine" id="cb15-6" data-line-number="6"><span class="co">// 0.64: Result.Win</span></a></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb16-1" data-line-number="1">mergeProbs ( <span class="dt">Prob</span> [(<span class="dt">H</span>,<span class="dv">7</span><span class="fu">%</span><span class="dv">10</span>),(<span class="dt">T</span>,<span class="dv">3</span><span class="fu">%</span><span class="dv">10</span>)] <span class="fu">&gt;&gt;=</span> play )</a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="fu">Prob</span>([(Coin.<span class="fu">H</span>,<span class="fl">0.7</span>),(.<span class="fu">T</span>,<span class="fl">0.3</span>)])</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  .<span class="fu">flatMap</span>(play)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  .<span class="fu">mergeProbs</span>(comp)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a><span class="co">// 0.36: Result.Lose</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a><span class="co">// 0.64: Result.Win</span></span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a>mergeProbs ( <span class="dt">Prob</span> [(<span class="dt">H</span>,<span class="dv">7</span><span class="op">%</span><span class="dv">10</span>),(<span class="dt">T</span>,<span class="dv">3</span><span class="op">%</span><span class="dv">10</span>)] <span class="op">&gt;&gt;=</span> play )</span></code></pre></div>
 <p>So how does this apply to Monty Hall? Well, we’ve actually done most of the work already. We’ll represent the doors as an Int, and the choice by an enum.</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb17-1" data-line-number="1">public enum Choice { <span class="kw">case</span> Switch, Stick }</a></code></pre></div>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb18-1" data-line-number="1"><span class="kw">data</span> <span class="dt">Choice</span> <span class="fu">=</span> <span class="dt">Switch</span> <span class="fu">|</span> <span class="dt">Stick</span></a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>public enum Choice { <span class="kw">case</span> Switch, Stick }</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Choice</span> <span class="ot">=</span> <span class="dt">Switch</span> <span class="op">|</span> <span class="dt">Stick</span></span></code></pre></div>
 <p>Then, a <code class="sourceCode scala">chances</code> function. The logic here is a bit dense. First of all, if you’re going to stick, it doesn’t matter how many doors the host opens: your chance of getting a car is <code>1/n</code>, where <code>n</code> is the number of doors. However, if you’re going to switch, two things need to happen: you need to <em>not</em> pick the car on your first choice, <em>and</em> you need to pick the car on your second choice. The chance of picking the car on your second choice (if the one you picked on your first choice <em>wasn’t</em> the car) is the one over the number of doors, minus the number of doors the host opens, minus one.</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb19-1" data-line-number="1">public func <span class="fu">chances</span>(n: Int, _ p: Int, _ c: Choice)(_ d: Int)</a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">  -&gt; Prob&lt;Bool&gt; {</a>
-<a class="sourceLine" id="cb19-3" data-line-number="3">    switch c {</a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">    <span class="kw">case</span> .<span class="fu">Stick</span> : <span class="kw">return</span> (<span class="dv">1</span>...<span class="fu">n</span>).<span class="fu">equalProbs</span>.<span class="fu">fmap</span>(==d)</a>
-<a class="sourceLine" id="cb19-5" data-line-number="5">    <span class="kw">case</span> .<span class="fu">Switch</span>:</a>
-<a class="sourceLine" id="cb19-6" data-line-number="6">      let notFirst = <span class="fu">chances</span>(n,p,.<span class="fu">Stick</span>)(d).<span class="fu">fmap</span>(!)</a>
-<a class="sourceLine" id="cb19-7" data-line-number="7">      let second =</a>
-<a class="sourceLine" id="cb19-8" data-line-number="8">        <span class="fu">Repeat</span>(count: (n-p)-<span class="dv">2</span>, repeatedValue: <span class="kw">false</span>) + [<span class="kw">true</span>]</a>
-<a class="sourceLine" id="cb19-9" data-line-number="9">      <span class="kw">return</span> notFirst.<span class="fu">flatMap</span> { f in </a>
-<a class="sourceLine" id="cb19-10" data-line-number="10">        second.<span class="fu">equalProbs</span>.<span class="fu">fmap</span> { s in f &amp;&amp; s } </a>
-<a class="sourceLine" id="cb19-11" data-line-number="11">      }</a>
-<a class="sourceLine" id="cb19-12" data-line-number="12">  }</a>
-<a class="sourceLine" id="cb19-13" data-line-number="13">}</a></code></pre></div>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="ot">chances ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Choice</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Prob</span> <span class="dt">Bool</span></a>
-<a class="sourceLine" id="cb20-2" data-line-number="2">chances n _ <span class="dt">Stick</span>  d <span class="fu">=</span> fmap (<span class="fu">==</span>d) (equalProbs [<span class="dv">1</span><span class="fu">..</span>n])</a>
-<a class="sourceLine" id="cb20-3" data-line-number="3">chances n p <span class="dt">Switch</span> d <span class="fu">=</span> </a>
-<a class="sourceLine" id="cb20-4" data-line-number="4">  (<span class="fu">&amp;&amp;</span>) <span class="fu">.</span> not          <span class="fu">&lt;$&gt;</span></a>
-<a class="sourceLine" id="cb20-5" data-line-number="5">  chances n p <span class="dt">Stick</span> d <span class="fu">&lt;*&gt;</span></a>
-<a class="sourceLine" id="cb20-6" data-line-number="6">  (equalProbs <span class="fu">$</span> <span class="dt">True</span> <span class="fu">:</span> replicate (n<span class="fu">-</span>p<span class="fu">-</span><span class="dv">2</span>) <span class="dt">False</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a>public func <span class="fu">chances</span>(n: Int, _ p: Int, _ c: Choice)(_ d: Int)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>  -&gt; Prob&lt;Bool&gt; {</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>    switch c {</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Stick</span> : <span class="kw">return</span> (<span class="dv">1</span>...<span class="fu">n</span>).<span class="fu">equalProbs</span>.<span class="fu">fmap</span>(==d)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Switch</span>:</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>      let notFirst = <span class="fu">chances</span>(n,p,.<span class="fu">Stick</span>)(d).<span class="fu">fmap</span>(!)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>      let second =</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>        <span class="fu">Repeat</span>(count: (n-p)-<span class="dv">2</span>, repeatedValue: <span class="kw">false</span>) + [<span class="kw">true</span>]</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a>      <span class="kw">return</span> notFirst.<span class="fu">flatMap</span> { f in </span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a>        second.<span class="fu">equalProbs</span>.<span class="fu">fmap</span> { s in f &amp;&amp; s } </span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true"></a>      }</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true"></a>  }</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="ot">chances ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Choice</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Prob</span> <span class="dt">Bool</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>chances n _ <span class="dt">Stick</span>  d <span class="ot">=</span> <span class="fu">fmap</span> (<span class="op">==</span>d) (equalProbs [<span class="dv">1</span><span class="op">..</span>n])</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>chances n p <span class="dt">Switch</span> d <span class="ot">=</span> </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>  (<span class="op">&amp;&amp;</span>) <span class="op">.</span> <span class="fu">not</span>          <span class="op">&lt;$&gt;</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>  chances n p <span class="dt">Stick</span> d <span class="op">&lt;*&gt;</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>  (equalProbs <span class="op">$</span> <span class="dt">True</span> <span class="op">:</span> <span class="fu">replicate</span> (n<span class="op">-</span>p<span class="op">-</span><span class="dv">2</span>) <span class="dt">False</span>)</span></code></pre></div>
 <p>Finally, the <code>chanceOfCar</code> function:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb21-1" data-line-number="1">public func chanceOfCar</a>
-<a class="sourceLine" id="cb21-2" data-line-number="2">  (n: Int, _ p: Int, _ s: Choice)</a>
-<a class="sourceLine" id="cb21-3" data-line-number="3">  -&gt; Prob&lt;Bool&gt; {</a>
-<a class="sourceLine" id="cb21-4" data-line-number="4">    <span class="kw">return</span> (<span class="dv">1</span>...<span class="fu">n</span>)</a>
-<a class="sourceLine" id="cb21-5" data-line-number="5">      .<span class="fu">equalProbs</span></a>
-<a class="sourceLine" id="cb21-6" data-line-number="6">      .<span class="fu">flatMap</span>(<span class="fu">chances</span>(n,p,s))</a>
-<a class="sourceLine" id="cb21-7" data-line-number="7">      .<span class="fu">mergeProbs</span>(comp)</a>
-<a class="sourceLine" id="cb21-8" data-line-number="8">}</a></code></pre></div>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="ot">chanceOfCar ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Choice</span> <span class="ot">-&gt;</span> <span class="dt">Prob</span> <span class="dt">Bool</span></a>
-<a class="sourceLine" id="cb22-2" data-line-number="2">chanceOfCar n p s <span class="fu">=</span> mergeProbs <span class="fu">$</span></a>
-<a class="sourceLine" id="cb22-3" data-line-number="3">                    equalProbs [<span class="dv">1</span><span class="fu">..</span>n] <span class="fu">&gt;&gt;=</span> </a>
-<a class="sourceLine" id="cb22-4" data-line-number="4">                    chances n p s</a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a>public func chanceOfCar</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>  (n: Int, _ p: Int, _ s: Choice)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  -&gt; Prob&lt;Bool&gt; {</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>    <span class="kw">return</span> (<span class="dv">1</span>...<span class="fu">n</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>      .<span class="fu">equalProbs</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>      .<span class="fu">flatMap</span>(<span class="fu">chances</span>(n,p,s))</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a>      .<span class="fu">mergeProbs</span>(comp)</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="ot">chanceOfCar ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Choice</span> <span class="ot">-&gt;</span> <span class="dt">Prob</span> <span class="dt">Bool</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>chanceOfCar n p s <span class="ot">=</span> mergeProbs <span class="op">$</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>                    equalProbs [<span class="dv">1</span><span class="op">..</span>n] <span class="op">&gt;&gt;=</span> </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a>                    chances n p s</span></code></pre></div>
 <p>Which returns, as you’d expect, 1/3 chance of car if you stick, and 2/3 if you switch.</p>
 <p>One of the final cool things you can do with this is change the number of doors, and the number of doors the host opens, and see what happens:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode scala"><code class="sourceCode scala"><a class="sourceLine" id="cb23-1" data-line-number="1"><span class="fu">chanceOfCar</span>(<span class="dv">6</span>, <span class="dv">2</span>, .<span class="fu">Switch</span>) </a>
-<a class="sourceLine" id="cb23-2" data-line-number="2"><span class="co">// 0.833333333333334: false, 0.166666666666667: true</span></a></code></pre></div>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb24-1" data-line-number="1">chanceOfCar <span class="dv">8</span> <span class="dv">3</span> <span class="dt">Switch</span> <span class="fu">//</span> <span class="dv">7</span> <span class="fu">%</span> <span class="dv">32</span></a></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="fu">chanceOfCar</span>(<span class="dv">6</span>, <span class="dv">2</span>, .<span class="fu">Switch</span>) </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a><span class="co">// 0.833333333333334: false, 0.166666666666667: true</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>chanceOfCar <span class="dv">8</span> <span class="dv">3</span> <span class="dt">Switch</span> <span class="op">//</span> <span class="dv">7</span> <span class="op">%</span> <span class="dv">32</span></span></code></pre></div>
 <p>The advantage gets less and less, but never goes away.</p>
 <p>If you check out the <a href="https://en.wikipedia.org/wiki/Monty_Hall_problem#N_doors">Wikipedia</a> entry on the problem, the formula for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>-doors is given: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mrow><mi>N</mi><mo>−</mo><mn>1</mn></mrow><mrow><mi>N</mi><mo stretchy="false" form="prefix">(</mo><mi>N</mi><mo>−</mo><mi>p</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow></mfrac><annotation encoding="application/x-tex">\frac{N−1}{N(N−p−1)}</annotation></semantics></math>.</p>
 <p>We can plug that straight in to our versions, to see if they’re correct:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="kw">let</span> sample <span class="fu">=</span> [(n,p)<span class="fu">|</span> n <span class="ot">&lt;-</span> [<span class="dv">3</span><span class="fu">..</span><span class="dv">20</span>], p <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="fu">..</span>(n<span class="fu">-</span><span class="dv">2</span>)]] </a>
-<a class="sourceLine" id="cb25-2" data-line-number="2"><span class="kw">let</span> expect <span class="fu">=</span> fmap frmla sample</a>
-<a class="sourceLine" id="cb25-3" data-line-number="3">             <span class="kw">where</span><span class="ot"> frmla ::</span> (<span class="dt">Integer</span>,<span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Rational</span></a>
-<a class="sourceLine" id="cb25-4" data-line-number="4">                   frmla (n,p) <span class="fu">=</span> (n <span class="fu">-</span> <span class="dv">1</span>)<span class="fu">%</span>(n<span class="fu">*</span>(n<span class="fu">-</span>p<span class="fu">-</span><span class="dv">1</span>))</a>
-<a class="sourceLine" id="cb25-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb25-6" data-line-number="6"><span class="kw">let</span> actual <span class="fu">=</span> fmap t sample <span class="kw">where</span></a>
-<a class="sourceLine" id="cb25-7" data-line-number="7">  t (n,p) <span class="fu">=</span> truePrb <span class="fu">$</span> getProb <span class="fu">$</span> chanceOfCar n p <span class="dt">Switch</span></a>
-<a class="sourceLine" id="cb25-8" data-line-number="8">  truePrb <span class="fu">=</span> fromJust <span class="fu">.</span> (fmap snd) <span class="fu">.</span> (find fst)</a>
-<a class="sourceLine" id="cb25-9" data-line-number="9"></a>
-<a class="sourceLine" id="cb25-10" data-line-number="10">expect <span class="fu">==</span> actual</a></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="kw">let</span> sample <span class="ot">=</span> [(n,p)<span class="op">|</span> n <span class="ot">&lt;-</span> [<span class="dv">3</span><span class="op">..</span><span class="dv">20</span>], p <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span>(n<span class="op">-</span><span class="dv">2</span>)]] </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="kw">let</span> expect <span class="ot">=</span> <span class="fu">fmap</span> frmla sample</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a>             <span class="kw">where</span><span class="ot"> frmla ::</span> (<span class="dt">Integer</span>,<span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Rational</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a>                   frmla (n,p) <span class="ot">=</span> (n <span class="op">-</span> <span class="dv">1</span>)<span class="op">%</span>(n<span class="op">*</span>(n<span class="op">-</span>p<span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a><span class="kw">let</span> actual <span class="ot">=</span> <span class="fu">fmap</span> t sample <span class="kw">where</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true"></a>  t (n,p) <span class="ot">=</span> truePrb <span class="op">$</span> getProb <span class="op">$</span> chanceOfCar n p <span class="dt">Switch</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true"></a>  truePrb <span class="ot">=</span> fromJust <span class="op">.</span> (<span class="fu">fmap</span> <span class="fu">snd</span>) <span class="op">.</span> (find <span class="fu">fst</span>)</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true"></a></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true"></a>expect <span class="op">==</span> actual</span></code></pre></div>
 <p>And it works! (I didn’t try the Swift version, because of floating-point inaccuracies)</p>
 <p>You can see the code used <a href="https://github.com/oisdk/Monty-Hall">here</a>.</p>
 

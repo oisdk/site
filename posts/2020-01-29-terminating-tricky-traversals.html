@@ -32,7 +32,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Agda.html">Agda</a>, <a href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
     
 </div>
 
@@ -47,18 +47,18 @@
 </details>
 <p>Just a short one today. I’m going to look at a couple of algorithms for breadth-first traversals with complex termination proofs.</p>
 <h1 id="breadth-first-graph-traversal">Breadth-First Graph Traversal</h1>
-<p>In a previous post I talked about breadth-first traversals over graphs, and the difficulties that cycles cause. Graphs are especially tricky to work with in a purely functional language, because so many of the basic algorithms are described in explicitly mututing terms (i.e. “mark off a node as you see it”), with no obvious immutable translation. The following is the last algoirthm I came up with:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="ot">bfs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [[a]]</a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">bfs g r <span class="fu">=</span> takeWhile (not<span class="fu">.</span>null) (map fst (fix (f r <span class="fu">.</span> push)))</a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">    push xs <span class="fu">=</span> ([],Set.empty) <span class="fu">:</span> [ ([],seen) <span class="fu">|</span> (_,seen) <span class="ot">&lt;-</span> xs ]</a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">    f x q<span class="fu">@</span>((l,s)<span class="fu">:</span>qs)</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">      <span class="fu">|</span> Set.member x s <span class="fu">=</span> q</a>
-<a class="sourceLine" id="cb1-7" data-line-number="7">      <span class="fu">|</span> otherwise <span class="fu">=</span> (x<span class="fu">:</span>l, Set.insert x s) <span class="fu">:</span> foldr f qs (g x)</a></code></pre></div>
+<p>In a previous post I talked about breadth-first traversals over graphs, and the difficulties that cycles cause. Graphs are especially tricky to work with in a purely functional language, because so many of the basic algorithms are described in explicitly mututing terms (i.e. “mark off a node as you see it”), with no obvious immutable translation. The following is the last algoirthm I came up with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">bfs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>bfs g r <span class="ot">=</span> <span class="fu">takeWhile</span> (<span class="fu">not</span><span class="op">.</span><span class="fu">null</span>) (<span class="fu">map</span> <span class="fu">fst</span> (fix (f r <span class="op">.</span> push)))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    push xs <span class="ot">=</span> ([],Set.empty) <span class="op">:</span> [ ([],seen) <span class="op">|</span> (_,seen) <span class="ot">&lt;-</span> xs ]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>    f x q<span class="op">@</span>((l,s)<span class="op">:</span>qs)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>      <span class="op">|</span> Set.member x s <span class="ot">=</span> q</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (x<span class="op">:</span>l, Set.insert x s) <span class="op">:</span> <span class="fu">foldr</span> f qs (g x)</span></code></pre></div>
 <p>As difficult as it is to work with graphs in a pure functional language, it’s even <em>more</em> difficult to work in a <em>total</em> language, like Agda. Looking at the above function, there are several bits that we can see right off the bat won’t translate over easily. Let’s start with <code>fix</code>.</p>
 <p>We shouldn’t expect to be able to write <code>fix</code> in Agda as-is. Just look at its Haskell implementation:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">fix f <span class="fu">=</span> f (fix f)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>fix f <span class="ot">=</span> f (fix f)</span></code></pre></div>
 <p>It’s obviously non total!</p>
 <p>(this is actually a non-memoizing version of <code>fix</code>, which is different from the <a href="https://stackoverflow.com/questions/37366222/why-is-this-version-of-fix-more-efficient-in-haskell/37366374">usual one</a>)</p>
 <p>We can write a function <em>like</em> <code>fix</code>, though, using coinduction and sized types.</p>
@@ -124,21 +124,21 @@
 </pre>
 <p>How do we convert this to a list of lists? Well, for this condition we would actually need to prove that there are only finitely many elements in the graph. We could actually use <a href="https://arxiv.org/abs/1604.01186">Noetherian finiteness</a> for this: though I have a working implementation, I’m still figuring out how to clean this up, so I will leave it for another post.</p>
 <h1 id="traversing-a-braun-tree">Traversing a Braun Tree</h1>
-<p>A recent paper <span class="citation" data-cites="NipkowS-CPP20">(Nipkow and Sewell <a href="#ref-NipkowS-CPP20">2020</a>)</span> provided Coq proofs for some algorithms on Braun trees <span class="citation" data-cites="okasakiThreeAlgorithmsBraun1997">(Okasaki <a href="#ref-okasakiThreeAlgorithmsBraun1997">1997</a>)</span>, which prompted me to take a look at them again. This time, I came up with an interesting linear-time <code>toList</code> function, which relies on the following peculiar type:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Q2</span> a</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Q2</span></a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> a</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4">  }</a></code></pre></div>
-<p>Even after coming up with the type myself, I still can’t really make heads nor tails of it. If I squint, it starts to look like some bizarre church-encoded binary number (but I have to <em>really</em> squint). It certainly seems related to corecursive queues <span class="citation" data-cites="smith_lloyd_2009">(Smith <a href="#ref-smith_lloyd_2009">2009</a>)</span>.</p>
+<p>A recent paper <span class="citation" data-cites="NipkowS-CPP20">(Nipkow and Sewell <a href="#ref-NipkowS-CPP20" role="doc-biblioref">2020</a>)</span> provided Coq proofs for some algorithms on Braun trees <span class="citation" data-cites="okasakiThreeAlgorithmsBraun1997">(Okasaki <a href="#ref-okasakiThreeAlgorithmsBraun1997" role="doc-biblioref">1997</a>)</span>, which prompted me to take a look at them again. This time, I came up with an interesting linear-time <code>toList</code> function, which relies on the following peculiar type:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> a</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  }</span></code></pre></div>
+<p>Even after coming up with the type myself, I still can’t really make heads nor tails of it. If I squint, it starts to look like some bizarre church-encoded binary number (but I have to <em>really</em> squint). It certainly seems related to corecursive queues <span class="citation" data-cites="smith_lloyd_2009">(Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>)</span>.</p>
 <p>Anyway, we can use the type to write the following lovely <code>toList</code> function on a Braun tree.</p>
 <p><span id="toListImpl"></p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">toList t <span class="fu">=</span> unQ2 (f t b) id id</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">    f (<span class="dt">Node</span> x l r) xs <span class="fu">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> x <span class="fu">:</span> unQ2 xs (ls <span class="fu">.</span> f l) (rs <span class="fu">.</span> f r))</a>
-<a class="sourceLine" id="cb4-5" data-line-number="5">    f <span class="dt">Leaf</span>         xs <span class="fu">=</span> <span class="dt">Q2</span> (\_  _  <span class="ot">-&gt;</span> [])</a>
-<a class="sourceLine" id="cb4-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb4-7" data-line-number="7">    b <span class="fu">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> unQ2 (ls (rs b)) id id)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>toList t <span class="ot">=</span> unQ2 (f t b) <span class="fu">id</span> <span class="fu">id</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> x <span class="op">:</span> unQ2 xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         xs <span class="ot">=</span> <span class="dt">Q2</span> (\_  _  <span class="ot">-&gt;</span> [])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    b <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> unQ2 (ls (rs b)) <span class="fu">id</span> <span class="fu">id</span>)</span></code></pre></div>
 <p></span></p>
 <p>So can we convert it to Agda?</p>
 <p>Not really! As it turns out, this function is even more difficult to implement than one might expect. We can’t even <em>write</em> the <code>Q2</code> type in Agda without getting in trouble.</p>
@@ -163,7 +163,7 @@
   <a id="6629" href="#6587" class="Function">f</a> <a id="6631" href="../code/terminating-tricky-traversals/Post.Prelude.html#4113" class="InductiveConstructor">leaf</a>         <a id="6644" href="#6644" class="Bound">xs</a> <a id="6647" class="Symbol">.</a><a id="6648" href="#6332" class="Field">q2</a> <a id="6651" href="#6651" class="Bound">ls</a> <a id="6654" href="#6654" class="Bound">rs</a> <a id="6657" class="Symbol">=</a> <a id="6659" href="../code/terminating-tricky-traversals/Post.Prelude.html#542" class="InductiveConstructor">[]</a>
   <a id="6664" href="#6587" class="Function">f</a> <a id="6666" class="Symbol">(</a><a id="6667" href="../code/terminating-tricky-traversals/Post.Prelude.html#4130" class="InductiveConstructor">node</a> <a id="6672" href="#6672" class="Bound">x</a> <a id="6674" href="#6674" class="Bound">l</a> <a id="6676" href="#6676" class="Bound">r</a><a id="6677" class="Symbol">)</a> <a id="6679" href="#6679" class="Bound">xs</a> <a id="6682" class="Symbol">.</a><a id="6683" href="#6332" class="Field">q2</a> <a id="6686" href="#6686" class="Bound">ls</a> <a id="6689" href="#6689" class="Bound">rs</a> <a id="6692" class="Symbol">=</a> <a id="6694" href="#6672" class="Bound">x</a> <a id="6696" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="6698" href="#6679" class="Bound">xs</a> <a id="6701" class="Symbol">.</a><a id="6702" href="#6332" class="Field">q2</a> <a id="6705" class="Symbol">(</a><a id="6706" href="#6686" class="Bound">ls</a> <a id="6709" href="../code/terminating-tricky-traversals/Post.Prelude.html#434" class="Function Operator">∘</a> <a id="6711" href="#6587" class="Function">f</a> <a id="6713" href="#6674" class="Bound">l</a><a id="6714" class="Symbol">)</a> <a id="6716" class="Symbol">(</a><a id="6717" href="#6689" class="Bound">rs</a> <a id="6720" href="../code/terminating-tricky-traversals/Post.Prelude.html#434" class="Function Operator">∘</a> <a id="6722" href="#6587" class="Function">f</a> <a id="6724" href="#6676" class="Bound">r</a><a id="6725" class="Symbol">)</a>
 </pre>
-<p>Apparently this problem of strict positivity for breadth-first traversals has come up before: <span class="citation" data-cites="bergerMartinHofmannCase2019">Berger, Matthes, and Setzer (<a href="#ref-bergerMartinHofmannCase2019">2019</a>)</span>; <span class="citation" data-cites="hofmannNonStrictlyPositive1993">Hofmann (<a href="#ref-hofmannNonStrictlyPositive1993">1993</a>)</span>.</p>
+<p>Apparently this problem of strict positivity for breadth-first traversals has come up before: <span class="citation" data-cites="bergerMartinHofmannCase2019">Berger, Matthes, and Setzer (<a href="#ref-bergerMartinHofmannCase2019" role="doc-biblioref">2019</a>)</span>; <span class="citation" data-cites="hofmannNonStrictlyPositive1993">Hofmann (<a href="#ref-hofmannNonStrictlyPositive1993" role="doc-biblioref">1993</a>)</span>.</p>
 <h1 id="waitwhere-did-q2-come-from">Wait—Where did Q2 Come From?</h1>
 <p>Update 31/01/2020</p>
 <p>Daniel Peebles (<a href="https://twitter.com/copumpkin">@copumpkin</a> on twitter) replied to my tweet about this post with the following:</p>
@@ -207,56 +207,56 @@
 
          1,         2, 3,       4, 5, 6, 7,   8, 9, 10, 11, 12, 13, 14, 15</code></pre>
 <p>If we want to do this in Haskell, we have a number of options for how we would represent queues: as ever, though, I much prefer to use vanilla lists and time the reversals so that they stay linear. Here’s what that looks like:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">toList t <span class="fu">=</span> f t b [] []</a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb7-4" data-line-number="4">    f (<span class="dt">Node</span> x l r) xs ls rs <span class="fu">=</span> x <span class="fu">:</span> xs (l <span class="fu">:</span> ls) (r <span class="fu">:</span> rs)</a>
-<a class="sourceLine" id="cb7-5" data-line-number="5">    f <span class="dt">Leaf</span>         _ _  _  <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb7-7" data-line-number="7">    b ls rs <span class="fu">=</span> foldr f b (reverse ls <span class="fu">++</span> reverse rs) [] []</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f t b [] []</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _ _  _  <span class="ot">=</span> []</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldr</span> f b (<span class="fu">reverse</span> ls <span class="op">++</span> <span class="fu">reverse</span> rs) [] []</span></code></pre></div>
 <p>Any place we see a <code>foldr</code> being run after a reverse or a concatenation, we know that we can remove a pass (in actual fact rewrite rules will likely do this automatically for us).</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">toList t <span class="fu">=</span> f b t [] []</a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">    f (<span class="dt">Node</span> x l r) xs ls rs <span class="fu">=</span> x <span class="fu">:</span> xs (l <span class="fu">:</span> ls) (r <span class="fu">:</span> rs)</a>
-<a class="sourceLine" id="cb8-5" data-line-number="5">    f <span class="dt">Leaf</span>         _  _  _  <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb8-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb8-7" data-line-number="7">    b ls rs <span class="fu">=</span> foldl (flip f) (foldl (flip f) b rs) ls [] []</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f b t [] []</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _  _  _  <span class="ot">=</span> []</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">flip</span> f) (<span class="fu">foldl</span> (<span class="fu">flip</span> f) b rs) ls [] []</span></code></pre></div>
 <p>Finally, since we’re building up the lists with <code>:</code> (in a linear way, i.e. we will not use the intermediate queues more than once), and we’re immediately consuming them with a fold, we can deforest the intermediate list, replacing every <code>:</code> with <code>f</code> (actually, it’s a little more tricky than that, since we replace the <code>:</code> with the <em>reversed</em> version of <code>f</code>, i.e. the one you would pass to <code>foldr</code> if you wanted it to act like <code>foldl</code>. This trick is explained in more detail in <a href="2019-05-08-list-manipulation-tricks.html">this post</a>).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb9-2" data-line-number="2">toList t <span class="fu">=</span> f t b id id</a>
-<a class="sourceLine" id="cb9-3" data-line-number="3">  <span class="kw">where</span></a>
-<a class="sourceLine" id="cb9-4" data-line-number="4">    f (<span class="dt">Node</span> x l r) xs ls rs <span class="fu">=</span> x <span class="fu">:</span> xs (ls <span class="fu">.</span> f l) (rs <span class="fu">.</span> f r)</a>
-<a class="sourceLine" id="cb9-5" data-line-number="5">    f <span class="dt">Leaf</span>         _ _ _ <span class="fu">=</span> []</a>
-<a class="sourceLine" id="cb9-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb9-7" data-line-number="7">    b ls rs <span class="fu">=</span> ls (rs b) id id</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f t b <span class="fu">id</span> <span class="fu">id</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _ _ _ <span class="ot">=</span> []</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> ls (rs b) <span class="fu">id</span> <span class="fu">id</span></span></code></pre></div>
 <p>Once you do that, however, you run into the “cannot construct the infinite type” error. To be precise:</p>
 <blockquote>
 <pre><code>• Occurs check: cannot construct the infinite type:
     a3 ~ (a3 -&gt; c0) -&gt; (a3 -&gt; c1) -&gt; [a2]</code></pre>
 </blockquote>
 <p>And this gives us the template for our newtype! It requires some trial and error, but you can see where some of the recursive calls are, and what you eventually get is the following:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="kw">newtype</span> <span class="dt">Q2</span> a</a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">  <span class="fu">=</span> <span class="dt">Q2</span></a>
-<a class="sourceLine" id="cb11-3" data-line-number="3">  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> [a]</a>
-<a class="sourceLine" id="cb11-4" data-line-number="4">  }</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> [a]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  }</span></code></pre></div>
 <p>(You can remove the list type constructor at the end, I did as I thought it made it slightly more general). And from there we get back to <a href="#toListImpl">the <code>toList</code> function</a>.</p>
-<h1 id="references" class="unnumbered">References</h1>
-<div id="refs" class="references">
+<h1 class="unnumbered" id="references">References</h1>
+<div id="refs" class="references hanging-indent" role="doc-bibliography">
 <div id="ref-bergerMartinHofmannCase2019">
-<p>Berger, Ulrich, Ralph Matthes, and Anton Setzer. 2019. “Martin Hofmann’s Case for Non-Strictly Positive Data Types.” In <em>24th international conference on types for proofs and programs (TYPES 2018)</em>, ed by. Peter Dybjer, José Espírito Santo, and Luís Pinto, 130:22. Leibniz international proceedings in informatics (LIPIcs). Dagstuhl, Germany: Schloss DagstuhlLeibniz-Zentrum fuer Informatik. doi:<a href="https://doi.org/10.4230/LIPIcs.TYPES.2018.1">10.4230/LIPIcs.TYPES.2018.1</a>. <a href="http://drops.dagstuhl.de/opus/volltexte/2019/11405" class="uri">http://drops.dagstuhl.de/opus/volltexte/2019/11405</a>.</p>
+<p>Berger, Ulrich, Ralph Matthes, and Anton Setzer. 2019. “Martin Hofmann’s Case for Non-Strictly Positive Data Types.” In <em>24th International Conference on Types for Proofs and Programs (TYPES 2018)</em>, ed by. Peter Dybjer, José Espírito Santo, and Luís Pinto, 130:22. Leibniz International Proceedings in Informatics (LIPIcs). Dagstuhl, Germany: Schloss DagstuhlLeibniz-Zentrum fuer Informatik. doi:<a href="https://doi.org/10.4230/LIPIcs.TYPES.2018.1">10.4230/LIPIcs.TYPES.2018.1</a>. <a href="http://drops.dagstuhl.de/opus/volltexte/2019/11405">http://drops.dagstuhl.de/opus/volltexte/2019/11405</a>.</p>
 </div>
 <div id="ref-hofmannNonStrictlyPositive1993">
-<p>Hofmann, Martin. 1993. “Non Strictly Positive Datatypes in System F.” <a href="https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html" class="uri">https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html</a>.</p>
+<p>Hofmann, Martin. 1993. “Non Strictly Positive Datatypes in System F.” <a href="https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html">https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html</a>.</p>
 </div>
 <div id="ref-NipkowS-CPP20">
-<p>Nipkow, Tobias, and Thomas Sewell. 2020. “Proof pearl: Braun trees.” In <em>Certified programs and proofs, CPP 2020</em>, ed by. J. Blanchette and C. Hritcu, –. ACM. <a href="http://www21.in.tum.de/~nipkow/pubs/cpp20.html" class="uri">http://www21.in.tum.de/~nipkow/pubs/cpp20.html</a>.</p>
+<p>Nipkow, Tobias, and Thomas Sewell. 2020. “Proof Pearl: Braun Trees.” In <em>Certified Programs and Proofs, CPP 2020</em>, ed by. J. Blanchette and C. Hritcu, –. ACM. <a href="http://www21.in.tum.de/~nipkow/pubs/cpp20.html">http://www21.in.tum.de/~nipkow/pubs/cpp20.html</a>.</p>
 </div>
 <div id="ref-okasakiThreeAlgorithmsBraun1997">
-<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf" class="uri">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
+<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
 </div>
 <div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf" class="uri">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
 </div>
 </div>
 

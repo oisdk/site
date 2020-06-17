@@ -32,7 +32,7 @@
 </div>
 <div class="info">
     
-        Tags: <a href="../tags/Haskell.html">Haskell</a>, <a href="../tags/Algorithms.html">Algorithms</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Algorithms'." href="../tags/Algorithms.html">Algorithms</a>
     
 </div>
 
@@ -52,119 +52,119 @@
 <p>Pairs on the same line can be performed in parallel.</p>
 <p>For our case, I’m going to be looking at sorting tuples, but the technique can easily be generalized to vectors, etc.</p>
 <p>The first trick is to figure out how to do “swapping”: we don’t want mutation, so what we can do instead is swap the <em>reference</em> to some value, by shadowing its name. In other words:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb3-1" data-line-number="1"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a, a)</a>
-<a class="sourceLine" id="cb3-2" data-line-number="2">swap2 lte x y <span class="fu">|</span> lte x y <span class="fu">=</span> (x, y)</a>
-<a class="sourceLine" id="cb3-3" data-line-number="3">              <span class="fu">|</span> otherwise <span class="fu">=</span> (y, x)</a>
-<a class="sourceLine" id="cb3-4" data-line-number="4"></a>
-<a class="sourceLine" id="cb3-5" data-line-number="5"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</a>
-<a class="sourceLine" id="cb3-6" data-line-number="6">sort3 lte (_0,_1,_2)</a>
-<a class="sourceLine" id="cb3-7" data-line-number="7">    <span class="fu">=</span> <span class="kw">case</span> swap2 lte _1 _2 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb3-8" data-line-number="8">      (_1, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _2 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb3-9" data-line-number="9">        (_0, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _1 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb3-10" data-line-number="10">          (_0, _1) <span class="ot">-&gt;</span> (_0, _1, _2)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a, a)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>swap2 lte x y <span class="op">|</span> lte x y <span class="ot">=</span> (x, y)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>              <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (y, x)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>sort3 lte (_0,_1,_2)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    <span class="ot">=</span> <span class="kw">case</span> swap2 lte _1 _2 <span class="kw">of</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>      (_1, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _2 <span class="kw">of</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>        (_0, _2) <span class="ot">-&gt;</span> <span class="kw">case</span> swap2 lte _0 _1 <span class="kw">of</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a>          (_0, _1) <span class="ot">-&gt;</span> (_0, _1, _2)</span></code></pre></div>
 <p>The indentation is hard to read, though, and wrapping-and-unwrapping tuples makes me nervous about the performance (although it may be inlined). The next step is to <em>church-encode</em> the pairs returned:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb4-2" data-line-number="2">swap2 lte x y k</a>
-<a class="sourceLine" id="cb4-3" data-line-number="3">    <span class="fu">|</span> lte x y <span class="fu">=</span> k x y</a>
-<a class="sourceLine" id="cb4-4" data-line-number="4">    <span class="fu">|</span> otherwise <span class="fu">=</span> k y x</a>
-<a class="sourceLine" id="cb4-5" data-line-number="5"></a>
-<a class="sourceLine" id="cb4-6" data-line-number="6"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</a>
-<a class="sourceLine" id="cb4-7" data-line-number="7">sort3 lte (_0,_1,_2)</a>
-<a class="sourceLine" id="cb4-8" data-line-number="8">    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb4-9" data-line-number="9">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb4-10" data-line-number="10">      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb4-11" data-line-number="11">      (_0,_1,_2)</a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>swap2 lte x y k</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    <span class="op">|</span> lte x y <span class="ot">=</span> k x y</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> k y x</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a) <span class="ot">-&gt;</span> (a,a,a)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>sort3 lte (_0,_1,_2)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    <span class="ot">=</span> swap2 lte _1 _2 <span class="op">$</span> \ _1 _2 <span class="ot">-&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>      swap2 lte _0 _2 <span class="op">$</span> \ _0 _2 <span class="ot">-&gt;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>      swap2 lte _0 _1 <span class="op">$</span> \ _0 _1 <span class="ot">-&gt;</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>      (_0,_1,_2)</span></code></pre></div>
 <p>Then, to get this to compile down to efficient code, we can make judicious use of <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/GHC-Exts.html#v:inline"><code class="sourceCode haskell">inline</code></a> from GHC.Exts:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb5-1" data-line-number="1"><span class="kw">import</span> <span class="dt">GHC.Exts</span> (inline)</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2"></a>
-<a class="sourceLine" id="cb5-3" data-line-number="3"><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">swap2 lte x y k</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">    <span class="fu">|</span> inline lte x y <span class="fu">=</span> inline k x y</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6">    <span class="fu">|</span> otherwise <span class="fu">=</span> inline k y x</a>
-<a class="sourceLine" id="cb5-7" data-line-number="7"><span class="ot">{-# INLINE swap2 #-}</span></a>
-<a class="sourceLine" id="cb5-8" data-line-number="8"></a>
-<a class="sourceLine" id="cb5-9" data-line-number="9"><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a, a, a) <span class="ot">-&gt;</span> (a, a, a)</a>
-<a class="sourceLine" id="cb5-10" data-line-number="10">sort3 lte (_0,_1,_2)</a>
-<a class="sourceLine" id="cb5-11" data-line-number="11">    <span class="fu">=</span> swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb5-12" data-line-number="12">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb5-13" data-line-number="13">      swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb5-14" data-line-number="14">      (_0,_1,_2)</a>
-<a class="sourceLine" id="cb5-15" data-line-number="15"><span class="ot">{-# INLINE sort3 #-}</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">GHC.Exts</span> (inline)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ot">swap2 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>swap2 lte x y k</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    <span class="op">|</span> inline lte x y <span class="ot">=</span> inline k x y</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> inline k y x</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a><span class="ot">{-# INLINE swap2 #-}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="ot">sort3 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a, a, a) <span class="ot">-&gt;</span> (a, a, a)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>sort3 lte (_0,_1,_2)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    <span class="ot">=</span> swap2 lte _1 _2 <span class="op">$</span> \ _1 _2 <span class="ot">-&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>      swap2 lte _0 _2 <span class="op">$</span> \ _0 _2 <span class="ot">-&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>      swap2 lte _0 _1 <span class="op">$</span> \ _0 _1 <span class="ot">-&gt;</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>      (_0,_1,_2)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a><span class="ot">{-# INLINE sort3 #-}</span></span></code></pre></div>
 <p>And to see if this really does make efficient code, let’s look at the core (cleaned up):</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb6-1" data-line-number="1">sort3</a>
-<a class="sourceLine" id="cb6-2" data-line-number="2">  <span class="fu">=</span> \ (<span class="ot">lte ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</a>
-<a class="sourceLine" id="cb6-3" data-line-number="3">      (<span class="ot">ds ::</span> (a, a, a)) <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-4" data-line-number="4">      <span class="kw">case</span> ds <span class="kw">of</span> wild_X8 (_0, _1, _2) <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-5" data-line-number="5">      <span class="kw">case</span> lte _1 _2 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-6" data-line-number="6">        <span class="dt">False</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-7" data-line-number="7">          <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-8" data-line-number="8">            <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _1, _0)</a>
-<a class="sourceLine" id="cb6-9" data-line-number="9">            <span class="dt">True</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-10" data-line-number="10">              <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-11" data-line-number="11">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _0, _1)</a>
-<a class="sourceLine" id="cb6-12" data-line-number="12">                <span class="dt">True</span> <span class="ot">-&gt;</span> (_0, _2, _1)</a>
-<a class="sourceLine" id="cb6-13" data-line-number="13">        <span class="dt">True</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-14" data-line-number="14">          <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-15" data-line-number="15">            <span class="dt">False</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-16" data-line-number="16">              <span class="kw">case</span> lte _2 _1 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-17" data-line-number="17">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _2, _0)</a>
-<a class="sourceLine" id="cb6-18" data-line-number="18">                <span class="dt">True</span> <span class="ot">-&gt;</span> (_2, _1, _0)</a>
-<a class="sourceLine" id="cb6-19" data-line-number="19">            <span class="dt">True</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb6-20" data-line-number="20">              <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></a>
-<a class="sourceLine" id="cb6-21" data-line-number="21">                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _0, _2)</a>
-<a class="sourceLine" id="cb6-22" data-line-number="22">                <span class="dt">True</span> <span class="ot">-&gt;</span> wild_X8</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>sort3</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="ot">=</span> \ (<span class="ot">lte ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>      (<span class="ot">ds ::</span> (a, a, a)) <span class="ot">-&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>      <span class="kw">case</span> ds <span class="kw">of</span> wild_X8 (_0, _1, _2) <span class="ot">-&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>      <span class="kw">case</span> lte _1 _2 <span class="kw">of</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>        <span class="dt">False</span> <span class="ot">-&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>          <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>            <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _1, _0)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>            <span class="dt">True</span> <span class="ot">-&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>              <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>                <span class="dt">False</span> <span class="ot">-&gt;</span> (_2, _0, _1)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>                <span class="dt">True</span> <span class="ot">-&gt;</span> (_0, _2, _1)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>        <span class="dt">True</span> <span class="ot">-&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>          <span class="kw">case</span> lte _0 _2 <span class="kw">of</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a>            <span class="dt">False</span> <span class="ot">-&gt;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a>              <span class="kw">case</span> lte _2 _1 <span class="kw">of</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _2, _0)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a>                <span class="dt">True</span> <span class="ot">-&gt;</span> (_2, _1, _0)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>            <span class="dt">True</span> <span class="ot">-&gt;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a>              <span class="kw">case</span> lte _0 _1 <span class="kw">of</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true"></a>                <span class="dt">False</span> <span class="ot">-&gt;</span> (_1, _0, _2)</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true"></a>                <span class="dt">True</span> <span class="ot">-&gt;</span> wild_X8</span></code></pre></div>
 <p>Fantastic! When we specialize to <code class="sourceCode haskell"><span class="dt">Int</span></code>, we get all of the proper unpacking:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="ot">sort3Int ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>) <span class="ot">-&gt;</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2">sort3Int <span class="fu">=</span> inline sort3 (<span class="fu">&lt;=</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">sort3Int ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>) <span class="ot">-&gt;</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>sort3Int <span class="ot">=</span> inline sort3 (<span class="op">&lt;=</span>)</span></code></pre></div>
 <p>Core (with just the variable names cleaned up this time):</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb8-1" data-line-number="1">sort3Int</a>
-<a class="sourceLine" id="cb8-2" data-line-number="2">  <span class="fu">=</span> \ (<span class="ot">w ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)) <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-3" data-line-number="3">      <span class="kw">case</span> w <span class="kw">of</span> w_X { (_0, _1, _2) <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-4" data-line-number="4">      <span class="kw">case</span> _0 <span class="kw">of</span> w_0 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _0U <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-5" data-line-number="5">      <span class="kw">case</span> _1 <span class="kw">of</span> w_1 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _1U <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-6" data-line-number="6">      <span class="kw">case</span> _2 <span class="kw">of</span> w_2 { <span class="dt">GHC.Types.I</span><span class="fu">#</span> _2U <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-7" data-line-number="7">      <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _1U _2U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-8" data-line-number="8">        __DEFAULT <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-9" data-line-number="9">          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-10" data-line-number="10">            __DEFAULT <span class="ot">-&gt;</span> (w_2, w_1, w_0);</a>
-<a class="sourceLine" id="cb8-11" data-line-number="11">            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-12" data-line-number="12">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-13" data-line-number="13">                __DEFAULT <span class="ot">-&gt;</span> (w_2, w_0, w_1);</a>
-<a class="sourceLine" id="cb8-14" data-line-number="14">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_0, w_2, w_1)</a>
-<a class="sourceLine" id="cb8-15" data-line-number="15">              }</a>
-<a class="sourceLine" id="cb8-16" data-line-number="16">          };</a>
-<a class="sourceLine" id="cb8-17" data-line-number="17">        <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-18" data-line-number="18">          <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-19" data-line-number="19">            __DEFAULT <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-20" data-line-number="20">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _2U _1U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-21" data-line-number="21">                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_2, w_0);</a>
-<a class="sourceLine" id="cb8-22" data-line-number="22">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> (w_2, w_1, w_0)</a>
-<a class="sourceLine" id="cb8-23" data-line-number="23">              };</a>
-<a class="sourceLine" id="cb8-24" data-line-number="24">            <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb8-25" data-line-number="25">              <span class="kw">case</span> <span class="fu">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</a>
-<a class="sourceLine" id="cb8-26" data-line-number="26">                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_0, w_2);</a>
-<a class="sourceLine" id="cb8-27" data-line-number="27">                <span class="dv">1</span><span class="fu">#</span> <span class="ot">-&gt;</span> w_X</a>
-<a class="sourceLine" id="cb8-28" data-line-number="28">              }</a>
-<a class="sourceLine" id="cb8-29" data-line-number="29">          }</a>
-<a class="sourceLine" id="cb8-30" data-line-number="30">      }</a>
-<a class="sourceLine" id="cb8-31" data-line-number="31">      }</a>
-<a class="sourceLine" id="cb8-32" data-line-number="32">      }</a>
-<a class="sourceLine" id="cb8-33" data-line-number="33">      }</a>
-<a class="sourceLine" id="cb8-34" data-line-number="34">      }</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>sort3Int</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="ot">=</span> \ (<span class="ot">w ::</span> (<span class="dt">Int</span>, <span class="dt">Int</span>, <span class="dt">Int</span>)) <span class="ot">-&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>      <span class="kw">case</span> w <span class="kw">of</span> w_X { (_0, _1, _2) <span class="ot">-&gt;</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>      <span class="kw">case</span> _0 <span class="kw">of</span> w_0 { <span class="dt">GHC.Types.I</span><span class="op">#</span> _0U <span class="ot">-&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>      <span class="kw">case</span> _1 <span class="kw">of</span> w_1 { <span class="dt">GHC.Types.I</span><span class="op">#</span> _1U <span class="ot">-&gt;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>      <span class="kw">case</span> _2 <span class="kw">of</span> w_2 { <span class="dt">GHC.Types.I</span><span class="op">#</span> _2U <span class="ot">-&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>      <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _1U _2U <span class="kw">of</span> {</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>        __DEFAULT <span class="ot">-&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>          <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>            __DEFAULT <span class="ot">-&gt;</span> (w_2, w_1, w_0);</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>            <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>              <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>                __DEFAULT <span class="ot">-&gt;</span> (w_2, w_0, w_1);</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>                <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span> (w_0, w_2, w_1)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>              }</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>          };</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>        <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>          <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _0U _2U <span class="kw">of</span> {</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>            __DEFAULT <span class="ot">-&gt;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>              <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _2U _1U <span class="kw">of</span> {</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_2, w_0);</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>                <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span> (w_2, w_1, w_0)</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>              };</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>            <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>              <span class="kw">case</span> <span class="op">GHC.Prim.&lt;=#</span> _0U _1U <span class="kw">of</span> {</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a>                __DEFAULT <span class="ot">-&gt;</span> (w_1, w_0, w_2);</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a>                <span class="dv">1</span><span class="op">#</span> <span class="ot">-&gt;</span> w_X</span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a>              }</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a>          }</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a>      }</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a>      }</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a>      }</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a>      }</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>      }</span></code></pre></div>
 <p>Now, for the real test: sorting 5-tuples, using the network above.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="ot">sort5 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a,a,a) <span class="ot">-&gt;</span> (a,a,a,a,a)</a>
-<a class="sourceLine" id="cb9-2" data-line-number="2">sort5 lte (_0,_1,_2,_3,_4)</a>
-<a class="sourceLine" id="cb9-3" data-line-number="3">    <span class="fu">=</span> swap2 lte _0 _1 <span class="fu">$</span> \ _0 _1 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-4" data-line-number="4">      swap2 lte _2 _3 <span class="fu">$</span> \ _2 _3 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-5" data-line-number="5">      swap2 lte _0 _2 <span class="fu">$</span> \ _0 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-6" data-line-number="6">      swap2 lte _1 _3 <span class="fu">$</span> \ _1 _3 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-7" data-line-number="7">      swap2 lte _1 _2 <span class="fu">$</span> \ _1 _2 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-8" data-line-number="8">      swap2 lte _0 _4 <span class="fu">$</span> \ _0 _4 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-9" data-line-number="9">      swap2 lte _1 _4 <span class="fu">$</span> \ _1 _4 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-10" data-line-number="10">      swap2 lte _2 _4 <span class="fu">$</span> \ _2 _4 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-11" data-line-number="11">      swap2 lte _3 _4 <span class="fu">$</span> \ _3 _4 <span class="ot">-&gt;</span></a>
-<a class="sourceLine" id="cb9-12" data-line-number="12">      (_0,_1,_2,_3,_4)</a>
-<a class="sourceLine" id="cb9-13" data-line-number="13"><span class="ot">{-# INLINE sort5 #-}</span></a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">sort5 ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> (a,a,a,a,a) <span class="ot">-&gt;</span> (a,a,a,a,a)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>sort5 lte (_0,_1,_2,_3,_4)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    <span class="ot">=</span> swap2 lte _0 _1 <span class="op">$</span> \ _0 _1 <span class="ot">-&gt;</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>      swap2 lte _2 _3 <span class="op">$</span> \ _2 _3 <span class="ot">-&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>      swap2 lte _0 _2 <span class="op">$</span> \ _0 _2 <span class="ot">-&gt;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>      swap2 lte _1 _3 <span class="op">$</span> \ _1 _3 <span class="ot">-&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>      swap2 lte _1 _2 <span class="op">$</span> \ _1 _2 <span class="ot">-&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>      swap2 lte _0 _4 <span class="op">$</span> \ _0 _4 <span class="ot">-&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>      swap2 lte _1 _4 <span class="op">$</span> \ _1 _4 <span class="ot">-&gt;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>      swap2 lte _2 _4 <span class="op">$</span> \ _2 _4 <span class="ot">-&gt;</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>      swap2 lte _3 _4 <span class="op">$</span> \ _3 _4 <span class="ot">-&gt;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>      (_0,_1,_2,_3,_4)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a><span class="ot">{-# INLINE sort5 #-}</span></span></code></pre></div>
 <p>The core output from this is over 1000 lines long: you can see it (with the variable names cleaned up) <a href="https://gist.github.com/oisdk/ec25d76d918135c4c28777e1b84ead5f">here</a>.</p>
 <p>In my benchmarks, these functions are indeed quicker than their counterparts in vector, but I’m not confident in my knowledge of Haskell performance to make much of a strong statement about them.</p>
 
