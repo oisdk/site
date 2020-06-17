@@ -23,9 +23,9 @@ jobs:
 
 
     - name: Build site
-      run: stack build
-    #     stack build
-    #     stack exec site build
+      run: |
+        stack build
+        stack exec site build
 
     # - name: Deploy to github pages
     #   uses: peaceiris/actions-gh-pages@v3
