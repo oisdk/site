@@ -19,7 +19,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ~/.stack
-        key: ${{ runner.os }}-store-${{ hashFiles('site/stack.yaml.lock') }}-${{ hashFiles('site/site.cabal') }}
+        key: ${{ runner.os }}-store-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('site.cabal') }}
 
 
     - name: Build site
