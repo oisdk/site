@@ -25,10 +25,10 @@ jobs:
     - name: Build site
       run: |
         stack build
-    #     stack exec site build
+        stack exec site build
 
-    # - name: Deploy to github pages
-    #   uses: peaceiris/actions-gh-pages@v3
-    #   with:
-    #     github_token: ${{ secrets.GITHUB_TOKEN }}
-    #     publish_dir: _site
+    - name: Deploy to github pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: _site
