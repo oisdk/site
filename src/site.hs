@@ -21,7 +21,7 @@ import           Text.Pandoc.Highlighting
 
 --------------------------------------------------------------------------------
 main :: IO ()
-main = hakyllWith (defaultConfiguration {deployCommand=command}) $ do
+main = hakyll $ do
 
     match "CNAME" $ do
       route   idRoute
@@ -236,26 +236,3 @@ feedConfiguration = FeedConfiguration
   , feedAuthorName = "Donnacha Oisín Kidney"
   , feedAuthorEmail = "mail@doisinkidney.com"
   , feedRoot = "https://doisinkidney.com"}
-
-
-command :: String
-command = unlines
- [ "git stash"
- , "git checkout develop"
- , "stack exec site clean"
- , "stack exec site build"
- , "git fetch --all"
- , "git checkout -b master --track origin/master"
- , "rsync -a --filter='P _site/'      "
- ++ "        --filter='P _cache/'     "
- ++ "        --filter='P .git/'       "
- ++ "        --filter='P .gitignore'  "
- ++ "        --filter='P .stack-work' "
- ++ "        --delete-excluded        "
- ++ "        _site/ ."
- , "git add -A"
- , "git commit -m \"Publish.\""
- , "git push origin master:master"
- , "git checkout develop"
- , "git branch -D master"
- , "git stash pop"]
