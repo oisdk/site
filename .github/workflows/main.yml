@@ -11,15 +11,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2  
 
-    - name: Cache dependencies (Unix)
-      uses: actions/cache@v2
-      with:
-        path: ~/.stack
-        key: ${{ runner.os }}-store-${{ hashFiles('generator/stack.yaml.lock') }}-${{ hashFiles('generator/generator.cabal') }}
-
     - uses: actions/setup-haskell@v1.1
       with:
           stack-version: '2.1.3'
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-store-${{ hashFiles('site/stack.yaml.lock') }}-${{ hashFiles('site/site.cabal') }}
+
 
     - name: Build site
       run: stack build
