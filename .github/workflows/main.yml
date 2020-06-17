@@ -13,7 +13,7 @@ jobs:
 
     - uses: actions/setup-haskell@v1.1
       with:
-          stack-version: '2.1.3'
+          stack-version: '2.3.1'
 
     - name: Cache dependencies
       uses: actions/cache@v2
@@ -23,8 +23,8 @@ jobs:
 
 
     - name: Build site
-      run: stack build
-    #     stack build
+      run: |
+        stack build
     #     stack exec site build
 
     # - name: Deploy to github pages
