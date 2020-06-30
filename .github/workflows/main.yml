@@ -12,7 +12,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Put lang in env (needed for pandoc-citeproc)
-      run: echo "::set-env name=LANG::en_IE.UTF-8"
+      run: echo "::set-env name=LANG::en_IE.iso88591"
 
     - uses: actions/setup-haskell@v1.1
       with:
