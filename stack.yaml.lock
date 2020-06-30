@@ -10,14 +10,14 @@ packages:
     git: https://github.com/oisdk/hakyll-series
     pantry-tree:
       size: 2287
-      sha256: 3ab494bb5411f3c94d0bc29cc687135b7bfcb9960b4ff272aefaa67673fee11d
-    commit: 64fce8092715609ee3129610906452002218fac1
+      sha256: a8d6776361a96fabcea5ba3a78ed54da4f8f09277b931f23566f2a7076baceec
+    commit: abf54b49db5fbc06471af38e2aa7b30c392a52b3
   original:
     git: https://github.com/oisdk/hakyll-series
-    commit: 64fce8092715609ee3129610906452002218fac1
+    commit: abf54b49db5fbc06471af38e2aa7b30c392a52b3
 snapshots:
 - completed:
-    size: 509471
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/12/26.yaml
-    sha256: 95f014df58d0679b1c4a2b7bf2b652b61da8d30de5f571abb0d59015ef678646
-  original: lts-12.26
+    size: 531237
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/1.yaml
+    sha256: 954b6b14b0c8130732cf4773f7ebb4efc9a44600d1a5265d142868bf93462bc6
+  original: lts-16.1

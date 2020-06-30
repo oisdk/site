@@ -1,4 +1,4 @@
-resolver: lts-12.26
+resolver: lts-16.1
 
 packages:
 - .
@@ -7,7 +7,7 @@ extra-deps:
 # - pandoc-2.1.3
 # - pandoc-types-1.17.4.2
 - git: https://github.com/oisdk/hakyll-series
-  commit: "64fce8092715609ee3129610906452002218fac1"
+  commit: "abf54b49db5fbc06471af38e2aa7b30c392a52b3"
 
 flags: {}
 extra-package-dbs: []
