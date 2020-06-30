@@ -9,10 +9,7 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: actions/checkout@v2
-    
-    - name: Put lang in env (needed for pandoc-citeproc)
-      run: echo "::set-env name=LANG::en_IE.UTF-8"
+    - uses: actions/checkout@v2  
 
     - uses: actions/setup-haskell@v1.1
       with:
@@ -23,6 +20,7 @@ jobs:
       with:
         path: ~/.stack
         key: ${{ runner.os }}-store-${{ hashFiles('stack.yaml.lock') }}-${{ hashFiles('site.cabal') }}
+
 
     - name: Build site
       run: |
