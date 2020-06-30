@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: pandoc-citeproc-0.17.0.1@sha256:c0d4815dc6ef21a6cbe2ea777d31fa46590412d0ef4df8cb20b87105a0e17770,8721
+    pantry-tree:
+      size: 25684
+      sha256: 13686c272aa58730e4a7436d8117174d31ec373ca932085c44aed7bcae3417ec
+  original:
+    hackage: pandoc-citeproc-0.17.0.1
+- completed:
     name: hakyll-series
     version: 0.1.2.0
     git: https://github.com/oisdk/hakyll-series
