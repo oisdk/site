@@ -134,6 +134,71 @@ Also I already pay for pro membership on github, so I figured I might get a good
 bit of server time. (it turns out the pro membership doesn't offer much more
 than free does in this regard)
 
+# Installing GHC, Cabal, and all the Haskell Stuff
+
+We'll need GHC to typecheck our literate Haskell files, but also Agda itself is
+written in Haskell, as is lhs2TeX, and several other tools, so it will be useful
+to have a Haskell install on the remote machine as a first step.
+Thankfully, the hard part here has already been worked out for us: the
+[setup-haskell](https://github.com/actions/setup-haskell) action can install
+cabal and a ghc version for us without much fuss (it also works excellently with
+stack; that's how I compile this website with github actions).
+Here's the particular step in the workflow which uses this action:
+
+```yaml
+- name: Install ghc and cabal
+  uses: actions/setup-haskell@v1.1
+  with:
+    ghc-version: ${{ matrix.ghc-ver }}
+    cabal-version: ${{ matrix.cabal-ver }}
+```
+
+One thing that's important to include is the following:
+
+```yaml
+- name: Put cabal programs in PATH
+  run: echo "::add-path::~/.cabal/bin"
+```
+
+For executables installed with cabal to be available in general you have to add
+`~/.cabal/bin` to your path, but unfortunately the GitHub actions syntax for
+doing that is the weird thing you see above.
+I would really love if GitHub actions made this oddity much more visible somehow
+(realising that `export PATH=...` didn't work cost me a couple hours at least).
+
+# Caching
+
+Since we're going to set up a full GHC, Haskell, Agda, and LaTeX install, the
+whole install process will likely take several hours (3-4 by my estimate).
+That's absolutely too long for this system to be useful for checking pull
+requests and the like (and it also can run you into cost troubles with server
+time etc.)
+As a fix I use caching in my setup: there are probably better ways to achieve
+the same result, but it has got the total time for the action to run down to
+about 3 minutes, so I'm sticking with it for now.
+
+There are two important things that the caching steps do.
+First, if a particular bit of source code or dependency doesn't change, the
+cache should copy over the old compile as best it can.
+Secondly, if there is a minor change, the cache should copy over the most recent
+closest compile to allow for incremental compiles: this second step is
+absolutely essential for quick Agda compiles.
+Here's the yaml code:
+
+```yaml
+    - uses: actions/cache@v2
+      name: Cache cabal packages
+      id: cache-cabal
+      with:
+        path: |
+          ~/.cabal/packages
+          ~/.cabal/store
+          ~/.cabal/bin
+          dist-newstyle
+        key: ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}-${{ hashFiles('main/haskell/haskell.cabal') }}
+        restore-keys: ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}
+```
+
 # A little bit of venting about GitHub Actions
 
 All in all, my feelings on the GitHub actions system are mixed.
