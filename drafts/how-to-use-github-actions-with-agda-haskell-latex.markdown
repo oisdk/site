@@ -1,5 +1,6 @@
 ---
 title: How to use GitHub actions for LaTeX, literate Haskell, and Agda
+tags: Haskell, Agda, LaTeX
 ---
 
 I'm currently working on my master's thesis, and because it contains a lot of
@@ -198,6 +199,76 @@ Here's the yaml code:
         key: ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}-${{ hashFiles('main/haskell/haskell.cabal') }}
         restore-keys: ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}
 ```
+
+The key uses matrix variables set for the versions of each program we include;
+the `restore-keys` field is searched for (by prefix) if an exact match for the
+key isn't found.
+
+# Installing Agda
+
+For the paper I was working on I needed to use the development version of Agda,
+which unfortunately meant I couldn't run `apt-get install agda` or whatever.
+This *also* meant that I ran into some bugs in GHC when trying to compile Agda
+from source: basically, it is not possible to compile Agda with `-O2`: it will
+heap overflow. 
+If you set the allowed amount of memory to something higher it will still not
+work, it will just take longer.
+
+The highest level of optimisation I could enable was `-O2`, and even then I
+found it was useful to increase GHC's permitted amount of memory just to be
+safe.
+Here's the code:
+
+```yaml
+- name: Install Agda
+  if: steps.cache-cabal.outputs.cache-hit != 'true'
+  run: |
+    cabal update
+    cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' alex-3.2.5
+    cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' happy-1.19.12
+    cd agda
+    mkdir -p doc
+    touch doc/user-manual.pdf
+    cabal install --overwrite-policy=always --ghc-options='-O1 +RTS -M6G -RTS'
+```
+
+# Installing Agda Libraries
+
+Agda doesn't have a sophisticated dependency management system, unfortunately,
+so you have to do quite a few things by hand if you want to get a version of
+(say) the standard library on the remote machine.
+The main thing is that you will want to typecheck everything in the library and
+cache the build files: this will save a tonne of time.
+Typechecking each file is a little tricky, though: the fastest way (in my
+experience) is to make a file called something like `Everything.agda` and put an
+import statement for every agda file in the project in it, and then typecheck
+that.
+This is quicker than typechecking every file individually.
+Here's a bash script which generates an "Everything" file:
+
+```bash
+#!/usr/bin/env bash
+
+cd agda || exit
+if [ -f "$1.agda" ]; then
+    echo "file agda/$1.agda already exists: you must supply a module name which does not already exist"
+    exit 17
+fi
+everything_file=$(mktemp)
+trap "rm -f $everything_file" 0 2 3 15
+echo "module $1 where" > $everything_file
+find . -type f \( -name "*.agda" -o -name "*.lagda" \) \
+        | cut -c 3- \
+        | cut -f1 -d'.' \
+        | sed 's/\//\./g' \
+        | sed 's/^/open import /' \
+              >> $everything_file
+mv $everything_file $1.agda
+```
+
+Unfortunately Agda's standard library actually contains files which do *not*
+typecheck (in the deprecated files): you need to include logic to avoid these
+files to have everything work properly.
 
 # A little bit of venting about GitHub Actions
 
