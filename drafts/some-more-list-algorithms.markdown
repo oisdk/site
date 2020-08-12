@@ -349,8 +349,8 @@ zipLongest c xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
     xf x xk yk = runZip yk (Just x) xk
     xb zs = runZip zs Nothing xb
     
-    yf y rk Nothing  xk =     y : xk (Zip rk)
-    yf y rk (Just x) xk = c x y : xk (Zip rk)
+    yf y yk Nothing  xk =     y : xk (Zip yk)
+    yf y yk (Just x) xk = c x y : xk (Zip yk)
     
     yb Nothing  _  = []
     yb (Just x) zs = x : zs (Zip yb)
