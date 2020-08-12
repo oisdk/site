@@ -349,8 +349,11 @@ zipLongest c xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
     xf x xk yk = runZip yk (Just x) xk
     xb zs = runZip zs Nothing xb
     
-    yf y rk x xk = maybe y (`c` y) x : xk (Zip rk)
-    yb = maybe (const []) (\x zs -> x : zs (Zip yb))
+    yf y rk Nothing  xk =     y : xk (Zip rk)
+    yf y rk (Just x) xk = c x y : xk (Zip rk)
+    
+    yb Nothing  _  = []
+    yb (Just x) zs = x : zs (Zip yb)
 ```
 
 Finally, all of these functions rely on the `Zip` type, which is *not* strictly
