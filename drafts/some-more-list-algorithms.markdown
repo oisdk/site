@@ -7,9 +7,149 @@ It's been a while since I last wrote a post (I've been busy with my Master's
 thesis, which is nearly done), so I thought I would quickly throw out some fun
 snippets of Haskell I had reason to write over the past couple of weeks.
 
+# Zipping With Folds
+
+For some reason, until recently I had been under the impression that it was
+impossible to fuse zips efficiently.
+In other words, I thought that `zip` was like `tail`, in that if it was
+implemented using only `foldr` it would result in an asymptotic slowdown (`tail`
+is normally $\mathcal{O}(1)$, implemented as a fold it's $\mathcal{O}(n)$).
+
+Well, it seems like this is not the case.
+The old zip-folding code I had looks to me now to be the correct complexity:
+it's related to [How To Zip Folds](http://okmij.org/ftp/Streams.html#zip-folds),
+by Oleg Kiselyov (although I'm using a different version of the function which
+can be found [on the mailing
+list](https://mail.haskell.org/pipermail/haskell/2005-October/016693.html)).
+The relevant code is as follows:
+
+```haskell
+newtype Zip a b = 
+  Zip { runZip :: a -> (Zip a b -> b) -> b }
+
+zip :: [a] -> [b] -> [(a,b)]
+zip xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
+  where
+    xf x xk yk = runZip yk x xk
+    xb _ = []
+    
+    yf y yk x xk = (x,y) : xk (Zip yk)
+    yb _ _ = []
+```
+
+There are apparently
+[reasons](https://hackage.haskell.org/package/base-4.14.0.0/docs/src/GHC.List.html#zip)
+for why the Prelude's `zip` isn't allowed to fuse both of its arguments: I don't
+fully understand them, however.
+(in particular the linked page says that the fused zip would have different
+strictness behaviour, but the version I have above seems to function properly).
+
+This version of zip leads to some more fun solutions to folding puzzles, like
+[this
+one](https://old.reddit.com/r/haskell/comments/f3z18s/zipping_from_the_end_of_a_list/):
+
+> Write a function that is equivalent to:
+> ```haskell
+> zipFromEnd xs ys = reverse (zip (reverse xs) (reverse ys))
+> ```
+> Without creating any intermediate lists.
+
+The desired function is interesting in that, instead of lining up lists
+according to their first elements, it aligns them according to the *ends*.
+
+```haskell
+>>> zipFromEnd [1,2,3] "abc"
+[(1,'a'),(2,'b'),(3,'c')]
+
+>>> zipFromEnd [1,2,3] "abcd"
+[(1,'b'),(2,'c'),(3,'d')]
+
+>>> zipFromEnd [1,2,3,4] "abc"
+[(2,'a'),(3,'b'),(4,'c')]
+```
+
+The solution here is just to use `foldl`, and we get the following:
+
+```haskell
+zipFromEnd :: [a] -> [b] -> [(a,b)]
+zipFromEnd xs ys = foldl xf xb xs (Zip (foldl yf yb ys)) []
+  where
+    xf xk x yk = runZip yk x xk
+    xb _ zs = zs
+    
+    yf yk y x xk zs = xk (Zip yk) ((x,y) : zs)
+    yb _ _ zs = zs
+```
+
+Another function which is a little interesting is the "zip longest" function:
+
+```haskell
+zipLongest :: (a -> a -> a) -> [a] -> [a] -> [a]
+zipLongest c xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
+  where
+    xf x xk yk = runZip yk (Just x) xk
+    xb zs = runZip zs Nothing xb
+    
+    yf y yk Nothing  xk =     y : xk (Zip yk)
+    yf y yk (Just x) xk = c x y : xk (Zip yk)
+    
+    yb Nothing  _  = []
+    yb (Just x) zs = x : zs (Zip yb)
+```
+
+Finally, all of these functions rely on the `Zip` type, which is *not* strictly
+positive.
+This means that we can't use it in Agda, and it's tricky to reason about: I
+wonder what it is about functions for deforestation that tends to lead to
+non-strictly-positive datatypes.
+
+
+
+# Lexicographic Permutations
+
+The next puzzle I was interested in was finding the next lexicographic
+permutation of some string.
+In other words, given some string $s$, you need to find another string $t$ that
+is a permutation of $s$ such that $s < t$, and that there is no string $u$ that
+is a permutation of $s$ and $s < u < t$.
+The [Wikipedia article on the
+topic](https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order)
+is excellent (and clear), but again the algorithm is described in extremely
+imperative terms:
+
+> #. Find the largest index k such that a[k] < a[k + 1]. If no such index
+>    exists, the permutation is the last permutation.
+> #. Find the largest index l greater than k such that a[k] < a[l].
+> #. Swap the value of a[k] with that of a[l].
+> #. Reverse the sequence from a[k + 1] up to and including the final element
+>    a[n].
+
+The challenge here is to write this algorithm without doing any indexing:
+indexing is expensive on Haskell lists, and regardless it is cleaner to express
+it without.
+
+I managed to work out the following:
+
+```haskell
+nextLexPerm :: Ord a => [a] -> Maybe [a]
+nextLexPerm []     = Nothing
+nextLexPerm (x:xs) = go1 x xs
+  where
+    go1 _ []     = Nothing
+    go1 i (j:xs) = maybe (go2 i j [] xs) (Just . (i:)) (go1 j xs)
+
+    go2 i j xs ys
+      | j <= i    = Nothing
+      | otherwise = Just (fromMaybe (j : foldl (flip (:)) (i:xs) ys) (go3 i (j:xs) ys))
+
+    go3 _ _  []     = Nothing
+    go3 i xs (j:ys) = go2 i j xs ys
+```
+
+
 # Circular Sorting
 
-The first comes from the [Rosetta Code problem Circle
+This comes from the [Rosetta Code problem Circle
 Sort](http://rosettacode.org/wiki/Sorting_Algorithms/Circle_Sort).
 This is a strange little sorting algorithm, where basically you compare elements
 on opposite sides of an array, swapping them as needed.
@@ -224,140 +364,3 @@ circleSort xs = if swapped then circleSort ks else ks
 So there it is! 
 The one-pass, purely function implementation of circle sort.
 Very possibly the most useless piece of code I've ever written.
-
-# Lexicographic Permutations
-
-The next puzzle I was interested in was finding the next lexicographic
-permutation of some string.
-In other words, given some string $s$, you need to find another string $t$ that
-is a permutation of $s$ such that $s < t$, and that there is no string $u$ that
-is a permutation of $s$ and $s < u < t$.
-The [Wikipedia article on the
-topic](https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order)
-is excellent (and clear), but again the algorithm is described in extremely
-imperative terms:
-
-> #. Find the largest index k such that a[k] < a[k + 1]. If no such index
->    exists, the permutation is the last permutation.
-> #. Find the largest index l greater than k such that a[k] < a[l].
-> #. Swap the value of a[k] with that of a[l].
-> #. Reverse the sequence from a[k + 1] up to and including the final element
->    a[n].
-
-The challenge here is to write this algorithm without doing any indexing:
-indexing is expensive on Haskell lists, and regardless it is cleaner to express
-it without.
-
-I managed to work out the following:
-
-```haskell
-nextLexPerm :: Ord a => [a] -> Maybe [a]
-nextLexPerm []     = Nothing
-nextLexPerm (x:xs) = go1 x xs
-  where
-    go1 _ []     = Nothing
-    go1 i (j:xs) = maybe (go2 i j [] xs) (Just . (i:)) (go1 j xs)
-
-    go2 i j xs ys
-      | j <= i    = Nothing
-      | otherwise = Just (fromMaybe (j : foldl (flip (:)) (i:xs) ys) (go3 i (j:xs) ys))
-
-    go3 _ _  []     = Nothing
-    go3 i xs (j:ys) = go2 i j xs ys
-```
-
-# Zipping With Folds
-
-Fro some reason, until recently I had been under the impression that it was
-impossible to fuse zips efficiently.
-In other words, I thought that `zip` was like `tail`, in that if it was
-implemented using only `foldr` it would result in an asymptotic slowdown (`tail`
-is normally $\mathcal{O}(1)$, implemented as a fold it's $\mathcal{O}(n)$).
-
-Well, it seems like this is not the case.
-The old zip-folding code I had looks to me now to be the correct complexity:
-it's related to [How To Zip Folds](http://okmij.org/ftp/Streams.html#zip-folds),
-by Oleg Kiselyov (although I'm using a different version of the function which
-can be found [on the mailing
-list](https://mail.haskell.org/pipermail/haskell/2005-October/016693.html)).
-The relevant code is as follows:
-
-```haskell
-newtype Zip a b = 
-  Zip { runZip :: a -> (Zip a b -> b) -> b }
-
-zip :: [a] -> [b] -> [(a,b)]
-zip xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
-  where
-    xf x xk yk = runZip yk x xk
-    xb _ = []
-    
-    yf y yk x xk = (x,y) : xk (Zip yk)
-    yb _ _ = []
-```
-
-There are apparently
-[reasons](https://hackage.haskell.org/package/base-4.14.0.0/docs/src/GHC.List.html#zip)
-for why the Prelude's `zip` isn't allowed to fuse both of its arguments: I don't
-fully understand them, however.
-(in particular the linked page says that the fused zip would have different
-strictness behaviour, but the version I have above seems to function properly).
-
-This version of zip leads to some more fun solutions to folding puzzles, like
-[this
-one](https://old.reddit.com/r/haskell/comments/f3z18s/zipping_from_the_end_of_a_list/):
-
-> Write a function that is equivalent to:
-> ```haskell
-> zipFromEnd xs ys = reverse (zip (reverse xs) (reverse ys))
-> ```
-> Without creating any intermediate lists.
-
-The desired function is interesting in that, instead of lining up lists
-according to their first elements, it aligns them according to the *ends*.
-
-```haskell
->>> zipFromEnd [1,2,3] "abc"
-[(1,'a'),(2,'b'),(3,'c')]
-
->>> zipFromEnd [1,2,3] "abcd"
-[(1,'b'),(2,'c'),(3,'d')]
-
->>> zipFromEnd [1,2,3,4] "abc"
-[(2,'a'),(3,'b'),(4,'c')]
-```
-
-The solution here is just to use `foldl`, and we get the following:
-
-```haskell
-zipFromEnd :: [a] -> [b] -> [(a,b)]
-zipFromEnd xs ys = foldl xf xb xs (Zip (foldl yf yb ys)) []
-  where
-    xf xk x yk = runZip yk x xk
-    xb _ zs = zs
-    
-    yf yk y x xk zs = xk (Zip yk) ((x,y) : zs)
-    yb _ _ zs = zs
-```
-
-Another function which is a little interesting is the "zip longest" function:
-
-```haskell
-zipLongest :: (a -> a -> a) -> [a] -> [a] -> [a]
-zipLongest c xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
-  where
-    xf x xk yk = runZip yk (Just x) xk
-    xb zs = runZip zs Nothing xb
-    
-    yf y yk Nothing  xk =     y : xk (Zip yk)
-    yf y yk (Just x) xk = c x y : xk (Zip yk)
-    
-    yb Nothing  _  = []
-    yb (Just x) zs = x : zs (Zip yb)
-```
-
-Finally, all of these functions rely on the `Zip` type, which is *not* strictly
-positive.
-This means that we can't use it in Agda, and it's tricky to reason about: I
-wonder what it is about functions for deforestation that tends to lead to
-non-strictly-positive datatypes.
