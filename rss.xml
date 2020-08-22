@@ -7,8 +7,243 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 19 May 2020 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sat, 22 Aug 2020 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Some More List Algorithms</title>
+    <link>https://doisinkidney.com/posts/2020-08-22-some-more-list-algorithms.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on August 22, 2020
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Haskell&#39;." href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>It’s been a while since I last wrote a post (I’ve been busy with my Master’s thesis, which is nearly done), so I thought I would quickly throw out some fun snippets of Haskell I had reason to write over the past couple of weeks.</p>
+<h1 id="zipping-with-folds">Zipping With Folds</h1>
+<p>For some reason, until recently I had been under the impression that it was impossible to fuse zips efficiently. In other words, I thought that <code>zip</code> was like <code>tail</code>, in that if it was implemented using only <code>foldr</code> it would result in an asymptotic slowdown (<code>tail</code> is normally <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>, implemented as a fold it’s <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>).</p>
+<p>Well, it seems like this is not the case. The old zip-folding code I had looks to me now to be the correct complexity: it’s related to <a href="http://okmij.org/ftp/Streams.html#zip-folds">How To Zip Folds</a>, by Oleg Kiselyov (although I’m using a different version of the function which can be found <a href="https://mail.haskell.org/pipermail/haskell/2005-October/016693.html">on the mailing list</a>). The relevant code is as follows:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Zip</span> a b <span class="ot">=</span> </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="dt">Zip</span> {<span class="ot"> runZip ::</span> a <span class="ot">-&gt;</span> (<span class="dt">Zip</span> a b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b }</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="fu">zip</span> xs ys <span class="ot">=</span> <span class="fu">foldr</span> xf xb xs (<span class="dt">Zip</span> (<span class="fu">foldr</span> yf yb ys))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    xf x xk yk <span class="ot">=</span> runZip yk x xk</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    xb _ <span class="ot">=</span> []</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>    </span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    yf y yk x xk <span class="ot">=</span> (x,y) <span class="op">:</span> xk (<span class="dt">Zip</span> yk)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>    yb _ _ <span class="ot">=</span> []</span></code></pre></div>
+<p>There are apparently <a href="https://hackage.haskell.org/package/base-4.14.0.0/docs/src/GHC.List.html#zip">reasons</a> for why the Prelude’s <code>zip</code> isn’t allowed to fuse both of its arguments: I don’t fully understand them, however. (in particular the linked page says that the fused zip would have different strictness behaviour, but the version I have above seems to function properly).</p>
+<p>This version of zip leads to some more fun solutions to folding puzzles, like <a href="https://old.reddit.com/r/haskell/comments/f3z18s/zipping_from_the_end_of_a_list/">this one</a>:</p>
+<blockquote>
+<p>Write a function that is equivalent to:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>zipFromEnd xs ys <span class="ot">=</span> <span class="fu">reverse</span> (<span class="fu">zip</span> (<span class="fu">reverse</span> xs) (<span class="fu">reverse</span> ys))</span></code></pre></div>
+<p>Without creating any intermediate lists.</p>
+</blockquote>
+<p>The desired function is interesting in that, instead of lining up lists according to their first elements, it aligns them according to the <em>ends</em>.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> zipFromEnd [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>] <span class="st">&quot;abc&quot;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>[(<span class="dv">1</span>,<span class="ch">&#39;a&#39;</span>),(<span class="dv">2</span>,<span class="ch">&#39;b&#39;</span>),(<span class="dv">3</span>,<span class="ch">&#39;c&#39;</span>)]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> zipFromEnd [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>] <span class="st">&quot;abcd&quot;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>[(<span class="dv">1</span>,<span class="ch">&#39;b&#39;</span>),(<span class="dv">2</span>,<span class="ch">&#39;c&#39;</span>),(<span class="dv">3</span>,<span class="ch">&#39;d&#39;</span>)]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> zipFromEnd [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>] <span class="st">&quot;abc&quot;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>[(<span class="dv">2</span>,<span class="ch">&#39;a&#39;</span>),(<span class="dv">3</span>,<span class="ch">&#39;b&#39;</span>),(<span class="dv">4</span>,<span class="ch">&#39;c&#39;</span>)]</span></code></pre></div>
+<p>The solution here is just to use <code>foldl</code>, and we get the following:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">zipFromEnd ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>zipFromEnd xs ys <span class="ot">=</span> <span class="fu">foldl</span> xf xb xs (<span class="dt">Zip</span> (<span class="fu">foldl</span> yf yb ys)) []</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    xf xk x yk <span class="ot">=</span> runZip yk x xk</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    xb _ zs <span class="ot">=</span> zs</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    yf yk y x xk zs <span class="ot">=</span> xk (<span class="dt">Zip</span> yk) ((x,y) <span class="op">:</span> zs)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    yb _ _ zs <span class="ot">=</span> zs</span></code></pre></div>
+<p>Another function which is a little interesting is the “zip longest” function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">zipLongest ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>zipLongest c xs ys <span class="ot">=</span> <span class="fu">foldr</span> xf xb xs (<span class="dt">Zip</span> (<span class="fu">foldr</span> yf yb ys))</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    xf x xk yk <span class="ot">=</span> runZip yk (<span class="dt">Just</span> x) xk</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    xb zs <span class="ot">=</span> runZip zs <span class="dt">Nothing</span> xb</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    yf y yk <span class="dt">Nothing</span>  xk <span class="ot">=</span>     y <span class="op">:</span> xk (<span class="dt">Zip</span> yk)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    yf y yk (<span class="dt">Just</span> x) xk <span class="ot">=</span> c x y <span class="op">:</span> xk (<span class="dt">Zip</span> yk)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    yb <span class="dt">Nothing</span>  _  <span class="ot">=</span> []</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    yb (<span class="dt">Just</span> x) zs <span class="ot">=</span> x <span class="op">:</span> zs (<span class="dt">Zip</span> yb)</span></code></pre></div>
+<p>Finally, all of these functions rely on the <code>Zip</code> type, which is <em>not</em> strictly positive. This means that we can’t use it in Agda, and it’s tricky to reason about: I wonder what it is about functions for deforestation that tends to lead to non-strictly-positive datatypes.</p>
+<h1 id="lexicographic-permutations">Lexicographic Permutations</h1>
+<p>The next puzzle I was interested in was finding the next lexicographic permutation of some string. In other words, given some string <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math>, you need to find another string <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math> that is a permutation of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> such that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>&lt;</mo><mi>t</mi></mrow><annotation encoding="application/x-tex">s &lt; t</annotation></semantics></math>, and that there is no string <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>u</mi><annotation encoding="application/x-tex">u</annotation></semantics></math> that is a permutation of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>s</mi><annotation encoding="application/x-tex">s</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>s</mi><mo>&lt;</mo><mi>u</mi><mo>&lt;</mo><mi>t</mi></mrow><annotation encoding="application/x-tex">s &lt; u &lt; t</annotation></semantics></math>. The <a href="https://en.wikipedia.org/wiki/Permutation#Generation_in_lexicographic_order">Wikipedia article on the topic</a> is excellent (and clear), but again the algorithm is described in extremely imperative terms:</p>
+<blockquote>
+<ol>
+<li>Find the largest index k such that a[k] &lt; a[k + 1]. If no such index exists, the permutation is the last permutation.</li>
+<li>Find the largest index l greater than k such that a[k] &lt; a[l].</li>
+<li>Swap the value of a[k] with that of a[l].</li>
+<li>Reverse the sequence from a[k + 1] up to and including the final element a[n].</li>
+</ol>
+</blockquote>
+<p>The challenge here is to write this algorithm without doing any indexing: indexing is expensive on Haskell lists, and regardless it is cleaner to express it without.</p>
+<p>I managed to work out the following:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">nextLexPerm ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> [a]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>nextLexPerm []     <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>nextLexPerm (x<span class="op">:</span>xs) <span class="ot">=</span> go1 x xs</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    go1 _ []     <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    go1 i (j<span class="op">:</span>xs) <span class="ot">=</span> <span class="fu">maybe</span> (go2 i j [] xs) (<span class="dt">Just</span> <span class="op">.</span> (i<span class="op">:</span>)) (go1 j xs)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    go2 i j xs ys</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>      <span class="op">|</span> j <span class="op">&lt;=</span> i    <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> (fromMaybe (j <span class="op">:</span> <span class="fu">foldl</span> (<span class="fu">flip</span> (<span class="op">:</span>)) (i<span class="op">:</span>xs) ys) (go3 i (j<span class="op">:</span>xs) ys))</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>    go3 _ _  []     <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>    go3 i xs (j<span class="op">:</span>ys) <span class="ot">=</span> go2 i j xs ys</span></code></pre></div>
+<h1 id="circular-sorting">Circular Sorting</h1>
+<p>This comes from the <a href="http://rosettacode.org/wiki/Sorting_Algorithms/Circle_Sort">Rosetta Code problem Circle Sort</a>. This is a strange little sorting algorithm, where basically you compare elements on opposite sides of an array, swapping them as needed. The example given is the following:</p>
+<pre><code>6 7 8 9 2 5 3 4 1</code></pre>
+<p>First we compare (and swap) <code>6</code> and <code>1</code>, and then <code>7</code> and <code>4</code>, and so on, until we reach the middle. At this point we split the array in two and perform the procedure on each half. After doing this once it is not the case that the array is definitely sorted: you may have to repeat the procedure several (but finitely many) times, until no swaps are performed.</p>
+<p>I have absolutely no idea what the practical application for such an odd algorithm would be, but it seemed like an interesting challenge to try implement it in a functional style (i.e. without indices or mutation).</p>
+<p>The first thing we have to do is fold the list in half, so we pair up the right items. We’ve actually seen an algorithm to do this <a href="2019-05-08-list-manipulation-tricks.html">before</a>: it’s often called the “tortoise and the hare”, and our previous use was to check if a list was a palindrome. Here’s how we implement it:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">halve ::</span> [a] <span class="ot">-&gt;</span> [(a,a)]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>halve xs <span class="ot">=</span> <span class="fu">snd</span> (go xs xs)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y (go ys zs)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,[])</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>    go ys     []       <span class="ot">=</span> (ys,[])</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    </span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>    f x (y<span class="op">:</span>ys,zs) <span class="ot">=</span> (ys, (x,y) <span class="op">:</span> zs)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    </span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> halve [<span class="dv">6</span>,<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">2</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">1</span>]</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>[(<span class="dv">6</span>,<span class="dv">1</span>),(<span class="dv">7</span>,<span class="dv">4</span>),(<span class="dv">8</span>,<span class="dv">3</span>),(<span class="dv">9</span>,<span class="dv">5</span>)]</span></code></pre></div>
+<p>Notice that the <code>2</code> in the very middle of the list is missing from the output: I’ll describe how to handle that element later on. In the above piece of code, that <code>2</code> actually gets bound to the underscore (in <code>(_:ys)</code>) in the second clause of <code>go</code>.</p>
+<p>Next we need to do the actual swapping: this is actually pretty straightforward, if we think of the algorithm functionally, rather than imperatively. Instead of swapping things in place, we are building up both halves of the new list, so the “swap” operation should simply decide which list each item goes into.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">halve ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> ([a],[a])</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>halve xs <span class="ot">=</span> tl (go xs xs)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    tl (_,lte,gt) <span class="ot">=</span> (lte,gt)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap y (go ys zs)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,[],[])</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    go ys     []       <span class="ot">=</span> (ys,[],[])</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>    </span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>    swap x (y<span class="op">:</span>ys,lte,gt) </span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>      <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> (ys, x <span class="op">:</span> lte, y <span class="op">:</span> gt)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (ys, y <span class="op">:</span> lte, x <span class="op">:</span> gt)</span></code></pre></div>
+<p>At this point we can also see what to do with the middle item: we’ll put it in the higher or lower list, depending on a comparison with the element it’s next to.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">halve ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> ([a],[a])</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>halve xs <span class="ot">=</span> tl (go xs xs)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>    tl (_,lte,gt) <span class="ot">=</span> (lte,gt)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap y (go ys zs)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>    go ys     []       <span class="ot">=</span> (ys,[],[])</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,[y <span class="op">|</span> e],[y <span class="op">|</span> <span class="fu">not</span> e])</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>      <span class="kw">where</span> e <span class="ot">=</span> y <span class="op">&lt;=</span> <span class="fu">head</span> ys</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a>    </span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>    swap x (y<span class="op">:</span>ys,lte,gt) </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>      <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> (ys, x <span class="op">:</span> lte, y <span class="op">:</span> gt)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (ys, y <span class="op">:</span> lte, x <span class="op">:</span> gt)</span></code></pre></div>
+<p>Next, we can use this as a helper function in the overall recursive function.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ot">circleSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>circleSort [] <span class="ot">=</span> []</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>circleSort [x] <span class="ot">=</span> [x]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>circleSort xs <span class="ot">=</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>  <span class="kw">let</span> (lte,gt) <span class="ot">=</span> halve xs</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>  <span class="kw">in</span> circleSort lte <span class="op">++</span> circleSort (<span class="fu">reverse</span> gt)</span></code></pre></div>
+<p>This function isn’t correct (yet). As we mentioned already, we need to run the circle sort procedure multiple times until no swaps occur. We can add in the tracking of swaps like so:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">circleSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>circleSort xs <span class="ot">=</span> <span class="kw">if</span> swapped <span class="kw">then</span> circleSort ks <span class="kw">else</span> ks</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    (swapped,ks) <span class="ot">=</span> go xs</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>    go []  <span class="ot">=</span> (<span class="dt">False</span>, [])</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>    go [x] <span class="ot">=</span> (<span class="dt">False</span>, [x])</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>    go xs  <span class="ot">=</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>      <span class="kw">let</span> (s,_,lte,gt) <span class="ot">=</span> halve xs xs</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>          (sl,lte&#39;) <span class="ot">=</span> go lte</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>          (sg,gt&#39; ) <span class="ot">=</span> go (<span class="fu">reverse</span> gt)</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>      <span class="kw">in</span> (s <span class="op">||</span> sl <span class="op">||</span> sg, lte&#39; <span class="op">++</span> gt&#39;)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>      </span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a>    halve (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap y (halve ys zs)</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true"></a>    halve ys     []       <span class="ot">=</span> (<span class="dt">False</span>,ys,[],[])</span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true"></a>    halve (y<span class="op">:</span>ys) [_]      <span class="ot">=</span> (<span class="dt">False</span>,ys,[y <span class="op">|</span> e],[y <span class="op">|</span> <span class="fu">not</span> e])</span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true"></a>      <span class="kw">where</span> e <span class="ot">=</span> y <span class="op">&lt;=</span> <span class="fu">head</span> ys</span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true"></a>      </span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true"></a>    swap x (s,y<span class="op">:</span>ys,lte,gt) </span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true"></a>      <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> (s   ,ys, x <span class="op">:</span> lte, y <span class="op">:</span> gt)</span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (<span class="dt">True</span>,ys, y <span class="op">:</span> lte, x <span class="op">:</span> gt)</span></code></pre></div>
+<p>So at this point we actually have a working implementation of the function, which avoids indices as intended. It has some problems still, though. First, we call <code>++</code>, when we could be using difference lists. Here’s the solution to that:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">circleSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>circleSort xs <span class="ot">=</span> <span class="kw">if</span> swapped <span class="kw">then</span> circleSort ks <span class="kw">else</span> ks</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>    (swapped,ks) <span class="ot">=</span> go xs []</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>    </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>    go []  zs <span class="ot">=</span> (<span class="dt">False</span>, zs)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>    go [x] zs <span class="ot">=</span> (<span class="dt">False</span>, x<span class="op">:</span>zs)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a>    go xs  zs <span class="ot">=</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>      <span class="kw">let</span> (s,_,lte,gt) <span class="ot">=</span> halve xs xs</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a>          (sl,lte&#39;) <span class="ot">=</span> go lte gt&#39;</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>          (sg,gt&#39; ) <span class="ot">=</span> go (<span class="fu">reverse</span> gt) zs</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>      <span class="kw">in</span> (s <span class="op">||</span> sl <span class="op">||</span> sg, lte&#39;)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a>      </span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a>    halve (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap y (halve ys zs)</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true"></a>    halve ys     []       <span class="ot">=</span> (<span class="dt">False</span>,ys,[],[])</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true"></a>    halve (y<span class="op">:</span>ys) [_]      <span class="ot">=</span> (<span class="dt">False</span>,ys,[y <span class="op">|</span> e],[y <span class="op">|</span> <span class="fu">not</span> e])</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true"></a>      <span class="kw">where</span> e <span class="ot">=</span> y <span class="op">&lt;=</span> <span class="fu">head</span> ys</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true"></a>      </span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true"></a>    swap x (s,y<span class="op">:</span>ys,lte,gt) </span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true"></a>      <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> (s   ,ys, x <span class="op">:</span> lte, y <span class="op">:</span> gt)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (<span class="dt">True</span>,ys, y <span class="op">:</span> lte, x <span class="op">:</span> gt)</span></code></pre></div>
+<p>Next we can actually rewrite the <code>go</code> function to allow for a certain amount of tail recursion (kind of):</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">circleSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>circleSort xs <span class="ot">=</span> <span class="kw">if</span> swapped <span class="kw">then</span> circleSort ks <span class="kw">else</span> ks</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    (swapped,ks) <span class="ot">=</span> go xs (<span class="dt">False</span>,[])</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>    go []  (s,ks) <span class="ot">=</span> (s,ks)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>    go [x] (s,ks) <span class="ot">=</span> (s,x<span class="op">:</span>ks)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>    go xs  (s,ks) <span class="ot">=</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>      <span class="kw">let</span> (s&#39;,_,ls,rs) <span class="ot">=</span> halve s xs xs</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>      <span class="kw">in</span> go ls (go (<span class="fu">reverse</span> rs) (s&#39;,ks))</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a> </span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a>    halve s (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap y (halve s ys zs)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>    halve s ys     []       <span class="ot">=</span> (s,ys,[],[])</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true"></a>    halve s (y<span class="op">:</span>ys) [_]      <span class="ot">=</span> (s,ys,[y <span class="op">|</span> e],[y <span class="op">|</span> <span class="fu">not</span> e])</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true"></a>      <span class="kw">where</span> e <span class="ot">=</span> y <span class="op">&lt;=</span> <span class="fu">head</span> ys</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true"></a> </span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true"></a>    swap x (s,y<span class="op">:</span>ys,ls,rs)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true"></a>      <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> (   s,ys,x<span class="op">:</span>ls,y<span class="op">:</span>rs)</span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (<span class="dt">True</span>,ys,y<span class="op">:</span>ls,x<span class="op">:</span>rs)</span></code></pre></div>
+<p>Next, we call <code>reverse</code>: but we can avoid the reverse by passing a parameter which tells us which direction we’re walking down the list. Since the swapping logic is symmetric, we’re able to just invert some of the functions. It is a little tricky, though:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">circleSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>circleSort xs <span class="ot">=</span> <span class="kw">if</span> swapped <span class="kw">then</span> circleSort ks <span class="kw">else</span> ks</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    (swapped,ks) <span class="ot">=</span> go <span class="dt">False</span> xs (<span class="dt">False</span>,[])</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    </span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    go d []  (s,ks) <span class="ot">=</span> sks</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>    go d [x] (s,ks) <span class="ot">=</span> (s,x<span class="op">:</span>ks)</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>    go d xs  (s,ks) <span class="ot">=</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>      <span class="kw">let</span> (s&#39;,_,ls,rs) <span class="ot">=</span> halve d s xs xs</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>      <span class="kw">in</span> go <span class="dt">False</span> ls (go <span class="dt">True</span> rs (s&#39;,ks))</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a> </span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>    halve d s (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> swap d y (halve d s ys zs)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>    halve d s ys     []       <span class="ot">=</span> (s,ys,[],[])</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>    halve d s (y<span class="op">:</span>ys) [_]      <span class="ot">=</span> (s,ys,[y <span class="op">|</span> e],[y <span class="op">|</span> <span class="fu">not</span> e])</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>      <span class="kw">where</span> e <span class="ot">=</span> y <span class="op">&lt;=</span> <span class="fu">head</span> ys</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a> </span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>    swap d x (s,y<span class="op">:</span>ys,ls,rs)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>      <span class="op">|</span> bool (<span class="op">&lt;=</span>) (<span class="op">&lt;</span>) d x y <span class="ot">=</span> (    d <span class="op">||</span> s,ys,x<span class="op">:</span>ls,y<span class="op">:</span>rs)</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span>           <span class="ot">=</span> (<span class="fu">not</span> d <span class="op">||</span> s,ys,y<span class="op">:</span>ls,x<span class="op">:</span>rs)</span></code></pre></div>
+<p>So there it is! The one-pass, purely function implementation of circle sort. Very possibly the most useless piece of code I’ve ever written.</p>
+]]></description>
+    <pubDate>Sat, 22 Aug 2020 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2020-08-22-some-more-list-algorithms.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Presentation on Purely Functional Data Structures</title>
     <link>https://doisinkidney.com/posts/2020-05-19-purely-functional-data-structures-slides.html</link>
     <description><![CDATA[<div class="info">
