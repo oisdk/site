@@ -223,7 +223,7 @@
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
 <span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    (swapped,ks) <span class="ot">=</span> go <span class="dt">False</span> xs (<span class="dt">False</span>,[])</span>
 <span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    </span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    go d []  (s,ks) <span class="ot">=</span> sks</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    go d []  (s,ks) <span class="ot">=</span> (s,ks)</span>
 <span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>    go d [x] (s,ks) <span class="ot">=</span> (s,x<span class="op">:</span>ks)</span>
 <span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>    go d xs  (s,ks) <span class="ot">=</span></span>
 <span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>      <span class="kw">let</span> (s&#39;,_,ls,rs) <span class="ot">=</span> halve d s xs xs</span>
