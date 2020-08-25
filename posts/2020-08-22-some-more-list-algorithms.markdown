@@ -345,7 +345,7 @@ circleSort xs = if swapped then circleSort ks else ks
   where
     (swapped,ks) = go False xs (False,[])
     
-    go d []  (s,ks) = sks
+    go d []  (s,ks) = (s,ks)
     go d [x] (s,ks) = (s,x:ks)
     go d xs  (s,ks) =
       let (s',_,ls,rs) = halve d s xs xs
