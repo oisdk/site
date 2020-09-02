@@ -123,5 +123,25 @@ leveraged to get step-by-step solutions out of the solver.
 # It's About the Journey, not the Destination
 
 Often in constructive mathematics we talk about mathematical "objects".
+We say that we can manipulate and use proofs like objects in the same way that
+we manipulate and use---say---data structures, or numbers.
+
+One of the things that it is useful to look at as an "object" is the equality
+proofs that we generate in the solver.
+In the example above we generated an actual *value* which corresponded to the
+proposition $x + y \times 1 + 3 = 2 + 1 + y + x$: maybe there's something in
+that from which we can generate a step-by-step explanation?
+
+Well, not quite.
+The equality type in Agda is the most subtle and complex of the primitive
+types for sure: but it doesn't contain any information.
+All equality proofs (on the same type) are equal: they're *propositions*.
+We'll ignore HoTT and CuTT for now (even thought equalities there are not
+necessarily propositions, they have to be over special types in order for them
+to be non propositions).
+
+But we're not working with equalities: we're working with *equivalences*. 
+And these equivalences only 
+
 
 # What if you wanted to implement this yourself?
