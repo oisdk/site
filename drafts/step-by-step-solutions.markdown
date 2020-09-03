@@ -141,7 +141,52 @@ necessarily propositions, they have to be over special types in order for them
 to be non propositions).
 
 But we're not working with equalities: we're working with *equivalences*. 
-And these equivalences only 
+These can be complex objects themselves.
+So let's put a type down which might represent a step of an equation:
 
+```agda
+record Step (from : A)
+            (to   : A) :
+            Type₀ where
+  field why : String
+```
 
-# What if you wanted to implement this yourself?
+This type is perhaps a little disappointing: it's basically a newtype wrapper
+for a string, after all!
+We'll look in a second at beefing it up, but for it's actually totally usable.
+We can implement all of the functions one would expect on equalities:
+
+```agda
+refl : Step x x
+refl .why = "refl"
+
+trans : Step x y → Step y z → Step x z
+trans x-to-y y-to-z .why = x-to-y .why ++ " ; " ++ y-to-z .why
+
+sym : Step x y → Step y x
+sym x-to-y .why = "sym (" ++ x-to-y .why ++ ")"
+```
+
+Now, if we use this type in the solver, the output will be a string that we can
+print out and read, containing all of the information of the steps in the
+solution.
+
+In my thesis I went into a good bit more detail.
+In particular:
+
+* You can have the equivalence carry and actual data representation of the
+  arithmetic expressions.
+  This makes for slightly easier printing.
+* You can optimise the solution once the output is more sophisticated than a
+  string.
+  For instance, because of the way the solver works you can often find loops in
+  the output: it might apply the axiom "+ is commutative" twice, for instance.
+  In the thesis I actually performed a form of Dijkstra's algorithm on the path
+  to the solution, in order to get the shortest possible output.
+* There's a lot more you have to do to make the output readable!
+
+# Wrapping Up
+
+Anyway, that's the post for today.
+A short bit of my thesis that I thought was interesting and kind of demonstrated
+a principle of constructive mathematics.
