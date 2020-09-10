@@ -24,7 +24,7 @@ Scott encoding) quick sort, and see what insights that gives us.
 To start we'll need a (bad) implementation of quick sort.
 
 ```haskell
-qsort :: [a] -> [a]
+qsort :: Ord a => [a] -> [a]
 qsort [] = []
 qsort (x:xs) = qsort lte ++ [x] ++ qsort gt
   where
@@ -37,7 +37,7 @@ that.
 The following is the corrected version:
 
 ```haskell
-qsort :: [a] -> [a]
+qsort :: Ord a => [a] -> [a]
 qsort xs = go xs []
   where
     go []     ys = ys
@@ -55,3 +55,29 @@ But I am not going to explain exactly *why* that choice of pivot is so bad for
 the time being.
 Instead, we're going to try and church encode this algorithm as much as we can,
 removing all explicit lists from view.
+
+We first want to rewrite the `go` function as some kind of fold.
+It's difficult, because it has a uncons-like function in it, which usually
+doesn't work as a fold.
+But we can make some headway by trying to imagine what the target type of the
+fold should be.
+A first guess will be `Maybe (a, [a], [a])`:
+
+```haskell
+type Base a = Maybe (a, [a], [a])
+
+go_f :: Ord a => a -> Base a -> Base a
+go_f x Nothing = Just (x, [], [])
+go_f x (Just (y, lte, gt))
+  | x <= y    = Just (y, x:lte, gt)
+  | otherwise = Just (y, lte, x:gt)
+  
+go_b :: Base a
+go_b = Nothing
+
+go :: Ord a => [a] -> Base a
+go = foldr go_f go_b
+```
+
+This expresses most of the `go` function as a fold, which can be further used to
+rewrite the whole `qsort` function:
