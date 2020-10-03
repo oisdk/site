@@ -6,8 +6,7 @@ bibliography: Finger Trees.bib
 
 ---
 
-## [This Post is Available With Clickable Code
-Here](https://oisdk.github.io/agda-indexed-fingertree/Data.FingerTree.html)
+## [This Post is Available With Clickable Code Here](https://oisdk.github.io/agda-indexed-fingertree/Data.FingerTree.html)
 
 This whole post is written with clickable identifiers and ascii art at the above
 link. I also provide the normal version below in case there are any problems
