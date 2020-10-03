@@ -4832,8 +4832,7 @@ Now, when we write functions, we have to prove that those functions themselves a
 </div>
 
 <hr />
-<h2 id="this-post-is-available-with-clickable-code">[This Post is Available With Clickable Code</h2>
-<p>Here](https://oisdk.github.io/agda-indexed-fingertree/Data.FingerTree.html)</p>
+<h2 id="this-post-is-available-with-clickable-code-here"><a href="https://oisdk.github.io/agda-indexed-fingertree/Data.FingerTree.html">This Post is Available With Clickable Code Here</a></h2>
 <p>This whole post is written with clickable identifiers and ascii art at the above link. I also provide the normal version below in case there are any problems rendering.</p>
 <hr />
 <p>As I have talked about <a href="/posts/2019-01-15-binomial-urn.html">previously</a>, a large class of divide-and conquer algorithms rely on “good” partitioning for the divide step. If you then want to make the algorithms incremental, you keep all of those partitions (with their summaries) in some “good” arrangement <span class="citation" data-cites="mu_queueing_2016">(Mu, Chiang, and Lyu <a href="#ref-mu_queueing_2016" role="doc-biblioref">2016</a>)</span>. Several common data structures are designed around this principle: binomial heaps, for instance, store partitions of size <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mn>2</mn><mi>n</mi></msup><annotation encoding="application/x-tex">2^n</annotation></semantics></math>. Different ways of storing partitions favours different use cases: switch from a binomial heap to a skew binomial, for instance, and you get constant-time <code>cons</code>.</p>
