@@ -208,8 +208,48 @@ without incurring a serious performance penalty.
 
 # Operations
 
+## Addition
+
+Now we need to encode the different desired operations on the binary numbers.
+Addition is first: we can write a naive version of this function by just
+expanding the definition of addition and definition of the binary numbers.
+
+```
+0           + y           = y
+
+x           + 0           = x
+
+(1 + 2 * x) + (1 + 2 * y) = 2 + 2 * (x + y)
+
+(1 + 2 * x) + (2 + 2 * y) = 3 + 2 * (x + y)
+                          = 1 + (2 + 2 * (x + y))
+
+(2 + 2 * x) + (1 + 2 * y) = 3 + 2 * (x + y)
+                          = 1 + (2 + 2 * (x + y))
+
+(2 + 2 * x) + (2 + 2 * y) = 4 + 2 * (x + y)
+                          = 2 + 2 * (1 + x + y)
+```
+
+Translated into Agda the above looks like the following:
+
+```agda
+_+_ : 𝔹 → 𝔹 → 𝔹
+0ᵇ    + ys    = ys
+xs    + 0ᵇ    = xs
+1ᵇ xs + 1ᵇ ys = 2ᵇ (xs + ys)
+1ᵇ xs + 2ᵇ ys = inc (2ᵇ (xs + ys))
+2ᵇ xs + 1ᵇ ys = inc (2ᵇ (xs + ys))
+2ᵇ xs + 2ᵇ ys = 2ᵇ inc (xs + ys)
+```
+
+Unfortunately this is nowhere near as efficient as it could be: we're calling
+`inc` a bunch of times on the output of the recursive call, when we should be
+using carrying to do the whole thing in one pass.
+That does make the function a lot longer, but it is much faster:
+
 <details>
-<summary>Addition</summary>
+<summary>Full Addition Implementation</summary>
 
 ```agda
 add₁ : 𝔹 → 𝔹 → 𝔹
@@ -235,19 +275,32 @@ add₂ (2ᵇ xs) (2ᵇ ys) = 2ᵇ add₂ xs ys
 
 infixl 6 _+_
 _+_ : 𝔹 → 𝔹 → 𝔹
-0ᵇ      + ys      = ys
-(1ᵇ xs) + 0ᵇ      = 1ᵇ xs
-(2ᵇ xs) + 0ᵇ      = 2ᵇ xs
-(1ᵇ xs) + (1ᵇ ys) = 2ᵇ (xs + ys)
-(1ᵇ xs) + (2ᵇ ys) = 1ᵇ add₁ xs ys
-(2ᵇ xs) + (1ᵇ ys) = 1ᵇ add₁ xs ys
-(2ᵇ xs) + (2ᵇ ys) = 2ᵇ add₁ xs ys
+0ᵇ    + ys    = ys
+1ᵇ xs + 0ᵇ    = 1ᵇ xs
+2ᵇ xs + 0ᵇ    = 2ᵇ xs
+1ᵇ xs + 1ᵇ ys = 2ᵇ (xs + ys)
+1ᵇ xs + 2ᵇ ys = 1ᵇ add₁ xs ys
+2ᵇ xs + 1ᵇ ys = 1ᵇ add₁ xs ys
+2ᵇ xs + 2ᵇ ys = 2ᵇ add₁ xs ys
 ```
 </details>
 
+## Multiplication
 
-<details>
-<summary>Multiplication</summary>
+Multiplication of binary numbers is actually one of the most well-studied
+algorithms out there: the standard encoding will get you an $\mathcal{O}(n^2)$
+(where $n$ is the number of bits) algorithm, but there are actually some
+reasonably easy-to-implement algorithms (Karatsuba multiplication being the most
+prominent) that can improve on that bound.
+In fact, in 2019 an $\mathcal{O}(n \log n)$ algorithm was discovered: whether or
+not such an algorithm existed was an important open question in computer
+science.
+
+Now, Karatsuba multiplication is actually a relatively simple algorithm, but it
+only actually gets a speedup when the numbers being multiplied have much more
+than 300 bits.
+For our purposes (a general-purpose number type to replace the peano numbers in
+Agda), we're probably better off with just the standard long multiplication.
 
 ```agda
 double : 𝔹 → 𝔹
@@ -261,8 +314,8 @@ _*_ : 𝔹 → 𝔹 → 𝔹
 1ᵇ xs * ys = ys + double (ys * xs)
 2ᵇ xs * ys = double (ys + ys * xs)
 ```
-</details>
 
+## Subtraction
 
 <details>
 <summary>Subtraction</summary>
