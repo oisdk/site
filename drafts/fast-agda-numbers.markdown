@@ -328,9 +328,18 @@ Like addition, we could write a naive and obviously correct implementation, but
 in order for the function to have the correct time complexity we need to write
 something much more involved.
 
-The trickiness lies in the fact that we can't emit a bit until we've seen to the
-end of at least one of the arguments.
+The problem with subtraction is that we don't know what the output is going to
+look like until we've seen the entirety of at least one of the inputs: so the
+function can't have the nice linear pattern that addition has.
+(at least I think it can't: if anyone can write a simple implementation of
+subtraction on the zeroless binary numbers which uses carry bits or something I
+would love to see it)
 
+So what we're left with is a function which needs to build up a chain of extra
+function calls as it descends into the numbers it's inspecting.
+Instead of encoding these as actual functions, we can defunctionalise them,
+encoding them as a second binary number.
+It's a little complex to explain, so here's what the solution looks like:
 
 <details>
 <summary>Subtraction</summary>
@@ -402,5 +411,3 @@ _-_ : 𝔹 → 𝔹 → 𝔹
 _-_ = sub₁ zero
 ```
 </details>
-
-# Testing Performance
