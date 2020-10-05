@@ -315,7 +315,22 @@ _*_ : 𝔹 → 𝔹 → 𝔹
 2ᵇ xs * ys = double (ys + ys * xs)
 ```
 
+One thing that is interesting about the above implementation is that it swaps
+the order of arguments to `*` in the recursive call: this reduces the usual
+left-bias of lazy operations.
+It means that both operands are explored at a similar rate.
+In performance tests it yields a modest speedup.
+
 ## Subtraction
+
+Subtraction is by far the trickiest of the operations I'm presenting here.
+Like addition, we could write a naive and obviously correct implementation, but
+in order for the function to have the correct time complexity we need to write
+something much more involved.
+
+The trickiness lies in the fact that we can't emit a bit until we've seen to the
+end of at least one of the arguments.
+
 
 <details>
 <summary>Subtraction</summary>
