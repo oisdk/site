@@ -3,6 +3,8 @@ title: Fun with SKI
 tags: Haskell
 ---
 
+<script src="../code/ski/script.js"></script>
+
 There are a bunch of "minimal" computational models out there: Turing machines,
 lambda calculus,
 [powerpoint](https://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf), etc.
@@ -44,5 +46,8 @@ I = S K K
 ```
 
 # Interpreting SKI Expressions
+
+<p id="repl_1">Turn on JavaScript to allow the REPLs</p>
+<script>small_repl("repl_1", Comb.S, Comb.K, Comb.I);</script>
 
 # Parsing
