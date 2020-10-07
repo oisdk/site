@@ -168,12 +168,12 @@ function steps(expr) {
     }
 }
 
-function small_repl(p_id, ...combo_set) {
+function small_repl(p_id, n_lines, def_val, ...combo_set) {
     const par = document.getElementById(p_id);
-    par.innerHTML = "";
 
     const inp = document.createElement("input");
     inp.type = "text";
+    inp.value = def_val;
     par.appendChild(inp);
 
     const button = document.createElement("input");
@@ -182,7 +182,9 @@ function small_repl(p_id, ...combo_set) {
     par.appendChild(button);
 
     const out = document.createElement("pre");
-    out.innerHTML = ">\n>\n>\n>\n>\n";
+    for (let i = 0; i < n_lines; i++) {
+        out.innerHTML += ">\n";
+    }
     par.appendChild(out);
 
     let initial = null;
@@ -197,7 +199,7 @@ function small_repl(p_id, ...combo_set) {
         }
         if ((stored !== null) && step(stored)) {
             lines.push("> " + show_expr(stored));
-            if (lines.length > 5) {
+            if (lines.length > n_lines) {
                 lines.shift();
             }
         }
@@ -205,7 +207,7 @@ function small_repl(p_id, ...combo_set) {
             lines.push("> " + show_expr(stored));
         }
         out.innerHTML = "";
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < n_lines; i++) {
             if (i < lines.length) {
                 out.innerHTML += lines[i];
             } else {

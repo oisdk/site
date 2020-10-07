@@ -19,35 +19,96 @@ programs, this complexity is a problem.
 We might want to reach for something even lower-level than lambda calculus: this
 is where SKI calculus comes in.
 
-We can actually encode SKI in lambda calculus.
-We start with the following definitions:
+There are only three combinators in SKI: S, K, and I (shocking, I know).
+These operate on strings and each of them do different things:
 
 ```
-S = \x y z -> (x z) (y z)
-K = \x y -> x
-I = \x -> x
+Sxyz ~> xz(yz)
+Kxy  ~> x
+Ix   ~> x
 ```
 
-These three combinators actually correspond to the Applicative operations on the
-Reader monad (`S = <*>`, `K = pure`, `I = ask`).
-(don't worry if you don't understand this, it's not very important! Just an
-interesting observation).
+I'll explain the actual form rules in a second, but first let's work with some
+examples to get a sense for how these combinators work.
 
-So, it turns out that from these three combinators we can actually construct
-*any* lambda expression.
-As an example, we actually don't even need `I`!
-We can construct it from `S` and `K`:
+Upper case letters are combinators, lower-case are variables.
+Yes, yes, I know I said that SKI didn't need variables, and it doesn't!
+I'm just using them here to explain how each of the combinators work.
+If you really want to be pedantic you can think of the lower case letters as
+notational placeholders meaning "any given combinator".
+They won't exist in any actual programs we write with SKI.
+
+Right, so the simplest combinator is `I`.
+`I` is like the identity combinator: it just returns its first argument.
+If you give a combinator more arguments than it usually accepts, you just keep
+the extra arguments in the output:
 
 ```
-I = S K K
-  = \x -> S K K x
-  = \x -> (K x) (K x)
-  = \x -> x
+Ixyz ~> xyz
+Iyx  ~> yx
 ```
 
-# Interpreting SKI Expressions
+`K` is the next combinator: it is the "const" one.
+It discards its second argument:
 
-<p id="repl_1">Turn on JavaScript to allow the REPLs</p>
-<script>small_repl("repl_1", Comb.S, Comb.K, Comb.I);</script>
+```
+Kxyz ~> xz
+```
 
-# Parsing
+We always start from the *left*, applying the rule for the left-most combinator
+first.
+
+```
+KIxyz ~> Iyz  ~> yz
+IKxyz ~> Kxyz ~> xz
+```
+
+If you don't give the leftmost combinator enough arguments, evaluation gets
+stuck:
+
+```
+Kx ~> Kx
+```
+
+Here's a small little evaluator for expressions which use `I` and `K`.
+You can edit the expression, and click "step" to step through it.
+
+<p id="KI"></p><script>small_repl("KI", 2, "IKxyz", Comb.K,
+Comb.I);</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+The last combinator introduces parentheses: it doesn't really have an intuitive
+analogue in functions (technically it's `<*>` for the reader monad, which is
+entirely unhelpful), but it works like this:
+
+```
+Sxyz ~> xz(yz)
+```
+
+Implicitly, all expressions are left-associative.
+That means that the following are all equal:
+
+```
+xyz = (xy)z = (x)yz = ((x)y)z
+```
+
+But `xyz` is *not* equal to, say, `x(yz)`.
+
+Here's another simple evaluator for SKI expressions which includes `S`:
+
+<p id="SKI"></p><script>small_repl("SKI", 5, "SKIxyz", Comb.S, Comb.K,
+Comb.I);</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+And here's a puzzle to start flexing your SKI skills: it turns out that SKI
+isn't actually as simple as it could be!
+One of the combinators can be defined in terms of the other two.
+Use the evaluator above to try and figure out which it is, and its definition.
+
+<details>
+<summary>The Redundant Combinator</summary>
+`I`
+</details>
+
+<details>
+<summary>Its Definition</summary>
+`I = SKK = SKS`
+</details>
