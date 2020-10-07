@@ -84,7 +84,7 @@ entirely unhelpful), but it works like this:
 Sxyz ~> xz(yz)
 ```
 
-Implicitly, all expressions are left-associative.
+You can write parentheses yourself: implicitly, all expressions are left-associative.
 That means that the following are all equal:
 
 ```
@@ -93,22 +93,17 @@ xyz = (xy)z = (x)yz = ((x)y)z
 
 But `xyz` is *not* equal to, say, `x(yz)`.
 
-Here's another simple evaluator for SKI expressions which includes `S`:
-
-<p id="SKI"></p><script>small_repl("SKI", 5, "SKIxyz", Comb.S, Comb.K,
-Comb.I);</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
-
 And here's a puzzle to start flexing your SKI skills: it turns out that SKI
 isn't actually as simple as it could be!
-One of the combinators can be defined in terms of the other two.
-Use the evaluator above to try and figure out which it is, and its definition.
+Technically speaking, we don't need `I`, as it can be defined in terms of `S`
+and `K`.
+Use the following evaluator to try and figure out how to do it: write an
+expression into the box that, when applied to `x`, evaluates to `x`.
+You're only allowed to use `S`, `K`, and parentheses for this.
+
+<p id="SKI"></p><script>small_tester("SKI", 5, "?", "x", "x", Comb.S, Comb.K);</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
 
 <details>
-<summary>The Redundant Combinator</summary>
-`I`
-</details>
-
-<details>
-<summary>Its Definition</summary>
+<summary>The Answer</summary>
 `I = SKK = SKS`
 </details>
