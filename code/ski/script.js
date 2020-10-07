@@ -1,179 +1,219 @@
+"use strict";
+
 const Comb = {S: 0, K: 1, I: 2, B: 3, C: 4, A: 5, M: 6, T: 7};
 Object.freeze(Comb);
 
-function clone(expr) {
-    let res = {op: expr.op, stack: []};
-    for (const x of expr.stack) {
-        res.stack.push(clone(x));
-    }
-    return res;
-}
-
-function step(expr) {
-    let x, y, z;
-    switch(expr.op) {
-        case Comb.S:
-            if (expr.stack.length<3) {
-                return false;
-            }
-            [x, y, z] = [expr.stack.pop(), expr.stack.pop(), expr.stack.pop()];
-            y.stack.unshift(z);
-            expr.stack.push(y);
-            expr.stack.push(clone(z));
-            break;
-        case Comb.K:
-            if (expr.stack.length<2) {
-                return false;
-            }
-            [x, y] = [expr.stack.pop(), expr.stack.pop()];
-            break;
-        case Comb.I:
-            if (expr.stack.length<1) {
-                return false;
-            }
-            x = expr.stack.pop();
-            break;
-        case Comb.B:
-            if (expr.stack.length<3) {
-                return false;
-            }
-            [x, y, z] = [expr.stack.pop(), expr.stack.pop(), expr.stack.pop()];
-            y.stack.unshift(z);
-            expr.stack.push(y);
-            break;
-        case Comb.C:
-            if (expr.stack.length<3) {
-                return false;
-            }
-            [x, y, z] = [expr.stack.pop(), expr.stack.pop(), expr.stack.pop()];
-            expr.stack.push(y);
-            expr.stack.push(z);
-            break;
-        case Comb.A:
-            if (expr.stack.length<2) {
-                return false;
-            }
-            [y, x] = [expr.stack.pop(), expr.stack.pop()];
-            break;
-        case Comb.M:
-            if (expr.stack.length<1) {
-                return false;
-            }
-            x = expr.stack.pop()
-            expr.stack.push(clone(x))
-            break;
-        case Comb.T:
-            if (expr.stack.length<2) {
-                return false;
-            }
-            [y, x] = [expr.stack.pop(), expr.stack.pop()];
-            expr.stack.push(y)
-            break;
-        default: return false;
-    }
-    for (const xe of x.stack) {
-        expr.stack.push(xe);
-    }
-    expr.op = x.op;
-    return true;
-}
-
-function* display_helper(expr, parens) {
-    if ((expr.stack.length>0)&&(parens)) {
-        yield '(';
-    }
-    switch(expr.op) {
-        case Comb.S: yield 'S'; break;
-        case Comb.K: yield 'K'; break;
-        case Comb.I: yield 'I'; break;
-        case Comb.B: yield 'B'; break;
-        case Comb.C: yield 'C'; break;
-        case Comb.A: yield 'A'; break;
-        case Comb.M: yield 'M'; break;
-        case Comb.T: yield 'T'; break;
-        default: yield expr.op;
-    }
-    for (let i = expr.stack.length - 1; i >= 0; i--) {
-        yield* display_helper(expr.stack[i],true);
-    }
-    if ((expr.stack.length>0)&&(parens)) {
-        yield ')';
-    }
-}
-
-function show_expr(expr) {
-    res = '';
-    for (const x of display_helper(expr, false)) {
-        res = res + x;
-    }
-    return res;
-}
-
-function parse_ski_single(inp, mask) {
-    while (true) {
-        let x = inp.next();
-        if (x.done) {
-            return null;
-        }
-        switch (x.value) {
-            case '(': return parse_ski_many(inp, mask);
-            case ')': return null;
-            case 'S': return {op: (((mask & (1 << Comb.S)) != 0) ? Comb.S : x.value), stack: []};
-            case 'K': return {op: (((mask & (1 << Comb.K)) != 0) ? Comb.K : x.value), stack: []};
-            case 'I': return {op: (((mask & (1 << Comb.I)) != 0) ? Comb.I : x.value), stack: []};
-            case 'B': return {op: (((mask & (1 << Comb.B)) != 0) ? Comb.B : x.value), stack: []};
-            case 'C': return {op: (((mask & (1 << Comb.C)) != 0) ? Comb.C : x.value), stack: []};
-            case 'A': return {op: (((mask & (1 << Comb.A)) != 0) ? Comb.A : x.value), stack: []};
-            case 'M': return {op: (((mask & (1 << Comb.M)) != 0) ? Comb.M : x.value), stack: []};
-            case 'T': return {op: (((mask & (1 << Comb.T)) != 0) ? Comb.T : x.value), stack: []};
-            case ' ': break;
-            default: return {op: x.value, stack: []};
-        }
-    }
-}
-
-function reverse_all(expr) {
-    expr.stack.reverse();
-    for (const x of expr.stack) {
-        reverse_all(x);
-    }
-}
-
-function parse_ski_many(inp, mask) {
-    let res = parse_ski_single(inp, mask);
-    if (res === null) {
-        return null;
-    }
-    let next_arg = parse_ski_single(inp, mask);
-    while (next_arg !== null) {
-        res.stack.push(next_arg);
-        next_arg = parse_ski_single(inp, mask);
-    }
-    return res;
-}
-
-function parse_ski(combo_set, string) {
+function make_comb_set(combs) {
     let mask = 0;
-    for (const c of combo_set) {
+    for (const c of combs) {
         mask |= (1 << c);
     }
-    const res = parse_ski_many(string[Symbol.iterator](), mask);
-    reverse_all(res);
-    return res
+    return mask;
 }
 
-function steps(expr) {
-    while (step(expr)) {
-      console.log(show_expr(expr));
+function in_comb_set(mask, comb) {
+    return ((mask & (1 << comb)) != 0);
+}
+
+class Expr {
+    constructor(op) {
+        this.op = op;
+        this.stack = [];
+    }
+
+    clone() {
+        const res = new Expr(this.op);
+        for (const x of this.stack) {
+            res.stack.push(x.clone());
+        }
+        return res;
+    }
+
+    equals(other) {
+        if (this.op != other.op) {
+            return false;
+        }
+        if (this.stack.length != other.stack.length) {
+            return false;
+        }
+        for (let i = 0; i < this.stack.length; i++) {
+            if (!(this.stack[i].equals(other.stack[i]))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    step() {
+        let x, y, z;
+        switch(this.op) {
+            case Comb.S:
+                if (this.stack.length<3) {
+                    return false;
+                }
+                [x, y, z] = [this.stack.pop(), this.stack.pop(), this.stack.pop()];
+                y.stack.unshift(z);
+                this.stack.push(y);
+                this.stack.push(z.clone());
+                break;
+            case Comb.K:
+                if (this.stack.length<2) {
+                    return false;
+                }
+                [x, y] = [this.stack.pop(), this.stack.pop()];
+                break;
+            case Comb.I:
+                if (this.stack.length<1) {
+                    return false;
+                }
+                x = this.stack.pop();
+                break;
+            case Comb.B:
+                if (this.stack.length<3) {
+                    return false;
+                }
+                [x, y, z] = [this.stack.pop(), this.stack.pop(), this.stack.pop()];
+                y.stack.unshift(z);
+                this.stack.push(y);
+                break;
+            case Comb.C:
+                if (this.stack.length<3) {
+                    return false;
+                }
+                [x, y, z] = [this.stack.pop(), this.stack.pop(), this.stack.pop()];
+                this.stack.push(y);
+                this.stack.push(z);
+                break;
+            case Comb.A:
+                if (this.stack.length<2) {
+                    return false;
+                }
+                [y, x] = [this.stack.pop(), this.stack.pop()];
+                break;
+            case Comb.M:
+                if (this.stack.length<1) {
+                    return false;
+                }
+                x = this.stack.pop()
+                this.stack.push(x.clone())
+                break;
+            case Comb.T:
+                if (this.stack.length<2) {
+                    return false;
+                }
+                [y, x] = [this.stack.pop(), this.stack.pop()];
+                this.stack.push(y)
+                break;
+            default: return false;
+        }
+        for (const xe of x.stack) {
+            this.stack.push(xe);
+        }
+        this.op = x.op;
+        return true;
+    }
+
+    show() {
+        function* display_helper(expr, parens) {
+            if ((expr.stack.length>0)&&(parens)) {
+                yield '(';
+            }
+            switch(expr.op) {
+                case Comb.S: yield 'S'; break;
+                case Comb.K: yield 'K'; break;
+                case Comb.I: yield 'I'; break;
+                case Comb.B: yield 'B'; break;
+                case Comb.C: yield 'C'; break;
+                case Comb.A: yield 'A'; break;
+                case Comb.M: yield 'M'; break;
+                case Comb.T: yield 'T'; break;
+                default: yield expr.op;
+            }
+            for (let i = expr.stack.length - 1; i >= 0; i--) {
+                yield* display_helper(expr.stack[i],true);
+            }
+            if ((expr.stack.length>0)&&(parens)) {
+                yield ')';
+            }
+        }
+        let res = '';
+        for (const x of display_helper(this, false)) {
+            res = res + x;
+        }
+        return res;
+    }
+
+    static parse(combos, string) {
+        function reverse_all(expr) {
+            expr.stack.reverse();
+            for (const x of expr.stack) {
+                reverse_all(x);
+            }
+        }
+
+        const mask = make_comb_set(combos);
+        const inp  = string[Symbol.iterator]();
+
+        function parse_ski_single() {
+            while (true) {
+                let x = inp.next();
+                if (x.done) {
+                    return null;
+                }
+                switch (x.value) {
+                    case '(': return parse_ski_many();
+                    case ')': return null;
+                    case 'S': return new Expr(in_comb_set(mask, Comb.S) ? Comb.S : x.value);
+                    case 'K': return new Expr(in_comb_set(mask, Comb.K) ? Comb.K : x.value);
+                    case 'I': return new Expr(in_comb_set(mask, Comb.I) ? Comb.I : x.value);
+                    case 'B': return new Expr(in_comb_set(mask, Comb.B) ? Comb.B : x.value);
+                    case 'C': return new Expr(in_comb_set(mask, Comb.C) ? Comb.C : x.value);
+                    case 'A': return new Expr(in_comb_set(mask, Comb.A) ? Comb.A : x.value);
+                    case 'M': return new Expr(in_comb_set(mask, Comb.M) ? Comb.M : x.value);
+                    case 'T': return new Expr(in_comb_set(mask, Comb.T) ? Comb.T : x.value);
+                    case ' ': break;
+                    default: return new Expr(x.value);
+                }
+            }
+        }
+
+        function parse_ski_many() {
+            let res = parse_ski_single();
+            if (res === null) {
+                return null;
+            }
+            let next_arg = parse_ski_single();
+            while (next_arg !== null) {
+                res.stack.push(next_arg);
+                next_arg = parse_ski_single();
+            }
+            return res;
+        }
+        
+        const res = parse_ski_many();
+        reverse_all(res);
+        return res;
+    }
+
+    free_vars() {
+        if (typeof this.op === 'string') {
+            return true;
+        }
+        for (const x of this.stack) {
+            if (x.free_vars()) {
+                return true;
+            }
+        }
+        return false;
     }
 }
 
-function small_repl(p_id, n_lines, def_val, ...combo_set) {
+function small_repl(p_id, n_lines, initial_expr, ...combo_set) {
     const par = document.getElementById(p_id);
 
     const inp = document.createElement("input");
     inp.type = "text";
-    inp.value = def_val;
+    inp.value = initial_expr;
     par.appendChild(inp);
 
     const button = document.createElement("input");
@@ -183,7 +223,7 @@ function small_repl(p_id, n_lines, def_val, ...combo_set) {
 
     const out = document.createElement("pre");
     for (let i = 0; i < n_lines; i++) {
-        out.innerHTML += ">\n";
+        out.innerHTML += "\n";
     }
     par.appendChild(out);
 
@@ -194,27 +234,98 @@ function small_repl(p_id, n_lines, def_val, ...combo_set) {
         let new_expr = inp.value;
         if (new_expr != initial) {
             initial = new_expr;
-            stored = parse_ski(combo_set, initial);
+            stored = Expr.parse(combo_set, initial);
             lines = [];
         }
-        if ((stored !== null) && step(stored)) {
-            lines.push("> " + show_expr(stored));
+        if ( (stored !== null) && stored.step() ) {
+            lines.push("~> " + stored.show());
             if (lines.length > n_lines) {
                 lines.shift();
             }
         }
         if ((stored !== null) && (lines.length == 0)) {
-            lines.push("> " + show_expr(stored));
+            lines.push("~> " + stored.show());
         }
         out.innerHTML = "";
         for (let i = 0; i < n_lines; i++) {
             if (i < lines.length) {
                 out.innerHTML += lines[i];
-            } else {
-                out.innerHTML += "> ";
             }
             out.innerHTML += "\n";
         }
     })
 }
 
+function small_tester(p_id, n_lines, initial_expr, vars, expect, ...combo_set) {
+    const expect_expr = Expr.parse(combo_set, expect);
+
+    const par = document.getElementById(p_id);
+
+    const inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = initial_expr;
+    par.appendChild(inp);
+
+    const vsp = document.createElement("code");
+    vsp.innerHTML = vars;
+    par.appendChild(vsp);
+
+    const button = document.createElement("input");
+    button.type = "button";
+    button.value = "step";
+    par.appendChild(button);
+
+    const out = document.createElement("pre");
+    for (let i = 0; i < n_lines; i++) {
+        out.innerHTML += "\n";
+    }
+    par.appendChild(out);
+
+    function check_correct(candidate) {
+        if (candidate.equals(expect_expr)) {
+            return ("✓ " + candidate.show());
+        } else {
+            return ("? " + candidate.show());
+        }
+    }
+
+    let initial = null;
+    let stored = null;
+    let lines = [];
+    button.addEventListener("click", function () {
+        let new_expr = inp.value;
+        let given = Expr.parse(combo_set, new_expr);
+        if ((given === null) || (given.free_vars())) {
+            return;
+        }
+
+        if (new_expr != initial) {
+            initial = new_expr;
+            stored = Expr.parse(combo_set, initial + vars);
+            lines = [];
+        }
+        if (stored !== null) {
+            if (stored.step()) {
+                lines.push(check_correct(stored));
+                if (lines.length > n_lines) {
+                    lines.shift();
+                }
+            } else {
+                if (!(stored.equals(expect_expr))) {
+                    lines.pop();
+                    lines.push("✗ " + stored.show());
+                }
+            }
+        }
+        if ((stored !== null) && (lines.length == 0)) {
+            lines.push(check_correct(stored));
+        }
+        out.innerHTML = "";
+        for (let i = 0; i < n_lines; i++) {
+            if (i < lines.length) {
+                out.innerHTML += lines[i];
+            }
+            out.innerHTML += "\n";
+        }
+    })
+}
