@@ -4,11 +4,7 @@ const Comb = {S: 0, K: 1, I: 2, B: 3, C: 4, A: 5, M: 6, T: 7};
 Object.freeze(Comb);
 
 function make_comb_set(combs) {
-    let mask = 0;
-    for (const c of combs) {
-        mask |= (1 << c);
-    }
-    return mask;
+    return combs.reduce((mask, c) => (mask | (1 << c)), 0);
 }
 
 function in_comb_set(mask, comb) {
@@ -144,12 +140,6 @@ class Expr {
     }
 
     static parse(combos, string) {
-        function reverse_all(expr) {
-            expr.stack.reverse();
-            for (const x of expr.stack) {
-                reverse_all(x);
-            }
-        }
 
         const mask = make_comb_set(combos);
         const inp  = string[Symbol.iterator]();
@@ -189,6 +179,11 @@ class Expr {
             }
             return res;
         }
+
+        function reverse_all(expr) {
+            expr.stack.reverse();
+            expr.stack.forEach(reverse_all);
+        }
         
         const res = parse_ski_many();
         reverse_all(res);
@@ -196,15 +191,7 @@ class Expr {
     }
 
     free_vars() {
-        if (typeof this.op === 'string') {
-            return true;
-        }
-        for (const x of this.stack) {
-            if (x.free_vars()) {
-                return true;
-            }
-        }
-        return false;
+        return (typeof this.op === 'string') || this.stack.some(e => e.free_vars());
     }
 }
 
@@ -276,22 +263,21 @@ function small_tester(p_id, n_lines, initial_expr, vars, expect, ...combo_set) {
     par.appendChild(button);
 
     const out = document.createElement("pre");
-    for (let i = 0; i < n_lines; i++) {
-        out.innerHTML += "\n";
-    }
+    out.innerHTML = "\n".repeat(n_lines);
     par.appendChild(out);
 
     function check_correct(candidate) {
         if (candidate.equals(expect_expr)) {
-            return ("✓ " + candidate.show());
+            return ("✓  " + candidate.show());
         } else {
-            return ("? " + candidate.show());
+            return ("~> " + candidate.show());
         }
     }
 
     let initial = null;
     let stored = null;
     let lines = [];
+    
     button.addEventListener("click", function () {
         let new_expr = inp.value;
         let given = Expr.parse(combo_set, new_expr);
@@ -313,7 +299,7 @@ function small_tester(p_id, n_lines, initial_expr, vars, expect, ...combo_set) {
             } else {
                 if (!(stored.equals(expect_expr))) {
                     lines.pop();
-                    lines.push("✗ " + stored.show());
+                    lines.push("✗  " + stored.show());
                 }
             }
         }
