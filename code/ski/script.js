@@ -186,6 +186,10 @@ class Expr {
         }
         
         const res = parse_ski_many();
+        
+        if (res === null) {
+            return null;
+        }
         reverse_all(res);
         return res;
     }
