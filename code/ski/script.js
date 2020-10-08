@@ -4,11 +4,9 @@ const Comb = {S: 0, K: 1, I: 2, B: 3, C: 4, A: 5, M: 6, T: 7, W: 8};
 Object.freeze(Comb);
 
 function make_comb_set(combs) {
-    return combs.reduce((mask, c) => (mask | (1 << c)), 0);
-}
-
-function in_comb_set(mask, comb) {
-    return ((mask & (1 << comb)) != 0);
+    const res = new Set();
+    combs.forEach(c => res.add(c));
+    return res;
 }
 
 class Expr {
@@ -162,15 +160,15 @@ class Expr {
                 switch (x.value) {
                     case '(': return parse_ski_many();
                     case ')': return null;
-                    case 'S': return new Expr(in_comb_set(mask, Comb.S) ? Comb.S : x.value);
-                    case 'K': return new Expr(in_comb_set(mask, Comb.K) ? Comb.K : x.value);
-                    case 'I': return new Expr(in_comb_set(mask, Comb.I) ? Comb.I : x.value);
-                    case 'B': return new Expr(in_comb_set(mask, Comb.B) ? Comb.B : x.value);
-                    case 'C': return new Expr(in_comb_set(mask, Comb.C) ? Comb.C : x.value);
-                    case 'A': return new Expr(in_comb_set(mask, Comb.A) ? Comb.A : x.value);
-                    case 'M': return new Expr(in_comb_set(mask, Comb.M) ? Comb.M : x.value);
-                    case 'T': return new Expr(in_comb_set(mask, Comb.T) ? Comb.T : x.value);
-                    case 'W': return new Expr(in_comb_set(mask, Comb.W) ? Comb.W : x.value);
+                    case 'S': return new Expr(mask.has(Comb.S) ? Comb.S : x.value);
+                    case 'K': return new Expr(mask.has(Comb.K) ? Comb.K : x.value);
+                    case 'I': return new Expr(mask.has(Comb.I) ? Comb.I : x.value);
+                    case 'B': return new Expr(mask.has(Comb.B) ? Comb.B : x.value);
+                    case 'C': return new Expr(mask.has(Comb.C) ? Comb.C : x.value);
+                    case 'A': return new Expr(mask.has(Comb.A) ? Comb.A : x.value);
+                    case 'M': return new Expr(mask.has(Comb.M) ? Comb.M : x.value);
+                    case 'T': return new Expr(mask.has(Comb.T) ? Comb.T : x.value);
+                    case 'W': return new Expr(mask.has(Comb.W) ? Comb.W : x.value);
                     case ' ': break;
                     default: return new Expr(x.value);
                 }
@@ -209,11 +207,14 @@ class Expr {
     }
 }
 
-function small_repl({input_id: p_id, input_width = 20, output_lines: n_lines, initial_expr, allowed_combos: combo_set}) {
-    const par = document.getElementById(p_id);
-
+function make_prompt(
+    { input_par
+    , input_width = 20
+    , output_lines: n_lines
+    , initial_expr
+    }) {
     const lab = document.createElement("label");
-    par.appendChild(lab)
+    input_par.appendChild(lab)
 
     const prompt = document.createElement("code");
     prompt.innerHTML = ("λ> ");
@@ -229,11 +230,33 @@ function small_repl({input_id: p_id, input_width = 20, output_lines: n_lines, in
     for (let i = 0; i < n_lines; i++) {
         out.innerHTML += "\n";
     }
-    par.appendChild(out);
+    input_par.appendChild(out);
+
+    return {inp, out};
+}
+
+function small_repl(
+    { input_id: p_id
+    , input_width = 20
+    , output_lines: n_lines
+    , initial_expr
+    , allowed_combos: combo_set
+    }) {
+
+    const par = document.getElementById(p_id);
+
+    const {inp, out} =
+        make_prompt({
+            input_par: par, 
+            input_width: input_width, 
+            output_lines: n_lines,
+            initial_expr: initial_expr
+        });
 
     let initial = null;
     let stored = null;
     let lines = [];
+
     inp.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
             let new_expr = inp.value;
@@ -242,14 +265,13 @@ function small_repl({input_id: p_id, input_width = 20, output_lines: n_lines, in
                 stored = Expr.parse(combo_set, initial);
                 lines = [];
             }
-            if ( (stored !== null) && stored.step() ) {
-                lines.push("~> " + stored.show());
-                if (lines.length > n_lines) {
-                    lines.shift();
+            if (stored !== null) {
+                if (lines.length === 0 || stored.step()) {
+                    lines.push("~> " + stored.show());
+                    if (lines.length > n_lines) {
+                        lines.shift();
+                    }
                 }
-            }
-            if ((stored !== null) && (lines.length == 0)) {
-                lines.push("~> " + stored.show());
             }
             out.innerHTML = "";
             for (let i = 0; i < n_lines; i++) {
@@ -262,39 +284,33 @@ function small_repl({input_id: p_id, input_width = 20, output_lines: n_lines, in
     })
 }
 
-function small_tester({input_id: p_id, input_width = 20, output_lines: n_lines, initial_expr, vars, expect, allowed_combos: combo_set}) {
+function small_tester(
+    { input_id: p_id
+    , input_width = 20
+    , output_lines: n_lines
+    , initial_expr
+    , vars
+    , expect
+    , allowed_combos: combo_set
+    }) {
     const expect_expr = Expr.parse(combo_set, expect);
 
     const par = document.getElementById(p_id);
 
-    const lab = document.createElement("label");
-    par.appendChild(lab)
-
-    const prompt = document.createElement("code");
-    prompt.innerHTML = ("λ> ");
-    lab.appendChild(prompt);
-
-    const inp = document.createElement("input");
-    inp.type = "text";
-    inp.value = initial_expr;
-    inp.size = input_width;
-    lab.appendChild(inp);
+    const {inp, out} =
+        make_prompt({
+            input_par: par, 
+            input_width: input_width, 
+            output_lines: n_lines,
+            initial_expr: initial_expr
+        });
 
     const vsp = document.createElement("code");
     vsp.innerHTML = vars + " ~> " + expect;
-    par.appendChild(vsp);
+    par.insertBefore(vsp, out);
 
-    const out = document.createElement("pre");
-    out.innerHTML = "\n".repeat(n_lines);
-    par.appendChild(out);
-
-    function check_correct(candidate) {
-        if (candidate.equals(expect_expr)) {
-            return ("✓  " + candidate.show());
-        } else {
-            return ("~> " + candidate.show());
-        }
-    }
+    const check_correct = (e) => 
+        (e.equals(expect_expr) ? "✓  " : "~> ") + e.show();
 
     let initial = null;
     let stored = null;
@@ -305,7 +321,7 @@ function small_tester({input_id: p_id, input_width = 20, output_lines: n_lines, 
             event.preventDefault();
             let new_expr = inp.value;
             let given = Expr.parse(combo_set, new_expr);
-            if ((given === null) || (given.free_vars())) {
+            if (given === null || given.free_vars()) {
                 return;
             }
 
@@ -316,20 +332,15 @@ function small_tester({input_id: p_id, input_width = 20, output_lines: n_lines, 
             }
 
             if (stored !== null) {
-                if (stored.step()) {
+                if (lines.length === 0 || stored.step()) {
                     lines.push(check_correct(stored));
                     if (lines.length > n_lines) {
                         lines.shift();
                     }
-                } else {
-                    if (!(stored.equals(expect_expr))) {
-                        lines.pop();
-                        lines.push("✗  " + stored.show());
-                    }
+                } else if (!(stored.equals(expect_expr))) {
+                    lines.pop();
+                    lines.push("✗  " + stored.show());
                 }
-            }
-            if ((stored !== null) && (lines.length == 0)) {
-                lines.push(check_correct(stored));
             }
             out.innerHTML = "";
             for (let i = 0; i < n_lines; i++) {
