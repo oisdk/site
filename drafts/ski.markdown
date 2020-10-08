@@ -16,6 +16,7 @@ input[type=text]:focus {
 }
 input[type=text]:invalid {
     color: red;
+    box-shadow: none;
 }
 </style>
 
