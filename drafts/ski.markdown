@@ -284,23 +284,7 @@ There's one small issue with `BC`: it doesn't (strictly speaking) have an
 equivalent to `I`.
 You can write an expression which is *close*, but it will only actually compute
 when applied to at least 3 arguments.
-In other words, our mystery 
-
-
-In other words, `BC` on its own is a *linear* language.
-This kind of language is all the rage these days: if we're not allowed duplicate
-or discard variables we can make concrete statements about the memory usage of a
-program; alternatively, this kind of logic can be used to provide things like
-privacy-preserving computation, or safe in-place operations in a functional
-programming language.
-Theoretically, for something like Haskell, we could compile a function down to
-`BCKW` combinators, and we 
-
-
-
-Well, there's one caveat: `BC` doesn't exactly have an equivalent to `I`.
-You can get close, but you need to supply at least 3 arguments.
-See if you can figure it out:
+See if you can find it.
 
 <p id="BCtoI"></p><script>
 small_tester(
@@ -313,16 +297,13 @@ small_tester(
   }
 );
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
-
 <details><summary>Answer</summary>
 ```
 BCC
 ```
 </details>
 
-So usually we add `I`, to get `BCI`.
-
-We can also have an *affine* language, with `BCK`.
+Usually we add `I`, though, to give us `BCI`.
 
 # The Minimal Combinators: S and K
 
@@ -334,9 +315,6 @@ Sxyz ~> xz(yz)
 ```
 
 It does parenthesising, reordering, *and* duplication.
-
-This means that 
-
 
 # Encoding Numbers
 
