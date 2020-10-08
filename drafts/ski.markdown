@@ -260,7 +260,49 @@ painful to use.
 
 # Linear Types and Combinators
 
+One of the things BCKW has over SKI is that each combinator represents a
+concrete capability.
+`K` and `W` especially: without these combinators, we can neither duplicate nor
+discard variables.
+In other words, `BC` on its own is a *linear* language.
+Well, there's one caveat: `BC` doesn't exactly have an equivalent to `I`.
+You can get close, but you need to supply at least 3 arguments.
+See if you can figure it out:
+
+<p id="BCtoI"></p><script>
+small_tester(
+  { input_id: "BCtoI"
+  , output_lines: 4
+  , input_width: 5
+  , initial_expr: ""
+  , vars: "xyz"
+  , expect: "xyz"
+  , allowed_combos: [Comb.B, Comb.C]
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+<details><summary>Answer</summary>
+```
+BCC
+```
+</details>
+
+So usually we add `I`, to get `BCI`.
+
+We can also have an affine language, with `BCK`.
+
 # The Minimal Combinators: S and K
+
+`S` is the only combinator we haven't seen yet.
+It's kind of a combination of `B`, `C`, and `W`:
+
+```
+Sxyz ~> xz(yz)
+```
+
+It does parenthesising, reordering, *and* duplication.
+
 
 # Encoding Numbers
 
