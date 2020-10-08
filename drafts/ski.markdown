@@ -14,6 +14,9 @@ input[type=text] {
 input[type=text]:focus {
     outline:none!important;
 }
+input[type=text]:invalid {
+    color: red;
+}
 </style>
 
 There are a bunch of "minimal" computational models out there: Turing machines,
@@ -141,10 +144,9 @@ small_tester(
   , expect: "x" 
   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
   }
-);
-</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+); </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
 
-<details><summary>The Answer</summary>
+<details><summary>Answer</summary>
 `CK` followed by any combinator will do the trick.
 So `CKB`, `CKK`, `CKC`, etc.
 
@@ -152,6 +154,110 @@ So `CKB`, `CKK`, `CKC`, etc.
 I = CKC
 ```
 </details>
+
+# Why Not Simpler Combinators?
+
+Each of the combinators we've defined so far work a little weird: they seem to
+skip over their first argument, and work on their second.
+Indeed, there is another, equivalent combinator calculus which doesn't have this
+peculiarity:
+
+```
+Bxyz ~> x(yz)
+Axy  ~> y
+Mx   ~> xx
+Txy  ~> yx
+```
+
+`B` stays the same in this calculus, but the rest of the combinators get
+switched out for seemingly simpler versions.
+`K` goes to `A`^[If you want to look up these combinators elsewhere, this is the only one
+you won't be able to find: it's much less common than `K`, and where I have
+found it people just call it `K`, so I had to pick a different letter to
+distinguish it]:
+
+```
+Axy ~> y
+Kxy ~> x
+```
+
+Which isn't a huge change.
+It's the other two where we see the real difference.
+`W` has been swapped out for `M`:
+
+```
+Wxy ~> xyy
+Mx  ~> xx
+```
+
+As you can see `W` basically does the same thing as `M`, but while passing
+through its first argument.
+The difference between `T` and `C` is similar:
+
+```
+Cxyz ~> xzy
+Txy  ~> yx
+```
+
+So, first of all, it is pretty simple to show that `BCKW` contains all of the
+`BAMT` combinators.
+Try find a way to write `T` using only `BCKW` combinators (hint: you might want
+to use your previous answer for writing `I` using `BCKW`).
+
+<p id="BCKWtoT"></p><script>
+small_tester(
+  { input_id: "BCKWtoT"
+  , output_lines: 3
+  , input_width: 8
+  , initial_expr: ""
+  , vars: "xy"
+  , expect: "yx"
+  , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
+  }
+); </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+<details><summary>Answer</summary>
+So in fact all of the changed BAMT combinators can be encoded using BCKW by
+putting `I` (or `CKC` or what have you) after the corresponding BCKW combinator.
+In other words:
+```
+T = CI = C(CKC)
+A = KI = K(CKC)
+M = WI = W(CKC)
+```
+</details>
+
+It's pretty easy to go from `BCKW` to `BAMT`, then.
+However, it's *extremely* difficult to go the other way.
+Here, try to write `K` in terms of `BAMT` (this is quite difficult, do not
+expect to get it!):
+
+<p id="BAMTtoK"></p><script>
+small_tester(
+  { input_id: "BAMTtoK"
+  , output_lines: 5
+  , input_width: 12
+  , initial_expr: ""
+  , vars: "xy"
+  , expect: "x"
+  , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T]
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+<details><summary>Answer</summary>
+Either of the following would work:
+
+```
+B(TA)(BBT)
+B(B(TA)B)T
+```
+</details>
+
+So this is why we will stick to `BCKW` for the time being: `BAMT` is just too
+painful to use.
+
+# Linear Types and Combinators
 
 <!-- # Some Other Combinators -->
 
@@ -178,10 +284,6 @@ I = CKC
 <!-- ``` -->
 
 <!-- `A` is quite similar to `K`, but it drops is first argument, keeping the -->
-<!-- second^[If you want to look up these combinators elsewhere, this is the only one -->
-<!-- you won't be able to find: it's much less common than `K`, and where I have -->
-<!-- found it people just call it `K`, so I had to pick a different letter to -->
-<!-- distinguish it]. -->
 <!-- `M` duplicates its argument, and `T` swaps them around. -->
 <!-- `B`, like `S`, adds parentheses. -->
 
@@ -217,7 +319,7 @@ I = CKC
 <!-- ); -->
 <!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
 
-<!-- <details><summary>The Answer</summary> -->
+<!-- <details><summary>Answer</summary> -->
 <!-- `A` followed by anything (so `AB`, `AT`, `AM`, etc) will give you a combinator -->
 <!-- equivalent to `I`. -->
 <!-- </details> -->
@@ -226,26 +328,6 @@ I = CKC
 <!-- The next one is *not*: do not expect to be able to get it! -->
 <!-- You need to replicate `K`. -->
 
-<!-- <p id="BAMTtoK"></p><script> -->
-<!-- small_tester( -->
-<!--   { input_id: "BAMTtoK" -->
-<!--   , output_lines: 5 -->
-<!--   , initial_expr: "" -->
-<!--   , vars: "xy" -->
-<!--   , expect: "x"  -->
-<!--   , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T] -->
-<!--   } -->
-<!-- ); -->
-<!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
-
-<!-- <details><summary>The Answer</summary> -->
-<!-- Either of the following would work: -->
-
-<!-- ``` -->
-<!-- B(TA)(BBT) -->
-<!-- B(B(TA)B)T -->
-<!-- ``` -->
-<!-- </details> -->
 
 <!-- That last one was pretty ugly. -->
 <!-- `S` is even more horrific still: -->
@@ -315,7 +397,7 @@ I = CKC
 <!-- ); -->
 <!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
 
-<!-- <details><summary>The Answer</summary> -->
+<!-- <details><summary>Answer</summary> -->
 <!-- ``` -->
 <!-- S = B(BW)(BBC) -->
 <!-- ``` -->

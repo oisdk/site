@@ -9,6 +9,21 @@ function make_comb_set(combs) {
     return res;
 }
 
+function show_comb(comb) {
+    switch(comb) {
+        case Comb.S: return 'S';
+        case Comb.K: return 'K';
+        case Comb.I: return 'I';
+        case Comb.B: return 'B';
+        case Comb.C: return 'C';
+        case Comb.A: return 'A';
+        case Comb.M: return 'M';
+        case Comb.T: return 'T';
+        case Comb.W: return 'W';
+        default: return null;
+    }   
+}
+
 class Expr {
     constructor(op) {
         this.op = op;
@@ -120,18 +135,7 @@ class Expr {
             if ((expr.stack.length>0)&&(parens)) {
                 yield '(';
             }
-            switch(expr.op) {
-                case Comb.S: yield 'S'; break;
-                case Comb.K: yield 'K'; break;
-                case Comb.I: yield 'I'; break;
-                case Comb.B: yield 'B'; break;
-                case Comb.C: yield 'C'; break;
-                case Comb.A: yield 'A'; break;
-                case Comb.M: yield 'M'; break;
-                case Comb.T: yield 'T'; break;
-                case Comb.W: yield 'W'; break;
-                default: yield expr.op;
-            }
+            yield show_comb(expr.op) ?? expr.op;
             for (let i = expr.stack.length - 1; i >= 0; i--) {
                 yield* display_helper(expr.stack[i],true);
             }
@@ -201,10 +205,6 @@ class Expr {
         reverse_all(res);
         return res;
     }
-
-    free_vars() {
-        return (typeof this.op === 'string') || this.stack.some(e => e.free_vars());
-    }
 }
 
 function make_prompt(
@@ -214,7 +214,7 @@ function make_prompt(
     , initial_expr
     }) {
     const lab = document.createElement("label");
-    input_par.appendChild(lab)
+    input_par.appendChild(lab);
 
     const prompt = document.createElement("code");
     prompt.innerHTML = ("λ> ");
@@ -226,10 +226,8 @@ function make_prompt(
     inp.size = input_width;
     lab.appendChild(inp);
 
-    const out = document.createElement("pre");
-    for (let i = 0; i < n_lines; i++) {
-        out.innerHTML += "\n";
-    }
+    const out = document.createElement("code");
+    out.innerHTML = "<br>".repeat(n_lines+1);
     input_par.appendChild(out);
 
     return {inp, out};
@@ -253,13 +251,20 @@ function small_repl(
             initial_expr: initial_expr
         });
 
+    inp.pattern = "([" + combo_set.map(show_comb).join('') + "]| |\\(|\\)|[a-z])+";
+
     let initial = null;
     let stored = null;
     let lines = [];
 
     inp.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
+            event.preventDefault();
+            if (inp.validity.patternMismatch) {
+                return;
+            }
             let new_expr = inp.value;
+
             if (new_expr != initial) {
                 initial = new_expr;
                 stored = Expr.parse(combo_set, initial);
@@ -273,15 +278,15 @@ function small_repl(
                     }
                 }
             }
-            out.innerHTML = "";
+            out.innerHTML = "<br>";
             for (let i = 0; i < n_lines; i++) {
                 if (i < lines.length) {
                     out.innerHTML += lines[i];
                 }
-                out.innerHTML += "\n";
+                out.innerHTML += "<br>";
             }
         }
-    })
+    });
 }
 
 function small_tester(
@@ -305,12 +310,14 @@ function small_tester(
             initial_expr: initial_expr
         });
 
+    inp.pattern = "([" + combo_set.map(show_comb).join('') + "]| |\\(|\\))+";
+
     const vsp = document.createElement("code");
     vsp.innerHTML = vars + " ~> " + expect;
     par.insertBefore(vsp, out);
 
     const check_correct = (e) => 
-        (e.equals(expect_expr) ? "✓  " : "~> ") + e.show();
+        (e.equals(expect_expr) ? "✓&nbsp;&nbsp;" : "~> ") + e.show();
 
     let initial = null;
     let stored = null;
@@ -319,9 +326,13 @@ function small_tester(
     inp.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
             event.preventDefault();
+            if (inp.validity.patternMismatch) {
+                return;
+            }
             let new_expr = inp.value;
+
             let given = Expr.parse(combo_set, new_expr);
-            if (given === null || given.free_vars()) {
+            if (given === null) {
                 return;
             }
 
@@ -339,16 +350,16 @@ function small_tester(
                     }
                 } else if (!(stored.equals(expect_expr))) {
                     lines.pop();
-                    lines.push("✗  " + stored.show());
+                    lines.push("✗&nbsp;&nbsp;" + stored.show());
                 }
             }
-            out.innerHTML = "";
+            out.innerHTML = "<br>";
             for (let i = 0; i < n_lines; i++) {
                 if (i < lines.length) {
                     out.innerHTML += lines[i];
                 }
-                out.innerHTML += "\n";
+                out.innerHTML += "<br>";
             }
         }
-    })
+    });
 }
