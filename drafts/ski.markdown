@@ -4,6 +4,15 @@ tags: Haskell
 ---
 
 <script src="../code/ski/script.js"></script>
+<style>
+input[type=text] {
+    border:0;
+    outline:0;
+}
+input[type=text]:focus {
+    outline:none!important;
+}
+</style>
 
 There are a bunch of "minimal" computational models out there: Turing machines,
 lambda calculus,
@@ -112,6 +121,7 @@ You're only allowed to use `S`, `K`, and parentheses for this.
 small_tester(
   { input_id: "SKI"
   , output_lines: 5
+  , input_width: 5
   , initial_expr: ""
   , vars: "x"
   , expect: "x" 
@@ -179,6 +189,7 @@ First, `I` (you want to write an expression that, when applied to `x`, returns
 small_tester(
   { input_id: "BAMTtoI"
   , output_lines: 2
+  , input_width: 3
   , initial_expr: ""
   , vars: "x"
   , expect: "x" 
@@ -231,6 +242,7 @@ with the awful equivalence for `S`:
 small_repl(
   { input_id: "BAMTtoS"
   , output_lines: 5
+  , input_width: 30
   , initial_expr: "B(B(B(T(BM(BBT)))(BBT)))(BB(B(T(BBT))(BBT)))xyz"
   , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T]
   }

@@ -126,8 +126,8 @@ ol li.serieslist:before {
  }
 
  .sourceCode,
- code, .Agda {
-     font-size: 10px;
+ code, pre, .Agda {
+     font-size: 11px;
      font-family: menlo, monospace
  }
 
