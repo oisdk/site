@@ -155,6 +155,8 @@ class Expr {
         const mask = make_comb_set(combos);
         const inp  = string[Symbol.iterator]();
 
+        let parens = 0;
+
         function parse_ski_single() {
             while (true) {
                 let x = inp.next();
@@ -162,8 +164,14 @@ class Expr {
                     return null;
                 }
                 switch (x.value) {
-                    case '(': return parse_ski_many();
-                    case ')': return null;
+                    case '(': 
+                        parens++;
+                        return parse_ski_many();
+                    case ')': 
+                        if (--parens < 0) {
+                            throw new EvalError();
+                        }
+                        return null;
                     case 'S': return new Expr(mask.has(Comb.S) ? Comb.S : x.value);
                     case 'K': return new Expr(mask.has(Comb.K) ? Comb.K : x.value);
                     case 'I': return new Expr(mask.has(Comb.I) ? Comb.I : x.value);
@@ -182,7 +190,7 @@ class Expr {
         function parse_ski_many() {
             let res = parse_ski_single();
             if (res === null) {
-                return null;
+                throw new EvalError();
             }
             let next_arg = parse_ski_single();
             while (next_arg !== null) {
@@ -196,10 +204,20 @@ class Expr {
             expr.stack.reverse();
             expr.stack.forEach(reverse_all);
         }
+
+        var res = null;
+
+        try {
+            res = parse_ski_many();
+        } catch (e) {
+            if (e instanceof EvalError) {
+                return null;
+            } else {
+                throw e;
+            }
+        }
         
-        const res = parse_ski_many();
-        
-        if (res === null) {
+        if (res === null || parens !== 0) {
             return null;
         }
         reverse_all(res);
@@ -257,6 +275,10 @@ function small_repl(
     let stored = null;
     let lines = [];
 
+    inp.addEventListener("input", function () {
+        inp.setCustomValidity("");
+    });
+
     inp.addEventListener("keydown", function (event) {
         if (event.key === "Enter") {
             event.preventDefault();
@@ -277,6 +299,8 @@ function small_repl(
                         lines.shift();
                     }
                 }
+            } else {
+                inp.setCustomValidity("invalid");
             }
             out.innerHTML = "<br>";
             for (let i = 0; i < n_lines; i++) {
@@ -322,6 +346,10 @@ function small_tester(
     let initial = null;
     let stored = null;
     let lines = [];
+
+    inp.addEventListener("input", function () {
+        inp.setCustomValidity("");
+    });
     
     inp.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
@@ -333,6 +361,7 @@ function small_tester(
 
             let given = Expr.parse(combo_set, new_expr);
             if (given === null) {
+                inp.setCustomValidity("invalid");
                 return;
             }
 
