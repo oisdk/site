@@ -335,7 +335,7 @@ function small_tester(
 
     const vsp = document.createElement("par");
     vsp.innerHTML = 
-      `Find a <code>?</code> such that <code>?${vars} ~> ${expect}</code>, using only the combinators <code>${combo_letters}</code>.<br>`;
+      `• Find a <code>?</code> such that <code>?${vars} ~> ${expect}</code>, using only the combinators <code>${combo_letters}</code>.<br>`;
     par.insertBefore(vsp, inp.parentElement);
 
     const check_correct = (e) => 
