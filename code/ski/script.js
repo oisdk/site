@@ -1,6 +1,6 @@
 "use strict";
 
-const Comb = {S: 0, K: 1, I: 2, B: 3, C: 4, A: 5, M: 6, T: 7};
+const Comb = {S: 0, K: 1, I: 2, B: 3, C: 4, A: 5, M: 6, T: 7, W: 8};
 Object.freeze(Comb);
 
 function make_comb_set(combs) {
@@ -100,6 +100,14 @@ class Expr {
                 [y, x] = [this.stack.pop(), this.stack.pop()];
                 this.stack.push(y)
                 break;
+            case Comb.W:
+                if (this.stack.length<2) {
+                    return false;
+                }
+                [x, y] = [this.stack.pop(), this.stack.pop()];
+                this.stack.push(y);
+                this.stack.push(y.clone());
+                break;
             default: return false;
         }
         for (const xe of x.stack) {
@@ -123,6 +131,7 @@ class Expr {
                 case Comb.A: yield 'A'; break;
                 case Comb.M: yield 'M'; break;
                 case Comb.T: yield 'T'; break;
+                case Comb.W: yield 'W'; break;
                 default: yield expr.op;
             }
             for (let i = expr.stack.length - 1; i >= 0; i--) {
@@ -161,6 +170,7 @@ class Expr {
                     case 'A': return new Expr(in_comb_set(mask, Comb.A) ? Comb.A : x.value);
                     case 'M': return new Expr(in_comb_set(mask, Comb.M) ? Comb.M : x.value);
                     case 'T': return new Expr(in_comb_set(mask, Comb.T) ? Comb.T : x.value);
+                    case 'W': return new Expr(in_comb_set(mask, Comb.W) ? Comb.W : x.value);
                     case ' ': break;
                     default: return new Expr(x.value);
                 }
@@ -199,7 +209,7 @@ class Expr {
     }
 }
 
-function small_repl(p_id, n_lines, initial_expr, ...combo_set) {
+function small_repl({input_id: p_id, output_lines: n_lines, initial_expr, allowed_combos: combo_set}) {
     const par = document.getElementById(p_id);
 
     const inp = document.createElement("input");
@@ -211,6 +221,13 @@ function small_repl(p_id, n_lines, initial_expr, ...combo_set) {
     button.type = "button";
     button.value = "step";
     par.appendChild(button);
+
+    inp.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            button.click();
+        }
+    })
 
     const out = document.createElement("pre");
     for (let i = 0; i < n_lines; i++) {
@@ -247,7 +264,7 @@ function small_repl(p_id, n_lines, initial_expr, ...combo_set) {
     })
 }
 
-function small_tester(p_id, n_lines, initial_expr, vars, expect, ...combo_set) {
+function small_tester({input_id: p_id, output_lines: n_lines, initial_expr, vars, expect, allowed_combos: combo_set}) {
     const expect_expr = Expr.parse(combo_set, expect);
 
     const par = document.getElementById(p_id);
@@ -266,9 +283,20 @@ function small_tester(p_id, n_lines, initial_expr, vars, expect, ...combo_set) {
     button.value = "step";
     par.appendChild(button);
 
+    inp.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            button.click();
+        }
+    })
+
     const out = document.createElement("pre");
     out.innerHTML = "\n".repeat(n_lines);
     par.appendChild(out);
+
+    const targ = document.createElement("pre");
+    targ.innerHTML = "target: " + expect;
+    par.appendChild(targ);
 
     function check_correct(candidate) {
         if (candidate.equals(expect_expr)) {
