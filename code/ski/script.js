@@ -227,7 +227,6 @@ class Expr {
 
 function make_prompt(
     { input_par
-    , input_width = 20
     , output_lines: n_lines
     , initial_expr
     }) {
@@ -241,7 +240,6 @@ function make_prompt(
     const inp = document.createElement("input");
     inp.type = "text";
     inp.value = initial_expr;
-    inp.size = input_width;
     lab.appendChild(inp);
 
     const out = document.createElement("code");
@@ -253,7 +251,6 @@ function make_prompt(
 
 function small_repl(
     { input_id: p_id
-    , input_width = 20
     , output_lines: n_lines
     , initial_expr
     , allowed_combos: combo_set
@@ -264,7 +261,6 @@ function small_repl(
     const {inp, out} =
         make_prompt({
             input_par: par, 
-            input_width: input_width, 
             output_lines: n_lines,
             initial_expr: initial_expr
         });
@@ -315,7 +311,6 @@ function small_repl(
 
 function small_tester(
     { input_id: p_id
-    , input_width = 20
     , output_lines: n_lines
     , initial_expr
     , vars
@@ -329,16 +324,19 @@ function small_tester(
     const {inp, out} =
         make_prompt({
             input_par: par, 
-            input_width: input_width, 
             output_lines: n_lines,
             initial_expr: initial_expr
         });
 
-    inp.pattern = "([" + combo_set.map(show_comb).join('') + "]| |\\(|\\))+";
+    const combo_letters = combo_set.map(show_comb).join('');
 
-    const vsp = document.createElement("code");
-    vsp.innerHTML = vars + " ~> " + expect;
-    par.insertBefore(vsp, out);
+    inp.pattern = "([" + combo_letters + "]| |\\(|\\))+";
+    inp.placeholder = "?";
+
+    const vsp = document.createElement("par");
+    vsp.innerHTML = 
+      `Find a <code>?</code> such that <code>?${vars} ~> ${expect}</code>, using only the combinators <code>${combo_letters}</code>.<br>`;
+    par.insertBefore(vsp, inp.parentElement);
 
     const check_correct = (e) => 
         (e.equals(expect_expr) ? "✓&nbsp;&nbsp;" : "~> ") + e.show();

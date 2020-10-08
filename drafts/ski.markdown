@@ -10,6 +10,7 @@ input[type=text] {
     outline:0;
     font-size: 11px;
     font-family: menlo, monospace;
+    width: 90%;
 }
 input[type=text]:focus {
     outline:none!important;
@@ -37,10 +38,10 @@ is where combinator calculi come in.
 You may have heard of SKI combinator calculus: it's the "simplest" of the
 calculi, but it's not actually very easy to understand, and it's absolute murder
 to try use.
-So we're going to start with BCKW, a more obscure calculus, actually invented by
+So we're going to start with `BCKW`, a more obscure calculus, actually invented by
 Haskell Curry.
 
-There are 4 combinators in BCKW: B, C, K, and W (shocking, I know).
+There are 4 combinators in `BCKW`: `B`, `C`, `K`, and `W` (shocking, I know).
 You can think about these combinators as functions which manipulate the
 beginning of strings:
 
@@ -51,7 +52,7 @@ Kxy  ~> x
 Wxy  ~> xyy
 ```
 
-I'll explain the actual formal rules in a second, but first let's work with some
+I'll explain the actual formal rules later on, but first let's work with some
 examples to get a sense for how these combinators work.
 
 Upper case letters are combinators, lower-case are variables.
@@ -132,14 +133,12 @@ Ix ~> x
 Try write an expression which functions the same way as `I`, using only the
 `BCKW` combinators.
 Use the following evaluator to try and figure out how to do it: write an
-expression into the box that, when applied to `x`, evaluates to `x`.
-You're only allowed to use `B`, `C`, `K`, `W`, and parentheses for this.
+expression after `λ>` which functions the same as `I`.
 
 <p id="BCKWtoI"></p><script>
 small_tester(
   { input_id: "BCKWtoI"
   , output_lines: 3
-  , input_width: 5
   , initial_expr: ""
   , vars: "x"
   , expect: "x" 
@@ -209,7 +208,6 @@ to use your previous answer for writing `I` using `BCKW`).
 small_tester(
   { input_id: "BCKWtoT"
   , output_lines: 3
-  , input_width: 8
   , initial_expr: ""
   , vars: "xy"
   , expect: "yx"
@@ -218,8 +216,8 @@ small_tester(
 ); </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
 
 <details><summary>Answer</summary>
-So in fact all of the changed BAMT combinators can be encoded using BCKW by
-putting `I` (or `CKC` or what have you) after the corresponding BCKW combinator.
+So in fact all of the changed `BAMT` combinators can be encoded using `BCKW` by
+putting `I` (or `CKC` or what have you) after the corresponding `BCKW` combinator.
 In other words:
 ```
 T = CI = C(CKC)
@@ -237,7 +235,6 @@ expect to get it!):
 small_tester(
   { input_id: "BAMTtoK"
   , output_lines: 5
-  , input_width: 12
   , initial_expr: ""
   , vars: "xy"
   , expect: "x"
@@ -260,11 +257,47 @@ painful to use.
 
 # Linear Types and Combinators
 
-One of the things BCKW has over SKI is that each combinator represents a
+One of the things `BCKW` has over `SKI` is that each combinator represents a
 concrete capability.
 `K` and `W` especially: without these combinators, we can neither duplicate nor
 discard variables.
+This makes the languages without one or both of these interesting (albeit not
+Turing-complete).
+
+If we say that we can't use `W`, we know that the will not duplicate any input.
+In fact, encoded appropriately, we know that the program can only decrease its
+size through execution.
+The `BCK` system is in fact an encoding of *affine* logic, which is all the rage
+nowadays.
+Rust uses affine types to guarantee memory safety: by preventing duplication of
+references, you can know that whenever you're looking at a variable you're free
+to modify it, or destroy it if necessary (obviously Rust is a bit more complex
+than what I've described here, but `BCK` is indeed the fundamental basis for the
+system in the same way that `SK` can be the basis for any programming language).
+
+If we remove `K` as well we have a *linear* language.
+This is even more restrictive, but is also quite actively researched at the
+moment: linear types have been used to construct languages for differential
+privacy, for instance.
+
+There's one small issue with `BC`: it doesn't (strictly speaking) have an
+equivalent to `I`.
+You can write an expression which is *close*, but it will only actually compute
+when applied to at least 3 arguments.
+In other words, our mystery 
+
+
 In other words, `BC` on its own is a *linear* language.
+This kind of language is all the rage these days: if we're not allowed duplicate
+or discard variables we can make concrete statements about the memory usage of a
+program; alternatively, this kind of logic can be used to provide things like
+privacy-preserving computation, or safe in-place operations in a functional
+programming language.
+Theoretically, for something like Haskell, we could compile a function down to
+`BCKW` combinators, and we 
+
+
+
 Well, there's one caveat: `BC` doesn't exactly have an equivalent to `I`.
 You can get close, but you need to supply at least 3 arguments.
 See if you can figure it out:
@@ -273,7 +306,6 @@ See if you can figure it out:
 small_tester(
   { input_id: "BCtoI"
   , output_lines: 4
-  , input_width: 5
   , initial_expr: ""
   , vars: "xyz"
   , expect: "xyz"
@@ -290,7 +322,7 @@ BCC
 
 So usually we add `I`, to get `BCI`.
 
-We can also have an affine language, with `BCK`.
+We can also have an *affine* language, with `BCK`.
 
 # The Minimal Combinators: S and K
 
@@ -302,6 +334,8 @@ Sxyz ~> xz(yz)
 ```
 
 It does parenthesising, reordering, *and* duplication.
+
+This means that 
 
 
 # Encoding Numbers
