@@ -315,6 +315,75 @@ Sxyz ~> xz(yz)
 ```
 
 It does parenthesising, reordering, *and* duplication.
+This allows it to be powerful to be Turing complete only with the addition of
+`K`.
+Try first to construct `I` given only `S` and `K`:
+
+<p id="SKtoI"></p><script>
+small_tester(
+  { input_id: "SKtoI"
+  , output_lines: 3
+  , initial_expr: ""
+  , vars: "x"
+  , expect: "x"
+  , allowed_combos: [Comb.S, Comb.K]
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>
+`SK` followed by any combinator will suffice.
+```
+I = SKK = SKS
+```
+</details>
+
+And now construct `S` from `BCKW`:
+
+<p id="BCKWtoS"></p><script>
+small_tester(
+  { input_id: "BCKWtoS"
+  , output_lines: 3
+  , initial_expr: ""
+  , vars: "xyz"
+  , expect: "xz(yz)"
+  , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>
+```
+S = B(BW)(BBC) = B(B(BW)C)(BB)
+```
+</details>
+
+# Recursion
+
+The next task is to encode the `Y` combinator.
+This is a combinator that evaluates to the following:
+
+```
+Yf ~> f(Yf)
+```
+
+As you can see, it encodes *recursion*.
+Like the `fix` function in Haskell, this combinator allows us to do recursion
+without explicit self-reference.
+And, of course, we can define this combinator using the combinators we've seen
+before, since our language is Turing complete.
+One encoding is `BM(CBM)`:
+
+<p id="Y"></p><script>
+small_repl(
+  { input_id: "Y"
+  , output_lines: 5
+  , initial_expr: "BM(CBM)f"
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+
+As you can see, `BM(CBM)`, when applied to `f`, yields `f(M(CBMf))`, which is
+equivalent to `f(BM(CBM)f)` (the `B` just hasn't been applied inside the `f`).
+So this is indeed a proper recursion combinator.
 
 # Encoding Numbers
 

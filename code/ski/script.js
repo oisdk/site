@@ -103,15 +103,15 @@ class Expr {
                 if (this.stack.length<1) {
                     return false;
                 }
-                x = this.stack.pop()
-                this.stack.push(x.clone())
+                x = this.stack.pop();
+                this.stack.push(x.clone());
                 break;
             case Comb.T:
                 if (this.stack.length<2) {
                     return false;
                 }
                 [y, x] = [this.stack.pop(), this.stack.pop()];
-                this.stack.push(y)
+                this.stack.push(y);
                 break;
             case Comb.W:
                 if (this.stack.length<2) {
@@ -253,7 +253,17 @@ function small_repl(
     { input_id: p_id
     , output_lines: n_lines
     , initial_expr
-    , allowed_combos: combo_set
+    , allowed_combos: combo_set =
+      [ Comb.S
+      , Comb.K
+      , Comb.I
+      , Comb.B
+      , Comb.C
+      , Comb.A 
+      , Comb.M 
+      , Comb.T 
+      , Comb.W
+      ]
     }) {
 
     const par = document.getElementById(p_id);
@@ -315,7 +325,17 @@ function small_tester(
     , initial_expr
     , vars
     , expect
-    , allowed_combos: combo_set
+    , allowed_combos: combo_set =
+      [ Comb.S
+      , Comb.K
+      , Comb.I
+      , Comb.B
+      , Comb.C
+      , Comb.A 
+      , Comb.M 
+      , Comb.T 
+      , Comb.W
+      ]
     }) {
     const expect_expr = Expr.parse(combo_set, expect);
 
