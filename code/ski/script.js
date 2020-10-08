@@ -209,25 +209,21 @@ class Expr {
     }
 }
 
-function small_repl({input_id: p_id, output_lines: n_lines, initial_expr, allowed_combos: combo_set}) {
+function small_repl({input_id: p_id, input_width = 20, output_lines: n_lines, initial_expr, allowed_combos: combo_set}) {
     const par = document.getElementById(p_id);
+
+    const lab = document.createElement("label");
+    par.appendChild(lab)
+
+    const prompt = document.createElement("code");
+    prompt.innerHTML = ("λ> ");
+    lab.appendChild(prompt);
 
     const inp = document.createElement("input");
     inp.type = "text";
     inp.value = initial_expr;
-    par.appendChild(inp);
-
-    const button = document.createElement("input");
-    button.type = "button";
-    button.value = "step";
-    par.appendChild(button);
-
-    inp.addEventListener("keyup", function(event) {
-        if (event.keyCode === 13) {
-            event.preventDefault();
-            button.click();
-        }
-    })
+    inp.size = input_width;
+    lab.appendChild(inp);
 
     const out = document.createElement("pre");
     for (let i = 0; i < n_lines; i++) {
@@ -238,65 +234,59 @@ function small_repl({input_id: p_id, output_lines: n_lines, initial_expr, allowe
     let initial = null;
     let stored = null;
     let lines = [];
-    button.addEventListener("click", function () {
-        let new_expr = inp.value;
-        if (new_expr != initial) {
-            initial = new_expr;
-            stored = Expr.parse(combo_set, initial);
-            lines = [];
-        }
-        if ( (stored !== null) && stored.step() ) {
-            lines.push("~> " + stored.show());
-            if (lines.length > n_lines) {
-                lines.shift();
+    inp.addEventListener("keydown", function (event) {
+        if (event.key === "Enter") {
+            let new_expr = inp.value;
+            if (new_expr != initial) {
+                initial = new_expr;
+                stored = Expr.parse(combo_set, initial);
+                lines = [];
             }
-        }
-        if ((stored !== null) && (lines.length == 0)) {
-            lines.push("~> " + stored.show());
-        }
-        out.innerHTML = "";
-        for (let i = 0; i < n_lines; i++) {
-            if (i < lines.length) {
-                out.innerHTML += lines[i];
+            if ( (stored !== null) && stored.step() ) {
+                lines.push("~> " + stored.show());
+                if (lines.length > n_lines) {
+                    lines.shift();
+                }
             }
-            out.innerHTML += "\n";
+            if ((stored !== null) && (lines.length == 0)) {
+                lines.push("~> " + stored.show());
+            }
+            out.innerHTML = "";
+            for (let i = 0; i < n_lines; i++) {
+                if (i < lines.length) {
+                    out.innerHTML += lines[i];
+                }
+                out.innerHTML += "\n";
+            }
         }
     })
 }
 
-function small_tester({input_id: p_id, output_lines: n_lines, initial_expr, vars, expect, allowed_combos: combo_set}) {
+function small_tester({input_id: p_id, input_width = 20, output_lines: n_lines, initial_expr, vars, expect, allowed_combos: combo_set}) {
     const expect_expr = Expr.parse(combo_set, expect);
 
     const par = document.getElementById(p_id);
 
+    const lab = document.createElement("label");
+    par.appendChild(lab)
+
+    const prompt = document.createElement("code");
+    prompt.innerHTML = ("λ> ");
+    lab.appendChild(prompt);
+
     const inp = document.createElement("input");
     inp.type = "text";
     inp.value = initial_expr;
-    par.appendChild(inp);
+    inp.size = input_width;
+    lab.appendChild(inp);
 
     const vsp = document.createElement("code");
-    vsp.innerHTML = vars;
+    vsp.innerHTML = vars + " ~> " + expect;
     par.appendChild(vsp);
-
-    const button = document.createElement("input");
-    button.type = "button";
-    button.value = "step";
-    par.appendChild(button);
-
-    inp.addEventListener("keyup", function(event) {
-        if (event.keyCode === 13) {
-            event.preventDefault();
-            button.click();
-        }
-    })
 
     const out = document.createElement("pre");
     out.innerHTML = "\n".repeat(n_lines);
     par.appendChild(out);
-
-    const targ = document.createElement("pre");
-    targ.innerHTML = "target: " + expect;
-    par.appendChild(targ);
 
     function check_correct(candidate) {
         if (candidate.equals(expect_expr)) {
@@ -310,40 +300,44 @@ function small_tester({input_id: p_id, output_lines: n_lines, initial_expr, vars
     let stored = null;
     let lines = [];
     
-    button.addEventListener("click", function () {
-        let new_expr = inp.value;
-        let given = Expr.parse(combo_set, new_expr);
-        if ((given === null) || (given.free_vars())) {
-            return;
-        }
+    inp.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            let new_expr = inp.value;
+            let given = Expr.parse(combo_set, new_expr);
+            if ((given === null) || (given.free_vars())) {
+                return;
+            }
 
-        if (new_expr != initial) {
-            initial = new_expr;
-            stored = Expr.parse(combo_set, initial + vars);
-            lines = [];
-        }
-        if (stored !== null) {
-            if (stored.step()) {
+            if (new_expr != initial) {
+                initial = new_expr;
+                stored = Expr.parse(combo_set, initial + vars);
+                lines = [];
+            }
+
+            if (stored !== null) {
+                if (stored.step()) {
+                    lines.push(check_correct(stored));
+                    if (lines.length > n_lines) {
+                        lines.shift();
+                    }
+                } else {
+                    if (!(stored.equals(expect_expr))) {
+                        lines.pop();
+                        lines.push("✗  " + stored.show());
+                    }
+                }
+            }
+            if ((stored !== null) && (lines.length == 0)) {
                 lines.push(check_correct(stored));
-                if (lines.length > n_lines) {
-                    lines.shift();
-                }
-            } else {
-                if (!(stored.equals(expect_expr))) {
-                    lines.pop();
-                    lines.push("✗  " + stored.show());
-                }
             }
-        }
-        if ((stored !== null) && (lines.length == 0)) {
-            lines.push(check_correct(stored));
-        }
-        out.innerHTML = "";
-        for (let i = 0; i < n_lines; i++) {
-            if (i < lines.length) {
-                out.innerHTML += lines[i];
+            out.innerHTML = "";
+            for (let i = 0; i < n_lines; i++) {
+                if (i < lines.length) {
+                    out.innerHTML += lines[i];
+                }
+                out.innerHTML += "\n";
             }
-            out.innerHTML += "\n";
         }
     })
 }
