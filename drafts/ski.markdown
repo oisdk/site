@@ -260,6 +260,20 @@ painful to use.
 
 # Linear Types and Combinators
 
+# The Minimal Combinators: S and K
+
+# Encoding Numbers
+
+# Encoding Lambda Terms as Combinators
+
+# Interpreting Combinators
+
+## In Haskell
+
+## In an Imperative Language
+
+# Encoding Combinators
+
 <!-- # Some Other Combinators -->
 
 <!-- We have a good reason for focusing on the `S` and `K` combinators: together, -->
