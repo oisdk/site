@@ -32,9 +32,7 @@ class Expr {
 
     clone() {
         const res = new Expr(this.op);
-        for (const x of this.stack) {
-            res.stack.push(x.clone());
-        }
+        res.stack = this.stack.map(x => x.clone());
         return res;
     }
 
@@ -264,7 +262,7 @@ function make_prompt(
 function small_repl(
     { input_id: p_id
     , output_lines: n_lines
-    , initial_expr
+    , initial_expr = ""
     , normal = false
     , allowed_combos: combo_set =
       [ Comb.S
@@ -335,7 +333,7 @@ function small_repl(
 function small_tester(
     { input_id: p_id
     , output_lines: n_lines
-    , initial_expr
+    , initial_expr = ""
     , normal = false
     , vars
     , expect

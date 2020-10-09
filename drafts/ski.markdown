@@ -377,6 +377,7 @@ small_repl(
   { input_id: "Y"
   , output_lines: 5
   , initial_expr: "BM(CBM)f"
+  , normal: true
   }
 );
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
@@ -386,6 +387,17 @@ equivalent to `f(BM(CBM)f)` (the `B` just hasn't been applied inside the `f`).
 So this is indeed a proper recursion combinator.
 
 # Encoding Numbers
+
+<p id="3"></p><script>
+small_tester(
+  { input_id: "3"
+  , output_lines: 5
+  , normal: true
+  , vars: "fx"
+  , expect: "f(f(fx))"
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
 
 # Encoding Lambda Terms as Combinators
 
