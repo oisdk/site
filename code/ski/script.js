@@ -130,6 +130,18 @@ class Expr {
         return true;
     }
 
+    step_normal() {
+        if (this.step()) {
+            return true;
+        }
+        for (let i = this.stack.length - 1; i >= 0; i--) {
+            if (this.stack[i].step_normal()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     show() {
         function* display_helper(expr, parens) {
             if ((expr.stack.length>0)&&(parens)) {
@@ -253,6 +265,7 @@ function small_repl(
     { input_id: p_id
     , output_lines: n_lines
     , initial_expr
+    , normal = false
     , allowed_combos: combo_set =
       [ Comb.S
       , Comb.K
@@ -299,7 +312,7 @@ function small_repl(
                 lines = [];
             }
             if (stored !== null) {
-                if (lines.length === 0 || stored.step()) {
+                if (lines.length === 0 || (!normal && stored.step()) || (normal && stored.step_normal())) {
                     lines.push("~> " + stored.show());
                     if (lines.length > n_lines) {
                         lines.shift();
@@ -323,6 +336,7 @@ function small_tester(
     { input_id: p_id
     , output_lines: n_lines
     , initial_expr
+    , normal = false
     , vars
     , expect
     , allowed_combos: combo_set =
@@ -390,7 +404,7 @@ function small_tester(
             }
 
             if (stored !== null) {
-                if (lines.length === 0 || stored.step()) {
+                if (lines.length === 0 || (!normal && stored.step()) || (normal && stored.step_normal())) {
                     lines.push(check_correct(stored));
                     if (lines.length > n_lines) {
                         lines.shift();
