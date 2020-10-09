@@ -97,7 +97,7 @@ Cxyz ~> xzy
 Here's a small little evaluator for expressions which use `C`, `K`, and `W`.
 You can edit the expression, and press enter to step through it.
 
-<p id="CKW"><script>
+<p id="CKW"></p><script>
 repl(
   { input_id: "CKW"
   , output_lines: 3
@@ -389,8 +389,6 @@ S = SS(SK) = SS(KI)
 ```
 </details>
 
-
-
 # Recursion
 
 The next task is to encode the `Y` combinator.
@@ -423,16 +421,55 @@ So this is indeed a proper recursion combinator.
 
 # Encoding Numbers
 
-<p id="3"></p><script>
+Let's try doing a little bit of programming with these combinators now.
+
+In the lambada calculus, to encode numbers we often use the *church* numerals:
+that's what we're going to do here, too.
+A church numeral representing some number $n$ is a function which takes two
+arguments, and applies the first argument to the second $n$ times.
+Here are some church numerals in Haskell:
+
+```
+zero :: (a -> a) -> a -> a
+zero f x = x
+
+one :: (a -> a) -> a -> a
+one f x = f x
+
+two :: (a -> a) -> a -> a
+two f x = f (f x)
+
+three :: (a -> a) -> a -> a
+three f x = f (f (f x))
+```
+
+Encoding these numerals in combinators is a little more difficult.
+Zero and one are obvious: they are `A` and `I`, respectively.
+Try to figure out two and three:
+
+<p id="two"></p><script>
 puzzle(
-  { input_id: "3"
-  , output_lines: 5
+  { input_id: "two"
+  , output_lines: 2
+  , normal: true
+  , vars: "fx"
+  , expect: "f(fx)"
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>`SBI`</details>
+
+<p id="three"></p><script>
+puzzle(
+  { input_id: "three"
+  , output_lines: 2
   , normal: true
   , vars: "fx"
   , expect: "f(f(fx))"
   }
 );
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>`SB(SBI)`</details>
 
 # Encoding Lambda Terms as Combinators
 
@@ -443,147 +480,3 @@ puzzle(
 ## In an Imperative Language
 
 # Encoding Combinators
-
-<!-- # Some Other Combinators -->
-
-<!-- We have a good reason for focusing on the `S` and `K` combinators: together, -->
-<!-- they're Turing complete, and they're the simplest two combinators which have -->
-<!-- that property (I think). -->
-<!-- Other combinators are either weirder, or require more than two to get Turing -->
-<!-- completeness. -->
-
-<!-- All the same, they are not very intuitive or usable. -->
-<!-- We're going to look at two other combinator sets now which are equal in power to -->
-<!-- the SK combinators: they have four combinators a piece, though, so they're not -->
-<!-- as "simple". -->
-
-<!-- First, we have the `BAMT` combinator set. -->
-<!-- I'll give the definition of each first, and then we'll move on to exploring them -->
-<!-- a little. -->
-
-<!-- ``` -->
-<!-- Bxyz ~> x(yz) -->
-<!-- Axy  ~> y -->
-<!-- Mx   ~> xx -->
-<!-- Txy  ~> yx -->
-<!-- ``` -->
-
-<!-- `A` is quite similar to `K`, but it drops is first argument, keeping the -->
-<!-- `M` duplicates its argument, and `T` swaps them around. -->
-<!-- `B`, like `S`, adds parentheses. -->
-
-<!-- In terms of normal functional code, `B` is composition: it takes two functions -->
-<!-- and an argument, and applied those two functions to the argument. -->
-
-<!-- I quite like this combinator set because each combinator is extremely simple in -->
-<!-- its function. -->
-<!-- Also, each combinator gives a concrete capability to the combinators. -->
-<!-- `M`, for instance, allows us to make copies. -->
-<!-- If we worked with only the `BAT` combinators, we would know that our interpreter -->
-<!-- would always produce an output no larger than its input. -->
-<!-- Similarly, `A` allows us to discard information. -->
-
-<!-- A combinator system that didn't include the `A` or `M` combinators would be -->
-<!-- *linear*: in fact, some linear logic (and affine logic) systems are based on -->
-<!-- this precise symmetry. -->
-
-<!-- So now, let's try use some of them to replicate the `SKI` combinators. -->
-<!-- First, `I` (you want to write an expression that, when applied to `x`, returns -->
-<!-- `x`): -->
-
-<!-- <p id="BAMTtoI"></p><script> -->
-<!-- puzzle( -->
-<!--   { input_id: "BAMTtoI" -->
-<!--   , output_lines: 2 -->
-<!--   , input_width: 3 -->
-<!--   , initial_expr: "" -->
-<!--   , vars: "x" -->
-<!--   , expect: "x"  -->
-<!--   , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T] -->
-<!--   } -->
-<!-- ); -->
-<!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
-
-<!-- <details><summary>Answer</summary> -->
-<!-- `A` followed by anything (so `AB`, `AT`, `AM`, etc) will give you a combinator -->
-<!-- equivalent to `I`. -->
-<!-- </details> -->
-
-<!-- That should have been pretty easy. -->
-<!-- The next one is *not*: do not expect to be able to get it! -->
-<!-- You need to replicate `K`. -->
-
-
-<!-- That last one was pretty ugly. -->
-<!-- `S` is even more horrific still: -->
-
-<!-- ``` -->
-<!-- S = B(B(B(T(BM(BBT)))(BBT)))(BB(B(T(BBT))(BBT))) -->
-<!-- ``` -->
-
-<!-- You can try out the `BAMT` calculus in the following evaluator, it's loaded up -->
-<!-- with the awful equivalence for `S`: -->
-
-<!-- <p id="BAMTtoS"></p><script> -->
-<!-- repl( -->
-<!--   { input_id: "BAMTtoS" -->
-<!--   , output_lines: 5 -->
-<!--   , input_width: 50 -->
-<!--   , initial_expr: "B(B(B(T(BM(BBT)))(BBT)))(BB(B(T(BBT))(BBT)))xyz" -->
-<!--   , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T] -->
-<!--   } -->
-<!-- ); -->
-<!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
-
-<!-- # A Usable Combinator Set -->
-
-<!-- So we've seen the theoretically simple `SK` combinators, the simple to -->
-<!-- understand (but a nightmare to use) `BAMT` combinators, now we'll introduce a -->
-<!-- combinator set which is relatively simple to both understand *and* use: `BCKW`. -->
-
-<!-- ``` -->
-<!-- Bxyz ~> x(yz) -->
-<!-- Cxyz ~> xzy -->
-<!-- Kxy  ~> x -->
-<!-- Wxy  ~> xyy -->
-<!-- ``` -->
-
-<!-- You can see that it's a little similar to `BAMT`, we have `B`, we have `K` -->
-<!-- (which is quite similar to `A`), and the `C` and `W`. -->
-<!-- These last two function analogously to `T` and `M`, except they take an extra -->
-<!-- argument that they keep in front. -->
-<!-- This makes them *far* easier to use. -->
-<!-- Here's a repl to try them out. -->
-<!-- See if you can figure out the other combinators we've seen so far. -->
-
-<!-- <p id="BCKW"></p><script> -->
-<!-- repl( -->
-<!--   { input_id: "BCKW" -->
-<!--   , output_lines: 5 -->
-<!--   , initial_expr: "" -->
-<!--   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W] -->
-<!--   } -->
-<!-- ); -->
-<!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
-
-
-<!-- And here's a puzzle: this is difficult, but doable. -->
-<!-- See if you can express `S` using `BCKW` alone. -->
-
-<!-- <p id="BCKWtoS"></p><script> -->
-<!-- puzzle( -->
-<!--   { input_id: "BCKWtoS" -->
-<!--   , output_lines: 5 -->
-<!--   , initial_expr: "" -->
-<!--   , vars: "xyz" -->
-<!--   , expect: "xz(yz)" -->
-<!--   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W] -->
-<!--   } -->
-<!-- ); -->
-<!-- </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript> -->
-
-<!-- <details><summary>Answer</summary> -->
-<!-- ``` -->
-<!-- S = B(BW)(BBC) -->
-<!-- ``` -->
-<!-- </details> -->
