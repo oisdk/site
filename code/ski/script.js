@@ -259,7 +259,7 @@ function make_prompt(
     return {inp, out};
 }
 
-function small_repl(
+function repl(
     { input_id: p_id
     , output_lines: n_lines
     , initial_expr = ""
@@ -330,7 +330,7 @@ function small_repl(
     });
 }
 
-function small_tester(
+function puzzle(
     { input_id: p_id
     , output_lines: n_lines
     , initial_expr = ""

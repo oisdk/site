@@ -98,7 +98,7 @@ Here's a small little evaluator for expressions which use `C`, `K`, and `W`.
 You can edit the expression, and press enter to step through it.
 
 <p id="CKW"><script>
-small_repl(
+repl(
   { input_id: "CKW"
   , output_lines: 3
   , initial_expr: "WKCxyz"
@@ -136,10 +136,9 @@ Use the following evaluator to try and figure out how to do it: write an
 expression after `λ>` which functions the same as `I`.
 
 <p id="BCKWtoI"></p><script>
-small_tester(
+puzzle(
   { input_id: "BCKWtoI"
   , output_lines: 3
-  , initial_expr: ""
   , vars: "x"
   , expect: "x" 
   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
@@ -205,10 +204,9 @@ Try find a way to write `T` using only `BCKW` combinators (hint: you might want
 to use your previous answer for writing `I` using `BCKW`).
 
 <p id="BCKWtoT"></p><script>
-small_tester(
+puzzle(
   { input_id: "BCKWtoT"
   , output_lines: 3
-  , initial_expr: ""
   , vars: "xy"
   , expect: "yx"
   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
@@ -232,10 +230,9 @@ Here, try to write `K` in terms of `BAMT` (this is quite difficult, do not
 expect to get it!):
 
 <p id="BAMTtoK"></p><script>
-small_tester(
+puzzle(
   { input_id: "BAMTtoK"
   , output_lines: 5
-  , initial_expr: ""
   , vars: "xy"
   , expect: "x"
   , allowed_combos: [Comb.B, Comb.A, Comb.M, Comb.T]
@@ -287,10 +284,9 @@ when applied to at least 3 arguments.
 See if you can find it.
 
 <p id="BCtoI"></p><script>
-small_tester(
+puzzle(
   { input_id: "BCtoI"
   , output_lines: 4
-  , initial_expr: ""
   , vars: "xyz"
   , expect: "xyz"
   , allowed_combos: [Comb.B, Comb.C]
@@ -320,10 +316,9 @@ This allows it to be powerful to be Turing complete only with the addition of
 Try first to construct `I` given only `S` and `K`:
 
 <p id="SKtoI"></p><script>
-small_tester(
+puzzle(
   { input_id: "SKtoI"
   , output_lines: 3
-  , initial_expr: ""
   , vars: "x"
   , expect: "x"
   , allowed_combos: [Comb.S, Comb.K]
@@ -340,10 +335,9 @@ I = SKK = SKS
 And now construct `S` from `BCKW`:
 
 <p id="BCKWtoS"></p><script>
-small_tester(
+puzzle(
   { input_id: "BCKWtoS"
   , output_lines: 3
-  , initial_expr: ""
   , vars: "xyz"
   , expect: "xz(yz)"
   , allowed_combos: [Comb.B, Comb.C, Comb.K, Comb.W]
@@ -354,7 +348,48 @@ small_tester(
 ```
 S = B(BW)(BBC) = B(B(BW)C)(BB)
 ```
+
 </details>
+
+Of course, to show that `SK` is universal we'd need to show that it contains one
+of the other universal systems.
+We won't do that exhaustively here, but first just try to figure out `B` and `W`:
+
+<p id="SKItoB"></p><script>
+puzzle(
+  { input_id: "SKItoB"
+  , output_lines: 3
+  , vars: "xyz"
+  , expect: "x(yz)"
+  , normal: true
+  , allowed_combos: [Comb.S, Comb.K, Comb.I]
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>
+```
+B = S(KS)K
+```
+</details>
+
+<p id="SKItoW"></p><script>
+puzzle(
+  { input_id: "SKItoW"
+  , output_lines: 3
+  , vars: "xy"
+  , expect: "xyy"
+  , allowed_combos: [Comb.S, Comb.K, Comb.I]
+  , normal: true
+  }
+);
+</script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
+<details><summary>Answer</summary>
+```
+S = SS(SK) = SS(KI)
+```
+</details>
+
+
 
 # Recursion
 
@@ -373,7 +408,7 @@ before, since our language is Turing complete.
 One encoding is `BM(CBM)`:
 
 <p id="Y"></p><script>
-small_repl(
+repl(
   { input_id: "Y"
   , output_lines: 5
   , initial_expr: "BM(CBM)f"
@@ -389,7 +424,7 @@ So this is indeed a proper recursion combinator.
 # Encoding Numbers
 
 <p id="3"></p><script>
-small_tester(
+puzzle(
   { input_id: "3"
   , output_lines: 5
   , normal: true
@@ -457,7 +492,7 @@ small_tester(
 <!-- `x`): -->
 
 <!-- <p id="BAMTtoI"></p><script> -->
-<!-- small_tester( -->
+<!-- puzzle( -->
 <!--   { input_id: "BAMTtoI" -->
 <!--   , output_lines: 2 -->
 <!--   , input_width: 3 -->
@@ -490,7 +525,7 @@ small_tester(
 <!-- with the awful equivalence for `S`: -->
 
 <!-- <p id="BAMTtoS"></p><script> -->
-<!-- small_repl( -->
+<!-- repl( -->
 <!--   { input_id: "BAMTtoS" -->
 <!--   , output_lines: 5 -->
 <!--   , input_width: 50 -->
@@ -522,7 +557,7 @@ small_tester(
 <!-- See if you can figure out the other combinators we've seen so far. -->
 
 <!-- <p id="BCKW"></p><script> -->
-<!-- small_repl( -->
+<!-- repl( -->
 <!--   { input_id: "BCKW" -->
 <!--   , output_lines: 5 -->
 <!--   , initial_expr: "" -->
@@ -536,7 +571,7 @@ small_tester(
 <!-- See if you can express `S` using `BCKW` alone. -->
 
 <!-- <p id="BCKWtoS"></p><script> -->
-<!-- small_tester( -->
+<!-- puzzle( -->
 <!--   { input_id: "BCKWtoS" -->
 <!--   , output_lines: 5 -->
 <!--   , initial_expr: "" -->
