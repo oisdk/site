@@ -1,5 +1,5 @@
 ---
-title: Fun with Combinator Calculi
+title: Fun with Combinators
 tags: Haskell
 ---
 
@@ -479,7 +479,7 @@ We already have 2 defined, so the next thing we need for a binary encoding is a
 successor function.
 And we know what *that* is, from the answer to 3!
 
-This means we can encode normal number in $O(\log n)$ space (although it still
+This means we can encode normal number in $\mathcal{O}(\log n)$ space (although it still
 takes linear time to evaluate).
 Here are some example numbers:
 
@@ -490,14 +490,113 @@ Here are some example numbers:
 271 = SB(B(WB)(SB(B(WB)(SB(B(WB)(SB(B(WB)(B(WB)(B(WB)(B(WB)(WB)))))))))))
 ```
 
+We could take up even less space if we allowed for non-normal forms.
+4, for instance, could be encoded like so:
+
+```
+M(WB)
+```
+
+But we generally prefer to keep our encodings in normal form: otherwise there's
+some extra evaluation we have to pay for when we go to use them.
+
 # Encoding Lambda Terms as Combinators
 
-We know that SKI and lambda calculus are equivalent: so can we then convert
+Once upon a time SKI combinators were used as a target for functional compilers:
+Miranda, Haskell's precursor, compiled down to a set of combinators which
+included `SKI`.
+Nowadays, Haskell is compiled to the "spineless tagless G-machine": its
+compilation technique took over from combinators in the late 80s, and has been
+the dominant form since.
+Apparently the reason is that, on the current architecture of most computers,
+combinator-based compilation targets just aren't fast enough.
+They generate too much garbage: as a result, switching to the STG yielded about
+a 40% speedup.
 
-# Interpreting Combinators
+A lot of this information comes from two talks, by the way:
 
-## In Haskell
+* [An Introduction to Combinator Compilers and Graph Reduction
+  Machines](https://www.youtube.com/watch?v=GawiQQCn3bk), by [David
+  Graunke](https://twitter.com/graunked?lang=en), which goes through a
+  high-level history and explanation of combinator compilers and why we switched
+  away from them.
+  A very interesting tidbit in this talk was that some people started making
+  custom hardware to handle combinator calculi a little better.
+  Even more interesting is the fact that these days we have FPGAs all over the
+  place, so maybe combinator compilers are ripe for reintroduction?
+* [Combinators Revisited](https://www.youtube.com/watch?v=zhj_tUMwTe0), by
+  [Edward Kmett](https://twitter.com/kmett), which goes through a little more of
+  the details of the problems with combinator compilers, and mentions some of
+  the places in which we're tantalisingly close to making combinator compilation
+  work.
+  
+So compilation to combinators was once upon a time an extremely active area of
+research, but it has since fallen by the wayside a little because our current
+hardware is unable to evaluate it efficiently.
+What this means for us, though, is that there's a large body of work on how to
+compile lambda terms to combinators!
 
-## In an Imperative Language
+We use the following basic combinator set for compilation: `SKIBC`.
+`S` is really the most important one here: of course we only need it and `K`,
+but we use `I` because it dramatically simplifies the expressions we generate,
+and we use `B` and `C` because they are special cases of `S`, as we'll see in a
+second.
+The translation works like so:
 
-# Encoding Combinators
+
+```
+\x. e1 e2 -> S (\x. e1) (\x. e2)
+\x. x     -> I
+\x. e     -> K e
+```
+
+The translation works bottom-up.
+We're only interested in removing the lambdas: combinator calculus does have
+application, after all, so there's nothing we need to do in that case.
+For that reason, the algorithm is often called "abstraction elimination", and
+it's the one the [pointfree.io](pointfree.io) uses to automatically pointfree
+Haskell expressions.
+
+There are three forms of abstraction: abstraction into an expression which is an
+application, abstraction which returns its argument, and abstraction which
+returns something other than its argument.
+In the first case, we use `S` to pass the argument down each branch of the
+abstraction.
+In the second, we just use `I`.
+And in the third case, we use `K` to just ignore the argument.
+We won't ever get `\x. \y. e`, since the algorithm works bottom-up, so the `\y.
+e` is eliminated before looking at the `\x. \y. e`.
+
+`B` and `C` work like special cases of `S`: when we pass `x` down both branches
+of the application in the first case, sometimes that work is unnecessary.
+Sometimes one of the branches doesn't use the passed variable: in this case, we
+use `B` or `C`, depending on which branch ignores the variable.
+
+```
+\x. e1 e2, x ∉ e1 -> B e1 (\x. e2)
+\x. e1 e2, x ∉ e2 -> C (\x. e1) e2
+```
+
+There is one issue with this approach: it produces combinator expressions which
+are of order $\mathcal{O}(n^3)$ larger than the corresponding lambda expression.
+With some tricks (like our usage of `C` and `B`) we can get that down to
+$\mathcal{O}(n^2)$, but that's still a pretty unpleasant size increase.
+
+The issue is that we're basically passing the arguments as a singly-linked list,
+where naive access is $\mathcal{O(n^2)}$, and more sophisticated access is
+$\mathcal{O}(n)$.
+
+Oleg Kiselyov wrote a [paper](http://okmij.org/ftp/tagless-final/ski.pdf) on
+getting this down to $\mathcal{O}(n)$, with some memoisation.
+There's also [this](https://crypto.stanford.edu/~blynn/lambda/logski.html),
+which has an implementation of conversion in $\mathcal{O}(n \log n)$ time.
+
+# Conclusion
+
+That's all for this post!
+I'll probably write more about combinators in the future: they're an extremely
+interesting subject, and a lot of fun as puzzles to mess around with.
+One thing that I haven't mentioned is the connection between combinators and
+concatenative languages: it turns out that these two things are pretty much the
+same thing!
+Maybe I'll look at it in a future post.
