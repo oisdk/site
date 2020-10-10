@@ -457,7 +457,7 @@ puzzle(
   }
 );
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
-<details><summary>Answer</summary>`SBI`</details>
+<details><summary>Answer</summary>`WB`</details>
 
 <p id="three"></p><script>
 puzzle(
@@ -469,9 +469,30 @@ puzzle(
   }
 );
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
-<details><summary>Answer</summary>`SB(SBI)`</details>
+<details><summary>Answer</summary>`SB(WB)`</details>
+
+It turns out that it's pretty easy to encode numbers in a relatively small
+amount of space, using a binary encoding.
+First, multiplication on Church numerals is simply composition: so that's `B` on
+our combinators.
+We already have 2 defined, so the next thing we need for a binary encoding is a
+successor function.
+And we know what *that* is, from the answer to 3!
+
+This means we can encode normal number in $O(\log n)$ space (although it still
+takes linear time to evaluate).
+Here are some example numbers:
+
+```
+10  = B(WB)(SB(B(WB)(WB)))
+11  = SB(B(WB)(SB(B(WB)(WB))))
+50  = B(WB)(SB(B(WB)(B(WB)(B(WB)(SB(WB))))))
+271 = SB(B(WB)(SB(B(WB)(SB(B(WB)(SB(B(WB)(B(WB)(B(WB)(B(WB)(WB)))))))))))
+```
 
 # Encoding Lambda Terms as Combinators
+
+We know that SKI and lambda calculus are equivalent: so can we then convert
 
 # Interpreting Combinators
 
