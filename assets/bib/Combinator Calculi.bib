@@ -1,0 +1,90 @@
+
+@misc{graunkeIntroductionCombinatorCompilers2016,
+  title = {An {{Introduction}} to {{Combinator Compilers}} and {{Graph Reduction Machines}}},
+  author = {Graunke, David},
+  year = {2016},
+  month = sep,
+  address = {{St. Louis}},
+  url = {https://www.youtube.com/watch?v=GawiQQCn3bk},
+  urldate = {2020-10-11},
+  abstract = {Graph reducing interpreters combined with compilation to combinators creates a "virtual machine" compilation target for pure lazy functional programs that is extremely concise, simple in its semantics, and naturally parallelizable. In their simple forms these techniques are a useful introduction to compiling and interpeting functional languages. In much more sophisticated forms, they illustrate how large-scale compilers are implemented in used in languages like Idris. We'll walk through the process of compiling programs in the lambda calculus to pure combinators and a simple implementation of the most straightforward graph reduction algorithm. With that context, we'll look at the history of graph reduction, from a surge of interest and excitement in the 80s and 90s to serious reservations in the 2000s. We'll look at concrete examples of combinator compilation and graph reduction, and compare with alternative techniques in Haskell's Spineless Tagless G-Machine.}
+}
+
+@inproceedings{kiselyovSKISemantically2018,
+  title = {{$\lambda$} to {{SKI}}, {{Semantically}}},
+  booktitle = {Functional and {{Logic Programming}}},
+  author = {Kiselyov, Oleg},
+  editor = {Gallagher, John P. and Sulzmann, Martin},
+  year = {2018},
+  pages = {33--50},
+  publisher = {{Springer International Publishing}},
+  address = {{Cham}},
+  doi = {10.1007/978-3-319-90686-7_3},
+  url = {http://okmij.org/ftp/tagless-final/ski.pdf},
+  abstract = {We present a technique for compiling lambda-calculus expressions into SKI combinators. Unlike the well-known bracket abstraction based on (syntactic) term re-writing, our algorithm relies on a specially chosen, compositional semantic model of generally open lambda terms. The meaning of a closed lambda term is the corresponding SKI combination. For simply-typed as well as unityped terms, the meaning derivation mirrors the typing derivation. One may also view the algorithm as an algebra, or a non-standard evaluator for lambda-terms (i.e., denotational semantics).The algorithm is implemented as a tagless-final compiler for (uni)typed lambda-calculus embedded as a DSL into OCaml. Its type preservation is clear even to OCaml. The correctness of both the algorithm and of its implementation becomes clear.Our algorithm is easily amenable to optimizations. In particular, its output and the running time can both be made linear in the size (i.e., the number of all constructors) of the input De Bruijn-indexed term.},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/MS6QEH64/ski.pdf},
+  isbn = {978-3-319-90686-7},
+  language = {en},
+  series = {Lecture {{Notes}} in {{Computer Science}}}
+}
+
+@misc{kmettCombinatorsRevisited2018,
+  title = {Combinators {{Revisited}}},
+  author = {Kmett, Edward},
+  year = {2018},
+  month = may,
+  address = {{Wesley Conference Centre, Sydney, Australia}},
+  url = {https://yowconference.com/talks/edward-kmett/yow-lambda-jam-2018/combinators-revisited-5919},
+  urldate = {2020-10-11},
+  abstract = {Back in the 80's, one approach to compiling functional programming languages was to compile down to combinators such as SKI. John Hughes' initial work on supercombinators changed the way folks thought about compiling functional languages and caused folks to turn away from this approach by customizing the combinator set to your particular program. Then Lennart Augustsson's work on implementing supercombinators more efficiently sealed the deal. GHC's compilation technique is a descendant of this school of thought. But what did we give up to get to where we are? Let's explore a bit of alternate history.},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/EDD9536W/combinators-revisited-5919.html},
+  language = {en}
+}
+
+@misc{lynnBenLynnOnline2018,
+  title = {Ben {{Lynn}}'s {{Online Garbage}}: {{Lambda}} the {{Penultimate}}},
+  shorttitle = {Ben {{Lynn}}'s {{Online Garbage}}},
+  author = {Lynn, Ben},
+  year = {2018},
+  month = nov,
+  url = {https://benlynn.blogspot.com/2018/11/lambda-penultimate_16.html},
+  urldate = {2020-10-11},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/X5K56LRB/lambda-penultimate_16.html},
+  journal = {Ben Lynn's Online Garbage},
+  keywords = {haskell,programming}
+}
+
+@misc{lynnSKILogarithmically2018,
+  title = {{$\lambda$} to {{SKI}}, Logarithmically},
+  author = {Lynn, Ben},
+  year = {2018},
+  month = nov,
+  url = {https://crypto.stanford.edu/~blynn/lambda/logski.html},
+  urldate = {2020-10-11},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/XJLH6BIF/logski.html},
+  journal = {crypto.stanford.edu/\textasciitilde blynn/}
+}
+
+@book{smullyanMockMockingbirdOther2000,
+  ids = {smullyanMockMockingbirdOther2000a},
+  title = {To {{Mock}} a {{Mockingbird}}: {{And Other Logic Puzzles Including}} an {{Amazing Adventure}} in {{Combinatory Logic}}},
+  shorttitle = {To {{Mock}} a {{Mockingbird}}},
+  author = {Smullyan, Raymond M.},
+  year = {2000},
+  publisher = {{Oxford University Press}},
+  abstract = {In this entertaining and challenging collection of logic puzzles, Raymond Smullyan - author of Forever Undecided - continues to delight and astonish us with his gift for making available, in the thoroughly pleasurable form of puzzles, some of the most important mathematical thinking of our time. In the first part of the book, he transports us once again to that wonderful realm where knights, knaves, twin sisters, quadruplet brothers, gods, demons, and mortals either always tell the truth or always lie, and where truth-seekers are set a variety of fascinating problems. The section culminates in an enchanting and profound metapuzzle in which Inspector Craig of Scotland Yard gets involved in a search for the Fountain of Youth on the Island of Knights and Knaves. In the second part of To Mock a Mockingbird, we accompany the Inspector on a summer-long adventure into the field of combinatory logic (a branch of logic that plays an important role in computer science and artificial intelligence). His adventure, which includes enchanted forests, talking birds, bird sociologists, and a classic quest, provides for us along the way the pleasure of solving puzzles of increasing complexity until we reach the Master Forest and - thanks to Godel's famous theorem - the final revelation.},
+  googlebooks = {wklinRKAIgQC},
+  isbn = {978-0-19-280142-5},
+  language = {en}
+}
+
+@unpublished{wildenhainTuringCompletenessMS2017,
+  title = {On the {{Turing Completeness}} of {{MS PowerPoint}}},
+  author = {Wildenhain, Tom},
+  year = {2017},
+  month = mar,
+  url = {http://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf},
+  file = {/Users/doisinkidney/Library/Mobile Documents/com~apple~CloudDocs/Zotero/storage/MGNMX4KW/Paper.pdf}
+}
+
+

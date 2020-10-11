@@ -1,6 +1,7 @@
 ---
 title: Fun with Combinators
 tags: Haskell
+bibliography: Combinator Calculi.bib
 ---
 
 <script src="../code/ski/script.js"></script>
@@ -22,8 +23,7 @@ input[type=text]:invalid {
 </style>
 
 There are a bunch of "minimal" computational models out there: Turing machines,
-lambda calculus,
-[powerpoint](https://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf), etc.
+lambda calculus, PowerPoint [@wildenhainTuringCompletenessMS2017], etc.
 Of those, lambda calculus is without question my favourite to actually write
 programs in: despite being simple and minimal, it's actually not too far from a
 workable language.
@@ -517,7 +517,8 @@ A lot of this information comes from two talks, by the way:
 
 * [An Introduction to Combinator Compilers and Graph Reduction
   Machines](https://www.youtube.com/watch?v=GawiQQCn3bk), by [David
-  Graunke](https://twitter.com/graunked?lang=en), which goes through a
+  Graunke](https://twitter.com/graunked?lang=en)
+  [-@graunkeIntroductionCombinatorCompilers2016], which goes through a
   high-level history and explanation of combinator compilers and why we switched
   away from them.
   A very interesting tidbit in this talk was that some people started making
@@ -525,10 +526,10 @@ A lot of this information comes from two talks, by the way:
   Even more interesting is the fact that these days we have FPGAs all over the
   place, so maybe combinator compilers are ripe for reintroduction?
 * [Combinators Revisited](https://www.youtube.com/watch?v=zhj_tUMwTe0), by
-  [Edward Kmett](https://twitter.com/kmett), which goes through a little more of
-  the details of the problems with combinator compilers, and mentions some of
-  the places in which we're tantalisingly close to making combinator compilation
-  work.
+  [Edward Kmett](https://twitter.com/kmett) [-@kmettCombinatorsRevisited2018],
+  which goes through a little more of the details of the problems with
+  combinator compilers, and mentions some of the places in which we're
+  tantalisingly close to making combinator compilation work.
   
 So compilation to combinators was once upon a time an extremely active area of
 research, but it has since fallen by the wayside a little because our current
@@ -586,10 +587,12 @@ The issue is that we're basically passing the arguments as a singly-linked list,
 where naive access is $\mathcal{O(n^2)}$, and more sophisticated access is
 $\mathcal{O}(n)$.
 
-Oleg Kiselyov wrote a [paper](http://okmij.org/ftp/tagless-final/ski.pdf) on
-getting this down to $\mathcal{O}(n)$, with some memoisation.
-There's also [this](https://crypto.stanford.edu/~blynn/lambda/logski.html),
-which has an implementation of conversion in $\mathcal{O}(n \log n)$ time.
+Oleg Kiselyov wrote a [paper](http://okmij.org/ftp/tagless-final/ski.pdf)
+[-@kiselyovSKISemantically2018] on getting this down to $\mathcal{O}(n)$, with
+some memoisation.
+There's also a blog post [@lynnBenLynnOnline2018], describing how to get that
+conversion without memoisation in $\mathcal{O}(n \log n)$ time, and an online
+implementation [here](https://crypto.stanford.edu/~blynn/lambda/logski.html).
 
 # Conclusion
 
@@ -600,3 +603,5 @@ One thing that I haven't mentioned is the connection between combinators and
 concatenative languages: it turns out that these two things are pretty much the
 same thing!
 Maybe I'll look at it in a future post.
+
+---
