@@ -481,14 +481,16 @@ And we know what *that* is, from the answer to 3!
 
 This means we can encode normal number in $\mathcal{O}(\log n)$ space (although it still
 takes linear time to evaluate).
-Here are some example numbers:
+The following repl allows for numbers:
 
-```
-10  = B(WB)(SB(B(WB)(WB)))
-11  = SB(B(WB)(SB(B(WB)(WB))))
-50  = B(WB)(SB(B(WB)(B(WB)(B(WB)(SB(WB))))))
-271 = SB(B(WB)(SB(B(WB)(SB(B(WB)(SB(B(WB)(B(WB)(B(WB)(B(WB)(WB)))))))))))
-```
+<p id="numbers"></p><script>
+repl({
+  input_id: "numbers",
+  normal: true,
+  allow_numbers: true,
+  initial_expr: "5fx"
+});
+</script>
 
 We could take up even less space if we allowed for non-normal forms.
 4, for instance, could be encoded like so:
