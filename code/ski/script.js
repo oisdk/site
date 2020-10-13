@@ -21,19 +21,31 @@ function show_comb(comb) {
         case Comb.T: return 'T';
         case Comb.W: return 'W';
         default: return null;
-    }   
+    }
 }
 
 class Expr {
-    constructor(op) {
+    constructor(op, stack = []) {
         this.op = op;
-        this.stack = [];
+        this.stack = stack;
+    }
+
+    map(f) {
+        return new Expr(f(this.op), this.stack.map(x => x.map(f)));
+    }
+
+    bind(f) {
+        const clos = f(this.op);
+        const out_stack = this.stack.map(x => x.bind(f));
+        const out = new Expr(clos.op, out_stack);
+        for (const x of clos.stack) {
+            out.stack.push(x);
+        }
+        return out;
     }
 
     clone() {
-        const res = new Expr(this.op);
-        res.stack = this.stack.map(x => x.clone());
-        return res;
+        return this.map(x => x);
     }
 
     equals(other) {
@@ -140,6 +152,13 @@ class Expr {
         return false;
     }
 
+    steps() {
+        console.log(this.show());
+        while (this.step_normal()) {
+            console.log(this.show());
+        }
+    }
+
     show() {
         function* display_helper(expr, parens) {
             if ((expr.stack.length>0)&&(parens)) {
@@ -160,10 +179,52 @@ class Expr {
         return res;
     }
 
-    static parse(combos, string) {
+    conv_combos(combos) {
+        const combo_strs = new Map();
+        for (const x of combos) {
+            combo_strs.set(show_comb(x), x);
+        }
+        return this.map(x => combo_strs.has(x) ? combo_strs.get(x) : x);
+    }
 
-        const mask = make_comb_set(combos);
-        const inp  = string[Symbol.iterator]();
+    static parse(string) {
+
+        function* tokens() {
+            const str = string[Symbol.iterator]();
+            let cur_num = null;
+
+            function* cur_num_yield() {
+                if (cur_num !== null) {
+                    yield cur_num;
+                    cur_num = null;
+                }
+            }
+
+            let c = str.next();
+
+            while (!(c.done)) {
+                switch (c.value) {
+                    case '(': yield* cur_num_yield(); yield '('; break;
+                    case ')': yield* cur_num_yield(); yield ')'; break;
+                    case ' ': yield* cur_num_yield(); break;
+                    case '0' : cur_num = (cur_num === null) ? 0 : 10 * cur_num; break;
+                    case '1' : cur_num = (cur_num === null) ? 1 : 1 + 10 * cur_num; break;
+                    case '2' : cur_num = (cur_num === null) ? 2 : 2 + 10 * cur_num; break;
+                    case '3' : cur_num = (cur_num === null) ? 3 : 3 + 10 * cur_num; break;
+                    case '4' : cur_num = (cur_num === null) ? 4 : 4 + 10 * cur_num; break;
+                    case '5' : cur_num = (cur_num === null) ? 5 : 5 + 10 * cur_num; break;
+                    case '6' : cur_num = (cur_num === null) ? 6 : 6 + 10 * cur_num; break;
+                    case '7' : cur_num = (cur_num === null) ? 7 : 7 + 10 * cur_num; break;
+                    case '8' : cur_num = (cur_num === null) ? 8 : 8 + 10 * cur_num; break;
+                    case '9' : cur_num = (cur_num === null) ? 9 : 9 + 10 * cur_num; break;
+                    default: yield* cur_num_yield(); yield c.value;
+                }
+                c = str.next();
+            }
+            yield* cur_num_yield();
+        }
+
+        const inp = tokens()[Symbol.iterator]();
 
         let parens = 0;
 
@@ -177,21 +238,11 @@ class Expr {
                     case '(': 
                         parens++;
                         return parse_ski_many();
-                    case ')': 
+                    case ')':
                         if (--parens < 0) {
                             throw new EvalError();
                         }
                         return null;
-                    case 'S': return new Expr(mask.has(Comb.S) ? Comb.S : x.value);
-                    case 'K': return new Expr(mask.has(Comb.K) ? Comb.K : x.value);
-                    case 'I': return new Expr(mask.has(Comb.I) ? Comb.I : x.value);
-                    case 'B': return new Expr(mask.has(Comb.B) ? Comb.B : x.value);
-                    case 'C': return new Expr(mask.has(Comb.C) ? Comb.C : x.value);
-                    case 'A': return new Expr(mask.has(Comb.A) ? Comb.A : x.value);
-                    case 'M': return new Expr(mask.has(Comb.M) ? Comb.M : x.value);
-                    case 'T': return new Expr(mask.has(Comb.T) ? Comb.T : x.value);
-                    case 'W': return new Expr(mask.has(Comb.W) ? Comb.W : x.value);
-                    case ' ': break;
                     default: return new Expr(x.value);
                 }
             }
@@ -233,6 +284,49 @@ class Expr {
         reverse_all(res);
         return res;
     }
+
+    static number(n) {
+        const res = new Expr("error: internal bug");
+        let cur = res;
+
+        while (true) {
+            switch (n) {
+                case 0: 
+                    cur.op = Comb.A;
+                    return res;
+                case 1: 
+                    cur.op = Comb.I;
+                    return res;
+                case 2:
+                    cur.op = Comb.W;
+                    cur.stack = [new Expr(Comb.B)];
+                    return res;
+                case 3:
+                    cur.op = Comb.S;
+                    cur.stack = [new Expr(Comb.W, [new Expr(Comb.B)]), new Expr(Comb.B)];
+                    return res;
+                default: 
+                    if (n % 2 === 1) {
+                        cur.op = Comb.S;
+                        cur.stack = [new Expr("error: internal bug"), new Expr(Comb.B)];
+                        cur = cur.stack[0];
+                        n--;
+                    }
+                    cur.op = Comb.B;
+                    cur.stack = [new Expr("error: internal bug"), new Expr(Comb.W, [new Expr(Comb.B)])];
+                    cur = cur.stack[0];
+                    n /= 2;
+            }
+        }
+    }
+
+    get_numbers() {
+        return this.bind(x => (typeof x === 'number') ? Expr.number(x) : new Expr(x))
+    }
+
+    get_definitions(dict) {
+        return this.bind(x => dict.has(x) ? dict.get(x) : new Expr(x));
+    }
 }
 
 function make_prompt(
@@ -261,7 +355,7 @@ function make_prompt(
 
 function repl(
     { input_id: p_id
-    , output_lines: n_lines
+    , output_lines: n_lines = 5
     , initial_expr = ""
     , normal = false
     , allowed_combos: combo_set =
@@ -275,6 +369,7 @@ function repl(
       , Comb.T 
       , Comb.W
       ]
+    , allow_numbers = false
     }) {
 
     const par = document.getElementById(p_id);
@@ -286,7 +381,7 @@ function repl(
             initial_expr: initial_expr
         });
 
-    inp.pattern = "([" + combo_set.map(show_comb).join('') + "]| |\\(|\\)|[a-z])+";
+    inp.pattern = "([" + combo_set.map(show_comb).join('') + "]| |\\(|\\)|[a-z]" + (allow_numbers ? "|[0-9]" : "") + ")+";
 
     let initial = null;
     let stored = null;
@@ -306,7 +401,11 @@ function repl(
 
             if (new_expr != initial) {
                 initial = new_expr;
-                stored = Expr.parse(combo_set, initial);
+                stored = Expr.parse(initial)
+                if (allow_numbers) {
+                    stored = stored.get_numbers();
+                }
+                stored = stored.conv_combos(combo_set);
                 lines = [];
             }
             if (stored !== null) {
@@ -332,7 +431,7 @@ function repl(
 
 function puzzle(
     { input_id: p_id
-    , output_lines: n_lines
+    , output_lines: n_lines = 5
     , initial_expr = ""
     , normal = false
     , vars
@@ -349,7 +448,7 @@ function puzzle(
       , Comb.W
       ]
     }) {
-    const expect_expr = Expr.parse(combo_set, expect);
+    const expect_expr = Expr.parse(expect).conv_combos(combo_set);
 
     const par = document.getElementById(p_id);
 
@@ -389,15 +488,14 @@ function puzzle(
             }
             let new_expr = inp.value;
 
-            let given = Expr.parse(combo_set, new_expr);
-            if (given === null) {
+            if (Expr.parse(new_expr) === null) {
                 inp.setCustomValidity("invalid");
                 return;
             }
 
             if (new_expr != initial) {
                 initial = new_expr;
-                stored = Expr.parse(combo_set, initial + vars);
+                stored = Expr.parse(initial + vars).conv_combos(combo_set);
                 lines = [];
             }
 
