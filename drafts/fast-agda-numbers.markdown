@@ -7,12 +7,47 @@ I've been messing around with some binary number implementations in Agda
 recently and I have come across a few tricks to make the representation work
 quickly.
 In this post I'll go through a few of those tricks, which might be helpful for
-other people writing Agda and struggling through its slowness.
+other people writing Agda and struggling with performance.
 
-# The Representation
+# A Flat Representation
 
-First things first, I'm using zeroless binary numbers as the basic
-representation.
+First things first we need to pick a representation for our numbers.
+Standard binary numbers are fine and efficient, but defining them properly is a
+little tricky because of redundancy, due to the presence of trailing zeroes.
+If we have a list of bits, least-significant-bit first, then there are multiple
+representations of the same number because we can stick arbitrary zeroes on the
+end without changing the semantic value.
+
+In decimal, this is like how "99" and "099" represent the same thing: this is
+undesirable for our number representation, because we want semantically equal
+numbers to be provably equal as well.
+
+There are a number of ways to get around the problem: towards the fancier end of
+the scale, we could construct a quotient type (in cubical Agda) which ignores
+trailing zeroes.
+This is extremely complex and extremely slow.
+
+Another popular option is to define two types: one for binary numbers which are
+possibly zero, and another for binary numbers which end in 1.
+
+```agda
+infixr 8 1ᵇ∷_ 0ᵇ∷_
+data 𝔹⁺ : Type₀ where
+  1ᵇ : 𝔹⁺
+  1ᵇ∷_ 0ᵇ∷_ : 𝔹⁺ → 𝔹⁺
+
+data 𝔹 : Type₀ where
+  0ᵇ : 𝔹
+  0<_ : 𝔹⁺ → 𝔹
+```
+
+While this approach works quite well, and important part of improving Agda's
+performance is reducing the complexity of the number type, in terms of
+constructors and nesting.
+The fact that we have two separate defined types here adds a little programming
+complexity, and probably would slow down typechecking a little.
+
+So instead we're going to use the *zeroless* binary numbers.
 They look like the following:
 
 ```agda
@@ -22,8 +57,19 @@ data 𝔹 : Type₀ where
   1ᵇ_ 2ᵇ_ : 𝔹 → 𝔹
 ```
 
-As you can see, this type is basically a list of booleans: it might be tempting,
-therefore, to redefine the type in terms of lists and bools:
+This type does indeed have a bijection with ℕ, with the following semantics:
+
+```agda
+⟦_⇓⟧ : 𝔹 → ℕ
+⟦ 0ᵇ ⇓⟧ = 0
+⟦ 1ᵇ xs ⇓⟧ = 1 + ⟦ xs ⇓⟧ * 2
+⟦ 2ᵇ xs ⇓⟧ = 2 + ⟦ xs ⇓⟧ * 2
+```
+
+
+But it's a single recursive type, with no parameters or nesting whatsoever.
+That helps performance quite a bit, which is why we *didn't* define the type
+using lists and booleans:
 
 ```agda
 𝔹 : Type₀
@@ -35,22 +81,15 @@ pattern 1ᵇ_ xs = false ∷ xs
 pattern 2ᵇ_ xs = true  ∷ xs
 ```
 
-Unfortunately, though, that will incur a pretty serious performance hit.
-Agda tends to slow down when used with complex, nested types: the simple
-non-parameterised type we defined first tends to work much faster.
+In testing, the list-of-bools approach was significantly slower than the flat
+datatype approach.
+
 
 # Conversion
 
 The next thing to consider is the function to convert to and from the natural
 numbers.
 The conversion to is as follows:
-
-```agda
-⟦_⇓⟧ : 𝔹 → ℕ
-⟦ 0ᵇ ⇓⟧ = 0
-⟦ 1ᵇ xs ⇓⟧ = 1 + ⟦ xs ⇓⟧ * 2
-⟦ 2ᵇ xs ⇓⟧ = 2 + ⟦ xs ⇓⟧ * 2
-```
 
 By using `+` and `*` here, we can leverage Agda's faster built-in natural number
 types.
