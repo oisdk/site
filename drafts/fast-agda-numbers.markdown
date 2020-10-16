@@ -406,6 +406,21 @@ We will pass the number itself as the bounds for recursion.
 ⟦ n ⇑⟧ = ⟦ n ⇑⟧⟨ n ⟩
 ```
 
+This differs from the usual notion of well-founded recursion in that the
+structure we pass to show that the algorithm is structurally terminating isn't
+a proposition: it can be more than one value, *and* it can affect the output.
+This has to be accounted for in the proofs: we need to pass a proof that the
+number being recursed on is always smaller than the termination helper so that
+the output is correct.
+
+```agda
+fast-correct-helper : ∀ n w → n ≤ w → ⟦ n ⇑⟧⟨ w ⟩ ≡ ⟦ n ⇑⟧
+```
+
+The `⟦ n ⇑⟧` on the right there is our old slow conversion.
+With this helper we can prove that the fast conversion and slow produce the same
+output.
+
 # Operations
 
 ## Addition
@@ -611,3 +626,42 @@ _-_ : 𝔹 → 𝔹 → 𝔹
 _-_ = sub₁ zero
 ```
 </details>
+
+# Order
+
+I've described how to do ordering on binary numbers in Agda before, but I'll
+show it again here.
+The key is to define `_≤_` and `_<_` at the same time, and to use booleans
+aggressively.
+Indexed data types are extremely powerful, but they don't actually work very
+well for this particular use case.
+Here's the code:
+
+```agda
+infix 4 _≲ᴮ_&_
+_≲ᴮ_&_ : 𝔹 → 𝔹 → Bool → Bool
+0ᵇ    ≲ᴮ ys    & true  = true
+0ᵇ    ≲ᴮ 0ᵇ    & false = false
+0ᵇ    ≲ᴮ 1ᵇ ys & false = true
+0ᵇ    ≲ᴮ 2ᵇ ys & false = true
+1ᵇ xs ≲ᴮ 0ᵇ    & s     = false
+1ᵇ xs ≲ᴮ 1ᵇ ys & s     = xs ≲ᴮ ys & s
+1ᵇ xs ≲ᴮ 2ᵇ ys & s     = xs ≲ᴮ ys & true
+2ᵇ xs ≲ᴮ 0ᵇ    & s     = false
+2ᵇ xs ≲ᴮ 1ᵇ ys & s     = xs ≲ᴮ ys & false
+2ᵇ xs ≲ᴮ 2ᵇ ys & s     = xs ≲ᴮ ys & s
+
+infix 4 _≤ᴮ_ _<ᴮ_
+_≤ᴮ_ : 𝔹 → 𝔹 → Bool
+xs ≤ᴮ ys = xs ≲ᴮ ys & true
+
+_<ᴮ_ : 𝔹 → 𝔹 → Bool
+xs <ᴮ ys = xs ≲ᴮ ys & false
+
+infix 4 _≤_ _<_
+_≤_ : 𝔹 → 𝔹 → Type₀
+xs ≤ ys = T (xs ≤ᴮ ys)
+
+_<_ : 𝔹 → 𝔹 → Type₀
+xs < ys = T (xs <ᴮ ys)
+```
