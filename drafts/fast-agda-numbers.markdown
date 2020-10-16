@@ -289,7 +289,7 @@ Which means that in proofs we can remove the strictness, but still have the
 strictness behaviour when using the function normally.
 
 So, finally we can write a strict version of our conversion function.
-We'll use this handy function to emulate bang patterns from Haskell:
+We'll use this cute function to emulate bang patterns from Haskell:
 
 ```agda
 infixr 0 let-bang
@@ -362,10 +362,49 @@ built-in `div` and `mod` functions to avoid the `inc` step altogether.
   else 2ᵇ ⟦ n ÷ 2 ⇑⟧
 ```
 
-This is asymptotically faster than any implementation which uses `inc`: however
-it doesn't pass the termination checker.
-As of yet, I haven't figured out how to get it to pass the termination checker
-without incurring a serious performance penalty.
+This is by far and away the fastest method for converting from ℕ.
+Unfortunately, it doesn't pass the termination checker: Agda can't obviously
+tell that `n ÷ 2` is smaller than `suc n`.
+
+At first, this seemed to me like a perfect case for using well-founded
+recursion.
+This is a heavy-duty, generic way to prove termination in more complex cases.
+You basically prove that a particular relation (like `_<_` on ℕ) is well
+founded, and then you pass a structure along with the recursive calls that shows
+the termination checker the recursion is indeed bounded.
+For the above function, that looks like this:
+
+```agda
+⟦_⇑⟧⟨_⟩ : ∀ n → Acc _<_ n → 𝔹
+⟦ zero  ⇑⟧⟨     wf ⟩ = 0ᵇ
+⟦ suc n ⇑⟧⟨ acc wf ⟩ =
+  if even n
+  then 1ᵇ ⟦ n ÷ 2 ⇑⟧⟨ wf (n ÷ 2) (s≤s (div2≤ n)) ⟩
+  else 2ᵇ ⟦ n ÷ 2 ⇑⟧⟨ wf (n ÷ 2) (s≤s (div2≤ n)) ⟩
+
+⟦_⇑⟧ : ℕ → 𝔹
+⟦ n ⇑⟧ = ⟦ n ⇑⟧⟨ ≤-wellFounded n ⟩
+```
+
+Unfortunately, this version is horrifically slow, taking several minutes to
+evaluate `⟦ 5000 ⇑⟧`.
+
+There's one trick we can use here, though, that will get us the desired
+performance without sacrificing provable termination.
+We will pass the number itself as the bounds for recursion.
+
+```agda
+⟦_⇑⟧⟨_⟩ : ℕ → ℕ → 𝔹
+⟦ suc n ⇑⟧⟨ suc w ⟩ =
+  if even n
+    then 1ᵇ ⟦ n ÷ 2 ⇑⟧⟨ w ⟩
+    else 2ᵇ ⟦ n ÷ 2 ⇑⟧⟨ w ⟩
+⟦ zero  ⇑⟧⟨ _     ⟩ = 0ᵇ
+⟦ suc _ ⇑⟧⟨ zero  ⟩ = 0ᵇ -- will not happen
+
+⟦_⇑⟧ : ℕ → 𝔹
+⟦ n ⇑⟧ = ⟦ n ⇑⟧⟨ n ⟩
+```
 
 # Operations
 
