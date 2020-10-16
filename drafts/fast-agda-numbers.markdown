@@ -84,34 +84,85 @@ pattern 2ᵇ_ xs = true  ∷ xs
 In testing, the list-of-bools approach was significantly slower than the flat
 datatype approach.
 
+The single, flat type can make some of the subsequent functions inelegant, and
+it's often annoying that we can't use common abstractions like `foldr`, but
+that's the price we pay.
+Also, often the simpler code is easier to read, if a little repetitive.
+
+The problem with performance in Agda is that we're optimising for an
+interpreter, not a compiler: we want these numbers to be fast for
+*typechecking*.
+A lot of what makes Haskell code fast is that common abstractions get optimised
+away: that just doesn't happen for interpreted code (usually).
+As a result, we have to write things a little differently.
 
 # Conversion
 
-The next thing to consider is the function to convert to and from the natural
-numbers.
-The conversion to is as follows:
+Next we will define the isomorphism between 𝔹 and ℕ.
+We've already defined how to convert to ℕ: it's important that we use the
+built-in `+` and `*` functions here, since they actually call out to Haskell
+functions on `Integer` which are much faster than anything we could define.
 
-By using `+` and `*` here, we can leverage Agda's faster built-in natural number
-types.
-Those functions will call out to actually fast (ish) implementations on
-Haskell's `Integer` type.
-The actual expressions we use are quite important for proofs: we want to write
-`n * 2` instead of `2 * n`, for instance, wherever possible.
-This allows the proof that the binary numbers are isomorphic to the Peano to be
-quite short:
+Part of the puzzle for defining the conversion functions is to figure out *how*
+to use the built-in functions Agda gives to us in a way that still makes the
+expressions easy to write proofs about.
+For instance, the second and third clauses of the `⟦_⇓⟧` are as follows:
+
+```agda
+⟦ 1ᵇ xs ⇓⟧ = 1 + ⟦ xs ⇓⟧ * 2
+⟦ 2ᵇ xs ⇓⟧ = 2 + ⟦ xs ⇓⟧ * 2
+```
+
+There are a number of other ways we could have written this:
+
+```agda
+-- Swapping the arguments to _*_, yielding something
+-- arguably more natural:
+⟦ 1ᵇ xs ⇓⟧ = 1 + 2 * ⟦ xs ⇓⟧
+⟦ 2ᵇ xs ⇓⟧ = 2 + 2 * ⟦ xs ⇓⟧
+
+-- The following actually looks the *simplest* to write proofs
+-- about:
+⟦ 1ᵇ xs ⇓⟧ = let rest = ⟦ xs ⇓⟧ in 1 + (rest + rest)
+⟦ 2ᵇ xs ⇓⟧ = let rest = ⟦ xs ⇓⟧ in 2 + (rest + rest)
+```
+
+But all of these have slightly trickier associated proofs.
+The key proof associated with converting *to* ℕ is the following:
+
+```agda
+inc-suc : ∀ x → ⟦ inc x ⇓⟧ ≡ suc ⟦ x ⇓⟧
+inc-suc 0ᵇ     = refl
+inc-suc (1ᵇ x) = refl
+inc-suc (2ᵇ x) = cong (λ rest → 1 + (rest * 2)) (inc-suc x)
+```
+
+The simplicity of this comes directly from the definitions we used.
+There may well be a simpler proof out there which has some different order of
+arguments, but this is the best I've found so far.
+
+Conversion from ℕ is quite simple:
+
+```agda
+inc : 𝔹 → 𝔹
+inc 0ᵇ      = 1ᵇ 0ᵇ
+inc (1ᵇ xs) = 2ᵇ xs
+inc (2ᵇ xs) = 1ᵇ inc xs
+
+⟦_⇑⟧ : ℕ → 𝔹
+⟦ zero  ⇑⟧ = 0ᵇ
+⟦ suc n ⇑⟧ = inc ⟦ n ⇑⟧
+```
+
+The full proof of isomorphism is very short indeed:
 
 <details>
 <summary>Proof of isomorphism</summary>
 
 ```agda
-inc-suc : ∀ x → ⟦ inc x ⇓⟧ ≡ suc ⟦ x ⇓⟧
-inc-suc 0ᵇ     i = 1
-inc-suc (1ᵇ x) i = 2 ℕ.+ ⟦ x ⇓⟧ ℕ.* 2
-inc-suc (2ᵇ x) i = suc (inc-suc x i ℕ.* 2)
-
-inc-2*-1ᵇ : ∀ n → inc ⟦ n ℕ.* 2 ⇑⟧ ≡ 1ᵇ ⟦ n ⇑⟧
-inc-2*-1ᵇ zero    i = 1ᵇ 0ᵇ
-inc-2*-1ᵇ (suc n) i = inc (inc (inc-2*-1ᵇ n i))
+inc-2*-1ᵇ : ∀ n → inc ⟦ n * 2 ⇑⟧ ≡ 1ᵇ ⟦ n ⇑⟧
+inc-2*-1ᵇ zero    = refl
+inc-2*-1ᵇ (suc n) = cong inc (cong inc (inc-2*-1ᵇ n))
 
 𝔹-rightInv : ∀ x → ⟦ ⟦ x ⇑⟧ ⇓⟧ ≡ x
 𝔹-rightInv zero    = refl
@@ -130,25 +181,27 @@ inc-2*-1ᵇ (suc n) i = inc (inc (inc-2*-1ᵇ n i))
 ```
 </details>
 
-The other function, converting *from* a peano number, is where performance
-becomes a little trickier to achieve:
-
-```agda
-⟦_⇑⟧ : ℕ → 𝔹
-⟦ zero ⇑⟧ = 0ᵇ
-⟦ suc n ⇑⟧ = inc ⟦ n ⇑⟧
-```
-
 # Strictness
 
-The above conversion from the natural numbers is a classic example of a
-space-leak in a language like Haskell.
-Perhaps a little surprisingly, laziness itself isn't the culprit: the space leak
-above would occur in a strict language also.
-The problem is that we will build up a long chain of calls to `inc` before
-evaluating any of them.
-Where laziness does become a problem is when we attempt to solve the problem in
-the traditional way: with an accumulator.
+Our function above for converting from ℕ could use some improvement.
+It uses $\mathcal{O}(n)$ time, and $\mathcal{O}(n)$ space: we'll fix the latter
+of those in this section.
+
+The conversion we have defined above evaluates a little like this:
+
+```agda
+   ⟦ 5 ⇑⟧
+~> ⟦ suc (suc (suc (suc (suc zero)))) ⇑⟧
+~> inc (inc (inc (inc (inc 0ᵇ))))
+~> 1ᵇ 2ᵇ 0ᵇ
+```
+
+This is in fact a classic space leak, almost the same as the kind you key from
+using a lazy `foldl` incorrectly in Haskell.
+Because the `inc` function is strict, we *have* to build up the long chain of
+calls to `inc` before we can do any reduction.
+A better way to go is to build up an accumulator as we go, which can reduce on
+each step of the computation.
 
 ```agda
 ⟦_⇑⟧ : ℕ → 𝔹
@@ -159,18 +212,86 @@ the traditional way: with an accumulator.
   go a (suc n) = go (inc a) n
 ```
 
-Here, laziness will preserve the space leak, since we don't force the evaluation
-of `a` at any point.
+Unfortunately, laziness will preserve the space leak even in the above function.
+We need to force the accumulator in order to keep the function constant space.
 
-Agda does have some strictness primitives, however, which we can use with the
-following helper functions:
+Strictness in Agda is strange for a few reasons.
+First of all, formally speaking, Agda programs can be interpreted either
+strictly *or* lazily: in contrast to Haskell, where forcing a given computation
+can give different results (modulo `unsafePerformIO`, the different results are
+only `⊥` or whatever the value is), all Agda programs must evaluate to the same
+value regardless of the evaluation method used (with the exception of
+coinductive types, which have to be evaluated lazily, although).
+
+Secondly there's the question of how laziness interacts with *proofs*.
+As an example, consider the following implementation of addition:
 
 ```agda
-infixr 0 _$!_
-_$!_ : {A : Type a} {B : A → Type b} → (∀ x → B x) → ∀ x → B x
-f $! x = primForce x f
-{-# INLINE _$!_ #-}
+_+_ : ℕ → ℕ → ℕ
+zero  + m = m
+suc n + m = suc (n + m)
+```
 
+Both clauses hold as equalities definitionally.
+In other words, you will never have to prove that `0 + x = x`, as the
+typechecker knows it implicitly.
+
+Some other equations---which are true---don't hold definitionally.
+`x + 0 = x` is a common example.
+Now this equality is true, but you have to inspect `x` in its entirety to make
+the typechecker realise it.
+So if we have a concrete `x`, say 5, then the typechecker will have no issue
+with discharging the proof obligation automatically.
+
+```agda
+x : ℕ
+x = 5
+
+_ : x + 0 ≡ x
+_ = refl
+```
+
+Strictness causes a similar thing: equations cease to hold definitionally until
+we inspect some other values.
+However, unlike the `x + 0` example, the value we need to inspect is the
+*output*.
+Here's a redefined strict definition of `+`:
+
+```agda
+_+_ : ℕ → ℕ → ℕ
+zero  + m = m
+suc n + m = suc $! (n + m)
+```
+
+`$!` is the strict application operator: it forces the right-hand-side (to weak
+head normal form) before applying the function on the left.
+Now, equalities like `suc n + m ≡ suc (n + m)` *won't* hold definitionally.
+But, if we can inspect `n` and `m`, then it will:
+
+```agda
+_ : suc 5 + 5 ≡ suc (5 + 5)
+_ = refl
+```
+
+At first, the lack of these definitional equalities bothered me a little: it
+seemed like a wart in strictness in Agda, and put me off of it for a bit.
+Of course, the lack of definitional equalities is the *point* of the strictness. 
+We *want* to force the evaluation of the argument before comparing it for
+equality.
+On top of that, Agda actually does give us a primitive which says basically the
+following: 
+
+```agda
+∀ f x → f $! x ≡ f x
+```
+
+Which means that in proofs we can remove the strictness, but still have the
+strictness behaviour when using the function normally.
+
+So, finally we can write a strict version of our conversion function.
+We'll use this handy function to emulate bang patterns from Haskell:
+
+```agda
 infixr 0 let-bang
 let-bang : {A : Type a} {B : A → Type b} → ∀ x → (∀ x → B x) → B x
 let-bang = primForce
@@ -187,10 +308,11 @@ This transforms our conversion function into the following:
   where
   go : 𝔹 → ℕ → 𝔹
   go a zero    = a
-  go a (suc n) = let! a′ =! inc a in! go a′ n
+  go a (suc n) = let! a′ =! inc′ a in! go a′ n
 ```
 
-(you do have to write a strict version of `inc` as well)
+(This isn't actually complete: you would have to write a strict version of `inc`
+as well)
 
 Actually, it is a little cleaner to recognise the more general pattern here, and
 define the functions as strict folds on `ℕ`:
