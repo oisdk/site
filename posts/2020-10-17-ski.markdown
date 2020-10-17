@@ -1,6 +1,6 @@
 ---
 title: Fun with Combinators
-tags: Haskell
+tags: Combinators
 bibliography: Combinator Calculi.bib
 ---
 
@@ -24,9 +24,11 @@ input[type=text]:invalid {
 
 There are a bunch of "minimal" computational models out there: Turing machines,
 lambda calculus, PowerPoint [@wildenhainTuringCompletenessMS2017], etc.
+These are radically simple languages which are nonetheless Turing complete, so
+theoretically "as powerful" as each other.
 Of those, lambda calculus is without question my favourite to actually write
-programs in: despite being simple and minimal, it's actually not too far from a
-workable language.
+programs in: it's the one which is closest to crawling out of the [Turing
+tarpit](https://en.wikipedia.org/wiki/Turing_tarpit).
 
 In terms of implementation, though, it is *far* from simple.
 Lambda calculus has *variables*, which introduce huge complexity into the
@@ -52,8 +54,7 @@ Kxy  ~> x
 Wxy  ~> xyy
 ```
 
-I'll explain the actual formal rules later on, but first let's work with some
-examples to get a sense for how these combinators work.
+Let's work with some examples to get a sense for how these combinators work.
 
 Upper case letters are combinators, lower-case are variables.
 Yes, yes, I know I said that combinator calculi didn't need variables, and it
