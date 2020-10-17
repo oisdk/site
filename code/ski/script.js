@@ -321,7 +321,7 @@ class Expr {
     }
 
     get_numbers() {
-        return this.bind(x => (typeof x === 'number') ? Expr.number(x) : new Expr(x))
+        return this.bind(x => (typeof x === 'number') ? Expr.number(x) : new Expr(x));
     }
 
     get_definitions(dict) {
@@ -401,11 +401,13 @@ function repl(
 
             if (new_expr != initial) {
                 initial = new_expr;
-                stored = Expr.parse(initial)
-                if (allow_numbers) {
-                    stored = stored.get_numbers();
+                stored = Expr.parse(initial);
+                if (stored !== null) {
+                    if (allow_numbers) {
+                        stored = stored.get_numbers();
+                    }
+                    stored = stored.conv_combos(combo_set);
                 }
-                stored = stored.conv_combos(combo_set);
                 lines = [];
             }
             if (stored !== null) {
