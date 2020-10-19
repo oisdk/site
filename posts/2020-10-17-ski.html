@@ -110,6 +110,7 @@ Turn on JavaScript to allow interactive evaluation
 <details>
 <p><summary>Answer</summary> <code>CK</code> followed by any combinator will do the trick. So <code>CKB</code>, <code>CKK</code>, <code>CKC</code>, etc.</p>
 <pre><code>I = CKC</code></pre>
+Update 19/10/2020: A few people have pointed out (<a href="https://www.joachim-breitner.de/">Joachim Breitner</a> was the first) that there is a shorter solution to this problem: <code>WK</code>. I tend to prefer solutions that don’t include <code>W</code>, since then we’re working in a subset of the language that is both terminating and affine; although in this case the reason I didn’t mention <code>WK</code> is that I just didn’t find it myself.
 </details>
 <h1 id="why-not-simpler-combinators">Why Not Simpler Combinators?</h1>
 <p>Each of the combinators we’ve defined so far work a little weird: they seem to skip over their first argument, and work on their second. Indeed, there is another, equivalent combinator calculus which doesn’t have this peculiarity:</p>
