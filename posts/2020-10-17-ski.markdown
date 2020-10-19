@@ -153,6 +153,13 @@ So `CKB`, `CKK`, `CKC`, etc.
 ```
 I = CKC
 ```
+
+Update 19/10/2020: A few people have pointed out ([Joachim
+Breitner](https://www.joachim-breitner.de/) was the first) that there is a
+shorter solution to this problem: `WK`.
+I tend to prefer solutions that don't include `W`, since then we're working in a
+subset of the language that is both terminating and affine; although in this
+case the reason I didn't mention `WK` is that I just didn't find it myself.
 </details>
 
 # Why Not Simpler Combinators?
