@@ -54,8 +54,6 @@ Kxy  ~> x
 Wxy  ~> xyy
 ```
 
-Let's work with some examples to get a sense for how these combinators work.
-
 Upper case letters are combinators, lower-case are variables.
 Yes, yes, I know I said that combinator calculi didn't need variables, and it
 doesn't!
@@ -63,6 +61,8 @@ I'm just using them here to explain how each of the combinators work.
 If you really want to be pedantic you can think of the lower case letters as
 notational placeholders meaning "any given combinator".
 They won't exist in any actual programs we write.
+
+Let's work with some examples to get a sense for how these combinators work.
 
 The simplest combinator is `K`: it's actually equivalent to the  `const`
 function from Haskell.
