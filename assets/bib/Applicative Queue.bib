@@ -1,0 +1,227 @@
+
+@article{allison_circular_2006,
+  title = {Circular {{Programs}} and {{Self}}-{{Referential Structures}}},
+  author = {Allison, Lloyd},
+  year = {2006},
+  month = oct,
+  volume = {19},
+  pages = {99--109},
+  issn = {1097-024X},
+  doi = {10.1002/spe.4380190202},
+  url = {http://users.monash.edu/~lloyd/tildeFP/1989SPE/},
+  urldate = {2018-06-01},
+  abstract = {A circular program creates a data structure whose computation depends upon itself or refers to itself. The technique is used to implement the classic data structures circular and doubly-linked lists, threaded trees and queues, in a functional programming language. These structures are normally thought to require updatable variables found in imperative languages. For example, a functional program to perform the breadth-first traversal of a tree is given. Some of the examples result in circular data structures when evaluated. Some examples are particularly space-efficient by avoiding the creation of intermediate temporary structures which would otherwise later become garbage. Lastly, the technique can be applied in an imperative language to give an elegant program.},
+  journal = {Software: Practice and Experience},
+  language = {en},
+  number = {2}
+}
+
+@inproceedings{bird_understanding_2013,
+  title = {Understanding {{Idiomatic Traversals Backwards}} and {{Forwards}}},
+  booktitle = {{{ACM SIGPLAN Notices}}},
+  author = {Bird, Richard and Gibbons, Jeremy and Mehner, Stefan and Schrijvers, Tom and Voigtlaender, Janis},
+  year = {2013},
+  volume = {48},
+  pages = {25--36},
+  publisher = {{ACM}},
+  url = {http://www.cs.ox.ac.uk/jeremy.gibbons/publications/uitbaf.pdf},
+  urldate = {2016-10-31}
+}
+
+@article{capriotti_free_2014,
+  title = {Free {{Applicative Functors}}},
+  author = {Capriotti, Paolo and Kaposi, Ambrus},
+  year = {2014},
+  month = jun,
+  volume = {153},
+  pages = {2--30},
+  issn = {2075-2180},
+  doi = {10.4204/EPTCS.153.2},
+  url = {http://www.paolocapriotti.com/assets/applicative.pdf},
+  urldate = {2017-03-13},
+  abstract = {Applicative functors are a generalisation of monads. Both allow the expression of effectful computations into an otherwise pure language, like Haskell. Applicative functors are to be preferred to monads when the structure of a computation is fixed a priori. That makes it possible to perform certain kinds of static analysis on applicative values. We define a notion of free applicative functor, prove that it satisfies the appropriate laws, and that the construction is left adjoint to a suitable forgetful functor. We show how free applicative functors can be used to implement embedded DSLs which can be statically analysed.},
+  archivePrefix = {arXiv},
+  eprint = {1403.0749},
+  journal = {Electronic Proceedings in Theoretical Computer Science},
+  keywords = {Computer Science - Programming Languages,Mathematics - Category Theory}
+}
+
+@misc{chatav_what_2015,
+  title = {What Is the Correct Way to Write Breadth First {{Traversal}} of a [{{Tree}}]?},
+  author = {Chatav, Etian},
+  year = {2015},
+  month = mar,
+  url = {https://www.facebook.com/groups/programming.haskell/permalink/985981691412832/},
+  urldate = {2018-06-01},
+  abstract = {What is the correct way to write breadth first Traversal of a [Tree]? I tried this: {$>$} data Tree a = Tree \{ label :: a, children :: [Tree a] \} deriving (Show) {$>$} type Traversal s t a b = forall f....},
+  journal = {Facebook},
+  language = {en}
+}
+
+@misc{cirdec_answer_2015,
+  title = {Answer to: {{Is}} a Lazy, Breadth-First Monadic Rose Tree Unfold Possible?},
+  author = {Cirdec},
+  year = {2015},
+  month = jan,
+  url = {https://stackoverflow.com/a/27752984/4892417},
+  abstract = {Data.Tree includes unfoldTreeM\_BF and unfoldForestM\_BF functions to construct trees breadth-first using the results of monadic actions. The tree unfolder can be written easily using the forest unfolder, so I'll focus on the latter: unfoldForestM\_BF :: Monad m ={$>$}              (b -{$>$} m (a, [b])) -{$>$} [b] -{$>$} m [Tree a] Starting with a list of seeds, it applies a function to each, generating actions that will produce the tree roots and the seeds for the next level of unfolding. The algorithm used is somewhat strict, so using unfoldForestM\_BF with the Identity monad is not exactly the same as using the pure unfoldForest. I've been trying to figure out if there's a way to make it lazy without sacrificing its O(n) time bound. If (as Edward Kmett suggested to me) this is impossible, I wonder if it would be possible to do it with a more constrained type, specifically requiring MonadFix rather than Monad. The concept there would be to (somehow) set up the pointers to the results of future computations while adding those computations to the to-do list, so if they are lazy in the effects of earlier computations they will be available immediately.},
+  journal = {Stack Overflow},
+  language = {en},
+  type = {Answer}
+}
+
+@misc{cirdec_answer_2015a,
+  title = {Answer to: {{Breadth}}-{{First Search}} Using {{State}} Monad in {{Haskell}}},
+  author = {Cirdec},
+  year = {2015},
+  month = feb,
+  url = {https://stackoverflow.com/a/28574768/4892417},
+  urldate = {2018-06-01},
+  journal = {Stack Overflow},
+  type = {Answer}
+}
+
+@misc{easterly_functions_2019,
+  title = {Functions and Newtype Wrappers for Traversing {{Trees}}: Rampion/Tree-Traversals},
+  shorttitle = {Functions and Newtype Wrappers for Traversing {{Trees}}},
+  author = {Easterly, Noah},
+  year = {2019},
+  month = jan,
+  url = {https://github.com/rampion/tree-traversals},
+  urldate = {2019-05-27},
+  copyright = {View license}
+}
+
+@misc{feuer_lazy_2015,
+  title = {Is a Lazy, Breadth-First Monadic Rose Tree Unfold Possible?},
+  author = {Feuer, David},
+  year = {2015},
+  month = jan,
+  url = {https://stackoverflow.com/q/27748526},
+  urldate = {2018-06-01},
+  abstract = {Data.Tree includes unfoldTreeM\_BF and unfoldForestM\_BF functions to construct trees breadth-first using the results of monadic actions. The tree unfolder can be written easily using the forest unfolder, so I'll focus on the latter: unfoldForestM\_BF :: Monad m ={$>$}              (b -{$>$} m (a, [b])) -{$>$} [b] -{$>$} m [Tree a] Starting with a list of seeds, it applies a function to each, generating actions that will produce the tree roots and the seeds for the next level of unfolding. The algorithm used is somewhat strict, so using unfoldForestM\_BF with the Identity monad is not exactly the same as using the pure unfoldForest. I've been trying to figure out if there's a way to make it lazy without sacrificing its O(n) time bound. If (as Edward Kmett suggested to me) this is impossible, I wonder if it would be possible to do it with a more constrained type, specifically requiring MonadFix rather than Monad. The concept there would be to (somehow) set up the pointers to the results of future computations while adding those computations to the to-do list, so if they are lazy in the effects of earlier computations they will be available immediately.},
+  journal = {Stack Overflow},
+  type = {Question}
+}
+
+@misc{gibbons_breadthfirst_2015,
+  title = {Breadth-{{First Traversal}}},
+  author = {Gibbons, Jeremy},
+  year = {2015},
+  month = mar,
+  url = {https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/},
+  urldate = {2018-03-16},
+  abstract = {Recently Eitan Chatav asked in the Programming Haskell group on Facebook What is the correct way to write breadth first traversal of a \$latex \{[\textbackslash mathsf\{Tree\}]\}\&fg=000000\$? He's thinking o\ldots},
+  journal = {Patterns in Functional Programming},
+  language = {en}
+}
+
+@techreport{jones_lineartime_1993,
+  title = {Linear-Time {{Breadth}}-First {{Tree Algorithms}}: {{An Exercise}} in the {{Arithmetic}} of {{Folds}} and {{Zips}}},
+  shorttitle = {Linear-Time Breadth-First Tree Algorithms},
+  author = {Jones, Geraint and Gibbons, Jeremy},
+  year = {1993},
+  month = may,
+  institution = {{Dept of Computer Science, University of Auckland}},
+  url = {http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/linear.ps.gz},
+  abstract = {This paper is about an application of the mathematics of the zip, reduce (fold) and accumulate (scan) operations on lists. It gives an account of the derivation of a linear-time breadth-first tree traversal algorithm, and of a subtle and efficient breadth-first tree labelling algorithm.},
+  number = {71}
+}
+
+@misc{kmett_comment_2015,
+  title = {Comment on: {{From}} Monoids to near-Semirings: The Essence of {{MonadPlus}} and {{Alternative}} \textbullet{} /r/Haskell},
+  author = {Kmett, Edward},
+  year = {2015},
+  month = jul,
+  url = {https://www.reddit.com/r/haskell/comments/3dlz6b/from_monoids_to_nearsemirings_the_essence_of/ct6mr0g/},
+  urldate = {2016-11-06},
+  abstract = {The problem is that roughly half of the instances we have for MonadPlus and Alternative today do not satisfy the oidification of the right-seminearring laws mentioned here. There are really two or more families of MonadPlus instances. There are those satisfying "left catch" and those with "left distribution" -- some satisfy both. Maybe, IO, and almost anything that doesn't use a list or other source of non-determinism fails these law and fails them badly. Most monad transformers preserve the "sense" of what MonadPlus law they inherit from the base monad, but then things like EitherT e, or variations on ListT change the meaning of ({$<$}|{$>$}) It gets worse when you move to Applicative vs. Alternative, because then things like Backwards[1] have a right unit instead of a left one, and the extra structure afforded by Applicative makes the type enforced left unit law we had in MonadPlus becomes an arbitrary imposition, even less likely to hold as we can see with Backwards. =( So this is definitely the essence of something nice to have, it just isn't the essence of the MonadPlus or Alternative classes we have today.},
+  journal = {reddit},
+  type = {Comment}
+}
+
+@misc{mazayong_breadthfirst_2015,
+  title = {Breadth-{{First Search}} Using {{State}} Monad in {{Haskell}}},
+  author = {MazaYong},
+  year = {2015},
+  month = feb,
+  url = {https://stackoverflow.com/questions/28573287/breadth-first-search-using-state-monad-in-haskell?noredirect=1\&lq=1},
+  urldate = {2018-06-01},
+  journal = {Stack Overflow},
+  type = {Question}
+}
+
+@inproceedings{okasaki_breadthfirst_2000,
+  title = {Breadth-First {{Numbering}}: {{Lessons}} from a {{Small Exercise}} in {{Algorithm Design}}},
+  shorttitle = {Breadth-First {{Numbering}}},
+  booktitle = {Proceedings of the {{Fifth ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  author = {Okasaki, Chris},
+  year = {2000},
+  pages = {131--136},
+  publisher = {{ACM}},
+  address = {{New York, NY, USA}},
+  doi = {10.1145/351240.351253},
+  url = {https://www.cs.tufts.edu/~nr/cs257/archive/chris-okasaki/breadth-first.pdf},
+  urldate = {2018-02-17},
+  abstract = {Every programmer has blind spots. Breadth-first numbering is an interesting toy problem that exposes a blind spot common to many---perhaps most---functional programmers.},
+  isbn = {978-1-58113-202-1},
+  keywords = {Breadth-first numbering,breadth-first traversal,views},
+  series = {{{ICFP}} '00}
+}
+
+@inproceedings{rivas_monoids_2015,
+  title = {From Monoids to Near-Semirings: The Essence of {{MonadPlus}} and {{Alternative}}},
+  shorttitle = {From Monoids to Near-Semirings},
+  booktitle = {Proceedings of the 17th {{International Symposium}} on {{Principles}} and {{Practice}} of {{Declarative Programming}}},
+  author = {Rivas, Exequiel and Jaskelioff, Mauro and Schrijvers, Tom},
+  year = {2015},
+  pages = {196--207},
+  publisher = {{ACM}},
+  doi = {10.1145/2790449.2790514},
+  url = {http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf},
+  urldate = {2016-11-23},
+  abstract = {It is well-known that monads are monoids in the category of endo-functors, and in fact so are applicative functors. Unfortunately, the benefits of this unified view are lost when the additional non-determinism structure of |MonadPlus| or |Alternative| is required. This article recovers the essence of these two type classes by extending monoids to near-semirings with both additive and multiplicative structure. This unified algebraic view enables us to generically define the free construction as well as a novel double Cayley representation that optimises both left-nested sums and left-nested products.},
+  isbn = {978-1-4503-3516-4},
+  language = {en}
+}
+
+@article{rivas_notions_2014,
+  title = {Notions of {{Computation}} as {{Monoids}}},
+  author = {Rivas, Exequiel and Jaskelioff, Mauro},
+  year = {2014},
+  month = may,
+  url = {http://arxiv.org/abs/1406.4823},
+  urldate = {2018-02-17},
+  abstract = {There are different notions of computation, the most popular being monads, applicative functors, and arrows. In this article we show that these three notions can be seen as monoids in a monoidal category. We demonstrate that at this level of abstraction one can obtain useful results which can be instantiated to the different notions of computation. In particular, we show how free constructions and Cayley representations for monoids translate into useful constructions for monads, applicative functors, and arrows. Moreover, the uniform presentation of all three notions helps in the analysis of the relation between them.},
+  archivePrefix = {arXiv},
+  eprint = {1406.4823},
+  journal = {arXiv:1406.4823 [cs, math]},
+  keywords = {Computer Science - Logic in Computer Science,Computer Science - Programming Languages,Mathematics - Category Theory},
+  primaryClass = {cs, math}
+}
+
+@article{smith_lloyd_2009,
+  title = {Lloyd {{Allison}}'s {{Corecursive Queues}}: {{Why Continuations Matter}}},
+  author = {Smith, Leon P},
+  year = {2009},
+  month = jul,
+  volume = {14},
+  pages = {28},
+  url = {https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf},
+  abstract = {In a purely functional setting, real-time queues are traditionally thought to be much harder to implement than either real-time stacks or amortized O(1) queues. In ``Circular Programs and Self-Referential Structures,'' [1] Lloyd Allison uses corecursion to implement a queue by defining a lazy list in terms of itself. This provides a simple, efficient, and attractive implementation of real-time queues.},
+  journal = {The Monad.Reader},
+  language = {en},
+  number = {14}
+}
+
+@misc{vanlaarhoven_nonregular_2009,
+  title = {A Non-Regular Data Type Challenge},
+  author = {{van Laarhoven}, Twan},
+  year = {2009},
+  month = apr,
+  url = {https://twanvl.nl/blog/haskell/non-regular1},
+  urldate = {2020-11-22},
+  journal = {Twan van Laarhoven's Blog}
+}
+
+
