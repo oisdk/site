@@ -1,5 +1,5 @@
 ---
-title: An Efficient Queue of Applicative Effects
+title: A Queue for Effectful Breadth-First Traversals
 tags: Haskell
 series: Breadth-First Traversals
 bibliography: Applicative Queue.bib
