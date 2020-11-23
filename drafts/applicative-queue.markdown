@@ -81,7 +81,7 @@ A much nicer function uses the `Phases` Applicative [@easterly_functions_2019]:
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
 bft f = runPhases . go
   where
-    go (Node x xs) = liftA2 Node (Lift (f x)) (later (traverse go xs))
+    go (x :& xs) = liftA2 (:&) (Lift (f x)) (later (traverse go xs))
 ```
 
 But this function is quadratic.
@@ -100,11 +100,11 @@ based on `liftA2` rather than `<*>`):
 ```haskell
 data Free f a where
   Pure :: a -> Free f a
-  Appl :: (a -> b -> c) -> f a -> Free f b -> Free f c
-
-runFree :: Applicative f => Free f a -> f a
-runFree (Pure x)      = pure x
-runFree (Appl f x xs) = liftA2 f x (runFree xs)
+  Lift :: (a -> b -> c) -> f a -> Free f b -> Free f c
+  
+lower :: Applicative f => Free f a -> f a
+lower (Pure x) = pure x
+lower (Lift f x xs) = liftA2 f x (lower xs)
 ```
 
 The key with the `Phases` type is to observe that there's actually two possible
@@ -116,7 +116,7 @@ instance Applicative (Free f) where
   pure = Pure
 
   liftA2 c (Pure x) ys = fmap (c x) ys
-  liftA2 c (Appl f x xs) ys = Appl (\x (y,z) -> c (f x y) z) x (liftA2 (,) xs ys)
+  liftA2 c (Lift f x xs) ys = Lift (\x (y,z) -> c (f x y) z) x (liftA2 (,) xs ys)
 ```
 
 And then one which *zips* effects together:
@@ -127,8 +127,8 @@ instance Applicative f => Applicative (Free f) where
   
   liftA2 c (Pure x) ys = fmap (c x) ys
   liftA2 c xs (Pure y) = fmap (flip c y) xs
-  liftA2 c (Appl f x xs) (Appl g y ys) = 
-    Appl 
+  liftA2 c (Lift f x xs) (Lift g y ys) = 
+    Lift 
       (\(x,y) (xs,ys) -> c (f x xs) (g y ys)) 
       (liftA2 (,) x y) 
       (liftA2 (,) xs ys)
@@ -148,7 +148,7 @@ Anyway, we're able to do the `later` operation quite simply:
 
 ```haskell
 later :: Free f a -> Free f a
-later = Appl (const id) (pure ())
+later = Lift (const id) (pure ())
 ```
 
 # Making it Efficient
@@ -165,33 +165,34 @@ It turns out that there is a similar cayley transformation for Applicative
 functors [@rivas_notions_2014; @rivas_monoids_2015]:
 
 ```haskell
-newtype Day f a = Day { runDay :: forall b. f b -> f (a, b) }
+newtype Day f a = Day { runDay :: ∀ b. f b -> f (a, b) }
 
 instance Functor f => Functor (Day f) where
   fmap f xs = Day (fmap (first f) . runDay xs)
   
 instance Functor f => Applicative (Day f) where
   pure x = Day (fmap ((,) x))
-  liftA2 c xs ys = Day (fmap (\(x,(y,z)) -> (c x y, z)) . runDay xs . runDay ys)
+  liftA2 c xs ys =
+    Day (fmap (\(x,(y,z)) -> (c x y, z)) . runDay xs . runDay ys)
 ```
 
 And with this type we can implement our queue of applicative effects:
 
 ```haskell
-type Q f = Day (Free f)
+type Queue f = Day (Free f)
 
-runQ :: Applicative f => Q f a -> f a
-runQ = fmap fst . runFree . flip runDay (Pure ())
+runQueue :: Applicative f => Queue f a -> f a
+runQueue = fmap fst . runFree . flip runDay (Pure ())
 
-now :: Applicative f => f a -> Q f a
+now :: Applicative f => f a -> Queue f a
 now xs = Day \case
-  Pure x      -> Appl (,) xs (Pure x)
-  Appl f y ys -> Appl (\(x,y) z -> (x, f y z)) (liftA2 (,) xs y) ys
+  Pure x      -> Lift (,) xs (Pure x)
+  Lift f y ys -> Lift (\(x,y) z -> (x, f y z)) (liftA2 (,) xs y) ys
 
-later :: Applicative f => Q f a -> Q f a
+later :: Applicative f => Queue f a -> Queue f a
 later xs = Day \case
-  Pure x      -> Appl (const id) (pure ()) (runDay xs (Pure x))
-  Appl f y ys -> Appl (\x (y,z) -> (y, f x z)) y (runDay xs ys)
+  Pure x      -> Lift (const id) (pure ()) (runDay xs (Pure x))
+  Lift f y ys -> Lift (\x (y,z) -> (y, f x z)) y (runDay xs ys)
 ```
 
 As expected, this gives us the clean implementation of a breadth-first traversal
@@ -199,7 +200,7 @@ with the right asymptotics (I think):
 
 ```haskell
 bft :: Applicative f => (a -> f b) -> Tree a -> f (Tree b)
-bft f = runQ . go
+bft f = runQueue . go
   where
     go (x :& xs) = liftA2 (:&) (now (f x)) (later (traverse go xs))
 ```
