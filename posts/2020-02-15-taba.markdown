@@ -83,6 +83,13 @@ foldlVec f b (x :- xs) = unComp (foldlVec (c f) (Comp (f x b)) xs)
     {-# INLINE c #-}
 ```
 
+We can use this function to write vector reverse:
+
+```haskell
+reverseVec :: Vec a n -> Vec a n
+reverseVec = foldlVec (:-) Nil
+```
+
 Now, to write the reversing zip, we need another newtype to put the parameter in
 the right place, but it is straightforward other than that.
 
