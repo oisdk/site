@@ -1373,14 +1373,17 @@ repl({
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="ot">    c ::</span> (a <span class="ot">-&gt;</span> b (<span class="dt">S</span> m) <span class="ot">-&gt;</span> b (<span class="dt">S</span> (<span class="dt">S</span> m))) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> (b <span class="op">:.:</span> <span class="dt">S</span>) m <span class="ot">-&gt;</span> (b <span class="op">:.:</span> <span class="dt">S</span>) (<span class="dt">S</span> m))</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    c <span class="ot">=</span> coerce</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    <span class="ot">{-# INLINE c #-}</span></span></code></pre></div>
+<p>We can use this function to write vector reverse:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">reverseVec ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>reverseVec <span class="ot">=</span> foldlVec (<span class="op">:-</span>) <span class="dt">Nil</span></span></code></pre></div>
 <p>Now, to write the reversing zip, we need another newtype to put the parameter in the right place, but it is straightforward other than that.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">VecCont</span> a b n <span class="ot">=</span> <span class="dt">VecCont</span> {<span class="ot"> runVecCont ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n }</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="ot">revZip ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> b n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>revZip <span class="ot">=</span> <span class="fu">flip</span> <span class="op">$</span> runVecCont <span class="op">.</span> </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  foldlVec</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>      (\y k <span class="ot">-&gt;</span> <span class="dt">VecCont</span> (\(x <span class="op">:-</span> xs) <span class="ot">-&gt;</span> (x,y) <span class="op">:-</span> runVecCont k xs))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>      (<span class="dt">VecCont</span> (<span class="fu">const</span> <span class="dt">Nil</span>))</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">VecCont</span> a b n <span class="ot">=</span> <span class="dt">VecCont</span> {<span class="ot"> runVecCont ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n }</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="ot">revZip ::</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> b n <span class="ot">-&gt;</span> <span class="dt">Vec</span> (a,b) n</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>revZip <span class="ot">=</span> <span class="fu">flip</span> <span class="op">$</span> runVecCont <span class="op">.</span> </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  foldlVec</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>      (\y k <span class="ot">-&gt;</span> <span class="dt">VecCont</span> (\(x <span class="op">:-</span> xs) <span class="ot">-&gt;</span> (x,y) <span class="op">:-</span> runVecCont k xs))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>      (<span class="dt">VecCont</span> (<span class="fu">const</span> <span class="dt">Nil</span>))</span></code></pre></div>
 <div id="refs" class="references hanging-indent" role="doc-bibliography">
 <div id="ref-danvy_there_2005">
 <p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
