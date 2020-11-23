@@ -182,7 +182,7 @@ And with this type we can implement our queue of applicative effects:
 type Queue f = Day (Free f)
 
 runQueue :: Applicative f => Queue f a -> f a
-runQueue = fmap fst . runFree . flip runDay (Pure ())
+runQueue = fmap fst . lower . flip runDay (Pure ())
 
 now :: Applicative f => f a -> Queue f a
 now xs = Day \case
