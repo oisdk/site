@@ -302,8 +302,10 @@ insert x = merge (Node x Leaf Leaf)
   <div class="column">
 ```python
 def insert(element, tree):
-    tree.__dict__ = merge(node(element, leaf(), leaf()),
-                          tree).__dict__.copy()
+    tree.__dict__ = merge(
+        node(element, leaf(), leaf()),
+        tree
+    ).__dict__.copy()
 ```
   </div>
 </div>
@@ -385,7 +387,10 @@ popMin (Node x xl xr) = Just (x, merge xl xr)
 def popMin(tree):
   if tree._is_node:
     res = tree._data
-    tree.__dict__ = merge(tree._lchild, tree._rchild).__dict__.copy()
+    tree.__dict__ = merge(
+        tree._lchild, 
+        tree._rchild
+    ).__dict__.copy()
     return res
   else:
     raise IndexError
