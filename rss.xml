@@ -2897,8 +2897,10 @@ R =
 </div>
 <div class="column">
 <div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">def</span> insert(element, tree):</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>    tree.__dict__ <span class="op">=</span> merge(node(element, leaf(), leaf()),</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>                          tree).__dict__.copy()</span></code></pre></div>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>    tree.__dict__ <span class="op">=</span> merge(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>        node(element, leaf(), leaf()),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>        tree</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    ).__dict__.copy()</span></code></pre></div>
 </div>
 </div>
 <h1 id="a-word-on-types">A Word on Types</h1>
@@ -2930,10 +2932,13 @@ R =
 <div class="sourceCode" id="cb16"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">def</span> popMin(tree):</span>
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>  <span class="cf">if</span> tree._is_node:</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>    res <span class="op">=</span> tree._data</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    tree.__dict__ <span class="op">=</span> merge(tree._lchild, tree._rchild).__dict__.copy()</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>    <span class="cf">return</span> res</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>  <span class="cf">else</span>:</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>    <span class="cf">raise</span> <span class="pp">IndexError</span></span></code></pre></div>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    tree.__dict__ <span class="op">=</span> merge(</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>        tree._lchild, </span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>        tree._rchild</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>    ).__dict__.copy()</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>    <span class="cf">return</span> res</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a>  <span class="cf">else</span>:</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a>    <span class="cf">raise</span> <span class="pp">IndexError</span></span></code></pre></div>
 </div>
 </div>
 <p>At first glance, this function should be right at home in Python. It <em>mutates</em> its input, and it has an error case. The code we’ve written here for Python is pretty idiomatic, also: other than the ugly deep copy, we’re basically just mutating the object, and using an exception for the exceptional state (when the tree is empty). Even the exception we use is the same exception as when you try and <code>pop()</code> from an empty list.</p>
