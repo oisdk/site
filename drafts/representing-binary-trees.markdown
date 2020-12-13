@@ -393,4 +393,20 @@ As I mentioned, the Agda code for this stuff can be found
 I have also put all of the Haskell code in one place
 [here](https://gist.github.com/oisdk/438b6e790481c908d9460ffb1196a759).
 
+Also, with all of this we can finally write a direct algorithm for efficient
+enumeration of binary trees:
+
+```haskell
+trees :: [a] -> [Tree a]
+trees []     = error "trees needs to be given a non-empty list"
+trees (x:xs) = foldr f b xs (Leaf x) [] []
+  where
+    b t st ks = foldl (flip (:*:)) t st : ks
+    
+    f v k t st ks = g v k t st (k (Leaf v) (t : st) ks)
+    
+    g v k t1 (t2 : st) o = f v k (t2 :*: t1) st o
+    g _ _ _  []        o = o
+```
+
 # References
