@@ -1,55 +1,61 @@
 ---
-title: Representing Binary Trees
+title: Enumerating Trees
 tags: Agda, Haskell
 bibliography: Tree Conversion.bib
 ---
 
-I've been playing around with some interesting algorithms and aspects of binary
-trees.
+Consider the following puzzle: 
 
+> Given a list of $n$ labels, list all the trees with those labels in order.
+
+For instance, given the labels [1,2,3,4], the answer (for binary trees) is the
+following:
+
+```
+┌1     ┌1      ┌1     ┌1     ┌1
+┤      ┤      ┌┤     ┌┤     ┌┤
+│┌2    │ ┌2   ││┌2   │└2    │└2
+└┤     │┌┤    │└┤    ┤     ┌┤
+ │┌3   ││└3   │ └3   │┌3   │└3
+ └┤    └┤     ┤      └┤    ┤
+  └4    └4    └4      └4   └4
+```
+
+This problem (the "enumeration" problem) turns out to be quite fascinating and
+deep, with connections to parsing, monoids, and continuations.
+It's also just a classic algorithmic problem which is fun to try and solve.
+
+It's worth having a go at attempting it yourself, but if you'd just like to see
+the slick solutions the following is one I'm especially proud of:
+
+<details>
+<summary>Solution to the Enumeration Problem on Forests of Rose Trees</summary>
 ```haskell
-data Tree = Leaf | Tree :*: Tree
+enumForests :: [a] -> [Forest a]
+enumForests = foldrM f []
+  where
+    f x xs = zipWith ((:) . (:&) x) (inits xs) (tails xs)
 ```
+</details>
 
-I thought I'd go through some of them today!
+In the rest of this post I'll go through the intuition behind solutions like the
+one above and I'll try to elucidate some of the connections to other areas of
+computer science.
 
-# Enumerating
 
-As part of my master's thesis I needed to prove that one could only make
-finitely many arithmetic expressions from list of numbers and binary operators.
-To prove something was finite you would basically give a list of all the
-elements of the type, and then show that every element of the type is somewhere
-in the list.
+# A First Approach: Trying to Enumerate Directly
 
-```agda
-Finite A = ∃(support : List A). ∀(x : A). x ∈ support
-```
+I first came across the enumeration problem when I was writing my master's
+thesis: I needed to prove (in Agda) that there were finitely many binary trees
+of a given size, and that I could list them (this proof was part of a larger
+verified solver for the countdown problem).
+My first few attempts were unsuccessful: the algorithm presented in the
+countdown paper [@hutton_countdown_2002] was not structurally recursive, and did
+not seem amenable to Agda-style proofs.
 
-(It was part of writing a verified solver for the countdown problem).
-There were a lot of interesting parts to the algorithm: enumerating
-permutations, for instance, was particularly tricky.
-Since not all of the binary operators were associative, however, I also needed
-to enumerate all the binary trees of a given size; this problem has stuck with
-me the most.
-
-While researching this post I found that enumeration of trees has been studied
-*extensively* elsewhere: see @knuth_art_2006, for example, or the excellent blog
-post by @tychonievich_enumerating_2013, or the entire field of [Boltzmann
-sampling](https://en.wikipedia.org/wiki/Boltzmann_sampler).
-This post will only scratch the surface of all of that: I hope to write much
-more on the topic in the future.
-
-Anyways, I needed a function which produced a list of all binary trees of a
-given size, and I needed that function to be simple enough to prove things
-about.
-That ruled out the standard algorithm presented in the first Countdown
-paper [@hutton_countdown_2002] immediately (wouldn't pass the termination
-checker).
-I decided I wasn't going to attack the problem directly, and instead I'd look
-for a type which was isomorphic with (or at least had surjection into) binary
-trees.
-
-In this search I came across Dyck words.
+Instead, I looked for a type which was isomorphic to binary trees, and which
+might be easier to reason about.
+One such type is Dyck words.
 
 # Dyck Words
 
@@ -61,21 +67,23 @@ A "Dyck word" is a string of balanced parentheses.
 (())()
 ```
 
-There's a lot of interesting aspects to these strings, which we'll look at in
-this post, but the important point for me was that I read that they were
-*isomorphic* to the binary trees.
-And, as a *flat* kind of data structure, strings seemed an awful lot easier to
-enumerate than binary trees.
+It's (apparently) well-known that these strings are isomorphic to binary trees
+(although the imperative descriptions of algorithms which actually computed this
+isomorphism addled my brain), but what made them interesting for me was that
+they are a *flat* type, structured like a linked list, and as such should be
+reasonably straightforward to prove to be finite.
 
-So let's get a type definition down for these strings, and see what we can do
-with it.
+Our first task, then, is to write down a type for Dyck words.
+Te following is a first possibility:
 
 ```haskell
-type Dyck = [Bool]
+data Paren = LParen | RParen
+type Dyck = [Paren]
 ```
 
-This particular type won't work at all.
-It includes many values which *don't* represent balanced parentheses.
+But this type isn't correct.
+It includes many values which *don't* represent balanced parentheses, i.e. the
+expressions `[LParen,RParen] :: Dyck` are well-typed.
 To describe dyck words properly we'll need to reach for the GADTs:
 
 ```haskell
@@ -139,25 +147,8 @@ A variant of this function was what I needed in my thesis: I also needed to
 prove that it produced every possible value of the type `Dyck`, which was not
 too difficult.
 
-In Haskell, enumeration is still quite useful, for things like QuickCheck.
-In particular, this function can be adapted to efficiently produce random Dyck
-words:
-
-```haskell
-genDyck :: Natty n -> Int -> (DyckSuff n -> Gen a) -> Gen a
-genDyck Zy     0 k = k Done 
-genDyck (Sy n) 0 k = genDyck n 0 (k . Clos)
-genDyck Zy     m k = genDyck (Sy Zy) (m - 1) (k . Open)
-genDyck (Sy n) m k = arbitrary >>= bool (genDyck (Sy (Sy n)) (m - 1) (k . Open)) (genDyck n m (k . Clos))
-
-instance Arbitrary Dyck where
-  arbitrary = sized (flip (genDyck Zy) pure)
-```
-
-I am pretty sure that this generates random Dyck words with the minimum number
-of random bits, but I have not proven that yet.
-
-But enough of that: now we need to convert between this type and a binary tree.
+The difficult part is still ahead, though: now we need to convert between this
+type and a binary tree.
 
 # Conversion
 
@@ -199,14 +190,6 @@ treeToDyck t = go t Done
     go :: Tree -> DyckSuff n -> DyckSuff n
     go Leaf        = id
     go (xs :*: ys) = go xs . Open . go ys . Clos
-```
-
-And, we can use our arbitrary instance to test the isomorphism in one direction
-at least:
-
-```haskell
-roundTrip :: Bal -> Property
-roundTrip d = treeToDyck (dyckToTree d) === d
 ```
 
 # A Compiler
@@ -404,34 +387,61 @@ introduction of continuations in @bahr_calculating_2015.
 
 # Direct Enumeration
 
-Also, with all of this we can finally write a direct algorithm for efficient
-enumeration of binary trees:
+It turns out that you can follow relatively straightforward rewriting steps from
+the Dyck-based enumeration algorithm to get to one which avoids Dyck words
+entirely:
 
 ```haskell
-trees :: [a] -> Expr (Expr a)
-trees []     = error "trees needs to be given a non-empty list"
-trees (x:xs) = foldr f b xs (Val x) []
+enumTrees :: [a] -> [Tree a]
+enumTrees = fmap (foldl1 (flip (:*:))) . foldlM f []
   where
-    b t st = Val (foldl (flip (:+:)) t st)
-    
-    f v k t st = g v k t st (k (Val v) (t : st))
-    
-    g v k t1 (t2 : st) o = o :+: f v k (t2 :+: t1) st
-    g _ _ _  []        o = o
+    f []         v = [[Leaf v]]
+    f [t1]       v = [[Leaf v, t1]]
+    f (t1:t2:st) v = (Leaf v : t1 : t2 : st) : f ((t2 :*: t1) : st) v
 ```
 
-From this we can also write a nice method for efficiently generating random trees:
+Maybe in a future post I'll go through the derivation of this algorithm.
+
+It turns out that the Dyck-based enumeration can be applied without much
+difficulty to rose trees as well:
 
 ```haskell
-instance Arbitrary a => Arbitrary (Val a) where
-  arbitrary = choice . trees . getNonEmpty =<< arbitrary
-    where
-      choice (Val x) = pure x
-      choice (xs :+: ys) = arbitrary >>= bool (choice xs) (choice ys)
-      
-  shrink (Val _)    = []
-  shrink (xs :+: ys) = xs : ys : map (uncurry (:+:)) (shrink (xs,ys))
+data Rose a = a :& Forest a
+type Forest a = [Rose a]
+
+dyckToForest :: Dyck -> Forest ()
+dyckToForest dy = go dy ([] :- Nil)
+  where
+    go :: DyckSuff n -> Stack (Forest ()) (S n) -> Forest ()
+    go (Open d) ts               = go d ([] :- ts)
+    go (Clos d) (t1 :- t2 :- ts) = go d ((() :& t2 : t1) :- ts)
+    go Done     (t  :- Nil)      = t
+
+forestToDyck :: Forest () -> Dyck
+forestToDyck t = go t Done
+  where
+    go :: Forest () -> DyckSuff n -> DyckSuff n
+    go []          = id
+    go ((() :& x):xs) = go x . Open . go xs . Clos
 ```
+
+And again, following relatively mechanical derivations, we arrive at an elegant algorithm:
+
+```haskell
+enumForests :: [a] -> [Forest a]
+enumForests = foldrM f []
+  where
+    f x xs = zipWith ((:) . (:&) x) (inits xs) (tails xs)
+```
+
+# Related Work
+
+While researching this post I found that enumeration of trees has been studied
+*extensively* elsewhere: see @knuth_art_2006, for example, or the excellent blog
+post by @tychonievich_enumerating_2013, or the entire field of [Boltzmann
+sampling](https://en.wikipedia.org/wiki/Boltzmann_sampler).
+This post has only scratched the surface of all of that: I hope to write much
+more on the topic in the future.
 
 
 # Code
