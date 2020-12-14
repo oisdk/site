@@ -22,7 +22,7 @@ elements of the type, and then show that every element of the type is somewhere
 in the list.
 
 ```agda
-Finite A = ∃(support : List A). ∀(x : A) → x ∈ support
+Finite A = ∃(support : List A). ∀(x : A). x ∈ support
 ```
 
 (It was part of writing a verified solver for the countdown problem).
@@ -96,6 +96,9 @@ Dyck word.
 ```haskell
 >>> Open $ Clos $ Open $ Clos $ Done :: Dyck
 ()()
+
+>>> Clos $ Open $ Clos $ Done :: DyckSuff (S Z)
+)()
 
 >>> Open $ Open $ Clos $ Open $ Clos $ Clos $ Open $ Clos $ Done :: Dyck
 (()())()
@@ -405,30 +408,31 @@ Also, with all of this we can finally write a direct algorithm for efficient
 enumeration of binary trees:
 
 ```haskell
-trees :: [a] -> Tree (Tree a)
+trees :: [a] -> Expr (Expr a)
 trees []     = error "trees needs to be given a non-empty list"
-trees (x:xs) = foldr f b xs (Leaf x) []
+trees (x:xs) = foldr f b xs (Val x) []
   where
-    b t st = Leaf (foldl (flip (:*:)) t st)
+    b t st = Val (foldl (flip (:+:)) t st)
     
-    f v k t st = g v k t st (k (Leaf v) (t : st))
+    f v k t st = g v k t st (k (Val v) (t : st))
     
-    g v k t1 (t2 : st) o = o :*: f v k (t2 :*: t1) st
+    g v k t1 (t2 : st) o = o :+: f v k (t2 :+: t1) st
     g _ _ _  []        o = o
 ```
 
 From this we can also write a nice method for efficiently generating random trees:
 
 ```haskell
-instance Arbitrary a => Arbitrary (Tree a) where
+instance Arbitrary a => Arbitrary (Val a) where
   arbitrary = choice . trees . getNonEmpty =<< arbitrary
     where
-      choice (Leaf x) = pure x
-      choice (xs :*: ys) = arbitrary >>= bool (choice xs) (choice ys)
+      choice (Val x) = pure x
+      choice (xs :+: ys) = arbitrary >>= bool (choice xs) (choice ys)
       
-  shrink (Leaf _)    = []
-  shrink (xs :*: ys) = xs : ys : map (uncurry (:*:)) (shrink (xs,ys))
+  shrink (Val _)    = []
+  shrink (xs :+: ys) = xs : ys : map (uncurry (:+:)) (shrink (xs,ys))
 ```
+
 
 # Code
 
