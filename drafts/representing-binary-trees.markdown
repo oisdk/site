@@ -397,16 +397,29 @@ Also, with all of this we can finally write a direct algorithm for efficient
 enumeration of binary trees:
 
 ```haskell
-trees :: [a] -> [Tree a]
+trees :: [a] -> Tree (Tree a)
 trees []     = error "trees needs to be given a non-empty list"
-trees (x:xs) = foldr f b xs (Leaf x) [] []
+trees (x:xs) = foldr f b xs (Leaf x) []
   where
-    b t st ks = foldl (flip (:*:)) t st : ks
+    b t st = Leaf (foldl (flip (:*:)) t st)
     
-    f v k t st ks = g v k t st (k (Leaf v) (t : st) ks)
+    f v k t st = g v k t st (k (Leaf v) (t : st))
     
-    g v k t1 (t2 : st) o = f v k (t2 :*: t1) st o
+    g v k t1 (t2 : st) o = o :*: f v k (t2 :*: t1) st
     g _ _ _  []        o = o
+```
+
+From this we can also write a nice method for efficiently generating random trees:
+
+```haskell
+instance Arbitrary a => Arbitrary (Tree a) where
+  arbitrary = choice . trees . getNonEmpty =<< arbitrary
+    where
+      choice (Leaf x) = pure x
+      choice (xs :*: ys) = arbitrary >>= bool (choice xs) (choice ys)
+      
+  shrink (Leaf _)    = []
+  shrink (xs :*: ys) = xs : ys : map (uncurry (:*:)) (shrink (xs,ys))
 ```
 
 # References
