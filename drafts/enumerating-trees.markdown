@@ -22,7 +22,7 @@ following:
 ```
 
 This problem (the "enumeration" problem) turns out to be quite fascinating and
-deep, with connections to parsing, monoids, and continuations.
+deep, with connections to parsing and monoids.
 It's also just a classic algorithmic problem which is fun to try and solve.
 
 It's worth having a go at attempting it yourself, but if you'd just like to see
@@ -392,12 +392,12 @@ the Dyck-based enumeration algorithm to get to one which avoids Dyck words
 entirely:
 
 ```haskell
-enumTrees :: [a] -> [Tree a]
-enumTrees = fmap (foldl1 (flip (:*:))) . foldlM f []
-  where
-    f []         v = [[Leaf v]]
-    f [t1]       v = [[Leaf v, t1]]
-    f (t1:t2:st) v = (Leaf v : t1 : t2 : st) : f ((t2 :*: t1) : st) v
+enumTrees :: [a] -> [Expr a]
+enumTrees = fmap (foldl1 (flip (:+:))) . foldlM f []
+  where    
+    f []         v = [[Val v]]
+    f [t1]       v = [[Val v, t1]]
+    f (t1:t2:st) v = (Val v : t1 : t2 : st) : f ((t2 :+: t1) : st) v
 ```
 
 Maybe in a future post I'll go through the derivation of this algorithm.
