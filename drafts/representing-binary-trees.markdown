@@ -16,8 +16,15 @@ I thought I'd go through some of them today!
 # Enumerating
 
 As part of my master's thesis I needed to prove that one could only make
-finitely many arithmetic expressions from list of numbers and binary operators,
-and then enumerate them.
+finitely many arithmetic expressions from list of numbers and binary operators.
+To prove something was finite you would basically give a list of all the
+elements of the type, and then show that every element of the type is somewhere
+in the list.
+
+```agda
+Finite A = ∃(support : List A). ∀(x : A) → x ∈ support
+```
+
 (It was part of writing a verified solver for the countdown problem).
 There were a lot of interesting parts to the algorithm: enumerating
 permutations, for instance, was particularly tricky.
@@ -25,15 +32,20 @@ Since not all of the binary operators were associative, however, I also needed
 to enumerate all the binary trees of a given size; this problem has stuck with
 me the most.
 
-Apparently enumeration of binary trees is pretty well-studied, and an important
-topic in combinatorics.
-As I was writing the code in Agda, however, I needed an especially simple
-algorithm that I could write proofs about (and one that was structurally
-terminating).
+While researching this post I found that enumeration of trees has been studied
+*extensively* elsewhere: see @knuth_art_2006, for example, or the excellent blog
+post by @tychonievich_enumerating_2013, or the entire field of [Boltzmann
+sampling](https://en.wikipedia.org/wiki/Boltzmann_sampler).
+This post will only scratch the surface of all of that: I hope to write much
+more on the topic in the future.
 
-For instance, if you use the standard algorithm presented in the first Countdown
-paper [@hutton_countdown_2002], you'll run into issues with termination.
-So I decided I wasn't going to attack the problem directly, and instead I'd look
+Anyways, I needed a function which produced a list of all binary trees of a
+given size, and I needed that function to be simple enough to prove things
+about.
+That ruled out the standard algorithm presented in the first Countdown
+paper [@hutton_countdown_2002] immediately (wouldn't pass the termination
+checker).
+I decided I wasn't going to attack the problem directly, and instead I'd look
 for a type which was isomorphic with (or at least had surjection into) binary
 trees.
 
@@ -64,32 +76,29 @@ type Dyck = [Bool]
 
 This particular type won't work at all.
 It includes many values which *don't* represent balanced parentheses.
-Instead we'll have to reach for the GADTs:
+To describe dyck words properly we'll need to reach for the GADTs:
 
 ```haskell
-data Dyck (n :: Nat) :: Type where
-  Done :: Dyck Z
-  Open :: Dyck (S n) -> Dyck n
-  Clos :: Dyck n     -> Dyck (S n)
+data DyckSuff (n :: Nat) :: Type where
+  Done :: DyckSuff Z
+  Open :: DyckSuff (S n) -> DyckSuff n
+  Clos :: DyckSuff n     -> DyckSuff (S n)
+
+type Dyck = DyckSuff Z
 ```
 
-This type doesn't represent Dyck words exactly; it represents *suffixes* of
-them.
-Its parameter is the number of extraneous closing parentheses: in other words, a
-value of type `Dyck Z` is a proper Dyck word.
+The first type here represents suffixes of Dyck words; a value of type
+`DyckSuff n` represents a string of parentheses which is balanced except for `n`
+extraneous closing parentheses.
 
 ```haskell
-type Bal = Dyck Z
-```
-
-```haskell
->>> Open $ Clos $ Open $ Clos $ Done :: Bal
+>>> Open $ Clos $ Open $ Clos $ Done :: Dyck
 ()()
 
->>> Open $ Open $ Clos $ Open $ Clos $ Clos $ Open $ Clos $ Done :: Bal
+>>> Open $ Open $ Clos $ Open $ Clos $ Clos $ Open $ Clos $ Done :: Dyck
 (()())()
 
->>> Open $ Open $ Clos $ Clos $ Open $ Clos $ Done :: Bal
+>>> Open $ Open $ Clos $ Clos $ Open $ Clos $ Done :: Dyck
 (())()
 ```
 
@@ -97,17 +106,22 @@ The next task is to actually enumerate these words.
 Here's an $O(n)$ algorithm which does just that:
 
 ```haskell
-enumDyck :: Int -> [Bal]
+enumDyck :: Int -> [Dyck]
 enumDyck sz = go Zy sz Done []
   where
-    go :: Natty n -> Int -> Dyck n -> [Bal] -> [Bal]
-    go Zy     0 k = (:) k
-    go (Sy n) 0 k = go n 0 (Open k)
-    go Zy     m k = go (Sy Zy) (m-1) (Clos k)
-    go (Sy n) m k =
-      go n m (Open k) .
-      go (Sy (Sy n)) (m-1) (Clos k)
-      
+    go, zero, left, right :: Natty n -> Int -> DyckSuff n -> [Dyck] -> [Dyck]
+    
+    go n m k = zero n m k . left n m k . right n m k
+
+    zero Zy 0 k = (k:)
+    zero _  _ _ = id
+    
+    left (Sy n) m k = go n m (Open k)
+    left Zy     _ _ = id
+    
+    right _ 0 _ = id
+    right n m k = go (Sy n) (m-1) (Clos k) 
+
 >>> mapM_ print (enumDyck 3)
 "()()()"
 "(())()"
@@ -117,7 +131,7 @@ enumDyck sz = go Zy sz Done []
 ```
 
 A variant of this function was what I needed in my thesis: I also needed to
-prove that it produced every possible value of the type `Dyck n`, which was not
+prove that it produced every possible value of the type `Dyck`, which was not
 too difficult.
 
 In Haskell, enumeration is still quite useful, for things like QuickCheck.
@@ -125,15 +139,13 @@ In particular, this function can be adapted to efficiently produce random Dyck
 words:
 
 ```haskell
-genDyck :: Natty n -> Int -> (Dyck n -> Gen a) -> Gen a
+genDyck :: Natty n -> Int -> (DyckSuff n -> Gen a) -> Gen a
 genDyck Zy     0 k = k Done 
 genDyck (Sy n) 0 k = genDyck n 0 (k . Clos)
-genDyck Zy     m k = genDyck (Sy Zy) (m-1) (k . Open)
-genDyck (Sy n) m k = do
-  bit <- arbitrary
-  if bit then genDyck n m (k . Clos) else genDyck (Sy (Sy n)) (m-1) (k . Open)
+genDyck Zy     m k = genDyck (Sy Zy) (m - 1) (k . Open)
+genDyck (Sy n) m k = arbitrary >>= bool (genDyck (Sy (Sy n)) (m - 1) (k . Open)) (genDyck n m (k . Clos))
 
-instance Arbitrary Bal where
+instance Arbitrary Dyck where
   arbitrary = sized (flip (genDyck Zy) pure)
 ```
 
@@ -158,10 +170,10 @@ bits of code: it will act as a stack in our stack-based algorithms.
 Here's one of those algorithms now:
 
 ```haskell
-dyckToTree :: Bal -> Tree
+dyckToTree :: Dyck -> Tree
 dyckToTree dy = go dy (Leaf :- Nil)
   where
-    go :: Dyck n -> Stack Tree (S n) -> Tree
+    go :: DyckSuff n -> Stack Tree (S n) -> Tree
     go (Open d) ts               = go d (Leaf :- ts)
     go (Clos d) (t1 :- t2 :- ts) = go d (t2 :*: t1 :- ts)
     go Done     (t  :- Nil)      = t
@@ -176,10 +188,10 @@ terminating.
 The function in the other direction is similarly simple:
 
 ```haskell
-treeToDyck :: Tree -> Bal
+treeToDyck :: Tree -> Dyck
 treeToDyck t = go t Done
   where
-    go :: Tree -> Dyck n -> Dyck n
+    go :: Tree -> DyckSuff n -> DyckSuff n
     go Leaf        = id
     go (xs :*: ys) = go xs . Open . go ys . Clos
 ```
@@ -356,10 +368,9 @@ prog-iso .leftInv  = prog→tree→prog
 
 </details>
 
-# Future Thoughts
+# Folds and Whatnot
 
-I think that's enough for one post!
-One last thing I'll mention is that all of the `exec` functions presented
+Another thing I'll mention is that all of the `exec` functions presented
 are *folds*.
 In particular, they're *left* folds.
 Here's how we'd rewrite `exec` to make that fact clear:
@@ -386,12 +397,85 @@ execFold = pop . foldlCode shift reduce Nil
 I think the "foldl-from-foldr" trick could be a nice way to explain the
 introduction of continuations in @bahr_calculating_2015.
 
-# Code
+# Cayley Trees
 
-As I mentioned, the Agda code for this stuff can be found
-[here](https://github.com/oisdk/agda-playground/blob/d7234c276f063dbb4a2d2cbcedb86dd48501a908/Data/Dyck/Payload.agda),
-I have also put all of the Haskell code in one place
-[here](https://gist.github.com/oisdk/438b6e790481c908d9460ffb1196a759).
+One last trick I'll mention is that of the type-level cayley transform for
+trees.
+The Cayley monoid is well-known in Haskell (difference lists, for instance, are
+a specific instance of the Cayley monoid), because it gives us $O(1)$ `<>`.
+What's less well known is that it's also important in dependently typed
+programming, because it gives us definitional associativity.
+In other words, the type `x . (y . z)` is definitionally equal to `(x . y) . z`
+in the Cayley monoid.
+
+I used a form of the type-level Cayley monoid in a [previous
+post](2020-02-15-taba.html) to type vector reverse without proofs.
+I figured out the other day another way to use it to type tree flattening.
+
+Say we have a size-indexed tree:
+
+```haskell
+data Tree (a :: Type) (n :: Nat) :: Type where
+  Leaf  :: a -> Tree a (S Z)
+  (:*:) :: Tree a n -> Tree a m -> Tree a (n + m)
+```
+
+And we want to flatten it to a list in $O(n)$ time:
+
+```haskell
+treeToList :: Tree a n -> Stack a n
+treeToList xs = go xs Nil
+  where
+    go :: Tree a n -> Stack a m -> Stack a (n + m)
+    go (Leaf    x) ks = x :- ks
+    go (xs :*: ys) ks = go xs (go ys ks)
+```
+
+Haskell would complain specifically that you hadn't proven the monoid laws:
+
+    • Couldn't match type ‘n’ with ‘n + 'Z’
+    • Could not deduce: (n2 + (m1 + m)) ~ ((n2 + m1) + m)
+    
+But it seems difficult at first to figure out how we can apply the same trick as
+we used for vector reverse: there's no real way for the `Tree` type to hold a
+function from `Nat` to `Nat`.
+
+To solve this problem we can borrow a trick that Haskellers had to use in the
+good old days before type families to represent type-level functions: types (or
+more usually classes) with multiple parameters.
+
+```haskell
+data Tree' (a :: Type) (n :: Nat) (m :: Nat) :: Type where
+  Leaf  :: a -> Tree' a n (S n)
+  (:*:) :: Tree' a n2 n3
+        -> Tree' a n1 n2
+        -> Tree' a n1 n3
+```
+
+The `Tree'` type here has three parameters: we're interested in the last two.
+The first of these is actually an argument to a function in disguise; the second
+is its result.
+To make it back into a normal size-indexed tree, we apply that function to zero:
+
+```haskell
+type Tree a = Tree' a Z
+
+three :: Tree Int (S (S (S Z)))
+three = (Leaf 1 :*: Leaf 2) :*: Leaf 3
+```
+
+This makes the `treeToList` function typecheck without complaint:
+
+```haskell
+treeToList :: Tree a n -> Stack a n
+treeToList xs = go xs Nil
+  where
+    go :: Tree' a x y -> Stack a x -> Stack a y
+    go (Leaf    x) ks = x :- ks
+    go (xs :*: ys) ks = go xs (go ys ks)
+```
+
+# Direct Enumeration
 
 Also, with all of this we can finally write a direct algorithm for efficient
 enumeration of binary trees:
@@ -421,5 +505,12 @@ instance Arbitrary a => Arbitrary (Tree a) where
   shrink (Leaf _)    = []
   shrink (xs :*: ys) = xs : ys : map (uncurry (:*:)) (shrink (xs,ys))
 ```
+
+# Code
+
+As I mentioned, the Agda code for this stuff can be found
+[here](https://github.com/oisdk/agda-playground/blob/d7234c276f063dbb4a2d2cbcedb86dd48501a908/Data/Dyck/Payload.agda),
+I have also put all of the Haskell code in one place
+[here](https://gist.github.com/oisdk/438b6e790481c908d9460ffb1196a759).
 
 # References
