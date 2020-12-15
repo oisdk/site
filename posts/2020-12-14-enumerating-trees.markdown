@@ -25,6 +25,13 @@ This problem (the "enumeration" problem) turns out to be quite fascinating and
 deep, with connections to parsing and monoids.
 It's also just a classic algorithmic problem which is fun to try and solve.
 
+The most general version of the algorithm is on forests of rose trees:
+
+```haskell
+data Rose a = a :& Forest a
+type Forest a = [Rose a]
+```
+
 It's worth having a go at attempting it yourself, but if you'd just like to see
 the slick solutions the following is one I'm especially proud of:
 
