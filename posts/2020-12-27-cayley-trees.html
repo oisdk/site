@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Trees indexed by a Cayley Monoid - Donnacha Oisín Kidney</title>
+        <style>body{color:black;font-family:Garamond,Times New Roman,serif;font-size:15px;margin:0px auto 0px auto;padding-left:5px;padding-right:5px;max-width:650px}math{font-size:13px}img{max-width:600px}summary{outline:0}div#header{border-bottom:3px double black;margin-bottom:30px;padding:12px 0px 12px 0px}div#logo a{color:black;float:left;font-size:20px;text-decoration:none}div#header #navigation{text-align:right}div#header #navigation a{color:black;font-family:Garamond,Times New Roman,Serif;font-size:18px;margin-left:10px;text-decoration:none;text-transform:uppercase}div#footer{font-family:Garamond,Times New Roman,Serif;border-top:solid 2px black;color:#555;font-size:12px;margin-top:30px;padding:12px 0px 12px 0px;text-align:right}h1{font-family:Garamond,Times New Roman,Serif;font-size:22px;font-weight:normal}h2{font-family:Garamond,Times New Roman,Serif;font-size:20px;font-weight:normal}div.info{color:#555;font-size:15px;font-style:italic}span.quiet{color:#828282;font-style:italic}a{color:black;word-wrap:break-word}ul.post-list{margin-left:0px;padding-left:0px;list-style-type:none}.hidden_source{display:none}ol.serieslist{counter-reset:item;list-style-type:none;padding-left:20}ol li.serieslist:before{content:'Part ' counter(item,decimal) ':';counter-increment:item}table.sourceCode,tr.sourceCode,td.lineNumbers,td.sourceCode,table.sourceCode pre{margin:0;padding:0;border:0;vertical-align:baseline;border:none}td.lineNumbers{border-right:1px solid #AAAAAA;text-align:right;color:#AAAAAA;padding-right:5px;padding-left:5px}td.sourceCode{padding-left:5px}.sourceCode,code,pre,.Agda{font-size:10px;font-family:menlo,monospace}.sourceCode span.kw{color:#262C6A}.sourceCode span.dt{color:#476A97}.sourceCode span.dv{color:#262C6A}.sourceCode span.bn{color:#262C6A}.sourceCode span.fl{color:#262C6A}.sourceCode span.ch{color:#262C6A}.sourceCode span.st{color:#702C51}.sourceCode span.co{color:#435138}.sourceCode span.ot{color:#262C6A}.sourceCode span.al{color:red}.sourceCode span.fu{color:#000000}.sourceCode span.re{color:#000000}.sourceCode span.er{color:red}li{margin-bottom:2px}li:last-child{margin-bottom:0px}.Agda .Comment{color:#B22222}.Agda .Background{}.Agda .Markup{color:#000000}.Agda .Keyword{color:#CD6600}.Agda .String{color:#B22222}.Agda .Number{color:#A020F0}.Agda .Symbol{color:#404040}.Agda .PrimitiveType{color:#0000CD}.Agda .Pragma{color:black}.Agda .Operator{}.Agda .Bound{color:black}.Agda .Generalizable{color:black}.Agda .InductiveConstructor{color:#008B00}.Agda .CoinductiveConstructor{color:#8B7500}.Agda .Datatype{color:#0000CD}.Agda .Field{color:#EE1289}.Agda .Function{color:#0000CD}.Agda .Module{color:#A020F0}.Agda .Postulate{color:#0000CD}.Agda .Primitive{color:#0000CD}.Agda .Record{color:#0000CD}.Agda .DottedPattern{}.Agda .UnsolvedMeta{color:black;background:yellow}.Agda .UnsolvedConstraint{color:black;background:yellow}.Agda .TerminationProblem{color:black;background:#FFA07A}.Agda .IncompletePattern{color:black;background:#F5DEB3}.Agda .Error{color:red;text-decoration:underline}.Agda .TypeChecks{color:black;background:#ADD8E6}.Agda a{text-decoration:none}.Agda a[href]:hover{background-color:#B4EEB4}.sourceCode{overflow-x:auto}</style>
+    </head>
+    <body>
+        <div id="header">
+            <div id="logo">
+                <a href="../">Donnacha Oisín Kidney</a>
+            </div>
+            <div id="navigation">
+                <a href="../about.html">About</a>
+                <a href="../contact.html">Contact</a>
+                <a href="../rss.xml">Feed</a>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2>Trees indexed by a Cayley Monoid</h2>
+
+            <div class="info">
+    Posted on December 27, 2020
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>The Cayley monoid is well-known in Haskell (difference lists, for instance, are a specific instance of the Cayley monoid), because it gives us <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math> <code>&lt;&gt;</code>. What’s less well known is that it’s also important in dependently typed programming, because it gives us definitional associativity. In other words, the type <code>x . (y . z)</code> is definitionally equal to <code>(x . y) . z</code> in the Cayley monoid.</p>
+<details>
+<p><summary>Some helpers and extra code</summary></p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  <span class="dt">Z</span>   <span class="op">+</span> m <span class="ot">=</span> m</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span></code></pre></div>
+</details>
+<p>I used a form of the type-level Cayley monoid in a <a href="2020-02-15-taba.html">previous post</a> to type vector reverse without proofs. I figured out the other day another way to use it to type tree flattening.</p>
+<p>Say we have a size-indexed tree and vector:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  <span class="dt">Leaf</span><span class="ot">  ::</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a (<span class="dt">S</span> <span class="dt">Z</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="ot">  (:*:) ::</span> <span class="dt">Tree</span> a n <span class="ot">-&gt;</span> <span class="dt">Tree</span> a m <span class="ot">-&gt;</span> <span class="dt">Tree</span> a (n <span class="op">+</span> m)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Vec</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">Vec</span> a <span class="dt">Z</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a><span class="ot">  (:-) ::</span> a <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a (<span class="dt">S</span> n)</span></code></pre></div>
+<p>And we want to flatten it to a list in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n)</annotation></semantics></math> time:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">treeToList ::</span> <span class="dt">Tree</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>treeToList xs <span class="ot">=</span> go xs <span class="dt">Nil</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="ot">    go ::</span> <span class="dt">Tree</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a m <span class="ot">-&gt;</span> <span class="dt">Vec</span> a (n <span class="op">+</span> m)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    go (<span class="dt">Leaf</span>    x) ks <span class="ot">=</span> x <span class="op">:-</span> ks</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    go (xs <span class="op">:*:</span> ys) ks <span class="ot">=</span> go xs (go ys ks)</span></code></pre></div>
+<p>Haskell would complain specifically that you hadn’t proven the monoid laws:</p>
+<pre><code>• Couldn't match type ‘n’ with ‘n + 'Z’
+• Could not deduce: (n2 + (m1 + m)) ~ ((n2 + m1) + m)</code></pre>
+<p>But it seems difficult at first to figure out how we can apply the same trick as we used for vector reverse: there’s no real way for the <code>Tree</code> type to hold a function from <code>Nat</code> to <code>Nat</code>.</p>
+<p>To solve this problem we can borrow a trick that Haskellers had to use in the good old days before type families to represent type-level functions: types (or more usually classes) with multiple parameters.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree'</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="dt">Leaf</span><span class="ot">  ::</span> a <span class="ot">-&gt;</span> <span class="dt">Tree'</span> a n (<span class="dt">S</span> n)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ot">  (:*:) ::</span> <span class="dt">Tree'</span> a n2 n3</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>        <span class="ot">-&gt;</span> <span class="dt">Tree'</span> a n1 n2</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>        <span class="ot">-&gt;</span> <span class="dt">Tree'</span> a n1 n3</span></code></pre></div>
+<p>The <code>Tree'</code> type here has three parameters: we’re interested in the last two. The first of these is actually an argument to a function in disguise; the second is its result. To make it back into a normal size-indexed tree, we apply that function to zero:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Tree</span> a <span class="ot">=</span> <span class="dt">Tree'</span> a <span class="dt">Z</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="ot">three ::</span> <span class="dt">Tree</span> <span class="dt">Int</span> (<span class="dt">S</span> (<span class="dt">S</span> (<span class="dt">S</span> <span class="dt">Z</span>)))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>three <span class="ot">=</span> (<span class="dt">Leaf</span> <span class="dv">1</span> <span class="op">:*:</span> <span class="dt">Leaf</span> <span class="dv">2</span>) <span class="op">:*:</span> <span class="dt">Leaf</span> <span class="dv">3</span></span></code></pre></div>
+<p>This makes the <code>treeToList</code> function typecheck without complaint:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">treeToList ::</span> <span class="dt">Tree</span> a n <span class="ot">-&gt;</span> <span class="dt">Vec</span> a n</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>treeToList xs <span class="ot">=</span> go xs <span class="dt">Nil</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a><span class="ot">    go ::</span> <span class="dt">Tree'</span> a x y <span class="ot">-&gt;</span> <span class="dt">Vec</span> a x <span class="ot">-&gt;</span> <span class="dt">Vec</span> a y</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    go (<span class="dt">Leaf</span>    x) ks <span class="ot">=</span> x <span class="op">:-</span> ks</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>    go (xs <span class="op">:*:</span> ys) ks <span class="ot">=</span> go xs (go ys ks)</span></code></pre></div>
+
+        </div>
+    </body>
+</html>
