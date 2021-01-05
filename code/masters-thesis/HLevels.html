@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>HLevels</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="HLevels.html" class="Module">HLevels</a> <a id="50" class="Keyword">where</a>
+
+<a id="57" class="Keyword">open</a> <a id="62" class="Keyword">import</a> <a id="69" href="Path.html" class="Module">Path</a>
+<a id="74" class="Keyword">open</a> <a id="79" class="Keyword">import</a> <a id="86" href="Cubical.Foundations.Everything.html" class="Module">Cubical.Foundations.Everything</a>
+  <a id="119" class="Keyword">using</a> <a id="125" class="Symbol">(</a><a id="126" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a>
+        <a id="141" class="Symbol">;</a><a id="142" href="Cubical.Foundations.Id.html#929" class="Function">isSet</a>
+        <a id="156" class="Symbol">;</a><a id="157" href="Cubical.Foundations.Id.html#854" class="Function">isContr</a>
+        <a id="173" class="Symbol">;</a><a id="174" href="Cubical.Foundations.Prelude.html#5919" class="Function">isGroupoid</a>
+        <a id="193" class="Symbol">;</a><a id="194" href="Cubical.Foundations.Prelude.html#7634" class="Function">isPropIsContr</a>
+        <a id="216" class="Symbol">;</a><a id="217" href="Cubical.Foundations.Prelude.html#8141" class="Function">isProp→isSet</a>
+        <a id="238" class="Symbol">;</a><a id="239" href="Cubical.Foundations.HLevels.html#2763" class="Function">isOfHLevel→isOfHLevelDep</a>
+        <a id="272" class="Symbol">;</a><a id="273" href="Cubical.Foundations.HLevels.html#1413" class="Function">hProp</a>
+        <a id="287" class="Symbol">;</a><a id="288" href="Cubical.Foundations.HLevels.html#11090" class="Function">isSetHProp</a>
+        <a id="307" class="Symbol">;</a><a id="308" href="Cubical.Foundations.HLevels.html#8924" class="Function">isPropIsProp</a>
+        <a id="329" class="Symbol">)</a>
+  <a id="333" class="Keyword">public</a>
+
+<a id="341" class="Keyword">open</a> <a id="346" class="Keyword">import</a> <a id="353" href="Level.html" class="Module">Level</a>
+<a id="359" class="Keyword">open</a> <a id="364" class="Keyword">import</a> <a id="371" href="Data.Sigma.html" class="Module">Data.Sigma</a>
+
+<a id="hSet"></a><a id="383" href="HLevels.html#383" class="Function">hSet</a> <a id="388" class="Symbol">:</a> <a id="390" class="Symbol">∀</a> <a id="392" href="HLevels.html#392" class="Bound">ℓ</a> <a id="394" class="Symbol">→</a> <a id="396" href="Level.html#205" class="Function">Type</a> <a id="401" class="Symbol">(</a><a id="402" href="Agda.Primitive.html#606" class="Primitive">ℓsuc</a> <a id="407" href="HLevels.html#392" class="Bound">ℓ</a><a id="408" class="Symbol">)</a>
+<a id="410" href="HLevels.html#383" class="Function">hSet</a> <a id="415" href="HLevels.html#415" class="Bound">ℓ</a> <a id="417" class="Symbol">=</a> <a id="419" href="Agda.Builtin.Sigma.html#166" class="Record">Σ</a> <a id="421" class="Symbol">(</a><a id="422" href="Level.html#205" class="Function">Type</a> <a id="427" href="HLevels.html#415" class="Bound">ℓ</a><a id="428" class="Symbol">)</a> <a id="430" href="Cubical.Foundations.Id.html#929" class="Function">isSet</a>
+</pre></body></html>

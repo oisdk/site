@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Relation.Nullary.Discrete.Properties</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Relation.Nullary.Discrete.Properties.html" class="Module">Relation.Nullary.Discrete.Properties</a> <a id="92" class="Keyword">where</a>
+
+<a id="99" class="Keyword">open</a> <a id="104" class="Keyword">import</a> <a id="111" href="Relation.Nullary.Discrete.Base.html" class="Module">Relation.Nullary.Discrete.Base</a>
+<a id="142" class="Keyword">open</a> <a id="147" class="Keyword">import</a> <a id="154" href="Relation.Nullary.Stable.Properties.html" class="Module">Relation.Nullary.Stable.Properties</a> <a id="189" class="Keyword">using</a> <a id="195" class="Symbol">(</a><a id="196" href="Relation.Nullary.Stable.Properties.html#311" class="Function">Stable≡→isSet</a><a id="209" class="Symbol">)</a>
+<a id="211" class="Keyword">open</a> <a id="216" class="Keyword">import</a> <a id="223" href="Relation.Nullary.Decidable.Properties.html" class="Module">Relation.Nullary.Decidable.Properties</a> <a id="261" class="Keyword">using</a> <a id="267" class="Symbol">(</a><a id="268" href="Relation.Nullary.Decidable.Properties.html#592" class="Function">Dec→Stable</a><a id="278" class="Symbol">;</a> <a id="280" href="Relation.Nullary.Decidable.Properties.html#716" class="Function">isPropDec</a><a id="289" class="Symbol">)</a>
+
+<a id="292" class="Keyword">open</a> <a id="297" class="Keyword">import</a> <a id="304" href="HLevels.html" class="Module">HLevels</a>
+<a id="312" class="Keyword">open</a> <a id="317" class="Keyword">import</a> <a id="324" href="Level.html" class="Module">Level</a>
+<a id="330" class="Keyword">open</a> <a id="335" class="Keyword">import</a> <a id="342" href="Path.html" class="Module">Path</a>
+
+<a id="Discrete→isSet"></a><a id="348" href="Relation.Nullary.Discrete.Properties.html#348" class="Function">Discrete→isSet</a> <a id="363" class="Symbol">:</a>
+<a id="365" class="Markup">\end{code}</a><a id="375" class="Background">
+%&lt;*discrete-isset&gt;
+</a><a id="395" class="Markup">\begin{code}</a>
+  <a id="410" href="Relation.Nullary.Discrete.Base.html#173" class="Function">Discrete</a> <a id="419" href="Level.html#444" class="Generalizable">A</a> <a id="421" class="Symbol">→</a> <a id="423" href="Cubical.Foundations.Id.html#929" class="Function">isSet</a> <a id="429" href="Level.html#444" class="Generalizable">A</a>
+<a id="431" class="Markup">\end{code}</a><a id="441" class="Background">
+%&lt;/discrete-isset&gt;
+</a><a id="461" class="Markup">\begin{code}</a>
+<a id="474" href="Relation.Nullary.Discrete.Properties.html#348" class="Function">Discrete→isSet</a> <a id="489" href="Relation.Nullary.Discrete.Properties.html#489" class="Bound">d</a> <a id="491" class="Symbol">=</a> <a id="493" href="Relation.Nullary.Stable.Properties.html#311" class="Function">Stable≡→isSet</a> <a id="507" class="Symbol">(λ</a> <a id="510" href="Relation.Nullary.Discrete.Properties.html#510" class="Bound">x</a> <a id="512" href="Relation.Nullary.Discrete.Properties.html#512" class="Bound">y</a> <a id="514" class="Symbol">→</a> <a id="516" href="Relation.Nullary.Decidable.Properties.html#592" class="Function">Dec→Stable</a> <a id="527" class="Symbol">(</a><a id="528" href="Relation.Nullary.Discrete.Properties.html#510" class="Bound">x</a> <a id="530" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="532" href="Relation.Nullary.Discrete.Properties.html#512" class="Bound">y</a><a id="533" class="Symbol">)</a> <a id="535" class="Symbol">(</a><a id="536" href="Relation.Nullary.Discrete.Properties.html#489" class="Bound">d</a> <a id="538" href="Relation.Nullary.Discrete.Properties.html#510" class="Bound">x</a> <a id="540" href="Relation.Nullary.Discrete.Properties.html#512" class="Bound">y</a><a id="541" class="Symbol">))</a>
+
+<a id="isPropDiscrete"></a><a id="545" href="Relation.Nullary.Discrete.Properties.html#545" class="Function">isPropDiscrete</a> <a id="560" class="Symbol">:</a>
+<a id="562" class="Markup">\end{code}</a><a id="572" class="Background">
+%&lt;*is-prop-discrete&gt;
+</a><a id="594" class="Markup">\begin{code}</a>
+  <a id="609" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a> <a id="616" class="Symbol">(</a><a id="617" href="Relation.Nullary.Discrete.Base.html#173" class="Function">Discrete</a> <a id="626" href="Level.html#444" class="Generalizable">A</a><a id="627" class="Symbol">)</a>
+<a id="629" class="Markup">\end{code}</a><a id="639" class="Background">
+%&lt;/is-prop-discrete&gt;
+</a><a id="661" class="Markup">\begin{code}</a>
+<a id="674" href="Relation.Nullary.Discrete.Properties.html#545" class="Function">isPropDiscrete</a> <a id="689" href="Relation.Nullary.Discrete.Properties.html#689" class="Bound">f</a> <a id="691" href="Relation.Nullary.Discrete.Properties.html#691" class="Bound">g</a> <a id="693" href="Relation.Nullary.Discrete.Properties.html#693" class="Bound">i</a> <a id="695" href="Relation.Nullary.Discrete.Properties.html#695" class="Bound">x</a> <a id="697" href="Relation.Nullary.Discrete.Properties.html#697" class="Bound">y</a> <a id="699" class="Symbol">=</a> <a id="701" href="Relation.Nullary.Decidable.Properties.html#716" class="Function">isPropDec</a> <a id="711" class="Symbol">(</a><a id="712" href="Relation.Nullary.Discrete.Properties.html#348" class="Function">Discrete→isSet</a> <a id="727" href="Relation.Nullary.Discrete.Properties.html#689" class="Bound">f</a> <a id="729" href="Relation.Nullary.Discrete.Properties.html#695" class="Bound">x</a> <a id="731" href="Relation.Nullary.Discrete.Properties.html#697" class="Bound">y</a><a id="732" class="Symbol">)</a> <a id="734" class="Symbol">(</a><a id="735" href="Relation.Nullary.Discrete.Properties.html#689" class="Bound">f</a> <a id="737" href="Relation.Nullary.Discrete.Properties.html#695" class="Bound">x</a> <a id="739" href="Relation.Nullary.Discrete.Properties.html#697" class="Bound">y</a><a id="740" class="Symbol">)</a> <a id="742" class="Symbol">(</a><a id="743" href="Relation.Nullary.Discrete.Properties.html#691" class="Bound">g</a> <a id="745" href="Relation.Nullary.Discrete.Properties.html#695" class="Bound">x</a> <a id="747" href="Relation.Nullary.Discrete.Properties.html#697" class="Bound">y</a><a id="748" class="Symbol">)</a> <a id="750" href="Relation.Nullary.Discrete.Properties.html#693" class="Bound">i</a>
+<a id="752" class="Markup">\end{code}</a><a id="762" class="Background">
+</a></pre></body></html>

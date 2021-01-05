@@ -1,0 +1,16 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Snippets.Dec</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+<a id="47" class="Keyword">module</a> <a id="54" href="Snippets.Dec.html" class="Module">Snippets.Dec</a> <a id="67" class="Keyword">where</a>
+
+<a id="74" class="Keyword">open</a> <a id="79" class="Keyword">import</a> <a id="86" href="Level.html" class="Module">Level</a>
+<a id="92" class="Keyword">open</a> <a id="97" class="Keyword">import</a> <a id="104" href="Data.Empty.html" class="Module">Data.Empty</a>
+<a id="115" class="Markup">\end{code}</a><a id="125" class="Background">
+%&lt;*dec-def&gt;
+</a><a id="138" class="Markup">\begin{code}</a>
+<a id="151" class="Keyword">data</a> <a id="Dec"></a><a id="156" href="Snippets.Dec.html#156" class="Datatype">Dec</a> <a id="160" class="Symbol">(</a><a id="161" href="Snippets.Dec.html#161" class="Bound">A</a> <a id="163" class="Symbol">:</a> <a id="165" href="Level.html#205" class="Function">Type</a> <a id="170" href="Level.html#428" class="Generalizable">a</a><a id="171" class="Symbol">)</a> <a id="173" class="Symbol">:</a> <a id="175" href="Level.html#205" class="Function">Type</a> <a id="180" href="Snippets.Dec.html#170" class="Bound">a</a> <a id="182" class="Keyword">where</a>
+  <a id="Dec.yes"></a><a id="190" href="Snippets.Dec.html#190" class="InductiveConstructor">yes</a>  <a id="195" class="Symbol">:</a>    <a id="200" href="Snippets.Dec.html#161" class="Bound">A</a> <a id="202" class="Symbol">→</a> <a id="204" href="Snippets.Dec.html#156" class="Datatype">Dec</a> <a id="208" href="Snippets.Dec.html#161" class="Bound">A</a>
+  <a id="Dec.no"></a><a id="212" href="Snippets.Dec.html#212" class="InductiveConstructor">no</a>   <a id="217" class="Symbol">:</a> <a id="219" href="Data.Empty.Base.html#162" class="Function Operator">¬</a>  <a id="222" href="Snippets.Dec.html#161" class="Bound">A</a> <a id="224" class="Symbol">→</a> <a id="226" href="Snippets.Dec.html#156" class="Datatype">Dec</a> <a id="230" href="Snippets.Dec.html#161" class="Bound">A</a>
+<a id="232" class="Markup">\end{code}</a><a id="242" class="Background">
+%&lt;/dec-def&gt;
+</a></pre></body></html>

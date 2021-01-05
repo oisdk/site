@@ -1,0 +1,25 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Snippets.Topos</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Snippets.Topos.html" class="Module">Snippets.Topos</a> <a id="70" class="Keyword">where</a>
+
+<a id="77" class="Keyword">open</a> <a id="82" class="Keyword">import</a> <a id="89" href="Prelude.html" class="Module">Prelude</a>
+
+<a id="98" class="Markup">\end{code}</a><a id="108" class="Background">
+%&lt;*prop-univ&gt;
+</a><a id="123" class="Markup">\begin{code}</a>
+<a id="Prop-univ"></a><a id="136" href="Snippets.Topos.html#136" class="Function">Prop-univ</a> <a id="146" class="Symbol">:</a> <a id="148" href="Level.html#274" class="Function">Type₁</a>
+<a id="154" href="Snippets.Topos.html#136" class="Function">Prop-univ</a> <a id="164" class="Symbol">=</a> <a id="166" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="169" href="Snippets.Topos.html#169" class="Bound">t</a> <a id="171" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="173" href="Level.html#255" class="Function">Type₀</a> <a id="179" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="181" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a> <a id="188" href="Snippets.Topos.html#169" class="Bound">t</a>
+<a id="190" class="Markup">\end{code}</a><a id="200" class="Background">
+%&lt;/prop-univ&gt;
+</a><a id="215" class="Markup">\begin{code}</a>
+<a id="prop-resize"></a><a id="228" href="Snippets.Topos.html#228" class="Function">prop-resize</a> <a id="240" class="Symbol">:</a> <a id="242" class="Symbol">(</a><a id="243" href="Snippets.Topos.html#243" class="Bound">u</a> <a id="245" class="Symbol">:</a> <a id="247" href="Agda.Primitive.html#423" class="Postulate">Level</a><a id="252" class="Symbol">)</a> <a id="254" class="Symbol">→</a> <a id="256" href="Level.html#205" class="Function">Type</a> <a id="261" class="Symbol">(</a><a id="262" href="Agda.Primitive.html#606" class="Primitive">ℓsuc</a> <a id="267" class="Symbol">(</a><a id="268" href="Agda.Primitive.html#606" class="Primitive">ℓsuc</a> <a id="273" href="Snippets.Topos.html#243" class="Bound">u</a><a id="274" class="Symbol">))</a>
+<a id="277" href="Snippets.Topos.html#228" class="Function">prop-resize</a> <a id="289" href="Snippets.Topos.html#289" class="Bound">u</a> <a id="291" class="Symbol">=</a>
+<a id="293" class="Markup">\end{code}</a><a id="303" class="Background">
+%&lt;*prop-resize&gt;
+</a><a id="320" class="Markup">\begin{code}</a>
+  <a id="335" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="338" href="Snippets.Topos.html#338" class="Bound">t</a> <a id="340" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="342" href="Level.html#205" class="Function">Type</a> <a id="347" href="Snippets.Topos.html#289" class="Bound">u</a> <a id="349" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="351" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a> <a id="358" href="Snippets.Topos.html#338" class="Bound">t</a> <a id="360" href="Agda.Builtin.Cubical.Glue.html#1051" class="Function Operator">≃</a> <a id="362" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="365" href="Snippets.Topos.html#365" class="Bound">t</a> <a id="367" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="369" href="Level.html#205" class="Function">Type</a> <a id="374" class="Symbol">(</a><a id="375" href="Agda.Primitive.html#606" class="Primitive">ℓsuc</a> <a id="380" href="Snippets.Topos.html#289" class="Bound">u</a><a id="381" class="Symbol">)</a> <a id="383" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="385" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a> <a id="392" href="Snippets.Topos.html#365" class="Bound">t</a>
+<a id="394" class="Markup">\end{code}</a><a id="404" class="Background">
+%&lt;/prop-resize&gt;
+</a></pre></body></html>

@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Data.Maybe.Sugar</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Data.Maybe.Sugar.html" class="Module">Data.Maybe.Sugar</a> <a id="72" class="Keyword">where</a>
+
+<a id="79" class="Keyword">open</a> <a id="84" class="Keyword">import</a> <a id="91" href="Prelude.html" class="Module">Prelude</a>
+<a id="99" class="Keyword">open</a> <a id="104" class="Keyword">import</a> <a id="111" href="Data.Maybe.html" class="Module">Data.Maybe</a>
+
+<a id="123" class="Keyword">infixl</a> <a id="130" class="Number">4</a> <a id="132" href="Data.Maybe.Sugar.html#397" class="Function Operator">_&lt;*&gt;_</a>
+<a id="138" class="Markup">\end{code}</a><a id="148" class="Background">
+%&lt;*bind&gt;
+</a><a id="158" class="Markup">\begin{code}</a>
+<a id="_&gt;&gt;=_"></a><a id="171" href="Data.Maybe.Sugar.html#171" class="Function Operator">_&gt;&gt;=_</a> <a id="177" class="Symbol">:</a> <a id="179" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="185" href="Level.html#444" class="Generalizable">A</a> <a id="187" class="Symbol">→</a> <a id="189" class="Symbol">(</a><a id="190" href="Level.html#444" class="Generalizable">A</a> <a id="192" class="Symbol">→</a> <a id="194" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="200" href="Level.html#458" class="Generalizable">B</a><a id="201" class="Symbol">)</a> <a id="203" class="Symbol">→</a> <a id="205" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="211" href="Level.html#458" class="Generalizable">B</a>
+<a id="213" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>  <a id="222" href="Data.Maybe.Sugar.html#171" class="Function Operator">&gt;&gt;=</a> <a id="226" href="Data.Maybe.Sugar.html#226" class="Bound">f</a> <a id="228" class="Symbol">=</a> <a id="230" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>
+<a id="238" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="243" href="Data.Maybe.Sugar.html#243" class="Bound">x</a>   <a id="247" href="Data.Maybe.Sugar.html#171" class="Function Operator">&gt;&gt;=</a> <a id="251" href="Data.Maybe.Sugar.html#251" class="Bound">f</a> <a id="253" class="Symbol">=</a> <a id="255" href="Data.Maybe.Sugar.html#251" class="Bound">f</a> <a id="257" href="Data.Maybe.Sugar.html#243" class="Bound">x</a>
+<a id="259" class="Markup">\end{code}</a><a id="269" class="Background">
+%&lt;/bind&gt;
+</a><a id="279" class="Markup">\begin{code}</a>
+
+<a id="293" class="Markup">\end{code}</a><a id="303" class="Background">
+%&lt;*pure&gt;
+</a><a id="313" class="Markup">\begin{code}</a>
+<a id="pure"></a><a id="326" href="Data.Maybe.Sugar.html#326" class="Function">pure</a> <a id="331" class="Symbol">:</a> <a id="333" href="Level.html#444" class="Generalizable">A</a> <a id="335" class="Symbol">→</a> <a id="337" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="343" href="Level.html#444" class="Generalizable">A</a>
+<a id="345" href="Data.Maybe.Sugar.html#326" class="Function">pure</a> <a id="350" class="Symbol">=</a> <a id="352" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a>
+<a id="357" class="Markup">\end{code}</a><a id="367" class="Background">
+%&lt;/pure&gt;
+%&lt;*ap&gt;
+</a><a id="384" class="Markup">\begin{code}</a>
+<a id="_&lt;*&gt;_"></a><a id="397" href="Data.Maybe.Sugar.html#397" class="Function Operator">_&lt;*&gt;_</a> <a id="403" class="Symbol">:</a>  <a id="406" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="412" class="Symbol">(</a><a id="413" href="Level.html#444" class="Generalizable">A</a> <a id="415" class="Symbol">→</a> <a id="417" href="Level.html#458" class="Generalizable">B</a><a id="418" class="Symbol">)</a> <a id="420" class="Symbol">→</a>
+         <a id="431" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="437" href="Level.html#444" class="Generalizable">A</a> <a id="439" class="Symbol">→</a>
+         <a id="450" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="456" href="Level.html#458" class="Generalizable">B</a>
+<a id="458" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>   <a id="468" href="Data.Maybe.Sugar.html#397" class="Function Operator">&lt;*&gt;</a> <a id="472" href="Data.Maybe.Sugar.html#472" class="Bound">xs</a>       <a id="481" class="Symbol">=</a> <a id="483" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>
+<a id="491" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="496" href="Data.Maybe.Sugar.html#496" class="Bound">f</a>    <a id="501" href="Data.Maybe.Sugar.html#397" class="Function Operator">&lt;*&gt;</a> <a id="505" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>  <a id="514" class="Symbol">=</a> <a id="516" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>
+<a id="524" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="529" href="Data.Maybe.Sugar.html#529" class="Bound">f</a>    <a id="534" href="Data.Maybe.Sugar.html#397" class="Function Operator">&lt;*&gt;</a> <a id="538" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="543" href="Data.Maybe.Sugar.html#543" class="Bound">x</a>   <a id="547" class="Symbol">=</a> <a id="549" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="554" class="Symbol">(</a><a id="555" href="Data.Maybe.Sugar.html#529" class="Bound">f</a> <a id="557" href="Data.Maybe.Sugar.html#543" class="Bound">x</a><a id="558" class="Symbol">)</a>
+<a id="560" class="Markup">\end{code}</a><a id="570" class="Background">
+%&lt;/ap&gt;
+</a><a id="578" class="Markup">\begin{code}</a>
+<a id="_&gt;&gt;_"></a><a id="591" href="Data.Maybe.Sugar.html#591" class="Function Operator">_&gt;&gt;_</a> <a id="596" class="Symbol">:</a> <a id="598" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="604" href="Level.html#444" class="Generalizable">A</a> <a id="606" class="Symbol">→</a> <a id="608" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="614" href="Level.html#458" class="Generalizable">B</a> <a id="616" class="Symbol">→</a> <a id="618" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="624" href="Level.html#458" class="Generalizable">B</a>
+<a id="626" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a> <a id="634" href="Data.Maybe.Sugar.html#591" class="Function Operator">&gt;&gt;</a> <a id="637" class="Symbol">_</a> <a id="639" class="Symbol">=</a> <a id="641" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>
+<a id="649" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="654" class="Symbol">_</a>  <a id="657" href="Data.Maybe.Sugar.html#591" class="Function Operator">&gt;&gt;</a> <a id="660" href="Data.Maybe.Sugar.html#660" class="Bound">y</a> <a id="662" class="Symbol">=</a> <a id="664" href="Data.Maybe.Sugar.html#660" class="Bound">y</a>
+
+<a id="guard"></a><a id="667" href="Data.Maybe.Sugar.html#667" class="Function">guard</a> <a id="673" class="Symbol">:</a> <a id="675" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="680" class="Symbol">→</a> <a id="682" href="Data.Maybe.Base.html#139" class="Datatype">Maybe</a> <a id="688" href="Agda.Builtin.Unit.html#164" class="Record">⊤</a>
+<a id="690" href="Data.Maybe.Sugar.html#667" class="Function">guard</a> <a id="696" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a> <a id="702" class="Symbol">=</a> <a id="704" href="Data.Maybe.Base.html#175" class="InductiveConstructor">nothing</a>
+<a id="712" href="Data.Maybe.Sugar.html#667" class="Function">guard</a> <a id="718" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>  <a id="724" class="Symbol">=</a> <a id="726" href="Data.Maybe.Base.html#196" class="InductiveConstructor">just</a> <a id="731" href="Agda.Builtin.Unit.html#201" class="InductiveConstructor">tt</a>
+<a id="734" class="Markup">\end{code}</a><a id="744" class="Background">
+</a></pre></body></html>

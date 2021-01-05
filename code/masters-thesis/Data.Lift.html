@@ -1,0 +1,13 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Data.Lift</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="Data.Lift.html" class="Module">Data.Lift</a> <a id="52" class="Keyword">where</a>
+
+<a id="59" class="Keyword">open</a> <a id="64" class="Keyword">import</a> <a id="71" href="Level.html" class="Module">Level</a>
+
+<a id="78" class="Keyword">record</a> <a id="Lift"></a><a id="85" href="Data.Lift.html#85" class="Record">Lift</a> <a id="90" class="Symbol">{</a><a id="91" href="Data.Lift.html#91" class="Bound">a</a><a id="92" class="Symbol">}</a> <a id="94" href="Data.Lift.html#94" class="Bound">ℓ</a> <a id="96" class="Symbol">(</a><a id="97" href="Data.Lift.html#97" class="Bound">A</a> <a id="99" class="Symbol">:</a> <a id="101" href="Level.html#205" class="Function">Type</a> <a id="106" href="Data.Lift.html#91" class="Bound">a</a><a id="107" class="Symbol">)</a> <a id="109" class="Symbol">:</a> <a id="111" href="Level.html#205" class="Function">Type</a> <a id="116" class="Symbol">(</a><a id="117" href="Data.Lift.html#91" class="Bound">a</a> <a id="119" href="Agda.Primitive.html#636" class="Primitive Operator">ℓ⊔</a> <a id="122" href="Data.Lift.html#94" class="Bound">ℓ</a><a id="123" class="Symbol">)</a> <a id="125" class="Keyword">where</a>
+  <a id="133" class="Keyword">constructor</a> <a id="lift"></a><a id="145" href="Data.Lift.html#145" class="InductiveConstructor">lift</a>
+  <a id="152" class="Keyword">field</a> <a id="Lift.lower"></a><a id="158" href="Data.Lift.html#158" class="Field">lower</a> <a id="164" class="Symbol">:</a> <a id="166" href="Data.Lift.html#97" class="Bound">A</a>
+
+<a id="169" class="Keyword">open</a> <a id="174" href="Data.Lift.html#85" class="Module">Lift</a> <a id="179" class="Keyword">public</a>
+</pre></body></html>

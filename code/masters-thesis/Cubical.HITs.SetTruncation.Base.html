@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Cubical.HITs.SetTruncation.Base</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Comment">{-
+
+This file contains:
+
+- Definition of set truncations
+
+-}</a>
+<a id="62" class="Symbol">{-#</a> <a id="66" class="Keyword">OPTIONS</a> <a id="74" class="Pragma">--cubical</a> <a id="84" class="Pragma">--safe</a> <a id="91" class="Symbol">#-}</a>
+<a id="95" class="Keyword">module</a> <a id="102" href="Cubical.HITs.SetTruncation.Base.html" class="Module">Cubical.HITs.SetTruncation.Base</a> <a id="134" class="Keyword">where</a>
+
+<a id="141" class="Keyword">open</a> <a id="146" class="Keyword">import</a> <a id="153" href="Cubical.Core.Primitives.html" class="Module">Cubical.Core.Primitives</a>
+
+<a id="178" class="Comment">-- set truncation as a higher inductive type:</a>
+
+<a id="225" class="Keyword">data</a> <a id="∥_∥₀"></a><a id="230" href="Cubical.HITs.SetTruncation.Base.html#230" class="Datatype Operator">∥_∥₀</a> <a id="235" class="Symbol">{</a><a id="236" href="Cubical.HITs.SetTruncation.Base.html#236" class="Bound">ℓ</a><a id="237" class="Symbol">}</a> <a id="239" class="Symbol">(</a><a id="240" href="Cubical.HITs.SetTruncation.Base.html#240" class="Bound">A</a> <a id="242" class="Symbol">:</a> <a id="244" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="249" href="Cubical.HITs.SetTruncation.Base.html#236" class="Bound">ℓ</a><a id="250" class="Symbol">)</a> <a id="252" class="Symbol">:</a> <a id="254" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="259" href="Cubical.HITs.SetTruncation.Base.html#236" class="Bound">ℓ</a> <a id="261" class="Keyword">where</a>
+  <a id="∥_∥₀.∣_∣₀"></a><a id="269" href="Cubical.HITs.SetTruncation.Base.html#269" class="InductiveConstructor Operator">∣_∣₀</a> <a id="274" class="Symbol">:</a> <a id="276" href="Cubical.HITs.SetTruncation.Base.html#240" class="Bound">A</a> <a id="278" class="Symbol">→</a> <a id="280" href="Cubical.HITs.SetTruncation.Base.html#230" class="Datatype Operator">∥</a> <a id="282" href="Cubical.HITs.SetTruncation.Base.html#240" class="Bound">A</a> <a id="284" href="Cubical.HITs.SetTruncation.Base.html#230" class="Datatype Operator">∥₀</a>
+  <a id="∥_∥₀.squash₀"></a><a id="289" href="Cubical.HITs.SetTruncation.Base.html#289" class="InductiveConstructor">squash₀</a> <a id="297" class="Symbol">:</a> <a id="299" class="Symbol">∀</a> <a id="301" class="Symbol">(</a><a id="302" href="Cubical.HITs.SetTruncation.Base.html#302" class="Bound">x</a> <a id="304" href="Cubical.HITs.SetTruncation.Base.html#304" class="Bound">y</a> <a id="306" class="Symbol">:</a> <a id="308" href="Cubical.HITs.SetTruncation.Base.html#230" class="Datatype Operator">∥</a> <a id="310" href="Cubical.HITs.SetTruncation.Base.html#240" class="Bound">A</a> <a id="312" href="Cubical.HITs.SetTruncation.Base.html#230" class="Datatype Operator">∥₀</a><a id="314" class="Symbol">)</a> <a id="316" class="Symbol">(</a><a id="317" href="Cubical.HITs.SetTruncation.Base.html#317" class="Bound">p</a> <a id="319" href="Cubical.HITs.SetTruncation.Base.html#319" class="Bound">q</a> <a id="321" class="Symbol">:</a> <a id="323" href="Cubical.HITs.SetTruncation.Base.html#302" class="Bound">x</a> <a id="325" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="327" href="Cubical.HITs.SetTruncation.Base.html#304" class="Bound">y</a><a id="328" class="Symbol">)</a> <a id="330" class="Symbol">→</a> <a id="332" href="Cubical.HITs.SetTruncation.Base.html#317" class="Bound">p</a> <a id="334" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="336" href="Cubical.HITs.SetTruncation.Base.html#319" class="Bound">q</a>
+</pre></body></html>

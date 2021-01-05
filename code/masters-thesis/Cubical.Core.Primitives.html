@@ -1,0 +1,207 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Cubical.Core.Primitives</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Comment">{-
+
+This file document and export the main primitives of Cubical Agda. It
+also defines some basic derived operations (composition and filling).
+
+-}</a>
+<a id="149" class="Symbol">{-#</a> <a id="153" class="Keyword">OPTIONS</a> <a id="161" class="Pragma">--cubical</a> <a id="171" class="Pragma">--safe</a> <a id="178" class="Symbol">#-}</a>
+<a id="182" class="Keyword">module</a> <a id="189" href="Cubical.Core.Primitives.html" class="Module">Cubical.Core.Primitives</a> <a id="213" class="Keyword">where</a>
+
+<a id="220" class="Keyword">open</a> <a id="225" class="Keyword">import</a> <a id="232" href="Agda.Builtin.Cubical.Path.html" class="Module">Agda.Builtin.Cubical.Path</a> <a id="258" class="Keyword">public</a>
+<a id="265" class="Keyword">open</a> <a id="270" class="Keyword">import</a> <a id="277" href="Agda.Builtin.Cubical.Sub.html" class="Module">Agda.Builtin.Cubical.Sub</a> <a id="302" class="Keyword">public</a>
+  <a id="311" class="Keyword">renaming</a> <a id="320" class="Symbol">(</a> <a id="322" href="Agda.Builtin.Cubical.Sub.html#216" class="Postulate">inc</a> <a id="326" class="Symbol">to</a> <a id="Sub.inc"></a><a id="329" href="Cubical.Core.Primitives.html#329" class="Postulate">inS</a>
+           <a id="344" class="Symbol">;</a> <a id="346" href="Agda.Builtin.Cubical.Sub.html#318" class="Primitive">primSubOut</a> <a id="357" class="Symbol">to</a> <a id="Sub.primSubOut"></a><a id="360" href="Cubical.Core.Primitives.html#360" class="Primitive">outS</a>
+           <a id="376" class="Symbol">)</a>
+<a id="378" class="Keyword">open</a> <a id="383" class="Keyword">import</a> <a id="390" href="Agda.Primitive.Cubical.html" class="Module">Agda.Primitive.Cubical</a> <a id="413" class="Keyword">public</a>
+  <a id="422" class="Keyword">renaming</a> <a id="431" class="Symbol">(</a> <a id="433" href="Agda.Primitive.Cubical.html#241" class="Primitive">primIMin</a>       <a id="448" class="Symbol">to</a> <a id="primIMin"></a><a id="451" href="Cubical.Core.Primitives.html#451" class="Primitive">_∧_</a>  <a id="456" class="Comment">-- I → I → I</a>
+           <a id="480" class="Symbol">;</a> <a id="482" href="Agda.Primitive.Cubical.html#266" class="Primitive">primIMax</a>       <a id="497" class="Symbol">to</a> <a id="primIMax"></a><a id="500" href="Cubical.Core.Primitives.html#500" class="Primitive">_∨_</a>  <a id="505" class="Comment">-- I → I → I</a>
+           <a id="529" class="Symbol">;</a> <a id="531" href="Agda.Primitive.Cubical.html#291" class="Primitive">primINeg</a>       <a id="546" class="Symbol">to</a> <a id="primINeg"></a><a id="549" href="Cubical.Core.Primitives.html#549" class="Primitive">~_</a>   <a id="554" class="Comment">-- I → I</a>
+           <a id="574" class="Symbol">;</a> <a id="576" href="Agda.Primitive.Cubical.html#759" class="Postulate">isOneEmpty</a>     <a id="591" class="Symbol">to</a> <a id="isOneEmpty"></a><a id="594" href="Cubical.Core.Primitives.html#594" class="Postulate">empty</a>
+           <a id="611" class="Symbol">;</a> <a id="613" href="Agda.Primitive.Cubical.html#1140" class="Primitive">primComp</a>       <a id="628" class="Symbol">to</a> <a id="primComp"></a><a id="631" href="Cubical.Core.Primitives.html#631" class="Primitive">comp</a>
+           <a id="647" class="Symbol">;</a> <a id="649" href="Agda.Primitive.Cubical.html#1367" class="Primitive">primHComp</a>      <a id="664" class="Symbol">to</a> <a id="primHComp"></a><a id="667" href="Cubical.Core.Primitives.html#667" class="Primitive">hcomp</a>
+           <a id="684" class="Symbol">;</a> <a id="686" href="Agda.Primitive.Cubical.html#1294" class="Primitive">primTransp</a>     <a id="701" class="Symbol">to</a> <a id="primTransp"></a><a id="704" href="Cubical.Core.Primitives.html#704" class="Primitive">transp</a>
+           <a id="722" class="Symbol">;</a> <a id="724" href="Agda.Primitive.Cubical.html#377" class="Postulate">itIsOne</a>        <a id="739" class="Symbol">to</a> <a id="itIsOne"></a><a id="742" href="Cubical.Core.Primitives.html#742" class="Postulate">1=1</a> <a id="746" class="Symbol">)</a>
+<a id="748" class="Keyword">open</a> <a id="753" class="Keyword">import</a> <a id="760" href="Agda.Primitive.html" class="Module">Agda.Primitive</a> <a id="775" class="Keyword">public</a>
+  <a id="784" class="Keyword">using</a>    <a id="793" class="Symbol">(</a> <a id="795" href="Agda.Primitive.html#423" class="Postulate">Level</a> <a id="801" class="Symbol">)</a>
+  <a id="805" class="Keyword">renaming</a> <a id="814" class="Symbol">(</a> <a id="816" href="Agda.Primitive.html#590" class="Primitive">lzero</a> <a id="822" class="Symbol">to</a> <a id="lzero"></a><a id="825" href="Cubical.Core.Primitives.html#825" class="Primitive">ℓ-zero</a>
+           <a id="843" class="Symbol">;</a> <a id="845" href="Agda.Primitive.html#606" class="Primitive">lsuc</a>  <a id="851" class="Symbol">to</a> <a id="lsuc"></a><a id="854" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a>
+           <a id="871" class="Symbol">;</a> <a id="873" href="Agda.Primitive.html#636" class="Primitive Operator">_⊔_</a>   <a id="879" class="Symbol">to</a> <a id="_⊔_"></a><a id="882" href="Cubical.Core.Primitives.html#882" class="Primitive Operator">ℓ-max</a>
+           <a id="899" class="Symbol">;</a> <a id="901" href="Agda.Primitive.html#787" class="Primitive">Setω</a>  <a id="907" class="Symbol">to</a> <a id="Setω"></a><a id="910" href="Cubical.Core.Primitives.html#910" class="Primitive">Typeω</a> <a id="916" class="Symbol">)</a>
+<a id="918" class="Keyword">open</a> <a id="923" class="Keyword">import</a> <a id="930" href="Agda.Builtin.Sigma.html" class="Module">Agda.Builtin.Sigma</a> <a id="949" class="Keyword">public</a>
+
+<a id="Type"></a><a id="957" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="962" class="Symbol">:</a> <a id="964" class="Symbol">(</a><a id="965" href="Cubical.Core.Primitives.html#965" class="Bound">ℓ</a> <a id="967" class="Symbol">:</a> <a id="969" href="Agda.Primitive.html#423" class="Postulate">Level</a><a id="974" class="Symbol">)</a> <a id="976" class="Symbol">→</a> <a id="978" class="PrimitiveType">Set</a> <a id="982" class="Symbol">(</a><a id="983" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a> <a id="989" href="Cubical.Core.Primitives.html#965" class="Bound">ℓ</a><a id="990" class="Symbol">)</a>
+<a id="992" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="997" href="Cubical.Core.Primitives.html#997" class="Bound">ℓ</a> <a id="999" class="Symbol">=</a> <a id="1001" class="PrimitiveType">Set</a> <a id="1005" href="Cubical.Core.Primitives.html#997" class="Bound">ℓ</a>
+
+<a id="Type₀"></a><a id="1008" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a> <a id="1014" class="Symbol">:</a> <a id="1016" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1021" class="Symbol">(</a><a id="1022" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a> <a id="1028" href="Cubical.Core.Primitives.html#825" class="Primitive">ℓ-zero</a><a id="1034" class="Symbol">)</a>
+<a id="1036" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a> <a id="1042" class="Symbol">=</a> <a id="1044" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1049" href="Cubical.Core.Primitives.html#825" class="Primitive">ℓ-zero</a>
+
+<a id="Type₁"></a><a id="1057" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a> <a id="1063" class="Symbol">:</a> <a id="1065" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1070" class="Symbol">(</a><a id="1071" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a> <a id="1077" class="Symbol">(</a><a id="1078" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a> <a id="1084" href="Cubical.Core.Primitives.html#825" class="Primitive">ℓ-zero</a><a id="1090" class="Symbol">))</a>
+<a id="1093" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a> <a id="1099" class="Symbol">=</a> <a id="1101" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1106" class="Symbol">(</a><a id="1107" href="Cubical.Core.Primitives.html#854" class="Primitive">ℓ-suc</a> <a id="1113" href="Cubical.Core.Primitives.html#825" class="Primitive">ℓ-zero</a><a id="1119" class="Symbol">)</a>
+
+<a id="1122" class="Comment">-- This file document the Cubical Agda primitives. The primitives</a>
+<a id="1188" class="Comment">-- themselves are bound by the Agda files imported above.</a>
+
+<a id="1247" class="Comment">-- * The Interval</a>
+<a id="1265" class="Comment">-- I : Typeω</a>
+
+<a id="1279" class="Comment">-- Endpoints, Connections, Reversal</a>
+<a id="1315" class="Comment">-- i0 i1   : I</a>
+<a id="1330" class="Comment">-- _∧_ _∨_ : I → I → I</a>
+<a id="1353" class="Comment">-- ~_      : I → I</a>
+
+
+<a id="1374" class="Comment">-- * Dependent path type. (Path over Path)</a>
+
+<a id="1418" class="Comment">-- Introduced with lambda abstraction and eliminated with application,</a>
+<a id="1489" class="Comment">-- just like function types.</a>
+
+<a id="1519" class="Comment">-- PathP : ∀ {ℓ} (A : I → Type ℓ) → A i0 → A i1 → Type ℓ</a>
+
+<a id="1577" class="Keyword">infix</a> <a id="1583" class="Number">4</a> <a id="1585" href="Cubical.Core.Primitives.html#1593" class="Function Operator">_[_≡_]</a>
+
+<a id="_[_≡_]"></a><a id="1593" href="Cubical.Core.Primitives.html#1593" class="Function Operator">_[_≡_]</a> <a id="1600" class="Symbol">:</a> <a id="1602" class="Symbol">∀</a> <a id="1604" class="Symbol">{</a><a id="1605" href="Cubical.Core.Primitives.html#1605" class="Bound">ℓ</a><a id="1606" class="Symbol">}</a> <a id="1608" class="Symbol">(</a><a id="1609" href="Cubical.Core.Primitives.html#1609" class="Bound">A</a> <a id="1611" class="Symbol">:</a> <a id="1613" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a> <a id="1615" class="Symbol">→</a> <a id="1617" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1622" href="Cubical.Core.Primitives.html#1605" class="Bound">ℓ</a><a id="1623" class="Symbol">)</a> <a id="1625" class="Symbol">→</a> <a id="1627" href="Cubical.Core.Primitives.html#1609" class="Bound">A</a> <a id="1629" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a> <a id="1632" class="Symbol">→</a> <a id="1634" href="Cubical.Core.Primitives.html#1609" class="Bound">A</a> <a id="1636" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a> <a id="1639" class="Symbol">→</a> <a id="1641" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1646" href="Cubical.Core.Primitives.html#1605" class="Bound">ℓ</a>
+<a id="1648" href="Cubical.Core.Primitives.html#1593" class="Function Operator">_[_≡_]</a> <a id="1655" class="Symbol">=</a> <a id="1657" href="Agda.Builtin.Cubical.Path.html#190" class="Postulate">PathP</a>
+
+
+<a id="1665" class="Comment">-- Non dependent path types</a>
+
+<a id="Path"></a><a id="1694" href="Cubical.Core.Primitives.html#1694" class="Function">Path</a> <a id="1699" class="Symbol">:</a> <a id="1701" class="Symbol">∀</a> <a id="1703" class="Symbol">{</a><a id="1704" href="Cubical.Core.Primitives.html#1704" class="Bound">ℓ</a><a id="1705" class="Symbol">}</a> <a id="1707" class="Symbol">(</a><a id="1708" href="Cubical.Core.Primitives.html#1708" class="Bound">A</a> <a id="1710" class="Symbol">:</a> <a id="1712" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1717" href="Cubical.Core.Primitives.html#1704" class="Bound">ℓ</a><a id="1718" class="Symbol">)</a> <a id="1720" class="Symbol">→</a> <a id="1722" href="Cubical.Core.Primitives.html#1708" class="Bound">A</a> <a id="1724" class="Symbol">→</a> <a id="1726" href="Cubical.Core.Primitives.html#1708" class="Bound">A</a> <a id="1728" class="Symbol">→</a> <a id="1730" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1735" href="Cubical.Core.Primitives.html#1704" class="Bound">ℓ</a>
+<a id="1737" href="Cubical.Core.Primitives.html#1694" class="Function">Path</a> <a id="1742" href="Cubical.Core.Primitives.html#1742" class="Bound">A</a> <a id="1744" href="Cubical.Core.Primitives.html#1744" class="Bound">a</a> <a id="1746" href="Cubical.Core.Primitives.html#1746" class="Bound">b</a> <a id="1748" class="Symbol">=</a> <a id="1750" href="Agda.Builtin.Cubical.Path.html#190" class="Postulate">PathP</a> <a id="1756" class="Symbol">(λ</a> <a id="1759" href="Cubical.Core.Primitives.html#1759" class="Bound">_</a> <a id="1761" class="Symbol">→</a> <a id="1763" href="Cubical.Core.Primitives.html#1742" class="Bound">A</a><a id="1764" class="Symbol">)</a> <a id="1766" href="Cubical.Core.Primitives.html#1744" class="Bound">a</a> <a id="1768" href="Cubical.Core.Primitives.html#1746" class="Bound">b</a>
+
+<a id="1771" class="Comment">-- PathP (λ i → A) x y gets printed as x ≡ y when A does not mention i.</a>
+<a id="1843" class="Comment">--  _≡_ : ∀ {ℓ} {A : Type ℓ} → A → A → Type ℓ</a>
+<a id="1889" class="Comment">--  _≡_ {A = A} = PathP (λ _ → A)</a>
+
+
+<a id="1925" class="Comment">-- * @IsOne r@ represents the constraint &quot;r = i1&quot;.</a>
+<a id="1976" class="Comment">-- Often we will use &quot;φ&quot; for elements of I, when we intend to use them</a>
+<a id="2047" class="Comment">-- with IsOne (or Partial[P]).</a>
+<a id="2078" class="Comment">-- IsOne : I → Typeω</a>
+
+<a id="2100" class="Comment">-- i1 is indeed equal to i1.</a>
+<a id="2129" class="Comment">-- 1=1 : IsOne i1</a>
+
+
+<a id="2149" class="Comment">-- * Types of partial elements, and their dependent version.</a>
+
+<a id="2211" class="Comment">-- &quot;Partial φ A&quot; is a special version of &quot;IsOne φ → A&quot; with a more</a>
+<a id="2278" class="Comment">-- extensional judgmental equality.</a>
+<a id="2314" class="Comment">-- &quot;PartialP φ A&quot; allows &quot;A&quot; to be defined only on &quot;φ&quot;.</a>
+
+<a id="2371" class="Comment">-- Partial : ∀ {ℓ} → I → Type ℓ → Typeω</a>
+<a id="2411" class="Comment">-- PartialP : ∀ {ℓ} → (φ : I) → Partial φ (Type ℓ) → Typeω</a>
+
+<a id="2471" class="Comment">-- Partial elements are introduced by pattern matching with (r = i0)</a>
+<a id="2540" class="Comment">-- or (r = i1) constraints, like so:</a>
+
+<a id="2578" class="Keyword">private</a>
+  <a id="sys"></a><a id="2588" href="Cubical.Core.Primitives.html#2588" class="Function">sys</a> <a id="2592" class="Symbol">:</a> <a id="2594" class="Symbol">∀</a> <a id="2596" href="Cubical.Core.Primitives.html#2596" class="Bound">i</a> <a id="2598" class="Symbol">→</a> <a id="2600" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="2608" class="Symbol">(</a><a id="2609" href="Cubical.Core.Primitives.html#2596" class="Bound">i</a> <a id="2611" href="Cubical.Core.Primitives.html#500" class="Primitive Operator">∨</a> <a id="2613" href="Cubical.Core.Primitives.html#549" class="Primitive Operator">~</a> <a id="2615" href="Cubical.Core.Primitives.html#2596" class="Bound">i</a><a id="2616" class="Symbol">)</a> <a id="2618" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a>
+  <a id="2626" href="Cubical.Core.Primitives.html#2588" class="Function">sys</a> <a id="2630" href="Cubical.Core.Primitives.html#2630" class="Bound">i</a> <a id="2632" class="Symbol">(</a><a id="2633" href="Cubical.Core.Primitives.html#2630" class="Bound">i</a> <a id="2635" class="Symbol">=</a> <a id="2637" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a><a id="2639" class="Symbol">)</a> <a id="2641" class="Symbol">=</a> <a id="2643" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+  <a id="2651" href="Cubical.Core.Primitives.html#2588" class="Function">sys</a> <a id="2655" href="Cubical.Core.Primitives.html#2655" class="Bound">i</a> <a id="2657" class="Symbol">(</a><a id="2658" href="Cubical.Core.Primitives.html#2655" class="Bound">i</a> <a id="2660" class="Symbol">=</a> <a id="2662" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="2664" class="Symbol">)</a> <a id="2666" class="Symbol">=</a> <a id="2668" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a> <a id="2674" class="Symbol">→</a> <a id="2676" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+
+  <a id="2685" class="Comment">-- It also works with pattern matching lambdas:</a>
+  <a id="2735" class="Comment">--  http://wiki.portal.chalmers.se/agda/pmwiki.php?n=ReferenceManual.PatternMatchingLambdas</a>
+  <a id="sys&#39;"></a><a id="2829" href="Cubical.Core.Primitives.html#2829" class="Function">sys&#39;</a> <a id="2834" class="Symbol">:</a> <a id="2836" class="Symbol">∀</a> <a id="2838" href="Cubical.Core.Primitives.html#2838" class="Bound">i</a> <a id="2840" class="Symbol">→</a> <a id="2842" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="2850" class="Symbol">(</a><a id="2851" href="Cubical.Core.Primitives.html#2838" class="Bound">i</a> <a id="2853" href="Cubical.Core.Primitives.html#500" class="Primitive Operator">∨</a> <a id="2855" href="Cubical.Core.Primitives.html#549" class="Primitive Operator">~</a> <a id="2857" href="Cubical.Core.Primitives.html#2838" class="Bound">i</a><a id="2858" class="Symbol">)</a> <a id="2860" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a>
+  <a id="2868" href="Cubical.Core.Primitives.html#2829" class="Function">sys&#39;</a> <a id="2873" href="Cubical.Core.Primitives.html#2873" class="Bound">i</a> <a id="2875" class="Symbol">=</a> <a id="2877" class="Symbol">λ</a> <a id="2879" class="Symbol">{</a> <a id="2881" class="Symbol">(</a><a id="2882" href="Cubical.Core.Primitives.html#2873" class="Bound">i</a> <a id="2884" class="Symbol">=</a> <a id="2886" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a><a id="2888" class="Symbol">)</a> <a id="2890" class="Symbol">→</a> <a id="2892" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+             <a id="2911" class="Symbol">;</a> <a id="2913" class="Symbol">(</a><a id="2914" href="Cubical.Core.Primitives.html#2873" class="Bound">i</a> <a id="2916" class="Symbol">=</a> <a id="2918" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="2920" class="Symbol">)</a> <a id="2922" class="Symbol">→</a> <a id="2924" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a> <a id="2930" class="Symbol">→</a> <a id="2932" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+             <a id="2951" class="Symbol">}</a>
+
+  <a id="2956" class="Comment">-- When the cases overlap they must agree.</a>
+  <a id="sys2"></a><a id="3001" href="Cubical.Core.Primitives.html#3001" class="Function">sys2</a> <a id="3006" class="Symbol">:</a> <a id="3008" class="Symbol">∀</a> <a id="3010" href="Cubical.Core.Primitives.html#3010" class="Bound">i</a> <a id="3012" href="Cubical.Core.Primitives.html#3012" class="Bound">j</a> <a id="3014" class="Symbol">→</a> <a id="3016" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="3024" class="Symbol">(</a><a id="3025" href="Cubical.Core.Primitives.html#3010" class="Bound">i</a> <a id="3027" href="Cubical.Core.Primitives.html#500" class="Primitive Operator">∨</a> <a id="3029" class="Symbol">(</a><a id="3030" href="Cubical.Core.Primitives.html#3010" class="Bound">i</a> <a id="3032" href="Cubical.Core.Primitives.html#451" class="Primitive Operator">∧</a> <a id="3034" href="Cubical.Core.Primitives.html#3012" class="Bound">j</a><a id="3035" class="Symbol">))</a> <a id="3038" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a>
+  <a id="3046" href="Cubical.Core.Primitives.html#3001" class="Function">sys2</a> <a id="3051" href="Cubical.Core.Primitives.html#3051" class="Bound">i</a> <a id="3053" href="Cubical.Core.Primitives.html#3053" class="Bound">j</a> <a id="3055" class="Symbol">=</a> <a id="3057" class="Symbol">λ</a> <a id="3059" class="Symbol">{</a> <a id="3061" class="Symbol">(</a><a id="3062" href="Cubical.Core.Primitives.html#3051" class="Bound">i</a> <a id="3064" class="Symbol">=</a> <a id="3066" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="3068" class="Symbol">)</a>          <a id="3079" class="Symbol">→</a> <a id="3081" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+               <a id="3102" class="Symbol">;</a> <a id="3104" class="Symbol">(</a><a id="3105" href="Cubical.Core.Primitives.html#3051" class="Bound">i</a> <a id="3107" class="Symbol">=</a> <a id="3109" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="3111" class="Symbol">)</a> <a id="3113" class="Symbol">(</a><a id="3114" href="Cubical.Core.Primitives.html#3053" class="Bound">j</a> <a id="3116" class="Symbol">=</a> <a id="3118" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="3120" class="Symbol">)</a> <a id="3122" class="Symbol">→</a> <a id="3124" href="Cubical.Core.Primitives.html#1008" class="Function">Type₀</a>
+               <a id="3145" class="Symbol">}</a>
+
+  <a id="3150" class="Comment">-- (i0 = i1) is actually absurd.</a>
+  <a id="sys3"></a><a id="3185" href="Cubical.Core.Primitives.html#3185" class="Function">sys3</a> <a id="3190" class="Symbol">:</a> <a id="3192" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="3200" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a> <a id="3203" href="Cubical.Core.Primitives.html#1057" class="Function">Type₁</a>
+  <a id="3211" href="Cubical.Core.Primitives.html#3185" class="Function">sys3</a> <a id="3216" class="Symbol">=</a> <a id="3218" class="Symbol">λ</a> <a id="3220" class="Symbol">{</a> <a id="3222" class="Symbol">()</a> <a id="3225" class="Symbol">}</a>
+
+
+<a id="3229" class="Comment">-- * There are cubical subtypes as in CCHM. Note that these are not</a>
+<a id="3297" class="Comment">-- fibrant (hence in Typeω):</a>
+
+<a id="_[_↦_]"></a><a id="3327" href="Cubical.Core.Primitives.html#3327" class="Function Operator">_[_↦_]</a> <a id="3334" class="Symbol">:</a> <a id="3336" class="Symbol">∀</a> <a id="3338" class="Symbol">{</a><a id="3339" href="Cubical.Core.Primitives.html#3339" class="Bound">ℓ</a><a id="3340" class="Symbol">}</a> <a id="3342" class="Symbol">(</a><a id="3343" href="Cubical.Core.Primitives.html#3343" class="Bound">A</a> <a id="3345" class="Symbol">:</a> <a id="3347" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="3352" href="Cubical.Core.Primitives.html#3339" class="Bound">ℓ</a><a id="3353" class="Symbol">)</a> <a id="3355" class="Symbol">(</a><a id="3356" href="Cubical.Core.Primitives.html#3356" class="Bound">φ</a> <a id="3358" class="Symbol">:</a> <a id="3360" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a><a id="3361" class="Symbol">)</a> <a id="3363" class="Symbol">(</a><a id="3364" href="Cubical.Core.Primitives.html#3364" class="Bound">u</a> <a id="3366" class="Symbol">:</a> <a id="3368" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="3376" href="Cubical.Core.Primitives.html#3356" class="Bound">φ</a> <a id="3378" href="Cubical.Core.Primitives.html#3343" class="Bound">A</a><a id="3379" class="Symbol">)</a> <a id="3381" class="Symbol">→</a> <a id="3383" href="Cubical.Core.Primitives.html#910" class="Primitive">Typeω</a>
+<a id="3389" href="Cubical.Core.Primitives.html#3389" class="Bound">A</a> <a id="3391" href="Cubical.Core.Primitives.html#3327" class="Function Operator">[</a> <a id="3393" href="Cubical.Core.Primitives.html#3393" class="Bound">φ</a> <a id="3395" href="Cubical.Core.Primitives.html#3327" class="Function Operator">↦</a> <a id="3397" href="Cubical.Core.Primitives.html#3397" class="Bound">u</a> <a id="3399" href="Cubical.Core.Primitives.html#3327" class="Function Operator">]</a> <a id="3401" class="Symbol">=</a> <a id="3403" href="Agda.Builtin.Cubical.Sub.html#191" class="Postulate">Sub</a> <a id="3407" href="Cubical.Core.Primitives.html#3389" class="Bound">A</a> <a id="3409" href="Cubical.Core.Primitives.html#3393" class="Bound">φ</a> <a id="3411" href="Cubical.Core.Primitives.html#3397" class="Bound">u</a>
+
+<a id="3414" class="Keyword">infix</a> <a id="3420" class="Number">4</a> <a id="3422" href="Cubical.Core.Primitives.html#3327" class="Function Operator">_[_↦_]</a>
+
+<a id="3430" class="Comment">-- Any element u : A can be seen as an element of A [ φ ↦ u ] which</a>
+<a id="3498" class="Comment">-- agrees with u on φ:</a>
+
+<a id="3522" class="Comment">-- inS : ∀ {ℓ} {A : Type ℓ} {φ} (u : A) → A [ φ ↦ (λ _ → u) ]</a>
+
+<a id="3585" class="Comment">-- One can also forget that an element agrees with u on φ:</a>
+
+<a id="3645" class="Comment">-- outS : ∀ {ℓ} {A : Type ℓ} {φ : I} {u : Partial φ A} → A [ φ ↦ u ] → A</a>
+
+
+<a id="3720" class="Comment">-- * Composition operation according to [CCHM 18].</a>
+<a id="3771" class="Comment">-- When calling &quot;comp A φ u a&quot; Agda makes sure that &quot;a&quot; agrees with &quot;u i0&quot; on &quot;φ&quot;.</a>
+<a id="3854" class="Comment">-- compCCHM : ∀ {ℓ} (A : (i : I) → Type ℓ) (φ : I) (u : ∀ i → Partial φ (A i)) (a : A i0) → A i1</a>
+
+<a id="3952" class="Comment">-- Note: this is not recommended to use, instead use the CHM</a>
+<a id="4013" class="Comment">-- primitives! The reason is that these work with HITs and produce</a>
+<a id="4080" class="Comment">-- fewer empty systems.</a>
+
+
+<a id="4106" class="Comment">-- * Generalized transport and homogeneous composition [CHM 18].</a>
+
+<a id="4172" class="Comment">-- When calling &quot;transp A φ a&quot; Agda makes sure that &quot;A&quot; is constant on &quot;φ&quot;.</a>
+<a id="4248" class="Comment">-- transp : ∀ {ℓ} (A : I → Type ℓ) (φ : I) (a : A i0) → A i1</a>
+
+<a id="4310" class="Comment">-- When calling &quot;hcomp A φ u a&quot; Agda makes sure that &quot;a&quot; agrees with &quot;u i0&quot; on &quot;φ&quot;.</a>
+<a id="4394" class="Comment">-- hcomp : ∀ {ℓ} {A : Type ℓ} {φ : I} (u : I → Partial φ A) (a : A) → A</a>
+
+<a id="4467" class="Keyword">private</a>
+  <a id="4477" class="Keyword">variable</a>
+    <a id="4490" href="Cubical.Core.Primitives.html#4490" class="Generalizable">ℓ</a>  <a id="4493" class="Symbol">:</a> <a id="4495" href="Agda.Primitive.html#423" class="Postulate">Level</a>
+    <a id="4505" href="Cubical.Core.Primitives.html#4505" class="Generalizable">ℓ′</a> <a id="4508" class="Symbol">:</a> <a id="4510" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a> <a id="4512" class="Symbol">→</a> <a id="4514" href="Agda.Primitive.html#423" class="Postulate">Level</a>
+
+<a id="4521" class="Comment">-- Homogeneous filling</a>
+<a id="hfill"></a><a id="4544" href="Cubical.Core.Primitives.html#4544" class="Function">hfill</a> <a id="4550" class="Symbol">:</a> <a id="4552" class="Symbol">{</a><a id="4553" href="Cubical.Core.Primitives.html#4553" class="Bound">A</a> <a id="4555" class="Symbol">:</a> <a id="4557" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="4562" href="Cubical.Core.Primitives.html#4490" class="Generalizable">ℓ</a><a id="4563" class="Symbol">}</a>
+        <a id="4573" class="Symbol">{</a><a id="4574" href="Cubical.Core.Primitives.html#4574" class="Bound">φ</a> <a id="4576" class="Symbol">:</a> <a id="4578" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a><a id="4579" class="Symbol">}</a>
+        <a id="4589" class="Symbol">(</a><a id="4590" href="Cubical.Core.Primitives.html#4590" class="Bound">u</a> <a id="4592" class="Symbol">:</a> <a id="4594" class="Symbol">∀</a> <a id="4596" href="Cubical.Core.Primitives.html#4596" class="Bound">i</a> <a id="4598" class="Symbol">→</a> <a id="4600" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="4608" href="Cubical.Core.Primitives.html#4574" class="Bound">φ</a> <a id="4610" href="Cubical.Core.Primitives.html#4553" class="Bound">A</a><a id="4611" class="Symbol">)</a>
+        <a id="4621" class="Symbol">(</a><a id="4622" href="Cubical.Core.Primitives.html#4622" class="Bound">u0</a> <a id="4625" class="Symbol">:</a> <a id="4627" href="Cubical.Core.Primitives.html#4553" class="Bound">A</a> <a id="4629" href="Cubical.Core.Primitives.html#3327" class="Function Operator">[</a> <a id="4631" href="Cubical.Core.Primitives.html#4574" class="Bound">φ</a> <a id="4633" href="Cubical.Core.Primitives.html#3327" class="Function Operator">↦</a> <a id="4635" href="Cubical.Core.Primitives.html#4590" class="Bound">u</a> <a id="4637" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a> <a id="4640" href="Cubical.Core.Primitives.html#3327" class="Function Operator">]</a><a id="4641" class="Symbol">)</a>
+        <a id="4651" class="Comment">-----------------------</a>
+        <a id="4683" class="Symbol">(</a><a id="4684" href="Cubical.Core.Primitives.html#4684" class="Bound">i</a> <a id="4686" class="Symbol">:</a> <a id="4688" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a><a id="4689" class="Symbol">)</a> <a id="4691" class="Symbol">→</a> <a id="4693" href="Cubical.Core.Primitives.html#4553" class="Bound">A</a>
+<a id="4695" href="Cubical.Core.Primitives.html#4544" class="Function">hfill</a> <a id="4701" class="Symbol">{</a><a id="4702" class="Argument">φ</a> <a id="4704" class="Symbol">=</a> <a id="4706" href="Cubical.Core.Primitives.html#4706" class="Bound">φ</a><a id="4707" class="Symbol">}</a> <a id="4709" href="Cubical.Core.Primitives.html#4709" class="Bound">u</a> <a id="4711" href="Cubical.Core.Primitives.html#4711" class="Bound">u0</a> <a id="4714" href="Cubical.Core.Primitives.html#4714" class="Bound">i</a> <a id="4716" class="Symbol">=</a>
+  <a id="4720" href="Cubical.Core.Primitives.html#667" class="Primitive">hcomp</a> <a id="4726" class="Symbol">(λ</a> <a id="4729" href="Cubical.Core.Primitives.html#4729" class="Bound">j</a> <a id="4731" class="Symbol">→</a> <a id="4733" class="Symbol">λ</a> <a id="4735" class="Symbol">{</a> <a id="4737" class="Symbol">(</a><a id="4738" href="Cubical.Core.Primitives.html#4706" class="Bound">φ</a> <a id="4740" class="Symbol">=</a> <a id="4742" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="4744" class="Symbol">)</a> <a id="4746" class="Symbol">→</a> <a id="4748" href="Cubical.Core.Primitives.html#4709" class="Bound">u</a> <a id="4750" class="Symbol">(</a><a id="4751" href="Cubical.Core.Primitives.html#4714" class="Bound">i</a> <a id="4753" href="Cubical.Core.Primitives.html#451" class="Primitive Operator">∧</a> <a id="4755" href="Cubical.Core.Primitives.html#4729" class="Bound">j</a><a id="4756" class="Symbol">)</a> <a id="4758" href="Cubical.Core.Primitives.html#742" class="Postulate">1=1</a>
+                 <a id="4779" class="Symbol">;</a> <a id="4781" class="Symbol">(</a><a id="4782" href="Cubical.Core.Primitives.html#4714" class="Bound">i</a> <a id="4784" class="Symbol">=</a> <a id="4786" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a><a id="4788" class="Symbol">)</a> <a id="4790" class="Symbol">→</a> <a id="4792" href="Cubical.Core.Primitives.html#360" class="Primitive">outS</a> <a id="4797" href="Cubical.Core.Primitives.html#4711" class="Bound">u0</a> <a id="4800" class="Symbol">})</a>
+        <a id="4811" class="Symbol">(</a><a id="4812" href="Cubical.Core.Primitives.html#360" class="Primitive">outS</a> <a id="4817" href="Cubical.Core.Primitives.html#4711" class="Bound">u0</a><a id="4819" class="Symbol">)</a>
+
+<a id="4822" class="Comment">-- Heterogeneous composition can defined as in CHM, however we use the</a>
+<a id="4893" class="Comment">-- builtin one as it doesn&#39;t require u0 to be a cubical subtype. This</a>
+<a id="4963" class="Comment">-- reduces the number of inS&#39;s a lot.</a>
+<a id="5001" class="Comment">-- comp : (A : ∀ i → Type (ℓ′ i))</a>
+<a id="5035" class="Comment">--        {φ : I}</a>
+<a id="5053" class="Comment">--        (u : ∀ i → Partial φ (A i))</a>
+<a id="5091" class="Comment">--        (u0 : A i0 [ φ ↦ u i0 ])</a>
+<a id="5126" class="Comment">--      → ---------------------------</a>
+<a id="5164" class="Comment">--        A i1</a>
+<a id="5179" class="Comment">-- comp A {φ = φ} u u0 =</a>
+<a id="5204" class="Comment">--   hcomp (λ i → λ { (φ = i1) → transp (λ j → A (i ∨ j)) i (u _ 1=1) })</a>
+<a id="5277" class="Comment">--         (transp A i0 (outS u0))</a>
+
+<a id="5313" class="Comment">-- Heterogeneous filling defined using comp</a>
+<a id="fill"></a><a id="5357" href="Cubical.Core.Primitives.html#5357" class="Function">fill</a> <a id="5362" class="Symbol">:</a> <a id="5364" class="Symbol">(</a><a id="5365" href="Cubical.Core.Primitives.html#5365" class="Bound">A</a> <a id="5367" class="Symbol">:</a> <a id="5369" class="Symbol">∀</a> <a id="5371" href="Cubical.Core.Primitives.html#5371" class="Bound">i</a> <a id="5373" class="Symbol">→</a> <a id="5375" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="5380" class="Symbol">(</a><a id="5381" href="Cubical.Core.Primitives.html#4505" class="Generalizable">ℓ′</a> <a id="5384" href="Cubical.Core.Primitives.html#5371" class="Bound">i</a><a id="5385" class="Symbol">))</a>
+       <a id="5395" class="Symbol">{</a><a id="5396" href="Cubical.Core.Primitives.html#5396" class="Bound">φ</a> <a id="5398" class="Symbol">:</a> <a id="5400" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a><a id="5401" class="Symbol">}</a>
+       <a id="5410" class="Symbol">(</a><a id="5411" href="Cubical.Core.Primitives.html#5411" class="Bound">u</a> <a id="5413" class="Symbol">:</a> <a id="5415" class="Symbol">∀</a> <a id="5417" href="Cubical.Core.Primitives.html#5417" class="Bound">i</a> <a id="5419" class="Symbol">→</a> <a id="5421" href="Agda.Primitive.Cubical.html#699" class="Primitive">Partial</a> <a id="5429" href="Cubical.Core.Primitives.html#5396" class="Bound">φ</a> <a id="5431" class="Symbol">(</a><a id="5432" href="Cubical.Core.Primitives.html#5365" class="Bound">A</a> <a id="5434" href="Cubical.Core.Primitives.html#5417" class="Bound">i</a><a id="5435" class="Symbol">))</a>
+       <a id="5445" class="Symbol">(</a><a id="5446" href="Cubical.Core.Primitives.html#5446" class="Bound">u0</a> <a id="5449" class="Symbol">:</a> <a id="5451" href="Cubical.Core.Primitives.html#5365" class="Bound">A</a> <a id="5453" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a> <a id="5456" href="Cubical.Core.Primitives.html#3327" class="Function Operator">[</a> <a id="5458" href="Cubical.Core.Primitives.html#5396" class="Bound">φ</a> <a id="5460" href="Cubical.Core.Primitives.html#3327" class="Function Operator">↦</a> <a id="5462" href="Cubical.Core.Primitives.html#5411" class="Bound">u</a> <a id="5464" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a> <a id="5467" href="Cubical.Core.Primitives.html#3327" class="Function Operator">]</a><a id="5468" class="Symbol">)</a>
+       <a id="5477" class="Comment">---------------------------</a>
+       <a id="5512" class="Symbol">(</a><a id="5513" href="Cubical.Core.Primitives.html#5513" class="Bound">i</a> <a id="5515" class="Symbol">:</a> <a id="5517" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a><a id="5518" class="Symbol">)</a> <a id="5520" class="Symbol">→</a> <a id="5522" href="Cubical.Core.Primitives.html#5365" class="Bound">A</a> <a id="5524" href="Cubical.Core.Primitives.html#5513" class="Bound">i</a>
+<a id="5526" href="Cubical.Core.Primitives.html#5357" class="Function">fill</a> <a id="5531" href="Cubical.Core.Primitives.html#5531" class="Bound">A</a> <a id="5533" class="Symbol">{</a><a id="5534" class="Argument">φ</a> <a id="5536" class="Symbol">=</a> <a id="5538" href="Cubical.Core.Primitives.html#5538" class="Bound">φ</a><a id="5539" class="Symbol">}</a> <a id="5541" href="Cubical.Core.Primitives.html#5541" class="Bound">u</a> <a id="5543" href="Cubical.Core.Primitives.html#5543" class="Bound">u0</a> <a id="5546" href="Cubical.Core.Primitives.html#5546" class="Bound">i</a> <a id="5548" class="Symbol">=</a>
+  <a id="5552" href="Cubical.Core.Primitives.html#631" class="Primitive">comp</a> <a id="5557" class="Symbol">(λ</a> <a id="5560" href="Cubical.Core.Primitives.html#5560" class="Bound">j</a> <a id="5562" class="Symbol">→</a> <a id="5564" href="Cubical.Core.Primitives.html#5531" class="Bound">A</a> <a id="5566" class="Symbol">(</a><a id="5567" href="Cubical.Core.Primitives.html#5546" class="Bound">i</a> <a id="5569" href="Cubical.Core.Primitives.html#451" class="Primitive Operator">∧</a> <a id="5571" href="Cubical.Core.Primitives.html#5560" class="Bound">j</a><a id="5572" class="Symbol">))</a>
+       <a id="5582" class="Symbol">(λ</a> <a id="5585" href="Cubical.Core.Primitives.html#5585" class="Bound">j</a> <a id="5587" class="Symbol">→</a> <a id="5589" class="Symbol">λ</a> <a id="5591" class="Symbol">{</a> <a id="5593" class="Symbol">(</a><a id="5594" href="Cubical.Core.Primitives.html#5538" class="Bound">φ</a> <a id="5596" class="Symbol">=</a> <a id="5598" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a><a id="5600" class="Symbol">)</a> <a id="5602" class="Symbol">→</a> <a id="5604" href="Cubical.Core.Primitives.html#5541" class="Bound">u</a> <a id="5606" class="Symbol">(</a><a id="5607" href="Cubical.Core.Primitives.html#5546" class="Bound">i</a> <a id="5609" href="Cubical.Core.Primitives.html#451" class="Primitive Operator">∧</a> <a id="5611" href="Cubical.Core.Primitives.html#5585" class="Bound">j</a><a id="5612" class="Symbol">)</a> <a id="5614" href="Cubical.Core.Primitives.html#742" class="Postulate">1=1</a>
+                <a id="5634" class="Symbol">;</a> <a id="5636" class="Symbol">(</a><a id="5637" href="Cubical.Core.Primitives.html#5546" class="Bound">i</a> <a id="5639" class="Symbol">=</a> <a id="5641" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a><a id="5643" class="Symbol">)</a> <a id="5645" class="Symbol">→</a> <a id="5647" href="Cubical.Core.Primitives.html#360" class="Primitive">outS</a> <a id="5652" href="Cubical.Core.Primitives.html#5543" class="Bound">u0</a> <a id="5655" class="Symbol">})</a>
+       <a id="5665" class="Symbol">(</a><a id="5666" href="Cubical.Core.Primitives.html#360" class="Primitive">outS</a> <a id="5671" href="Cubical.Core.Primitives.html#5543" class="Bound">u0</a><a id="5673" class="Symbol">)</a>
+
+<a id="5676" class="Comment">-- Σ-types</a>
+<a id="5687" class="Keyword">infix</a> <a id="5693" class="Number">2</a> <a id="5695" href="Cubical.Core.Primitives.html#5705" class="Function">Σ-syntax</a>
+
+<a id="Σ-syntax"></a><a id="5705" href="Cubical.Core.Primitives.html#5705" class="Function">Σ-syntax</a> <a id="5714" class="Symbol">:</a> <a id="5716" class="Symbol">∀</a> <a id="5718" class="Symbol">{</a><a id="5719" href="Cubical.Core.Primitives.html#5719" class="Bound">ℓ</a> <a id="5721" href="Cubical.Core.Primitives.html#5721" class="Bound">ℓ&#39;</a><a id="5723" class="Symbol">}</a> <a id="5725" class="Symbol">(</a><a id="5726" href="Cubical.Core.Primitives.html#5726" class="Bound">A</a> <a id="5728" class="Symbol">:</a> <a id="5730" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="5735" href="Cubical.Core.Primitives.html#5719" class="Bound">ℓ</a><a id="5736" class="Symbol">)</a> <a id="5738" class="Symbol">(</a><a id="5739" href="Cubical.Core.Primitives.html#5739" class="Bound">B</a> <a id="5741" class="Symbol">:</a> <a id="5743" href="Cubical.Core.Primitives.html#5726" class="Bound">A</a> <a id="5745" class="Symbol">→</a> <a id="5747" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="5752" href="Cubical.Core.Primitives.html#5721" class="Bound">ℓ&#39;</a><a id="5754" class="Symbol">)</a> <a id="5756" class="Symbol">→</a> <a id="5758" href="Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="5763" class="Symbol">(</a><a id="5764" href="Cubical.Core.Primitives.html#882" class="Primitive">ℓ-max</a> <a id="5770" href="Cubical.Core.Primitives.html#5719" class="Bound">ℓ</a> <a id="5772" href="Cubical.Core.Primitives.html#5721" class="Bound">ℓ&#39;</a><a id="5774" class="Symbol">)</a>
+<a id="5776" href="Cubical.Core.Primitives.html#5705" class="Function">Σ-syntax</a> <a id="5785" class="Symbol">=</a> <a id="5787" href="Agda.Builtin.Sigma.html#166" class="Record">Σ</a>
+
+<a id="5790" class="Keyword">syntax</a> <a id="5797" href="Cubical.Core.Primitives.html#5705" class="Function">Σ-syntax</a> <a id="5806" class="Bound">A</a> <a id="5808" class="Symbol">(λ</a> <a id="5811" class="Bound">x</a> <a id="5813" class="Symbol">→</a> <a id="5815" class="Bound">B</a><a id="5816" class="Symbol">)</a> <a id="5818" class="Symbol">=</a> <a id="5820" class="Function">Σ[</a> <a id="5823" class="Bound">x</a> <a id="5825" class="Function">∈</a> <a id="5827" class="Bound">A</a> <a id="5829" class="Function">]</a> <a id="5831" class="Bound">B</a>
+
+</pre></body></html>

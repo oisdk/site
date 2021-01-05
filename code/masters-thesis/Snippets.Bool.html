@@ -1,0 +1,172 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Snippets.Bool</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Snippets.Bool.html" class="Module">Snippets.Bool</a> <a id="69" class="Keyword">where</a>
+
+<a id="76" class="Keyword">open</a> <a id="81" class="Keyword">import</a> <a id="88" href="Level.html" class="Module">Level</a>
+
+<a id="95" class="Keyword">module</a> <a id="BoolDefn"></a><a id="102" href="Snippets.Bool.html#102" class="Module">BoolDefn</a> <a id="111" class="Keyword">where</a>
+<a id="117" class="Markup">\end{code}</a><a id="127" class="Background">
+%&lt;*bool-def&gt;
+</a><a id="141" class="Markup">\begin{code}</a>
+  <a id="156" class="Keyword">data</a> <a id="BoolDefn.Bool"></a><a id="161" href="Snippets.Bool.html#161" class="Datatype">Bool</a> <a id="166" class="Symbol">:</a> <a id="168" href="Level.html#255" class="Function">Type₀</a> <a id="174" class="Keyword">where</a>
+    <a id="BoolDefn.Bool.false"></a><a id="184" href="Snippets.Bool.html#184" class="InductiveConstructor">false</a>  <a id="191" class="Symbol">:</a> <a id="193" href="Snippets.Bool.html#161" class="Datatype">Bool</a>
+    <a id="BoolDefn.Bool.true"></a><a id="202" href="Snippets.Bool.html#202" class="InductiveConstructor">true</a>   <a id="209" class="Symbol">:</a> <a id="211" href="Snippets.Bool.html#161" class="Datatype">Bool</a>
+<a id="216" class="Markup">\end{code}</a><a id="226" class="Background">
+%&lt;/bool-def&gt;
+</a><a id="240" class="Markup">\begin{code}</a>
+
+<a id="254" class="Keyword">open</a> <a id="259" class="Keyword">import</a> <a id="266" href="Data.Bool.html" class="Module">Data.Bool</a> <a id="276" class="Keyword">hiding</a> <a id="283" class="Symbol">(</a><a id="284" href="Data.Bool.html#303" class="Function">not</a><a id="287" class="Symbol">)</a>
+<a id="289" class="Keyword">open</a> <a id="294" class="Keyword">import</a> <a id="301" href="Prelude.html" class="Module">Prelude</a> <a id="309" class="Keyword">hiding</a> <a id="316" class="Symbol">(</a><a id="317" href="Cubical.Core.Primitives.html#451" class="Primitive">_∧_</a><a id="320" class="Symbol">;</a> <a id="322" href="Data.Bool.html#303" class="Function">not</a><a id="325" class="Symbol">)</a>
+
+<a id="328" class="Markup">\end{code}</a><a id="338" class="Background">
+%&lt;*bool-val&gt;
+</a><a id="352" class="Markup">\begin{code}</a>
+<a id="a-boolean"></a><a id="365" href="Snippets.Bool.html#365" class="Function">a-boolean</a> <a id="375" class="Symbol">:</a> <a id="377" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
+<a id="382" href="Snippets.Bool.html#365" class="Function">a-boolean</a> <a id="392" class="Symbol">=</a> <a id="394" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>
+<a id="399" class="Markup">\end{code}</a><a id="409" class="Background">
+%&lt;/bool-val&gt;
+</a><a id="423" class="Markup">\begin{code}</a>
+<a id="436" class="Keyword">module</a> <a id="LambdaNot"></a><a id="443" href="Snippets.Bool.html#443" class="Module">LambdaNot</a> <a id="453" class="Keyword">where</a>
+<a id="459" class="Markup">\end{code}</a><a id="469" class="Background">
+%&lt;*lambda-not&gt;
+</a><a id="485" class="Markup">\begin{code}</a>
+  <a id="LambdaNot.not"></a><a id="500" href="Snippets.Bool.html#500" class="Function">not</a> <a id="504" class="Symbol">:</a> <a id="506" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="511" class="Symbol">→</a> <a id="513" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
+  <a id="520" href="Snippets.Bool.html#500" class="Function">not</a> <a id="524" class="Symbol">=</a> <a id="526" class="Symbol">λ</a>  <a id="529" class="Symbol">{</a> <a id="531" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="538" class="Symbol">→</a> <a id="540" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>
+            <a id="557" class="Symbol">;</a> <a id="559" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="566" class="Symbol">→</a> <a id="568" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+            <a id="586" class="Symbol">}</a>
+<a id="588" class="Markup">\end{code}</a><a id="598" class="Background">
+%&lt;/lambda-not&gt;
+%&lt;*not-def&gt;
+</a><a id="626" class="Markup">\begin{code}</a>
+<a id="not"></a><a id="639" href="Snippets.Bool.html#639" class="Function">not</a> <a id="643" class="Symbol">:</a> <a id="645" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="650" class="Symbol">→</a> <a id="652" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
+<a id="657" href="Snippets.Bool.html#639" class="Function">not</a> <a id="661" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="668" class="Symbol">=</a> <a id="670" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>
+<a id="675" href="Snippets.Bool.html#639" class="Function">not</a> <a id="679" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="686" class="Symbol">=</a> <a id="688" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="694" class="Markup">\end{code}</a><a id="704" class="Background">
+%&lt;/not-def&gt;
+</a><a id="717" class="Markup">\begin{code}</a>
+<a id="730" class="Keyword">infixl</a> <a id="737" class="Number">6</a> <a id="739" href="Snippets.Bool.html#779" class="Function Operator">_∧_</a>
+<a id="743" class="Markup">\end{code}</a><a id="753" class="Background">
+%&lt;*and-def&gt;
+</a><a id="766" class="Markup">\begin{code}</a>
+<a id="_∧_"></a><a id="779" href="Snippets.Bool.html#779" class="Function Operator">_∧_</a> <a id="783" class="Symbol">:</a> <a id="785" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="790" class="Symbol">→</a> <a id="792" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="797" class="Symbol">→</a> <a id="799" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
+<a id="804" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="811" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="813" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="820" class="Symbol">=</a> <a id="822" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="828" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="835" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="837" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="844" class="Symbol">=</a> <a id="846" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="852" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="859" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="861" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="868" class="Symbol">=</a> <a id="870" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="876" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="883" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="885" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="892" class="Symbol">=</a> <a id="894" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>
+<a id="899" class="Markup">\end{code}</a><a id="909" class="Background">
+%&lt;/and-def&gt;
+</a><a id="922" class="Markup">\begin{code}</a>
+<a id="935" class="Keyword">open</a> <a id="940" class="Keyword">import</a> <a id="947" href="Cardinality.Finite.SplitEnumerable.html" class="Module">Cardinality.Finite.SplitEnumerable</a>
+<a id="982" class="Keyword">open</a> <a id="987" class="Keyword">import</a> <a id="994" href="Cardinality.Finite.SplitEnumerable.Search.html" class="Module">Cardinality.Finite.SplitEnumerable.Search</a>
+<a id="1036" class="Keyword">open</a> <a id="1041" class="Keyword">import</a> <a id="1048" href="Cardinality.Finite.SplitEnumerable.Instances.html" class="Module">Cardinality.Finite.SplitEnumerable.Instances</a>
+<a id="1093" class="Keyword">open</a> <a id="1098" class="Keyword">import</a> <a id="1105" href="Cardinality.Finite.SplitEnumerable.Inductive.html" class="Module">Cardinality.Finite.SplitEnumerable.Inductive</a>
+<a id="1150" class="Keyword">open</a> <a id="1155" class="Keyword">import</a> <a id="1162" href="Cardinality.Finite.SplitEnumerable.Isomorphism.html" class="Module">Cardinality.Finite.SplitEnumerable.Isomorphism</a>
+<a id="1209" class="Keyword">open</a> <a id="1214" class="Keyword">import</a> <a id="1221" href="Cardinality.Finite.ManifestBishop.html" class="Module">Cardinality.Finite.ManifestBishop</a>
+<a id="1255" class="Keyword">open</a> <a id="1260" class="Keyword">import</a> <a id="1267" href="Data.Bool.Properties.html" class="Module">Data.Bool.Properties</a> <a id="1288" class="Keyword">using</a> <a id="1294" class="Symbol">(</a><a id="1295" href="Data.Bool.Properties.html#329" class="Function">discreteBool</a><a id="1307" class="Symbol">)</a>
+
+<a id="1310" class="Keyword">infixl</a> <a id="1317" class="Number">4</a> <a id="1319" href="Snippets.Bool.html#1323" class="Function Operator">_≟_</a>
+<a id="_≟_"></a><a id="1323" href="Snippets.Bool.html#1323" class="Function Operator">_≟_</a> <a id="1327" class="Symbol">=</a> <a id="1329" href="Data.Bool.Properties.html#329" class="Function">discreteBool</a>
+<a id="1342" class="Markup">\end{code}</a><a id="1352" class="Background">
+%&lt;*bool-assoc-auto-proof&gt;
+</a><a id="1379" class="Markup">\begin{code}</a>
+<a id="∧-assoc"></a><a id="1392" href="Snippets.Bool.html#1392" class="Function">∧-assoc</a> <a id="1400" class="Symbol">:</a> <a id="1402" class="Symbol">∀</a> <a id="1404" href="Snippets.Bool.html#1404" class="Bound">x</a> <a id="1406" href="Snippets.Bool.html#1406" class="Bound">y</a> <a id="1408" href="Snippets.Bool.html#1408" class="Bound">z</a> <a id="1410" class="Symbol">→</a> <a id="1412" class="Symbol">(</a><a id="1413" href="Snippets.Bool.html#1404" class="Bound">x</a> <a id="1415" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1417" href="Snippets.Bool.html#1406" class="Bound">y</a><a id="1418" class="Symbol">)</a> <a id="1420" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1422" href="Snippets.Bool.html#1408" class="Bound">z</a> <a id="1424" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="1426" href="Snippets.Bool.html#1404" class="Bound">x</a> <a id="1428" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1430" class="Symbol">(</a><a id="1431" href="Snippets.Bool.html#1406" class="Bound">y</a> <a id="1433" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1435" href="Snippets.Bool.html#1408" class="Bound">z</a><a id="1436" class="Symbol">)</a>
+<a id="1438" href="Snippets.Bool.html#1392" class="Function">∧-assoc</a> <a id="1446" class="Symbol">=</a> <a id="1448" href="Cardinality.Finite.SplitEnumerable.Search.html#3532" class="Function">∀↯ⁿ</a> <a id="1452" class="Number">3</a> <a id="1454" class="Symbol">λ</a> <a id="1456" href="Snippets.Bool.html#1456" class="Bound">x</a> <a id="1458" href="Snippets.Bool.html#1458" class="Bound">y</a> <a id="1460" href="Snippets.Bool.html#1460" class="Bound">z</a> <a id="1462" class="Symbol">→</a> <a id="1464" class="Symbol">(</a><a id="1465" href="Snippets.Bool.html#1456" class="Bound">x</a> <a id="1467" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1469" href="Snippets.Bool.html#1458" class="Bound">y</a><a id="1470" class="Symbol">)</a> <a id="1472" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1474" href="Snippets.Bool.html#1460" class="Bound">z</a> <a id="1476" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="1478" href="Snippets.Bool.html#1456" class="Bound">x</a> <a id="1480" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1482" class="Symbol">(</a><a id="1483" href="Snippets.Bool.html#1458" class="Bound">y</a> <a id="1485" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1487" href="Snippets.Bool.html#1460" class="Bound">z</a><a id="1488" class="Symbol">)</a>
+<a id="1490" class="Markup">\end{code}</a><a id="1500" class="Background">
+%&lt;/bool-assoc-auto-proof&gt;
+%&lt;*some-assoc&gt;
+</a><a id="1542" class="Markup">\begin{code}</a>
+<a id="some-assoc"></a><a id="1555" href="Snippets.Bool.html#1555" class="Function">some-assoc</a> <a id="1566" class="Symbol">:</a> <a id="1568" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="1571" href="Snippets.Bool.html#1571" class="Bound">f</a> <a id="1573" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="1575" class="Symbol">(</a><a id="1576" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="1581" class="Symbol">→</a> <a id="1583" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="1588" class="Symbol">→</a> <a id="1590" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a><a id="1594" class="Symbol">)</a> <a id="1596" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="1598" class="Symbol">∀</a> <a id="1600" href="Snippets.Bool.html#1600" class="Bound">x</a> <a id="1602" href="Snippets.Bool.html#1602" class="Bound">y</a> <a id="1604" href="Snippets.Bool.html#1604" class="Bound">z</a> <a id="1606" class="Symbol">→</a> <a id="1608" href="Snippets.Bool.html#1571" class="Bound">f</a> <a id="1610" class="Symbol">(</a><a id="1611" href="Snippets.Bool.html#1571" class="Bound">f</a> <a id="1613" href="Snippets.Bool.html#1600" class="Bound">x</a> <a id="1615" href="Snippets.Bool.html#1602" class="Bound">y</a><a id="1616" class="Symbol">)</a> <a id="1618" href="Snippets.Bool.html#1604" class="Bound">z</a> <a id="1620" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="1622" href="Snippets.Bool.html#1571" class="Bound">f</a> <a id="1624" href="Snippets.Bool.html#1600" class="Bound">x</a> <a id="1626" class="Symbol">(</a><a id="1627" href="Snippets.Bool.html#1571" class="Bound">f</a> <a id="1629" href="Snippets.Bool.html#1602" class="Bound">y</a> <a id="1631" href="Snippets.Bool.html#1604" class="Bound">z</a><a id="1632" class="Symbol">)</a>
+<a id="1634" href="Snippets.Bool.html#1555" class="Function">some-assoc</a> <a id="1645" class="Symbol">=</a> <a id="1647" href="Cardinality.Finite.SplitEnumerable.Search.html#3884" class="Function">∃↯ⁿ</a> <a id="1651" class="Number">1</a> <a id="1653" class="Symbol">λ</a> <a id="1655" href="Snippets.Bool.html#1655" class="Bound">f</a> <a id="1657" class="Symbol">→</a> <a id="1659" href="Cardinality.Finite.SplitEnumerable.Search.html#2912" class="Function">∀?ⁿ</a> <a id="1663" class="Number">3</a> <a id="1665" class="Symbol">λ</a> <a id="1667" href="Snippets.Bool.html#1667" class="Bound">x</a> <a id="1669" href="Snippets.Bool.html#1669" class="Bound">y</a> <a id="1671" href="Snippets.Bool.html#1671" class="Bound">z</a> <a id="1673" class="Symbol">→</a> <a id="1675" href="Snippets.Bool.html#1655" class="Bound">f</a> <a id="1677" class="Symbol">(</a><a id="1678" href="Snippets.Bool.html#1655" class="Bound">f</a> <a id="1680" href="Snippets.Bool.html#1667" class="Bound">x</a> <a id="1682" href="Snippets.Bool.html#1669" class="Bound">y</a><a id="1683" class="Symbol">)</a> <a id="1685" href="Snippets.Bool.html#1671" class="Bound">z</a> <a id="1687" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="1689" href="Snippets.Bool.html#1655" class="Bound">f</a> <a id="1691" href="Snippets.Bool.html#1667" class="Bound">x</a> <a id="1693" class="Symbol">(</a><a id="1694" href="Snippets.Bool.html#1655" class="Bound">f</a> <a id="1696" href="Snippets.Bool.html#1669" class="Bound">y</a> <a id="1698" href="Snippets.Bool.html#1671" class="Bound">z</a><a id="1699" class="Symbol">)</a>
+<a id="1701" class="Markup">\end{code}</a><a id="1711" class="Background">
+%&lt;/some-assoc&gt;
+%&lt;*obvious&gt;
+</a><a id="1739" class="Markup">\begin{code}</a>
+<a id="obvious"></a><a id="1752" href="Snippets.Bool.html#1752" class="Function">obvious</a> <a id="1760" class="Symbol">:</a> <a id="1762" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a> <a id="1767" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="1769" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a> <a id="1775" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="1777" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="1783" href="Snippets.Bool.html#1752" class="Function">obvious</a> <a id="1791" class="Symbol">=</a> <a id="1793" href="Cubical.Foundations.Id.html#570" class="Function">refl</a>
+<a id="1798" class="Markup">\end{code}</a><a id="1808" class="Background">
+%&lt;/obvious&gt;
+</a><a id="1821" class="Markup">\begin{code}</a>
+<a id="1834" class="Markup">\end{code}</a><a id="1844" class="Background">
+%&lt;*is-true&gt;
+</a><a id="1857" class="Markup">\begin{code}</a>
+<a id="True"></a><a id="1870" href="Snippets.Bool.html#1870" class="Function">True</a> <a id="1875" class="Symbol">:</a> <a id="1877" href="Relation.Nullary.Decidable.Base.html#309" class="Record">Dec</a> <a id="1881" href="Level.html#444" class="Generalizable">A</a> <a id="1883" class="Symbol">→</a> <a id="1885" href="Level.html#255" class="Function">Type₀</a>
+<a id="1891" href="Snippets.Bool.html#1870" class="Function">True</a> <a id="1896" class="Symbol">(</a><a id="1897" href="Relation.Nullary.Decidable.Base.html#447" class="InductiveConstructor">yes</a>  <a id="1902" class="Symbol">_)</a> <a id="1905" class="Symbol">=</a> <a id="1907" href="Agda.Builtin.Unit.html#164" class="Record">⊤</a>
+<a id="1909" href="Snippets.Bool.html#1870" class="Function">True</a> <a id="1914" class="Symbol">(</a><a id="1915" href="Relation.Nullary.Decidable.Base.html#485" class="InductiveConstructor">no</a>   <a id="1920" class="Symbol">_)</a> <a id="1923" class="Symbol">=</a> <a id="1925" href="Cubical.Data.Empty.Base.html#114" class="Datatype">⊥</a>
+<a id="1927" class="Markup">\end{code}</a><a id="1937" class="Background">
+%&lt;/is-true&gt;
+%&lt;*from-true&gt;
+</a><a id="1964" class="Markup">\begin{code}</a>
+<a id="toWitness"></a><a id="1977" href="Snippets.Bool.html#1977" class="Function">toWitness</a> <a id="1987" class="Symbol">:</a>  <a id="1990" class="Symbol">(</a><a id="1991" href="Snippets.Bool.html#1991" class="Bound">decision</a> <a id="2000" class="Symbol">:</a> <a id="2002" href="Relation.Nullary.Decidable.Base.html#309" class="Record">Dec</a> <a id="2006" href="Level.html#444" class="Generalizable">A</a><a id="2007" class="Symbol">)</a> <a id="2009" class="Symbol">→</a>
+            <a id="2023" class="Symbol">{</a> <a id="2025" href="Snippets.Bool.html#2025" class="Bound">_</a> <a id="2027" class="Symbol">:</a> <a id="2029" href="Snippets.Bool.html#1870" class="Function">True</a> <a id="2034" href="Snippets.Bool.html#1991" class="Bound">decision</a> <a id="2043" class="Symbol">}</a> <a id="2045" class="Symbol">→</a> <a id="2047" href="Level.html#444" class="Generalizable">A</a>
+<a id="2049" href="Snippets.Bool.html#1977" class="Function">toWitness</a> <a id="2059" class="Symbol">(</a><a id="2060" href="Relation.Nullary.Decidable.Base.html#447" class="InductiveConstructor">yes</a> <a id="2064" href="Snippets.Bool.html#2064" class="Bound">x</a><a id="2065" class="Symbol">)</a> <a id="2067" class="Symbol">=</a> <a id="2069" href="Snippets.Bool.html#2064" class="Bound">x</a>
+<a id="2071" class="Markup">\end{code}</a><a id="2081" class="Background">
+%&lt;/from-true&gt;
+</a><a id="2096" class="Markup">\begin{code}</a>
+<a id="2109" class="Keyword">open</a> <a id="2114" class="Keyword">import</a> <a id="2121" href="Relation.Nullary.Decidable.Logic.html" class="Module">Relation.Nullary.Decidable.Logic</a>
+<a id="2154" class="Keyword">open</a> <a id="2159" class="Keyword">import</a> <a id="2166" href="Relation.Nullary.Decidable.html" class="Module">Relation.Nullary.Decidable</a>
+
+<a id="from-true"></a><a id="2194" href="Snippets.Bool.html#2194" class="Function">from-true</a> <a id="2204" class="Symbol">:</a> <a id="2206" class="Symbol">(</a><a id="2207" href="Snippets.Bool.html#2207" class="Bound">dec</a> <a id="2211" class="Symbol">:</a> <a id="2213" href="Relation.Nullary.Decidable.Base.html#309" class="Record">Dec</a> <a id="2217" href="Level.html#444" class="Generalizable">A</a><a id="2218" class="Symbol">)</a> <a id="2220" class="Symbol">→</a> <a id="2222" class="Symbol">{</a> <a id="2224" href="Snippets.Bool.html#2224" class="Bound">_</a> <a id="2226" class="Symbol">:</a> <a id="2228" href="Data.Bool.html#640" class="Function">T</a> <a id="2230" class="Symbol">(</a><a id="2231" href="Relation.Nullary.Decidable.Base.html#381" class="Field">does</a> <a id="2236" href="Snippets.Bool.html#2207" class="Bound">dec</a><a id="2239" class="Symbol">)</a> <a id="2241" class="Symbol">}</a> <a id="2243" class="Symbol">→</a> <a id="2245" href="Level.html#444" class="Generalizable">A</a>
+<a id="2247" href="Snippets.Bool.html#2194" class="Function">from-true</a> <a id="2257" class="Symbol">(</a><a id="2258" href="Relation.Nullary.Decidable.Base.html#447" class="InductiveConstructor">yes</a> <a id="2262" href="Snippets.Bool.html#2262" class="Bound">p</a><a id="2263" class="Symbol">)</a> <a id="2265" class="Symbol">=</a> <a id="2267" href="Snippets.Bool.html#2262" class="Bound">p</a>
+<a id="2269" class="Markup">\end{code}</a><a id="2279" class="Background">
+%&lt;*extremely-obvious&gt;
+</a><a id="2302" class="Markup">\begin{code}</a>
+<a id="extremely-obvious"></a><a id="2315" href="Snippets.Bool.html#2315" class="Function">extremely-obvious</a> <a id="2333" class="Symbol">:</a> <a id="2335" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a> <a id="2340" href="Path.html#506" class="Function Operator">≢</a> <a id="2342" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>
+<a id="2348" href="Snippets.Bool.html#2315" class="Function">extremely-obvious</a> <a id="2366" class="Symbol">=</a> <a id="2368" href="Snippets.Bool.html#2194" class="Function">from-true</a> <a id="2378" class="Symbol">(</a><a id="2379" href="Relation.Nullary.Decidable.Logic.html#539" class="Function">!</a> <a id="2381" class="Symbol">(</a><a id="2382" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a> <a id="2387" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="2389" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a><a id="2394" class="Symbol">))</a>
+<a id="2397" class="Markup">\end{code}</a><a id="2407" class="Background">
+%&lt;/extremely-obvious&gt;
+</a><a id="2430" class="Markup">\begin{code}</a>
+<a id="2443" class="Keyword">module</a> <a id="PreInst′"></a><a id="2450" href="Snippets.Bool.html#2450" class="Module">PreInst′</a> <a id="2459" class="Keyword">where</a>
+  <a id="2467" class="Keyword">open</a> <a id="2472" href="Cardinality.Finite.SplitEnumerable.Search.html#1842" class="Module">PreInst</a>
+<a id="2480" class="Markup">\end{code}</a><a id="2490" class="Background">
+%&lt;*pre-inst-proof&gt;
+</a><a id="2510" class="Markup">\begin{code}</a>
+  <a id="PreInst′.∧-idem"></a><a id="2525" href="Snippets.Bool.html#2525" class="Function">∧-idem</a> <a id="2532" class="Symbol">:</a> <a id="2534" class="Symbol">∀</a> <a id="2536" href="Snippets.Bool.html#2536" class="Bound">x</a> <a id="2538" class="Symbol">→</a> <a id="2540" href="Snippets.Bool.html#2536" class="Bound">x</a> <a id="2542" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2544" href="Snippets.Bool.html#2536" class="Bound">x</a> <a id="2546" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="2548" href="Snippets.Bool.html#2536" class="Bound">x</a>
+  <a id="2552" href="Snippets.Bool.html#2525" class="Function">∧-idem</a> <a id="2559" class="Symbol">=</a> <a id="2561" href="Cardinality.Finite.SplitEnumerable.Search.html#1933" class="Function">∀↯</a> <a id="2564" href="Cardinality.Finite.SplitEnumerable.html#2496" class="Function">ℰ!⟨2⟩</a> <a id="2570" class="Symbol">λ</a> <a id="2572" href="Snippets.Bool.html#2572" class="Bound">x</a> <a id="2574" class="Symbol">→</a> <a id="2576" href="Snippets.Bool.html#2572" class="Bound">x</a> <a id="2578" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2580" href="Snippets.Bool.html#2572" class="Bound">x</a> <a id="2582" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="2584" href="Snippets.Bool.html#2572" class="Bound">x</a>
+<a id="2586" class="Markup">\end{code}</a><a id="2596" class="Background">
+%&lt;/pre-inst-proof&gt;
+</a><a id="2616" class="Markup">\begin{code}</a>
+<a id="2629" class="Keyword">open</a> <a id="2634" href="Cardinality.Finite.SplitEnumerable.Search.html#2316" class="Module">WithInst</a>
+<a id="2643" class="Markup">\end{code}</a><a id="2653" class="Background">
+%&lt;*with-inst-proof&gt;
+</a><a id="2674" class="Markup">\begin{code}</a>
+<a id="∧-idem"></a><a id="2687" href="Snippets.Bool.html#2687" class="Function">∧-idem</a> <a id="2694" class="Symbol">:</a> <a id="2696" class="Symbol">∀</a> <a id="2698" href="Snippets.Bool.html#2698" class="Bound">x</a> <a id="2700" class="Symbol">→</a> <a id="2702" href="Snippets.Bool.html#2698" class="Bound">x</a> <a id="2704" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2706" href="Snippets.Bool.html#2698" class="Bound">x</a> <a id="2708" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="2710" href="Snippets.Bool.html#2698" class="Bound">x</a>
+<a id="2712" href="Snippets.Bool.html#2687" class="Function">∧-idem</a> <a id="2719" class="Symbol">=</a> <a id="2721" href="Cardinality.Finite.SplitEnumerable.Search.html#2413" class="Function">∀↯</a> <a id="2724" class="Symbol">λ</a> <a id="2726" href="Snippets.Bool.html#2726" class="Bound">x</a> <a id="2728" class="Symbol">→</a> <a id="2730" href="Snippets.Bool.html#2726" class="Bound">x</a> <a id="2732" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2734" href="Snippets.Bool.html#2726" class="Bound">x</a> <a id="2736" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="2738" href="Snippets.Bool.html#2726" class="Bound">x</a>
+<a id="2740" class="Markup">\end{code}</a><a id="2750" class="Background">
+%&lt;/with-inst-proof&gt;
+</a><a id="2771" class="Markup">\begin{code}</a>
+<a id="2784" class="Keyword">module</a> <a id="BadCurrying"></a><a id="2791" href="Snippets.Bool.html#2791" class="Module">BadCurrying</a> <a id="2803" class="Keyword">where</a>
+<a id="2809" class="Markup">\end{code}</a><a id="2819" class="Background">
+%&lt;*and-comm&gt;
+</a><a id="2833" class="Markup">\begin{code}</a>
+  <a id="BadCurrying.∧-comm"></a><a id="2848" href="Snippets.Bool.html#2848" class="Function">∧-comm</a> <a id="2855" class="Symbol">:</a> <a id="2857" class="Symbol">∀</a> <a id="2859" href="Snippets.Bool.html#2859" class="Bound">x</a> <a id="2861" href="Snippets.Bool.html#2861" class="Bound">y</a> <a id="2863" class="Symbol">→</a> <a id="2865" href="Snippets.Bool.html#2859" class="Bound">x</a> <a id="2867" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2869" href="Snippets.Bool.html#2861" class="Bound">y</a> <a id="2871" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="2873" href="Snippets.Bool.html#2861" class="Bound">y</a> <a id="2875" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2877" href="Snippets.Bool.html#2859" class="Bound">x</a>
+  <a id="2881" href="Snippets.Bool.html#2848" class="Function">∧-comm</a> <a id="2888" class="Symbol">=</a> <a id="2890" href="Data.Sigma.Base.html#605" class="Function">curry</a> <a id="2896" class="Symbol">(</a><a id="2897" href="Cardinality.Finite.SplitEnumerable.Search.html#2413" class="Function">∀↯</a> <a id="2900" class="Symbol">(</a><a id="2901" href="Data.Sigma.Base.html#769" class="Function">uncurry</a> <a id="2909" class="Symbol">(λ</a> <a id="2912" href="Snippets.Bool.html#2912" class="Bound">x</a> <a id="2914" href="Snippets.Bool.html#2914" class="Bound">y</a> <a id="2916" class="Symbol">→</a> <a id="2918" href="Snippets.Bool.html#2912" class="Bound">x</a> <a id="2920" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2922" href="Snippets.Bool.html#2914" class="Bound">y</a> <a id="2924" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="2926" href="Snippets.Bool.html#2914" class="Bound">y</a> <a id="2928" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="2930" href="Snippets.Bool.html#2912" class="Bound">x</a> <a id="2932" class="Symbol">)))</a>
+<a id="2936" class="Markup">\end{code}</a><a id="2946" class="Background">
+%&lt;/and-comm&gt;
+</a><a id="2960" class="Markup">\begin{code}</a>
+<a id="2973" class="Keyword">open</a> <a id="2978" class="Keyword">import</a> <a id="2985" href="Data.Fin.html" class="Module">Data.Fin</a>
+<a id="2994" class="Markup">\end{code}</a><a id="3004" class="Background">
+%&lt;*finite-sigma-inst&gt;
+</a><a id="3027" class="Markup">\begin{code}</a>
+<a id="3040" href="Snippets.Bool.html#3040" class="Function">_</a> <a id="3042" class="Symbol">:</a> <a id="3044" href="Cardinality.Finite.SplitEnumerable.Inductive.html#177" class="Function">ℰ!</a> <a id="3047" class="Symbol">(</a><a id="3048" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="3051" href="Snippets.Bool.html#3051" class="Bound">s</a> <a id="3053" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="3055" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="3060" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="3062" class="Symbol">(</a><a id="3063" href="Data.Bool.html#532" class="Function Operator">if</a> <a id="3066" href="Snippets.Bool.html#3051" class="Bound">s</a> <a id="3068" href="Data.Bool.html#532" class="Function Operator">then</a> <a id="3073" href="Data.Fin.Base.html#398" class="Function">Fin</a> <a id="3077" class="Number">3</a> <a id="3079" href="Data.Bool.html#532" class="Function Operator">else</a> <a id="3084" href="Data.Fin.Base.html#398" class="Function">Fin</a> <a id="3088" class="Number">4</a><a id="3089" class="Symbol">))</a>
+<a id="3092" class="Symbol">_</a> <a id="3094" class="Symbol">=</a> <a id="3096" href="Instance.html#127" class="Function">it</a>
+<a id="3099" class="Markup">\end{code}</a><a id="3109" class="Background">
+%&lt;/finite-sigma-inst&gt;
+%&lt;*and-comm-auto&gt;
+</a><a id="3150" class="Markup">\begin{code}</a>
+<a id="∧-comm"></a><a id="3163" href="Snippets.Bool.html#3163" class="Function">∧-comm</a> <a id="3170" class="Symbol">:</a> <a id="3172" class="Symbol">∀</a> <a id="3174" href="Snippets.Bool.html#3174" class="Bound">x</a> <a id="3176" href="Snippets.Bool.html#3176" class="Bound">y</a> <a id="3178" class="Symbol">→</a> <a id="3180" href="Snippets.Bool.html#3174" class="Bound">x</a> <a id="3182" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="3184" href="Snippets.Bool.html#3176" class="Bound">y</a> <a id="3186" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="3188" href="Snippets.Bool.html#3176" class="Bound">y</a> <a id="3190" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="3192" href="Snippets.Bool.html#3174" class="Bound">x</a>
+<a id="3194" href="Snippets.Bool.html#3163" class="Function">∧-comm</a> <a id="3201" class="Symbol">=</a> <a id="3203" href="Cardinality.Finite.SplitEnumerable.Search.html#3532" class="Function">∀↯ⁿ</a> <a id="3207" class="Number">2</a> <a id="3209" class="Symbol">λ</a> <a id="3211" href="Snippets.Bool.html#3211" class="Bound">x</a> <a id="3213" href="Snippets.Bool.html#3213" class="Bound">y</a> <a id="3215" class="Symbol">→</a> <a id="3217" href="Snippets.Bool.html#3211" class="Bound">x</a> <a id="3219" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="3221" href="Snippets.Bool.html#3213" class="Bound">y</a> <a id="3223" href="Snippets.Bool.html#1323" class="Function Operator">≟</a> <a id="3225" href="Snippets.Bool.html#3213" class="Bound">y</a> <a id="3227" href="Snippets.Bool.html#779" class="Function Operator">∧</a> <a id="3229" href="Snippets.Bool.html#3211" class="Bound">x</a>
+<a id="3231" class="Markup">\end{code}</a><a id="3241" class="Background">
+%&lt;/and-comm-auto&gt;
+
+%&lt;*boolean&gt;
+</a><a id="3273" class="Markup">\begin{code}</a>
+<a id="Boolean"></a><a id="3286" href="Snippets.Bool.html#3286" class="Function">Boolean</a> <a id="3294" class="Symbol">:</a> <a id="3296" href="Level.html#255" class="Function">Type₀</a>
+<a id="3302" href="Snippets.Bool.html#3286" class="Function">Boolean</a> <a id="3310" class="Symbol">=</a> <a id="3312" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
+<a id="3317" class="Markup">\end{code}</a><a id="3327" class="Background">
+%&lt;/boolean&gt;
+</a><a id="3340" class="Markup">\begin{code}</a>
+<a id="3353" class="Keyword">open</a> <a id="3358" href="Snippets.Bool.html#102" class="Module">BoolDefn</a> <a id="3367" class="Keyword">public</a>
+<a id="3374" class="Markup">\end{code}</a><a id="3384" class="Background">
+</a></pre></body></html>

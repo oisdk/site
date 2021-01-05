@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Container.Membership</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--safe</a> <a id="33" class="Pragma">--cubical</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">open</a> <a id="53" class="Keyword">import</a> <a id="60" href="Container.html" class="Module">Container</a>
+
+<a id="71" class="Keyword">module</a> <a id="78" href="Container.Membership.html" class="Module">Container.Membership</a> <a id="99" class="Symbol">{</a><a id="100" href="Container.Membership.html#100" class="Bound">s</a> <a id="102" href="Container.Membership.html#102" class="Bound">p</a><a id="103" class="Symbol">}</a> <a id="105" class="Symbol">(</a><a id="106" href="Container.Membership.html#106" class="Bound">𝒞</a> <a id="108" class="Symbol">:</a> <a id="110" href="Container.html#93" class="Function">Container</a> <a id="120" href="Container.Membership.html#100" class="Bound">s</a> <a id="122" href="Container.Membership.html#102" class="Bound">p</a><a id="123" class="Symbol">)</a> <a id="125" class="Keyword">where</a>
+
+<a id="132" class="Keyword">open</a> <a id="137" class="Keyword">import</a> <a id="144" href="Prelude.html" class="Module">Prelude</a>
+<a id="152" class="Keyword">open</a> <a id="157" class="Keyword">import</a> <a id="164" href="HLevels.html" class="Module">HLevels</a>
+
+<a id="173" class="Keyword">infixr</a> <a id="180" class="Number">5</a> <a id="182" href="Container.Membership.html#191" class="Function Operator">_∈_</a> <a id="186" href="Container.Membership.html#331" class="Function Operator">_∈!_</a>
+<a id="_∈_"></a><a id="191" href="Container.Membership.html#191" class="Function Operator">_∈_</a> <a id="195" class="Symbol">:</a> <a id="197" href="Level.html#444" class="Generalizable">A</a> <a id="199" class="Symbol">→</a> <a id="201" href="Container.html#196" class="Function Operator">⟦</a> <a id="203" href="Container.Membership.html#106" class="Bound">𝒞</a> <a id="205" href="Container.html#196" class="Function Operator">⟧</a> <a id="207" href="Level.html#444" class="Generalizable">A</a> <a id="209" class="Symbol">→</a> <a id="211" href="Level.html#205" class="Function">Type</a> <a id="216" class="Symbol">_</a>
+<a id="218" class="Markup">\end{code}</a><a id="228" class="Background">
+%&lt;*membership-def&gt;
+</a><a id="248" class="Markup">\begin{code}</a>
+<a id="261" href="Container.Membership.html#261" class="Bound">x</a> <a id="263" href="Container.Membership.html#191" class="Function Operator">∈</a> <a id="265" href="Container.Membership.html#265" class="Bound">xs</a> <a id="268" class="Symbol">=</a> <a id="270" href="Cubical.Foundations.Equiv.html#876" class="Function">fiber</a> <a id="276" class="Symbol">(</a><a id="277" href="Agda.Builtin.Sigma.html#264" class="Field">snd</a> <a id="281" href="Container.Membership.html#265" class="Bound">xs</a><a id="283" class="Symbol">)</a> <a id="285" href="Container.Membership.html#261" class="Bound">x</a>
+<a id="287" class="Markup">\end{code}</a><a id="297" class="Background">
+%&lt;/membership-def&gt;
+</a><a id="317" class="Markup">\begin{code}</a>
+
+<a id="_∈!_"></a><a id="331" href="Container.Membership.html#331" class="Function Operator">_∈!_</a> <a id="336" class="Symbol">:</a> <a id="338" href="Level.html#444" class="Generalizable">A</a> <a id="340" class="Symbol">→</a> <a id="342" href="Container.html#196" class="Function Operator">⟦</a> <a id="344" href="Container.Membership.html#106" class="Bound">𝒞</a> <a id="346" href="Container.html#196" class="Function Operator">⟧</a> <a id="348" href="Level.html#444" class="Generalizable">A</a> <a id="350" class="Symbol">→</a> <a id="352" href="Level.html#205" class="Function">Type</a> <a id="357" class="Symbol">_</a>
+<a id="359" class="Markup">\end{code}</a><a id="369" class="Background">
+%&lt;*uniq-memb-def&gt;
+</a><a id="388" class="Markup">\begin{code}</a>
+<a id="401" href="Container.Membership.html#401" class="Bound">x</a> <a id="403" href="Container.Membership.html#331" class="Function Operator">∈!</a> <a id="406" href="Container.Membership.html#406" class="Bound">xs</a> <a id="409" class="Symbol">=</a> <a id="411" href="Cubical.Foundations.Id.html#854" class="Function">isContr</a> <a id="419" class="Symbol">(</a><a id="420" href="Container.Membership.html#401" class="Bound">x</a> <a id="422" href="Container.Membership.html#191" class="Function Operator">∈</a> <a id="424" href="Container.Membership.html#406" class="Bound">xs</a><a id="426" class="Symbol">)</a>
+<a id="428" class="Markup">\end{code}</a><a id="438" class="Background">
+%&lt;/uniq-memb-def&gt;
+</a></pre></body></html>
