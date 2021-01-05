@@ -1,0 +1,12 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Data.Empty.Base</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="Data.Empty.Base.html" class="Module">Data.Empty.Base</a> <a id="58" class="Keyword">where</a>
+
+<a id="65" class="Keyword">open</a> <a id="70" class="Keyword">import</a> <a id="77" href="Cubical.Data.Empty.html" class="Module">Cubical.Data.Empty</a> <a id="96" class="Keyword">using</a> <a id="102" class="Symbol">(</a><a id="103" href="Cubical.Data.Empty.Base.html#114" class="Datatype">⊥</a><a id="104" class="Symbol">;</a> <a id="106" href="Cubical.Data.Empty.Base.html#131" class="Function">⊥-elim</a><a id="112" class="Symbol">;</a> <a id="114" href="Cubical.Data.Empty.Properties.html#193" class="Function">isProp⊥</a><a id="121" class="Symbol">)</a> <a id="123" class="Keyword">public</a>
+<a id="130" class="Keyword">open</a> <a id="135" class="Keyword">import</a> <a id="142" href="Level.html" class="Module">Level</a>
+
+<a id="149" class="Keyword">infix</a> <a id="155" class="Number">4.5</a> <a id="159" href="Data.Empty.Base.html#162" class="Function Operator">¬_</a>
+<a id="¬_"></a><a id="162" href="Data.Empty.Base.html#162" class="Function Operator">¬_</a> <a id="165" class="Symbol">:</a> <a id="167" href="Level.html#205" class="Function">Type</a> <a id="172" href="Level.html#428" class="Generalizable">a</a> <a id="174" class="Symbol">→</a> <a id="176" href="Level.html#205" class="Function">Type</a> <a id="181" href="Level.html#428" class="Generalizable">a</a>
+<a id="183" href="Data.Empty.Base.html#162" class="Function Operator">¬</a> <a id="185" href="Data.Empty.Base.html#185" class="Bound">A</a> <a id="187" class="Symbol">=</a> <a id="189" href="Data.Empty.Base.html#185" class="Bound">A</a> <a id="191" class="Symbol">→</a> <a id="193" href="Cubical.Data.Empty.Base.html#114" class="Datatype">⊥</a>
+</pre></body></html>

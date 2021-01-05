@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map.html" class="Module">Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map</a> <a id="100" class="Keyword">where</a>
+
+<a id="107" class="Keyword">open</a> <a id="112" class="Keyword">import</a> <a id="119" href="Prelude.html" class="Module">Prelude</a> <a id="127" class="Keyword">hiding</a> <a id="134" class="Symbol">(</a><a id="135" href="Cubical.Data.Empty.Base.html#114" class="Datatype">⊥</a><a id="136" class="Symbol">;</a> <a id="138" href="Agda.Builtin.Unit.html#164" class="Record">⊤</a><a id="139" class="Symbol">)</a>
+<a id="141" class="Keyword">open</a> <a id="146" class="Keyword">import</a> <a id="153" href="Algebra.Construct.Free.Semilattice.Eliminators.html" class="Module">Algebra.Construct.Free.Semilattice.Eliminators</a>
+<a id="200" class="Keyword">open</a> <a id="205" class="Keyword">import</a> <a id="212" href="Algebra.Construct.Free.Semilattice.Definition.html" class="Module">Algebra.Construct.Free.Semilattice.Definition</a>
+<a id="258" class="Keyword">open</a> <a id="263" class="Keyword">import</a> <a id="270" href="Cubical.Foundations.HLevels.html" class="Module">Cubical.Foundations.HLevels</a>
+<a id="298" class="Keyword">open</a> <a id="303" class="Keyword">import</a> <a id="310" href="Data.Empty.UniversePolymorphic.html" class="Module">Data.Empty.UniversePolymorphic</a>
+<a id="341" class="Keyword">open</a> <a id="346" class="Keyword">import</a> <a id="353" href="HITs.PropositionalTruncation.Sugar.html" class="Module">HITs.PropositionalTruncation.Sugar</a>
+<a id="388" class="Keyword">open</a> <a id="393" class="Keyword">import</a> <a id="400" href="HITs.PropositionalTruncation.Properties.html" class="Module">HITs.PropositionalTruncation.Properties</a>
+<a id="440" class="Keyword">open</a> <a id="445" class="Keyword">import</a> <a id="452" href="HITs.PropositionalTruncation.html" class="Module">HITs.PropositionalTruncation</a>
+<a id="481" class="Keyword">open</a> <a id="486" class="Keyword">import</a> <a id="493" href="Data.Unit.UniversePolymorphic.html" class="Module">Data.Unit.UniversePolymorphic</a>
+<a id="523" class="Keyword">open</a> <a id="528" class="Keyword">import</a> <a id="535" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Def.html" class="Module">Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Def</a>
+<a id="593" class="Keyword">open</a> <a id="598" class="Keyword">import</a> <a id="605" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Membership.html" class="Module">Algebra.Construct.Free.Semilattice.Relation.Unary.Membership</a>
+
+<a id="667" class="Keyword">private</a>
+  <a id="677" class="Keyword">variable</a> <a id="686" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map.html#686" class="Generalizable">p</a> <a id="688" class="Symbol">:</a> <a id="690" href="Agda.Primitive.html#423" class="Postulate">Level</a>
+  <a id="698" class="Keyword">variable</a> <a id="707" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map.html#707" class="Generalizable">P</a> <a id="709" class="Symbol">:</a> <a id="711" href="Level.html#444" class="Generalizable">A</a> <a id="713" class="Symbol">→</a> <a id="715" href="Level.html#205" class="Function">Type</a> <a id="720" href="Algebra.Construct.Free.Semilattice.Relation.Unary.Any.Map.html#686" class="Generalizable">p</a>
+
+<a id="723" class="Comment">-- map-◇-fn : ∀ x → P x → ∀ y xs → (x ∈ xs → ◇ P xs) → (y ≡ x) ⊎ (x ∈ xs) → ◇ P (y ∷ xs)</a>
+<a id="812" class="Comment">-- map-◇-fn {P = P} x Px y xs k (inl y≡x) = ∣ inl (subst P (sym y≡x) Px) ∣</a>
+<a id="887" class="Comment">-- map-◇-fn x Px y xs k (inr x∈xs) = ∣ inr (k x∈xs) ∣</a>
+
+<a id="942" class="Comment">-- map-◇-prop : ∀ (x : A) {xs} → isProp (x ∈ xs → ◇ P xs)</a>
+<a id="1000" class="Comment">-- map-◇-prop {P = P} x {xs} p q i x∈xs = ◇′ P xs .snd (p x∈xs) (q x∈xs) i</a>
+
+<a id="1076" class="Comment">-- map-◇ : ∀ (x : A) → P x → (xs : 𝒦 A) → x ∈ xs → ◇ P xs</a>
+<a id="1134" class="Comment">-- map-◇ {A = A} {P = P} x Px =</a>
+<a id="1166" class="Comment">--   𝒦-elim-prop {A = A} {P = λ ys → x ∈ ys → ◇ P ys}</a>
+<a id="1220" class="Comment">--     (map-◇-prop {A = A} {P = P} x)</a>
+<a id="1258" class="Comment">--     (λ y xs Pxs → recPropTrunc squash (map-◇-fn x Px y xs Pxs))</a>
+<a id="1325" class="Comment">--     (λ ())</a>
+</pre></body></html>

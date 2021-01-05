@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Level</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--safe</a> <a id="33" class="Pragma">--without-K</a> <a id="45" class="Symbol">#-}</a>
+
+<a id="50" class="Keyword">module</a> <a id="57" href="Level.html" class="Module">Level</a> <a id="63" class="Keyword">where</a>
+
+<a id="70" class="Keyword">open</a> <a id="75" class="Keyword">import</a> <a id="82" href="Agda.Primitive.html" class="Module">Agda.Primitive</a>
+  <a id="99" class="Keyword">using</a> <a id="105" class="Symbol">(</a><a id="106" href="Agda.Primitive.html#423" class="Postulate">Level</a><a id="111" class="Symbol">)</a>
+  <a id="115" class="Keyword">renaming</a> <a id="124" class="Symbol">(</a> <a id="126" href="Agda.Primitive.html#636" class="Primitive Operator">_⊔_</a> <a id="130" class="Symbol">to</a> <a id="Primitive._⊔_"></a><a id="133" href="Level.html#133" class="Primitive Operator">_ℓ⊔_</a>
+           <a id="149" class="Symbol">;</a> <a id="151" href="Agda.Primitive.html#590" class="Primitive">lzero</a> <a id="157" class="Symbol">to</a> <a id="Primitive.lzero"></a><a id="160" href="Level.html#160" class="Primitive">ℓzero</a>
+           <a id="177" class="Symbol">;</a> <a id="179" href="Agda.Primitive.html#606" class="Primitive">lsuc</a>  <a id="185" class="Symbol">to</a> <a id="Primitive.lsuc"></a><a id="188" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="193" class="Symbol">)</a>
+  <a id="197" class="Keyword">public</a>
+
+<a id="Type"></a><a id="205" href="Level.html#205" class="Function">Type</a> <a id="210" class="Symbol">:</a> <a id="212" class="Symbol">(</a><a id="213" href="Level.html#213" class="Bound">ℓ</a> <a id="215" class="Symbol">:</a> <a id="217" href="Agda.Primitive.html#423" class="Postulate">Level</a><a id="222" class="Symbol">)</a> <a id="224" class="Symbol">→</a> <a id="226" class="PrimitiveType">Set</a> <a id="230" class="Symbol">(</a><a id="231" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="236" href="Level.html#213" class="Bound">ℓ</a><a id="237" class="Symbol">)</a>
+<a id="239" href="Level.html#205" class="Function">Type</a> <a id="244" href="Level.html#244" class="Bound">ℓ</a> <a id="246" class="Symbol">=</a> <a id="248" class="PrimitiveType">Set</a> <a id="252" href="Level.html#244" class="Bound">ℓ</a>
+
+<a id="Type₀"></a><a id="255" href="Level.html#255" class="Function">Type₀</a> <a id="261" class="Symbol">=</a> <a id="263" href="Level.html#205" class="Function">Type</a> <a id="268" href="Level.html#160" class="Primitive">ℓzero</a>
+<a id="Type₁"></a><a id="274" href="Level.html#274" class="Function">Type₁</a> <a id="280" class="Symbol">=</a> <a id="282" href="Level.html#205" class="Function">Type</a> <a id="287" class="Symbol">(</a><a id="288" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="293" href="Level.html#160" class="Primitive">ℓzero</a><a id="298" class="Symbol">)</a>
+<a id="Type₂"></a><a id="300" href="Level.html#300" class="Function">Type₂</a> <a id="306" class="Symbol">=</a> <a id="308" href="Level.html#205" class="Function">Type</a> <a id="313" class="Symbol">(</a><a id="314" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="319" class="Symbol">(</a><a id="320" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="325" href="Level.html#160" class="Primitive">ℓzero</a><a id="330" class="Symbol">))</a>
+<a id="Type₃"></a><a id="333" href="Level.html#333" class="Function">Type₃</a> <a id="339" class="Symbol">=</a> <a id="341" href="Level.html#205" class="Function">Type</a> <a id="346" class="Symbol">(</a><a id="347" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="352" class="Symbol">(</a><a id="353" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="358" class="Symbol">(</a><a id="359" href="Level.html#188" class="Primitive">ℓsuc</a> <a id="364" href="Level.html#160" class="Primitive">ℓzero</a><a id="369" class="Symbol">)))</a>
+
+<a id="374" class="Markup">\end{code}</a><a id="384" class="Background">
+%&lt;*level-var-decl&gt;
+</a><a id="404" class="Markup">\begin{code}</a>
+<a id="417" class="Keyword">variable</a>
+  <a id="428" href="Level.html#428" class="Generalizable">a</a> <a id="430" href="Level.html#430" class="Generalizable">b</a> <a id="432" href="Level.html#432" class="Generalizable">c</a> <a id="434" class="Symbol">:</a> <a id="436" href="Agda.Primitive.html#423" class="Postulate">Level</a>
+  <a id="444" href="Level.html#444" class="Generalizable">A</a>  <a id="447" class="Symbol">:</a> <a id="449" href="Level.html#205" class="Function">Type</a> <a id="454" href="Level.html#428" class="Generalizable">a</a>
+  <a id="458" href="Level.html#458" class="Generalizable">B</a>  <a id="461" class="Symbol">:</a> <a id="463" href="Level.html#205" class="Function">Type</a> <a id="468" href="Level.html#430" class="Generalizable">b</a>
+  <a id="472" href="Level.html#472" class="Generalizable">C</a>  <a id="475" class="Symbol">:</a> <a id="477" href="Level.html#205" class="Function">Type</a> <a id="482" href="Level.html#432" class="Generalizable">c</a>
+<a id="484" class="Markup">\end{code}</a><a id="494" class="Background">
+%&lt;/level-var-decl&gt;
+</a></pre></body></html>

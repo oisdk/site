@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Snippets.Implicits</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Snippets.Implicits.html" class="Module">Snippets.Implicits</a> <a id="74" class="Keyword">where</a>
+
+<a id="81" class="Keyword">open</a> <a id="86" class="Keyword">import</a> <a id="93" href="Level.html" class="Module">Level</a>
+
+<a id="100" class="Keyword">module</a> <a id="Normal"></a><a id="107" href="Snippets.Implicits.html#107" class="Module">Normal</a> <a id="114" class="Keyword">where</a>
+<a id="120" class="Markup">\end{code}</a><a id="130" class="Background">
+%&lt;*id-def&gt;
+</a><a id="142" class="Markup">\begin{code}</a>
+  <a id="Normal.id"></a><a id="157" href="Snippets.Implicits.html#157" class="Function">id</a> <a id="160" class="Symbol">:</a> <a id="162" href="Level.html#444" class="Generalizable">A</a> <a id="164" class="Symbol">→</a> <a id="166" href="Level.html#444" class="Generalizable">A</a>
+  <a id="170" href="Snippets.Implicits.html#157" class="Function">id</a> <a id="173" href="Snippets.Implicits.html#173" class="Bound">x</a> <a id="175" class="Symbol">=</a> <a id="177" href="Snippets.Implicits.html#173" class="Bound">x</a>
+<a id="179" class="Markup">\end{code}</a><a id="189" class="Background">
+%&lt;/id-def&gt;
+</a><a id="201" class="Markup">\begin{code}</a>
+<a id="214" class="Keyword">module</a> <a id="ImplicitType"></a><a id="221" href="Snippets.Implicits.html#221" class="Module">ImplicitType</a> <a id="234" class="Keyword">where</a>
+<a id="240" class="Markup">\end{code}</a><a id="250" class="Background">
+%&lt;*id-expl&gt;
+</a><a id="263" class="Markup">\begin{code}</a>
+  <a id="ImplicitType.id"></a><a id="278" href="Snippets.Implicits.html#278" class="Function">id</a> <a id="281" class="Symbol">:</a> <a id="283" class="Symbol">∀</a> <a id="285" class="Symbol">{</a><a id="286" href="Snippets.Implicits.html#286" class="Bound">a</a><a id="287" class="Symbol">}</a> <a id="289" class="Symbol">{</a><a id="290" href="Snippets.Implicits.html#290" class="Bound">A</a> <a id="292" class="Symbol">:</a> <a id="294" href="Level.html#205" class="Function">Type</a> <a id="299" href="Snippets.Implicits.html#286" class="Bound">a</a><a id="300" class="Symbol">}</a> <a id="302" class="Symbol">→</a> <a id="304" href="Snippets.Implicits.html#290" class="Bound">A</a> <a id="306" class="Symbol">→</a> <a id="308" href="Snippets.Implicits.html#290" class="Bound">A</a>
+  <a id="312" href="Snippets.Implicits.html#278" class="Function">id</a> <a id="315" class="Symbol">{</a><a id="316" href="Snippets.Implicits.html#316" class="Bound">a</a><a id="317" class="Symbol">}</a> <a id="319" class="Symbol">{</a><a id="320" href="Snippets.Implicits.html#320" class="Bound">A</a><a id="321" class="Symbol">}</a> <a id="323" href="Snippets.Implicits.html#323" class="Bound">x</a> <a id="325" class="Symbol">=</a> <a id="327" href="Snippets.Implicits.html#323" class="Bound">x</a>
+<a id="329" class="Markup">\end{code}</a><a id="339" class="Background">
+%&lt;/id-expl&gt;
+</a><a id="352" class="Markup">\begin{code}</a>
+<a id="365" class="Keyword">module</a> <a id="Lambdafied"></a><a id="372" href="Snippets.Implicits.html#372" class="Module">Lambdafied</a> <a id="383" class="Keyword">where</a>
+<a id="389" class="Markup">\end{code}</a><a id="399" class="Background">
+%&lt;*id-lambda&gt;
+</a><a id="414" class="Markup">\begin{code}</a>
+  <a id="Lambdafied.id"></a><a id="429" href="Snippets.Implicits.html#429" class="Function">id</a> <a id="432" class="Symbol">:</a> <a id="434" href="Level.html#444" class="Generalizable">A</a> <a id="436" class="Symbol">→</a> <a id="438" href="Level.html#444" class="Generalizable">A</a>
+  <a id="442" href="Snippets.Implicits.html#429" class="Function">id</a> <a id="445" class="Symbol">=</a> <a id="447" class="Symbol">λ</a> <a id="449" href="Snippets.Implicits.html#449" class="Bound">x</a> <a id="451" class="Symbol">→</a> <a id="453" href="Snippets.Implicits.html#449" class="Bound">x</a>
+<a id="455" class="Markup">\end{code}</a><a id="465" class="Background">
+%&lt;/id-lambda&gt;
+</a></pre></body></html>

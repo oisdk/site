@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Function.Injective.Base</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Pragma">--postfix-projections</a> <a id="65" class="Symbol">#-}</a>
+
+<a id="70" class="Keyword">module</a> <a id="77" href="Function.Injective.Base.html" class="Module">Function.Injective.Base</a> <a id="101" class="Keyword">where</a>
+
+<a id="108" class="Keyword">open</a> <a id="113" class="Keyword">import</a> <a id="120" href="Level.html" class="Module">Level</a>
+<a id="126" class="Keyword">open</a> <a id="131" class="Keyword">import</a> <a id="138" href="Path.html" class="Module">Path</a>
+<a id="143" class="Keyword">open</a> <a id="148" class="Keyword">import</a> <a id="155" href="Data.Sigma.html" class="Module">Data.Sigma</a>
+
+<a id="Injective"></a><a id="167" href="Function.Injective.Base.html#167" class="Function">Injective</a> <a id="177" class="Symbol">:</a> <a id="179" class="Symbol">(</a><a id="180" href="Level.html#444" class="Generalizable">A</a> <a id="182" class="Symbol">→</a> <a id="184" href="Level.html#458" class="Generalizable">B</a><a id="185" class="Symbol">)</a> <a id="187" class="Symbol">→</a> <a id="189" href="Level.html#205" class="Function">Type</a> <a id="194" class="Symbol">_</a>
+<a id="196" class="Markup">\end{code}</a><a id="206" class="Background">
+%&lt;*injective&gt;
+</a><a id="221" class="Markup">\begin{code}</a>
+<a id="234" href="Function.Injective.Base.html#167" class="Function">Injective</a> <a id="244" href="Function.Injective.Base.html#244" class="Bound">f</a> <a id="246" class="Symbol">=</a> <a id="248" class="Symbol">∀</a> <a id="250" href="Function.Injective.Base.html#250" class="Bound">x</a> <a id="252" href="Function.Injective.Base.html#252" class="Bound">y</a> <a id="254" class="Symbol">→</a> <a id="256" href="Function.Injective.Base.html#244" class="Bound">f</a> <a id="258" href="Function.Injective.Base.html#250" class="Bound">x</a> <a id="260" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="262" href="Function.Injective.Base.html#244" class="Bound">f</a> <a id="264" href="Function.Injective.Base.html#252" class="Bound">y</a> <a id="266" class="Symbol">→</a> <a id="268" href="Function.Injective.Base.html#250" class="Bound">x</a> <a id="270" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="272" href="Function.Injective.Base.html#252" class="Bound">y</a>
+<a id="274" class="Markup">\end{code}</a><a id="284" class="Background">
+%&lt;/injective&gt;
+</a><a id="299" class="Markup">\begin{code}</a>
+
+<a id="313" class="Keyword">infixr</a> <a id="320" class="Number">0</a> <a id="322" href="Function.Injective.Base.html#326" class="Function Operator">_↣_</a>
+<a id="_↣_"></a><a id="326" href="Function.Injective.Base.html#326" class="Function Operator">_↣_</a> <a id="330" class="Symbol">:</a> <a id="332" href="Level.html#205" class="Function">Type</a> <a id="337" href="Level.html#428" class="Generalizable">a</a> <a id="339" class="Symbol">→</a> <a id="341" href="Level.html#205" class="Function">Type</a> <a id="346" href="Level.html#430" class="Generalizable">b</a> <a id="348" class="Symbol">→</a> <a id="350" href="Level.html#205" class="Function">Type</a> <a id="355" class="Symbol">(</a><a id="356" href="Level.html#428" class="Generalizable">a</a> <a id="358" href="Agda.Primitive.html#636" class="Primitive Operator">ℓ⊔</a> <a id="361" href="Level.html#430" class="Generalizable">b</a><a id="362" class="Symbol">)</a>
+<a id="364" class="Markup">\end{code}</a><a id="374" class="Background">
+%&lt;*injection&gt;
+</a><a id="389" class="Markup">\begin{code}</a>
+<a id="402" href="Function.Injective.Base.html#402" class="Bound">A</a> <a id="404" href="Function.Injective.Base.html#326" class="Function Operator">↣</a> <a id="406" href="Function.Injective.Base.html#406" class="Bound">B</a> <a id="408" class="Symbol">=</a> <a id="410" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="413" href="Function.Injective.Base.html#413" class="Bound">f</a> <a id="415" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="417" class="Symbol">(</a><a id="418" href="Function.Injective.Base.html#402" class="Bound">A</a> <a id="420" class="Symbol">→</a> <a id="422" href="Function.Injective.Base.html#406" class="Bound">B</a><a id="423" class="Symbol">)</a> <a id="425" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="427" href="Function.Injective.Base.html#167" class="Function">Injective</a> <a id="437" href="Function.Injective.Base.html#413" class="Bound">f</a>
+<a id="439" class="Markup">\end{code}</a><a id="449" class="Background">
+%&lt;/injection&gt;
+</a><a id="464" class="Markup">\begin{code}</a>
+<a id="refl-↣"></a><a id="477" href="Function.Injective.Base.html#477" class="Function">refl-↣</a> <a id="484" class="Symbol">:</a> <a id="486" href="Level.html#444" class="Generalizable">A</a> <a id="488" href="Function.Injective.Base.html#326" class="Function Operator">↣</a> <a id="490" href="Level.html#444" class="Generalizable">A</a>
+<a id="492" href="Function.Injective.Base.html#477" class="Function">refl-↣</a> <a id="499" class="Symbol">.</a><a id="500" href="Agda.Builtin.Sigma.html#252" class="Field">fst</a> <a id="504" href="Function.Injective.Base.html#504" class="Bound">x</a> <a id="506" class="Symbol">=</a> <a id="508" href="Function.Injective.Base.html#504" class="Bound">x</a>
+<a id="510" href="Function.Injective.Base.html#477" class="Function">refl-↣</a> <a id="517" class="Symbol">.</a><a id="518" href="Agda.Builtin.Sigma.html#264" class="Field">snd</a> <a id="522" href="Function.Injective.Base.html#522" class="Bound">x</a> <a id="524" href="Function.Injective.Base.html#524" class="Bound">y</a> <a id="526" href="Function.Injective.Base.html#526" class="Bound">x≡y</a> <a id="530" class="Symbol">=</a> <a id="532" href="Function.Injective.Base.html#526" class="Bound">x≡y</a>
+<a id="536" class="Markup">\end{code}</a><a id="546" class="Background">
+</a></pre></body></html>

@@ -1,0 +1,20 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Cardinality.Finite.ManifestBishop.Container</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">module</a> <a id="55" href="Cardinality.Finite.ManifestBishop.Container.html" class="Module">Cardinality.Finite.ManifestBishop.Container</a> <a id="99" class="Keyword">where</a>
+
+<a id="106" class="Keyword">open</a> <a id="111" class="Keyword">import</a> <a id="118" href="Prelude.html" class="Module">Prelude</a>
+<a id="126" class="Keyword">open</a> <a id="131" class="Keyword">import</a> <a id="138" href="Data.Fin.html" class="Module">Data.Fin</a>
+<a id="147" class="Keyword">open</a> <a id="152" class="Keyword">import</a> <a id="159" href="Container.html" class="Module">Container</a>
+<a id="169" class="Keyword">open</a> <a id="174" class="Keyword">import</a> <a id="181" href="Container.List.html" class="Module">Container.List</a> <a id="196" class="Keyword">public</a>
+<a id="203" class="Keyword">open</a> <a id="208" class="Keyword">import</a> <a id="215" href="Container.Membership.html" class="Module">Container.Membership</a> <a id="236" class="Symbol">(</a><a id="237" href="Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a> <a id="239" href="Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="241" href="Data.Fin.Base.html#398" class="Function">Fin</a><a id="244" class="Symbol">)</a> <a id="246" class="Keyword">public</a>
+
+<a id="ℬ"></a><a id="254" href="Cardinality.Finite.ManifestBishop.Container.html#254" class="Function">ℬ</a> <a id="256" class="Symbol">:</a> <a id="258" href="Level.html#205" class="Function">Type</a> <a id="263" href="Level.html#428" class="Generalizable">a</a> <a id="265" class="Symbol">→</a> <a id="267" href="Level.html#205" class="Function">Type</a> <a id="272" href="Level.html#428" class="Generalizable">a</a>
+<a id="274" class="Markup">\end{code}</a><a id="284" class="Background">
+%&lt;*bish-def&gt;
+</a><a id="298" class="Markup">\begin{code}</a>
+<a id="311" href="Cardinality.Finite.ManifestBishop.Container.html#254" class="Function">ℬ</a> <a id="313" href="Cardinality.Finite.ManifestBishop.Container.html#313" class="Bound">A</a> <a id="315" class="Symbol">=</a> <a id="317" href="Data.Sigma.Base.html#401" class="Function">Σ[</a> <a id="320" href="Cardinality.Finite.ManifestBishop.Container.html#320" class="Bound">support</a> <a id="328" href="Data.Sigma.Base.html#401" class="Function">⦂</a> <a id="330" href="Container.List.html#141" class="Function">List</a> <a id="335" href="Cardinality.Finite.ManifestBishop.Container.html#313" class="Bound">A</a> <a id="337" href="Data.Sigma.Base.html#401" class="Function">]</a> <a id="339" class="Symbol">((</a><a id="341" href="Cardinality.Finite.ManifestBishop.Container.html#341" class="Bound">x</a> <a id="343" class="Symbol">:</a> <a id="345" href="Cardinality.Finite.ManifestBishop.Container.html#313" class="Bound">A</a><a id="346" class="Symbol">)</a> <a id="348" class="Symbol">→</a> <a id="350" href="Cardinality.Finite.ManifestBishop.Container.html#341" class="Bound">x</a> <a id="352" href="Container.Membership.html#331" class="Function Operator">∈!</a> <a id="355" href="Cardinality.Finite.ManifestBishop.Container.html#320" class="Bound">support</a><a id="362" class="Symbol">)</a>
+<a id="364" class="Markup">\end{code}</a><a id="374" class="Background">
+%&lt;/bish-def&gt;
+</a></pre></body></html>

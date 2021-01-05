@@ -1,0 +1,21 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Data.Fin.Literals</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="Data.Fin.Literals.html" class="Module">Data.Fin.Literals</a> <a id="60" class="Keyword">where</a>
+
+<a id="67" class="Comment">-- import Data.Nat as ℕ</a>
+<a id="91" class="Comment">-- import Data.Nat.Properties as ℕ</a>
+<a id="126" class="Keyword">open</a> <a id="131" class="Keyword">import</a> <a id="138" href="Data.Fin.html" class="Module">Data.Fin</a>
+<a id="147" class="Keyword">open</a> <a id="152" class="Keyword">import</a> <a id="159" href="Data.Fin.Properties.html" class="Module">Data.Fin.Properties</a>
+<a id="179" class="Keyword">open</a> <a id="184" class="Keyword">import</a> <a id="191" href="Literals.Number.html" class="Module">Literals.Number</a>
+<a id="207" class="Comment">-- open import Relation.Nullary</a>
+<a id="239" class="Keyword">open</a> <a id="244" class="Keyword">import</a> <a id="251" href="Agda.Builtin.Nat.html" class="Module">Agda.Builtin.Nat</a> <a id="268" class="Keyword">renaming</a> <a id="277" class="Symbol">(</a><a id="278" href="Agda.Builtin.Nat.html#746" class="Primitive Operator">_&lt;_</a> <a id="282" class="Symbol">to</a> <a id="_&lt;_"></a><a id="285" href="Data.Fin.Literals.html#285" class="Primitive Operator">_&lt;ᵇ_</a><a id="289" class="Symbol">)</a>
+<a id="291" class="Keyword">open</a> <a id="296" class="Keyword">import</a> <a id="303" href="Data.Bool.html" class="Module">Data.Bool</a>
+
+<a id="314" class="Keyword">instance</a>
+  <a id="numberFin"></a><a id="325" href="Data.Fin.Literals.html#325" class="Function">numberFin</a> <a id="335" class="Symbol">:</a> <a id="337" class="Symbol">∀</a> <a id="339" class="Symbol">{</a><a id="340" href="Data.Fin.Literals.html#340" class="Bound">n</a><a id="341" class="Symbol">}</a> <a id="343" class="Symbol">→</a> <a id="345" href="Agda.Builtin.FromNat.html#197" class="Record">Number</a> <a id="352" class="Symbol">(</a><a id="353" href="Data.Fin.Base.html#398" class="Function">Fin</a> <a id="357" href="Data.Fin.Literals.html#340" class="Bound">n</a><a id="358" class="Symbol">)</a>
+  <a id="362" href="Data.Fin.Literals.html#325" class="Function">numberFin</a> <a id="372" class="Symbol">{</a><a id="373" href="Data.Fin.Literals.html#373" class="Bound">n</a><a id="374" class="Symbol">}</a> <a id="376" class="Symbol">=</a> <a id="378" class="Keyword">record</a>
+    <a id="389" class="Symbol">{</a> <a id="391" href="Agda.Builtin.FromNat.html#253" class="Field">Constraint</a> <a id="402" class="Symbol">=</a> <a id="404" class="Symbol">λ</a> <a id="406" href="Data.Fin.Literals.html#406" class="Bound">m</a> <a id="408" class="Symbol">→</a> <a id="410" href="Data.Bool.html#640" class="Function">T</a> <a id="412" class="Symbol">(</a><a id="413" href="Data.Fin.Literals.html#406" class="Bound">m</a> <a id="415" href="Data.Fin.Literals.html#285" class="Primitive Operator">&lt;ᵇ</a> <a id="418" href="Data.Fin.Literals.html#373" class="Bound">n</a><a id="419" class="Symbol">)</a>
+    <a id="425" class="Symbol">;</a> <a id="427" href="Agda.Builtin.FromNat.html#282" class="Field">fromNat</a>    <a id="438" class="Symbol">=</a> <a id="440" class="Symbol">λ</a> <a id="442" href="Data.Fin.Literals.html#442" class="Bound">m</a> <a id="444" class="Symbol">{{</a><a id="446" href="Data.Fin.Literals.html#446" class="Bound">pr</a><a id="448" class="Symbol">}}</a> <a id="451" class="Symbol">→</a> <a id="453" href="Data.Fin.Properties.html#2288" class="Function">FinFromℕ</a> <a id="462" href="Data.Fin.Literals.html#442" class="Bound">m</a> <a id="464" href="Data.Fin.Literals.html#373" class="Bound">n</a> <a id="466" href="Data.Fin.Literals.html#446" class="Bound">pr</a>
+    <a id="473" class="Symbol">}</a>
+</pre></body></html>
