@@ -24,8 +24,8 @@
 </div>
 
 <p>The final version of my master’s thesis got approved recently so I thought I’d post it here for people who might be interested.</p>
-<p>Here’s the pdf: <a href="https://oisdk.github.io/masters-thesis/paper.pdf">https://oisdk.github.io/masters-thesis/paper.pdf</a>.</p>
-<p>And all of the theorems in the thesis have been formalised in Agda. The code is organised to follow the structure of the pdf here: <a href="https://oisdk.github.io/masters-thesis/README.html">https://oisdk.github.io/masters-thesis/README.html</a>.</p>
+<p><a href="../pdfs/masters-thesis.pdf">Here’s the pdf</a>.</p>
+<p>And all of the theorems in the thesis have been formalised in Agda. The code is organised to follow the structure of the pdf <a href="../code/masters-thesis/README.html">here</a>.</p>
 <p>The title of the thesis is “Finiteness in Cubical Type Theory”: basically it’s all about formalising the notion of “this type is finite” in CuTT. I also wanted to write something that could serve as a kind of introduction to some components of modern dependent type theory which didn’t go the standard length-indexed vector route.</p>
 ]]></description>
     <pubDate>Mon, 04 Jan 2021 00:00:00 UT</pubDate>
