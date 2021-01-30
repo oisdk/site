@@ -226,7 +226,7 @@
 <span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>  liftA2 f (<span class="dt">ZipList</span> xs) (<span class="dt">ZipList</span> ys) <span class="ot">=</span> <span class="dt">ZipList</span> (<span class="fu">zipWith</span> f xs ys)</span></code></pre></div>
 <p>We’ll use some of our knowledge about <code class="sourceCode haskell"><span class="dt">ZipList</span></code> to help us in the next section.</p>
 <h1 id="timekeeping">Timekeeping</h1>
-<p>We’ve seen that efforts to model both coroutines and partiality end up in the same neighborhood: there’s yet another way to get there, which seems (at first) almost the opposite of the second. It starts with a blog post from Conor McBride <span class="citation" data-cites="mcbride_time_2009">(<a href="#ref-mcbride_time_2009" role="doc-biblioref">2009</a>)</span> called “Time flies like an applicative functor”. Curiously, here too breadth-first labeling is the focus. Remember first the lovely circular solution from <span class="citation" data-cites="jones_linear-time_1993-1">(<span class="citeproc-not-found" data-reference-id="jones_linear-time_1993-1"><strong>???</strong></span>)</span>:</p>
+<p>We’ve seen that efforts to model both coroutines and partiality end up in the same neighborhood: there’s yet another way to get there, which seems (at first) almost the opposite of the second. It starts with a blog post from Conor McBride <span class="citation" data-cites="mcbride_time_2009">(<a href="#ref-mcbride_time_2009" role="doc-biblioref">2009</a>)</span> called “Time flies like an applicative functor”. Curiously, here too breadth-first labeling is the focus. Remember first the lovely circular solution from <span class="citation" data-cites="jones_linear-time_1993">Jones and Gibbons (<a href="#ref-jones_linear-time_1993" role="doc-biblioref">1993</a>)</span>:</p>
 <div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a <span class="ot">=</span> <span class="dt">Leaf</span> <span class="op">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a></span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a><span class="ot">relabel ::</span> <span class="dt">Tree</span> x <span class="ot">-&gt;</span> [[a]] <span class="ot">-&gt;</span> (<span class="dt">Tree</span> a, [[a]])</span>
@@ -312,11 +312,17 @@
 <div id="ref-blazevic_coroutine_2011">
 <p>Blažević, Mario. 2011. “Coroutine Pipelines.” <em>The Monad.Reader</em> 19 (19) (August): 29–50.</p>
 </div>
+<div id="ref-capretta_general_2005">
+<p>Capretta, Venanzio. 2005. “General Recursion via Coinductive Types.” <em>Logical Methods in Computer Science</em> 1 (2) (July). doi:<a href="https://doi.org/10.2168/LMCS-1(2:1)2005">10.2168/LMCS-1(2:1)2005</a>. <a href="http://arxiv.org/abs/cs/0505037">http://arxiv.org/abs/cs/0505037</a>.</p>
+</div>
 <div id="ref-capretta_partiality_2004">
 <p>Capretta, Venanzio, Thorsten Altenkirch, and Tarmo Uustalu. 2004. “Partiality Is an Effect.” In <em>Dependently Typed Programming</em>, 04381:20. Dagstuhl Seminar Proceedings. Dagstuhl, Germany: Internationales Begegnungs- und Forschungszentrum für Informatik (IBFI), Schloss Dagstuhl, Germany.</p>
 </div>
 <div id="ref-gonzalez_pipes_2018">
 <p>Gonzalez, Gabriel. 2018. “Pipes: Compositional Pipelines.”</p>
+</div>
+<div id="ref-jones_linear-time_1993">
+<p>Jones, Geraint, and Jeremy Gibbons. 1993. <em>Linear-Time Breadth-First Tree Algorithms: An Exercise in the Arithmetic of Folds and Zips</em>. Dept of Computer Science, University of Auckland.</p>
 </div>
 <div id="ref-kiselyov_iteratees_2012">
 <p>Kiselyov, Oleg. 2012. “Iteratees.” In <em>Proceedings of the 11th International Conference on Functional and Logic Programming</em>, 166–181. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer, Berlin, Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-29822-6_15">10.1007/978-3-642-29822-6_15</a>.</p>
@@ -334,7 +340,7 @@
 <section class="footnotes" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>There is a later, seemingly more formal version of the talk available <span class="citation" data-cites="capretta_partiality_2005">(<span class="citeproc-not-found" data-reference-id="capretta_partiality_2005"><strong>???</strong></span>)</span>, but the one from 2004 was a little easier for me to understand, and had a lot more Haskell code.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1" role="doc-endnote"><p>There is a later, seemingly more formal version of the talk available <span class="citation" data-cites="capretta_general_2005">(Capretta <a href="#ref-capretta_general_2005" role="doc-biblioref">2005</a>)</span>, but the one from 2004 was a little easier for me to understand, and had a lot more Haskell code.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 <li id="fn2" role="doc-endnote"><p>Small note: <code>(,) a</code> and <code>(-&gt;) a</code> are adjunct. I wonder if there is any implication from this? Certainly, producers and consumers seem adjunct, but there’s no instance I can find for it in adjunctions.<a href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
