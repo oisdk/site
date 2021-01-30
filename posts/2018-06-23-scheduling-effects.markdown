@@ -103,7 +103,7 @@ accessible) talk "Partiality is an effect"
 [@capretta_partiality_2004][^later-version]. 
 
 [^later-version]: There is a later, seemingly more formal version of the talk
-    available [@capretta_partiality_2005], but the one from 2004 was a little
+    available [@capretta_general_2005], but the one from 2004 was a little
     easier for me to understand, and had a lot more Haskell code.
 
 The monad in question looks like this:
@@ -415,7 +415,7 @@ same neighborhood: there's yet another way to get there, which seems (at first)
 almost the opposite of the second. It starts with a blog post from Conor McBride
 [-@mcbride_time_2009] called "Time flies like an applicative functor".
 Curiously, here too breadth-first labeling is the focus. Remember first the
-lovely circular solution from @jones_linear-time_1993-1:
+lovely circular solution from @jones_linear-time_1993:
 
 ```haskell
 data Tree a = Leaf | Node a (Tree a) (Tree a)
