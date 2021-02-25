@@ -1,0 +1,137 @@
+
+@article{allison_circular_2006,
+  title = {Circular {{Programs}} and {{Self}}-{{Referential Structures}}},
+  author = {Allison, Lloyd},
+  year = {2006},
+  month = oct,
+  volume = {19},
+  pages = {99--109},
+  issn = {1097-024X},
+  doi = {10.1002/spe.4380190202},
+  url = {http://users.monash.edu/~lloyd/tildeFP/1989SPE/},
+  urldate = {2018-06-01},
+  abstract = {A circular program creates a data structure whose computation depends upon itself or refers to itself. The technique is used to implement the classic data structures circular and doubly-linked lists, threaded trees and queues, in a functional programming language. These structures are normally thought to require updatable variables found in imperative languages. For example, a functional program to perform the breadth-first traversal of a tree is given. Some of the examples result in circular data structures when evaluated. Some examples are particularly space-efficient by avoiding the creation of intermediate temporary structures which would otherwise later become garbage. Lastly, the technique can be applied in an imperative language to give an elegant program.},
+  journal = {Software: Practice and Experience},
+  language = {en},
+  number = {2}
+}
+
+@inproceedings{berger_martin_2019,
+  ids = {bergerMartinHofmannCase2018},
+  title = {Martin {{Hofmann}}'s {{Case}} for {{Non}}-{{Strictly Positive Data Types}}},
+  booktitle = {24th International Conference on Types for Proofs and Programs ({{TYPES}} 2018)},
+  author = {Berger, Ulrich and Matthes, Ralph and Setzer, Anton},
+  editor = {Dybjer, Peter and Santo, Jos{\'e} Esp{\'i}rito and Pinto, Lu{\'i}s},
+  year = {2019},
+  volume = {130},
+  pages = {22},
+  publisher = {{Schloss Dagstuhl\textendash Leibniz-Zentrum fuer Informatik}},
+  address = {{Dagstuhl, Germany}},
+  issn = {1868-8969},
+  doi = {10.4230/LIPIcs.TYPES.2018.1},
+  url = {http://drops.dagstuhl.de/opus/volltexte/2019/11405},
+  abstract = {We describe the breadth-first traversal algorithm by Martin Hofmann that uses a non-strictly positive data type and carry out a simple verification in an extensional setting. Termination is shown by implementing the algorithm in the strongly normalising extension of system F by Mendler-style recursion. We then analyze the same algorithm by alternative verifications first in an intensional setting using a non-strictly positive inductive definition (not just a non-strictly positive data type), and subsequently by two different algebraic reductions. The verification approaches are compared in terms of notions of simulation and should elucidate the somewhat mysterious algorithm and thus make a case for other uses of non-strictly positive data types. Except for the termination proof, which cannot be formalised in Coq, all proofs were formalised in Coq and some of the algorithms were implemented in Agda and Haskell.},
+  isbn = {978-3-95977-106-1},
+  language = {en},
+  series = {Leibniz International Proceedings in Informatics ({{LIPIcs}})},
+  urn = {urn:nbn:de:0030-drops-114052}
+}
+
+@techreport{krstic_category_2000,
+  title = {A {{Category}} of {{Hyperfunctions}}},
+  author = {Krstic, Sava and Launchbury, John},
+  year = {2000},
+  url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.2421},
+  abstract = {Introduction  In the usual mathematical practice, functions whose arguments are functions are commonplace. Functions whose arguments are functions whose arguments are functions are rarer, and everything beyond the third level is exotic. Innitely nested function spaces like  H(A;B) = ((((   ! A) ! B) ! A) ! B)  cannot exist for cardinality reasons. In domain theory, however, such innite expressions can be given a precise meaning. For suitable categories D, including all reasonable cartesian closed categories of pointed domains, the theory provides canonical solutions in D to recursive domain equations, and our H(A;B) can be dened as the canonical solution of the equation X    = (X ! A) ! B. Textbook expos}
+}
+
+@article{launchbury_coroutining_2013,
+  title = {Coroutining {{Folds}} with {{Hyperfunctions}}},
+  author = {Launchbury, J. and Krstic, S. and Sauerwein, T. E.},
+  year = {2013},
+  month = sep,
+  volume = {129},
+  pages = {121--135},
+  issn = {2075-2180},
+  doi = {10.4204/EPTCS.129.9},
+  url = {http://arxiv.org/abs/1309.5135},
+  urldate = {2020-12-30},
+  abstract = {Fold functions are a general mechanism for computing over recursive data structures. First-order folds compute results bottom-up. With higher-order folds, computations that inherit attributes from above can also be expressed. In this paper, we explore folds over a form of recursive higher-order function, called hyperfunctions, and show that hyperfunctions allow fold computations to coroutine across data structures, as well as compute bottom up and top down. We use the compiler technique of foldr-build as an exemplar to show how hyperfunctions can be used.},
+  archiveprefix = {arXiv},
+  eprint = {1309.5135},
+  journal = {Electron. Proc. Theor. Comput. Sci.},
+  keywords = {Computer Science - Logic in Computer Science,Computer Science - Programming Languages,D.1.1}
+}
+
+@techreport{launchbury_zip_2000,
+  ids = {launchbury_zip_2000a},
+  title = {Zip {{Fusion}} with {{Hyperfunctions}}},
+  author = {Launchbury, John and Krstic, Sava and Sauerwein, Timothy E.},
+  year = {2000},
+  url = {http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.4961},
+  abstract = {Automatic removal of intermediate structures has been...}
+}
+
+@techreport{pieters_faster_2018,
+  title = {Faster Coroutine Pipelines: A Reconstruction (Extended Version)},
+  shorttitle = {Faster Coroutine Pipelines},
+  author = {Pieters, Ruben and Schrijvers, Tom},
+  year = {2018},
+  month = nov,
+  institution = {{Department of Computer Science, KU Leuven; Leuven. Belgium}},
+  url = {http://www.cs.kuleuven.be/publicaties/rapporten/cw/CW715.pdf},
+  urldate = {2021-02-23},
+  abstract = {Spivey has recently presented a novel functional representation that supports the efficient composition, or merging, of coroutine pipelines for processing streams of data. This representation was inspired by Shivers and Might's three-continuation approach and is shown to be equivalent to a simple yet inefficient executable specification. Unfortunately, neither Shivers and Might's original work nor the equivalence proof sheds much light on the underlying principles allowing the derivation of this efficient representation from its specification. This paper gives the missing insight by reconstructing a systematic derivation in terms of known transformation steps from the simple specification to the efficient representation. This derivation sheds light on the limitations of the representation and on its applicability to other settings. In particular, it has enabled us to obtain a similar representation for pipes featuring two-way communication, similar to the Haskell pipes library. Our benchmarks confirm that this two-way representation retains the same improved performance characteristics.},
+  language = {en}
+}
+
+@inproceedings{pieters_faster_2019,
+  title = {Faster {{Coroutine Pipelines}}: {{A Reconstruction}}},
+  shorttitle = {Faster {{Coroutine Pipelines}}},
+  booktitle = {Practical {{Aspects}} of {{Declarative Languages}}},
+  author = {Pieters, Ruben P. and Schrijvers, Tom},
+  editor = {Alferes, Jos{\'e} J{\'u}lio and Johansson, Moa},
+  year = {2019},
+  pages = {133--149},
+  publisher = {{Springer International Publishing}},
+  address = {{Cham}},
+  doi = {10.1007/978-3-030-05998-9_9},
+  url = {https://people.cs.kuleuven.be/~tom.schrijvers/portfolio/padl2019.html},
+  abstract = {Spivey has recently presented a novel functional representation that supports the efficient composition, or merging, of coroutine pipelines for processing streams of data. This representation was inspired by Shivers and Might's three-continuation approach and is shown to be equivalent to a simple yet inefficient executable specification. Unfortunately, neither Shivers and Might's original work nor the equivalence proof sheds much light on the underlying principles allowing the derivation of this efficient representation from its specification.This paper gives the missing insight by reconstructing a systematic derivation in terms of known transformation steps from the simple specification to the efficient representation. This derivation sheds light on the limitations of the representation and on its applicability to other settings. In particular, it has enabled us to obtain a similar representation for pipes featuring two-way communication, similar to the Haskell pipes library. Our benchmarks confirm that this two-way representation retains the same improved performance characteristics.},
+  isbn = {978-3-030-05998-9},
+  keywords = {Algebra,Stream processing,Structured recursion},
+  language = {en},
+  series = {Lecture {{Notes}} in {{Computer Science}}}
+}
+
+@article{smith_lloyd_2009,
+  title = {Lloyd {{Allison}}'s {{Corecursive Queues}}: {{Why Continuations Matter}}},
+  author = {Smith, Leon P},
+  year = {2009},
+  month = jul,
+  volume = {14},
+  pages = {28},
+  url = {https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf},
+  abstract = {In a purely functional setting, real-time queues are traditionally thought to be much harder to implement than either real-time stacks or amortized O(1) queues. In ``Circular Programs and Self-Referential Structures,'' [1] Lloyd Allison uses corecursion to implement a queue by defining a lazy list in terms of itself. This provides a simple, efficient, and attractive implementation of real-time queues.},
+  journal = {The Monad.Reader},
+  language = {en},
+  number = {14}
+}
+
+@article{spivey_faster_2017,
+  title = {Faster Coroutine Pipelines},
+  author = {Spivey, Michael},
+  year = {2017},
+  month = aug,
+  volume = {1},
+  pages = {5:1--5:23},
+  doi = {10.1145/3110249},
+  url = {https://doi.org/10.1145/3110249},
+  urldate = {2020-01-31},
+  abstract = {Coroutine pipelines provide an attractive structuring mechanism for complex programs that process streams of data, with the advantage over lazy streams that both ends of a pipeline may interact with the I/O system, as may processes in the middle. Two popular Haskell libraries, Pipes and Conduit, support such pipelines. In both libraries, pipelines are implemented in a direct style by combining a free monad of communication events with an interpreter for (pseudo-)parallel composition that interleaves the events of its argument processes. These implementations both suffer from a slow-down when processes are deeply nested in sequence or in parallel. We propose an alternative implementation of pipelines based on continuations that does not suffer from this slow-down. What is more, the implementation is significantly faster on small, communication-intensive examples even where they do not suffer from the slow-down, and comparable in speed with similar programs based on lazy streams. We also show that the continuation-based implementation may be derived from the direct-style implementation by algebraic reasoning.},
+  journal = {Proc. ACM Program. Lang.},
+  keywords = {Pipelines},
+  number = {ICFP}
+}
+
+
