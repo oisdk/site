@@ -1,13 +1,11 @@
 ---
 title: About
 ---
-I'm a master's student, studying at [UCC](https://www.ucc.ie) in Cork, Ireland.
+I'm a PhD student, studying at [Imperial](https://www.imperial.ac.uk/), in the [functional
+programming group](https://fp.doc.ic.ac.uk/).
 
-I'm mainly interested in statically-typed functional programming. Currently I'm
-coding in [Haskell](http://haskell.org), and [Agda](http://agda.readthedocs.io).
-
-I go by Oisín: it's pronounced "uh-sheen", with an emphasis on the first
-syllable. Kind of rhymes with machine.
+I go by Oisín: it's pronounced "uh-sheen".
+It rhymes with the phrase "the sheen".
 
 This site is generated using [Hakyll](https://jaspervdj.be/hakyll/), a fantastic
 static site generator written in Haskell. The source code for the site is
