@@ -233,7 +233,7 @@ In fact this reveals a little about what was happening in the `zip` function: we
 convert the left-hand list to a `ProdPar` (producer), and the right-hand to a
 consumer, and apply them to each other.
 
-# Hyperfunctions Don't Exist in Set Theory
+# Hyperfunctions Are Weird
 
 Aside from just being kind of weird intuitively, hyperfunctions are weird *in
 theory*.
@@ -242,8 +242,6 @@ tried, you'd run into those pesky size restrictions which stop us from making
 things like "the set of all sets".
 Haskell types, however, are not sets, precisely because we can define things
 like `a -&> b`.
-
-# Hyperfunctions Don't Exist in (pedantic) Type Systems
 
 For slightly different reasons to the set theory restrictions, we can't define
 the type of hyperfunctions in Agda.
@@ -302,3 +300,78 @@ As far as I understand it, it would likely be safe to allow types like `↬` abo
 in Agda [@coquand_agda_2013], although I'm not certain that with all of Agda's newer
 features that's still the case.
 
+# Hyperfunctions are Monads (and profunctors, and categories, and arrows...)
+
+So we've seen that hyperfunctions show up kind of incidentally through certain
+optimisations, and we've seen that they occupy a strange space in terms of their
+theoretical interpretation: we haven't yet seen much about the type itself in
+isolation.
+Luckily Ed Kmett has already written the [hyperfunctions
+package](https://hackage.haskell.org/package/hyperfunctions)
+-@kmett_hyperfunctions_2015, where a laundry list of instances are provided,
+which can tell us a little more about what hyperfunctions can actually do on
+their own.
+
+Hyperfunctions form a category.
+This means you can compose them and they have an identity.
+
+```haskell
+instance Category (-&>) where
+  id = Hyp (\k -> invoke k id)
+  f . g = Hyp (\k -> invoke f (g . k))
+```
+
+The identity here is a kind of recursion combinator.
+If we remove the newtype noise, it's equivalent to the following:
+
+```haskell
+i x = x i
+```
+
+One way to look at hyperfunctions is as a kind of stack of interacting
+functions: in this analogy, `id` is the empty stack.
+We can push functions onto the stack like so:
+
+```haskell
+push :: (a -> b) -> a -&> b -> a -&> b
+push f q = Hyp (\k -> f (invoke k q))
+```
+
+Understood in this sense, `.` acts like a zipping operation on stacks, since we
+have the following law:
+
+```haskell
+push f p . push g q ≡ push (f . g) (p . q)
+```
+
+We can get some computational content out of the type in a few ways.
+`invoke` firstly is useful because it interacts with `push` like so:
+
+```haskell
+invoke (push f p) q ≡ f (invoke q p)
+```
+
+Along with the `id` implementation we have, this will let us run a
+hyperfunction with a kind of fixpoint:
+
+```haskell
+run :: Hyper a a -> a
+run f = invoke f id
+```
+
+This analogy helps us understand how the breadth-first traversals worked: the
+hyperfunctions are kind of like stacks with $\mathcal{O}(1)$ `push` and `zip`,
+which is precisely what you need for an efficient breadth-first traversal.
+
+```haskell
+bfenum :: Tree a -> [a]
+bfenum = run . f
+  where
+    f (x :& xs) = push (x:) (zips (map f xs))
+    
+    zips = foldr (.) id
+```
+
+Finally, hyperfunctions are of course monads.
+
+# Other Hyperfunctions?
