@@ -21,7 +21,6 @@ Values of the type `a -&> b` are called *hyperfunctions*
 If we expand it out a bit we can see that it's an infinitely left-nested
 function, which takes in some `a`s and returns some `b`s---kind of.
 
-
 ```haskell
 type a -&> b = (b -&> a) -> b
              = ((a -&> b) -> a) -> b
@@ -37,7 +36,7 @@ positive.
 "Positivity" here refers to the position relative to the arrows:
 to the left of an arrow is negative, to the right is positive, but two negatives
 cancel out (if you think about it, a function of type `(a -> b) -> c` will have
-to produce, not consume an `a`).
+to produce, not consume, an `a`).
 
 # Hyperfunctions Are Useful
 
@@ -53,28 +52,40 @@ function which allows you to fuse away `zip` on both parameters:
 newtype Zip a b = 
   Zip { runZip :: a -> (Zip a b -> b) -> b }
 
-zip :: [a] -> [b] -> [(a,b)]
-zip xs ys = foldr xf xb xs (Zip (foldr yf yb ys))
+zip :: forall a b. [a] -> [b] -> [(a,b)]
+zip xs ys = xz yz
   where
-    xf x xk yk = runZip yk x xk
-    xb _ = []
+    xz :: Zip a [(a,b)] -> [(a,b)]
+    xz = foldr f b xs
+      where    
+        f x xk yk = runZip yk x xk
+        b _ = []
     
-    yf y yk x xk = (x,y) : xk (Zip yk)
-    yb _ _ = []
+    yz :: Zip a [(a,b)]
+    yz = foldr f b ys
+      where
+        f y yk = Zip (\x xk -> (x,y) : xk yk)
+        b = Zip (\_ _ -> [])
 ```
 
 It turns out that this `Zip` type is just a hyperfunction in disguise (with some
 parameters flipped around):
 
 ```haskell
-zip :: [a] -> [b] -> [(a,b)]
-zip xs ys = invoke (foldr xf xb xs) (foldr yf yb ys)
+zip :: forall a b. [a] -> [b] -> [(a,b)]
+zip xs ys = invoke xz yz
   where
-    xf x xk = Hyp (\yk -> invoke yk xk x)
-    xb = Hyp (\_ -> [])
+    xz :: (a -> [(a,b)]) -&> [(a,b)]
+    xz = foldr f b xs
+      where
+        f x xk = Hyp (\yk -> invoke yk xk x)    
+        b = Hyp (\_ -> [])
     
-    yf y yk = Hyp (\xk x -> (x,y) : invoke xk yk)
-    yb = Hyp (\_ _ -> [])
+    yz :: [(a,b)] -&> (a -> [(a,b)]) 
+    yz = foldr f b ys
+      where
+        f y yk = Hyp (\xk x -> (x,y) : invoke xk yk)
+        b = Hyp (\_ _ -> [])
 ```
 
 Similarly, in [another previous
@@ -90,8 +101,13 @@ newtype Q a = Q { q :: (Q a -> [a]) -> [a] }
 bfenum :: Tree a -> [a]
 bfenum t = q (f t b) e
   where
+    f :: Tree a -> Q a -> Q a
     f (x :& xs) fw = Q (\bw -> x : q fw (bw . flip (foldr f) xs))
+    
+    b :: Q a
     b = fix (Q . flip id)
+    
+    e :: Q a -> [a]
     e = fix (flip q)
 ```
 
@@ -101,7 +117,10 @@ Again, `Q` here is another hyperfunction!
 bfenum :: Tree a -> [a]
 bfenum t = invoke (f t e) e
   where
+    f :: Tree a -> ([a] -&> [a]) -> ([a] -&> [a])
     f (x :& xs) fw = Hyp (\bw -> x : invoke fw (Hyp (invoke bw . flip (foldr f) xs)))
+    
+    e :: [a] -&> [a]
     e = Hyp (\k -> invoke k e)
 ```
 
@@ -115,15 +134,18 @@ hyperfunction?
 ```haskell
 bfenum t = invoke (f t e) e 1
   where
+    f :: Tree a -> (Int -> [a]) -&> (Int -> [a]) 
+                -> (Int -> [a]) -&> (Int -> [a])
     f (x :& xs) fw =
       Hyp (\bw n -> x :
             invoke fw
               (Hyp (invoke bw . flip (foldr f) xs)) (n+1))
 
+    e :: (Int -> [a]) -&> (Int -> [a])
     e = Hyp b
     
     b x 0 = []
-    b x n = invoke x e (n-1)
+    b x n = invoke x (Hyp b) (n-1)
 ```
 
 (my version here is actually a good bit different from the one in
@@ -138,9 +160,13 @@ newtype HypM m a b = HypM { invokeM :: (m (HypM m a b) -> a) -> b }
 
 bfenum t = r (f t e)
   where
+    f :: Tree a -> HypM Maybe [a] [a] -> HypM Maybe [a] [a]
     f (x :& xs) fw = HypM (\bw -> x : invokeM fw (bw . Just . flip (foldr f) xs . fromMaybe e))
 
+    e :: HypM Maybe [a] [a]
     e = HypM ($ Nothing)
+    
+    r :: HypM Maybe [a] [a] -> [a]
     r = fix (flip invokeM . maybe [])
 ```
 
