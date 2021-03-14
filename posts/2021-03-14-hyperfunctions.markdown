@@ -10,14 +10,14 @@ Check out this type:
 newtype a -&> b = Hyp { invoke :: (b -&> a) -> b } 
 ```
 
-This is the type of hyperfunctions [@launchbury_coroutining_2013;
+This a hyperfunction [@launchbury_coroutining_2013;
 -@launchbury_zip_2000; -@krstic_category_2000], and I think 
 it's one of the weirdest and most interesting newtypes you can write in
 Haskell.
 
 The first thing to notice is that the recursion pattern is weird.
 For a type to refer to itself recursively on the *left* of a function arrow is
-pretty unusual, but on top of that the recursion here is *non-regular*.
+pretty unusual, but on top of that the recursion is *non-regular*.
 That means that the recursive reference has different type parameters to its
 parent: on the left-hand-side of the equals sign we have `a -&> b`, but on the
 right we refer to `b -&> a`.
@@ -103,7 +103,8 @@ zip xs ys = foldr xf xb xs (foldr yf yb ys)
     yb _ _ = []
 ```
 
-In an untyped language, such a definition would be totally fine.
+In an untyped language, or a language with recursive types, such a definition
+would be totally fine. 
 In Haskell, though, the compiler will complain with the following:
 
 ```
@@ -215,8 +216,8 @@ bfe t = invoke (f t e) e 1
     b x n = invoke x (Hyp b) (n-1)
 ```
 
-(my version here is actually a good bit different from the one in
-@smith_lloyd_2009, but the basic idea is the same)
+[my version here is actually a good bit different from the one in
+@smith_lloyd_2009, but the basic idea is the same]
 
 ### Coroutines
 
