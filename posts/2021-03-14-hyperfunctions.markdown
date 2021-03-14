@@ -19,7 +19,7 @@ The first thing to notice is that the recursion pattern is weird.
 For a type to refer to itself recursively on the *left* of a function arrow is
 pretty unusual, but on top of that the recursion is *non-regular*.
 That means that the recursive reference has different type parameters to its
-parent: on the left-hand-side of the equals sign we have `a -&> b`, but on the
+parent: `a -&> b` is on the left-hand-side of the equals sign, but on the
 right we refer to `b -&> a`.
 
 Being weird is reason enough to write about them, but what's really shocking
