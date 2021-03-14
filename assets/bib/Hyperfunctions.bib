@@ -62,6 +62,40 @@
   series = {Lecture {{Notes}} in {{Computer Science}}}
 }
 
+@inproceedings{ghani_monadic_2005,
+  ids = {ghani_monadic_2005a,ghani_monadic_2005b},
+  title = {Monadic Augment and Generalised Short Cut Fusion},
+  booktitle = {Proceedings of the Tenth {{ACM SIGPLAN}} International Conference on {{Functional}} Programming},
+  author = {Ghani, Neil and Johann, Patricia and Uustalu, Tarmo and Vene, Varmo},
+  year = {2005},
+  month = sep,
+  pages = {294--305},
+  publisher = {{Association for Computing Machinery}},
+  address = {{New York, NY, USA}},
+  doi = {10.1145/1086365.1086403},
+  url = {https://doi.org/10.1145/1086365.1086403},
+  urldate = {2020-12-31},
+  abstract = {Monads are commonplace programming devices that are used to uniformly structure computations with effects such as state, exceptions, and I/O. This paper further develops the monadic programming paradigm by investigating the extent to which monadic computations can be optimised by using generalisations of short cut fusion to eliminate monadic structures whose sole purpose is to "glue together" monadic program components.We make several contributions. First, we show that every inductive type has an associated build combinator and an associated short cut fusion rule. Second, we introduce the notion of an inductive monad to describe those monads that give rise to inductive types, and we give examples of such monads which are widely used in functional programming. Third, we generalise the standard augment combinators and cata/augment fusion rules for algebraic data types to types induced by inductive monads. This allows us to give the first cata/augment rules for some common data types, such as rose trees. Fourth, we demonstrate the practical applicability of our generalisations by providing Haskell implementations for all concepts and examples in the paper. Finally, we offer deep theoretical insights by showing that the augment combinators are monadic in nature, and thus that our cata/build and cata/augment rules are arguably the best generally applicable fusion rules obtainable.},
+  isbn = {978-1-59593-064-4},
+  keywords = {augment,bind,build,monads,short cut fusion},
+  series = {{{ICFP}} '05}
+}
+
+@article{hedges_selection_2015,
+  title = {The Selection Monad as a {{CPS}} Transformation},
+  author = {Hedges, Jules},
+  year = {2015},
+  month = mar,
+  url = {http://arxiv.org/abs/1503.06061},
+  urldate = {2020-02-07},
+  abstract = {A computation in the continuation monad returns a final result given a continuation, ie. it is a function with type \$(X \textbackslash to R) \textbackslash to R\$. If we instead return the intermediate result at \$X\$ then our computation is called a selection function. Selection functions appear in diverse areas of mathematics and computer science (especially game theory, proof theory and topology) but the existing literature does not heavily emphasise the fact that the selection monad is a CPS translation. In particular it has so far gone unnoticed that the selection monad has a call/cc-like operator with interesting similarities and differences to the usual call/cc, which we explore experimentally using Haskell. Selection functions can be used whenever we find the intermediate result more interesting than the final result. For example a SAT solver computes an assignment to a boolean function, and then its continuation decides whether it is a satisfying assignment, and we find the assignment itself more interesting than the fact that it is or is not satisfying. In game theory we find the move chosen by a player more interesting than the outcome that results from that move. The author and collaborators are developing a theory of games in which selection functions are viewed as generalised notions of rationality, used to model players. By realising that strategic contexts in game theory are examples of continuations we can see that classical game theory narrowly misses being in CPS, and that a small change of viewpoint yields a theory of games that is better behaved, and especially more compositional.},
+  archiveprefix = {arXiv},
+  eprint = {1503.06061},
+  journal = {arXiv:1503.06061 [cs]},
+  keywords = {Computer Science - Programming Languages},
+  primaryclass = {cs}
+}
+
 @misc{hofmann_non_1993,
   title = {Non {{Strictly Positive Datatypes}} in {{System F}}},
   author = {Hofmann, Martin},
