@@ -7,8 +7,289 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Mon, 04 Jan 2021 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sun, 14 Mar 2021 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Hyperfunctions</title>
+    <link>https://doisinkidney.com/posts/2021-03-14-hyperfunctions.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on March 14, 2021
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Haskell&#39;." href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>Check out this type:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">newtype</span> a <span class="op">-&amp;&gt;</span> b <span class="ot">=</span> <span class="dt">Hyp</span> {<span class="ot"> invoke ::</span> (b <span class="op">-&amp;&gt;</span> a) <span class="ot">-&gt;</span> b } </span></code></pre></div>
+<p>This a hyperfunction <span class="citation" data-cites="launchbury_coroutining_2013 launchbury_zip_2000 krstic_category_2000">(Launchbury, Krstic, and Sauerwein <a href="#ref-launchbury_coroutining_2013" role="doc-biblioref">2013</a>; <a href="#ref-launchbury_zip_2000" role="doc-biblioref">2000</a>; <a href="#ref-krstic_category_2000" role="doc-biblioref">2000</a>)</span>, and I think it’s one of the weirdest and most interesting newtypes you can write in Haskell.</p>
+<p>The first thing to notice is that the recursion pattern is weird. For a type to refer to itself recursively on the <em>left</em> of a function arrow is pretty unusual, but on top of that the recursion is <em>non-regular</em>. That means that the recursive reference has different type parameters to its parent: on the left-hand-side of the equals sign we have <code>a -&amp;&gt; b</code>, but on the right we refer to <code>b -&amp;&gt; a</code>.</p>
+<p>Being weird is reason enough to write about them, but what’s really shocking about hyperfunctions is that they’re <em>useful</em>. Once I saw the definition I realised that a bunch of optimisation code I had written (to fuse away zips in particular) was actually using hyperfunctions <span class="citation" data-cites="ghani_monadic_2005">(Ghani et al. <a href="#ref-ghani_monadic_2005" role="doc-biblioref">2005</a>)</span>. After that, I saw them all over the place: in coroutine implementations, queues, breadth-first traversals, etc.</p>
+<p>Anyways, since coming across hyperfunctions a few months ago I thought I’d do a writeup on them. I’m kind of surprised they’re not more well-known, to be honest: they’re like a slightly more enigmatic <a href="https://hackage.haskell.org/package/mtl-2.2.2/docs/Control-Monad-Cont.html"><code>Cont</code></a> monad, with a far cooler name. Let’s get into it!</p>
+<h1 id="what-are-hyperfunctions">What Are Hyperfunctions?</h1>
+<p>The newtype noise kind of hides what’s going on with hyperfunctions: expanding the definition out might make things slightly clearer.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">type</span> a <span class="op">-&amp;&gt;</span> b <span class="ot">=</span> (b <span class="op">-&amp;&gt;</span> a) <span class="ot">-&gt;</span> b</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>             <span class="ot">=</span> ((a <span class="op">-&amp;&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>             <span class="ot">=</span> (((b <span class="op">-&amp;&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>             <span class="ot">=</span> ((((<span class="op">...</span> <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b</span></code></pre></div>
+<p>So a value of type <code>a -&amp;&gt; b</code> is kind of an infinitely left-nested function type. One thing worth noticing is that all the <code>a</code>s are in negative positions and all the <code>b</code>s in positive. This negative and positive business basically refers to the position of arguments in relation to a function arrow: to the left are negatives, and to the right are positives, but two negatives cancel out.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>((((<span class="op">...</span> <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>           <span class="op">+</span>     <span class="op">-</span>     <span class="op">+</span>     <span class="op">-</span>     <span class="op">+</span></span></code></pre></div>
+<p>All the things in negative positions are kind of like the things a function “consumes”, and positive positions are the things “produced”. It’s worth fiddling around with very nested function types to get a feel for this notion. For hyperfunctions, though, it’s enough to know that <code>a -&amp;&gt; b</code> does indeed (kind of) take in a bunch of <code>a</code>s, and it kind of produces <code>b</code>s.</p>
+<p>By the way, one of the ways to get to grips with polarity in this sense is to play around with the Cont monad, codensity monad, or selection monad <span class="citation" data-cites="hedges_selection_2015">(Hedges <a href="#ref-hedges_selection_2015" role="doc-biblioref">2015</a>)</span>. If you do, you may notice one of the interesting parallels about hyperfunctions: the type <code>a -&amp;&gt; a</code> is in fact the fixpoint of the continuation monad (<code>Fix (Cont a)</code>). Suspicious!</p>
+<h1 id="hyperfunctions-are-everywhere">Hyperfunctions Are Everywhere</h1>
+<p>Before diving further into the properties of the type itself, I’d like to give some examples of how it can show up in pretty standard optimisation code.</p>
+<h3 id="zips">Zips</h3>
+<p>Let’s say you wanted to write <code>zip</code> with <code>foldr</code> (I have already described this particular algorithm in a <a href="2020-08-22-some-more-list-algorithms.html">previous post</a>). Not <code>foldr</code> on the left argument, mind you, but <code>foldr</code> on <em>both</em>. If you proceed mechanically, replacing every recursive function with <code>foldr</code>, you can actually arrive at a definition:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">zip</span> xs ys <span class="ot">=</span> <span class="fu">foldr</span> xf xb xs (<span class="fu">foldr</span> yf yb ys)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    xf x xk yk <span class="ot">=</span> yk x xk</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    xb _ <span class="ot">=</span> []</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>    </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    yf y yk x xk <span class="ot">=</span> (x,y) <span class="op">:</span> xk yk</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    yb _ _ <span class="ot">=</span> []</span></code></pre></div>
+<p>In an untyped language, or a language with recursive types, such a definition would be totally fine. In Haskell, though, the compiler will complain with the following:</p>
+<pre><code>• Occurs check: cannot construct the infinite type:
+    t0 ~ a -&gt; (t0 -&gt; [(a, b)]) -&gt; [(a, b)]</code></pre>
+<p>Seasoned Haskellers will know, though, that this is not a type error: no, this is a type <em>recipe</em>. The compiler is telling you what parameters it wants you to stick in the newtype:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Zip</span> a b <span class="ot">=</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="dt">Zip</span> {<span class="ot"> runZip ::</span> a <span class="ot">-&gt;</span> (<span class="dt">Zip</span> a b <span class="ot">-&gt;</span> [(a,b)]) <span class="ot">-&gt;</span> [(a,b)] }</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> <span class="kw">forall</span> a b<span class="op">.</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="fu">zip</span> xs ys <span class="ot">=</span> xz yz</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="ot">    xz ::</span> <span class="dt">Zip</span> a b <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    xz <span class="ot">=</span> <span class="fu">foldr</span> f b xs</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>      <span class="kw">where</span>    </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>        f x xk yk <span class="ot">=</span> runZip yk x xk</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>        b _ <span class="ot">=</span> []</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>    </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a><span class="ot">    yz ::</span> <span class="dt">Zip</span> a b</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    yz <span class="ot">=</span> <span class="fu">foldr</span> f b ys</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a>        f y yk <span class="ot">=</span> <span class="dt">Zip</span> (\x xk <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> xk yk)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>        b <span class="ot">=</span> <span class="dt">Zip</span> (\_ _ <span class="ot">-&gt;</span> [])</span></code></pre></div>
+<p>And here we see the elusive hyperfunction: hidden behind a slight change of parameter order, <code>Zip a b</code> is in fact the same as <code>[(a,b)] -&amp;&gt; (a -&gt; [(a,b)])</code>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> <span class="kw">forall</span> a b<span class="op">.</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="fu">zip</span> xs ys <span class="ot">=</span> invoke xz yz</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a><span class="ot">    xz ::</span> (a <span class="ot">-&gt;</span> [(a,b)]) <span class="op">-&amp;&gt;</span> [(a,b)]</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    xz <span class="ot">=</span> <span class="fu">foldr</span> f b xs</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>        f x xk <span class="ot">=</span> <span class="dt">Hyp</span> (\yk <span class="ot">-&gt;</span> invoke yk xk x)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>        b <span class="ot">=</span> <span class="dt">Hyp</span> (\_ <span class="ot">-&gt;</span> [])</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>    </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a><span class="ot">    yz ::</span> [(a,b)] <span class="op">-&amp;&gt;</span> (a <span class="ot">-&gt;</span> [(a,b)]) </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>    yz <span class="ot">=</span> <span class="fu">foldr</span> f b ys</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true"></a>        f y yk <span class="ot">=</span> <span class="dt">Hyp</span> (\xk x <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> invoke xk yk)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true"></a>        b <span class="ot">=</span> <span class="dt">Hyp</span> (\_ _ <span class="ot">-&gt;</span> [])</span></code></pre></div>
+<h3 id="bfts">BFTs</h3>
+<p>In <a href="2019-05-14-corecursive-implicit-queues.html">another previous post</a> I derived the following function to do a breadth-first traversal of a tree:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a <span class="ot">=</span> a <span class="op">:&amp;</span> [<span class="dt">Tree</span> a]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="ot">bfe ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>bfe t <span class="ot">=</span> q (f t b) e</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Q</span> a <span class="ot">-&gt;</span> <span class="dt">Q</span> a</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) fw <span class="ot">=</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>    </span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="ot">    b ::</span> <span class="dt">Q</span> a</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>    b <span class="ot">=</span> <span class="dt">Q</span> (\k <span class="ot">-&gt;</span> k b)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    </span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a><span class="ot">    e ::</span> <span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>    e (<span class="dt">Q</span> q) <span class="ot">=</span> q e</span></code></pre></div>
+<p>That <code>Q</code> type there is another hyperfunction.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">bfe ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>bfe t <span class="ot">=</span> invoke (f t e) e</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> ([a] <span class="op">-&amp;&gt;</span> [a]) <span class="ot">-&gt;</span> ([a] <span class="op">-&amp;&gt;</span> [a])</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) fw <span class="ot">=</span> <span class="dt">Hyp</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> invoke fw (<span class="dt">Hyp</span> (invoke bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>    </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="ot">    e ::</span> [a] <span class="op">-&amp;&gt;</span> [a]</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke k e)</span></code></pre></div>
+<p>One of the problems I had with the above function was that it didn’t terminate: it could enumerate all the elements of the tree but it didn’t know when to stop. A similar program <span class="citation" data-cites="allison_circular_2006 smith_lloyd_2009">(Allison <a href="#ref-allison_circular_2006" role="doc-biblioref">2006</a>; described and translated to Haskell in Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>)</span> manages to solve the problem with a counter. Will it shock you to find out this solution can also be encoded with a hyperfunction?</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>bfe t <span class="ot">=</span> invoke (f t e) e <span class="dv">1</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>                <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a])</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) fw <span class="ot">=</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>      <span class="dt">Hyp</span> (\bw n <span class="ot">-&gt;</span> x <span class="op">:</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>            invoke fw</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>              (<span class="dt">Hyp</span> (invoke bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)) (n<span class="op">+</span><span class="dv">1</span>))</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="ot">    e ::</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a])</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Hyp</span> b</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>    </span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a>    b x <span class="dv">0</span> <span class="ot">=</span> []</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a>    b x n <span class="ot">=</span> invoke x (<span class="dt">Hyp</span> b) (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+<p><span class="citation" data-cites="smith_lloyd_2009">(my version here is actually a good bit different from the one in Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>, but the basic idea is the same)</span></p>
+<h3 id="coroutines">Coroutines</h3>
+<p>Hyperfunctions seem to me to be quite deeply related to coroutines. At the very least several of the types involved in coroutine implementations are actual hyperfunctions. The <code>ProdPar</code> and <code>ConsPar</code> types from <span class="citation" data-cites="pieters_faster_2019">Pieters and Schrijvers (<a href="#ref-pieters_faster_2019" role="doc-biblioref">2019</a>)</span> are good examples:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ProdPar</span> a b <span class="ot">=</span> <span class="dt">ProdPar</span> (<span class="dt">ConsPar</span> a b <span class="ot">-&gt;</span> b) </span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ConsPar</span> a b <span class="ot">=</span> <span class="dt">ConsPar</span> (a <span class="ot">-&gt;</span> <span class="dt">ProdPar</span> a b <span class="ot">-&gt;</span> b)</span></code></pre></div>
+<p><code>ProdPar a b</code> is isomorphic to <code>(a -&gt; b) -&amp;&gt; b</code>, and <code>ConsPar a b</code> to <code>b -&amp;&gt; (a -&gt; b)</code>, as witnessed by the following functions:</p>
+<details>
+<p><summary>Conversion functions between <code>ProdPar</code>, <code>ConsPar</code> and hyperfunctions</summary></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">fromP ::</span> <span class="dt">ProdPar</span> a b <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="op">-&amp;&gt;</span> b</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>fromP (<span class="dt">ProdPar</span> x) <span class="ot">=</span> <span class="dt">Hyp</span> (x <span class="op">.</span> toC)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a><span class="ot">toC ::</span>  b <span class="op">-&amp;&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">ConsPar</span> a b</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>toC (<span class="dt">Hyp</span> h) <span class="ot">=</span> <span class="dt">ConsPar</span> (\x p <span class="ot">-&gt;</span> h (fromP p) x)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a><span class="ot">toP ::</span> (a <span class="ot">-&gt;</span> b) <span class="op">-&amp;&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">ProdPar</span> a b</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>toP (<span class="dt">Hyp</span> x) <span class="ot">=</span> <span class="dt">ProdPar</span> (x <span class="op">.</span> fromC)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a><span class="ot">fromC ::</span> <span class="dt">ConsPar</span> a b <span class="ot">-&gt;</span> b <span class="op">-&amp;&gt;</span> (a <span class="ot">-&gt;</span> b)</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>fromC (<span class="dt">ConsPar</span> p) <span class="ot">=</span> <span class="dt">Hyp</span> (\h x <span class="ot">-&gt;</span> p x (toP h))</span></code></pre></div>
+</details>
+<p>In fact this reveals a little about what was happening in the <code>zip</code> function: we convert the left-hand list to a <code>ProdPar</code> (producer), and the right-hand to a consumer, and apply them to each other.</p>
+<h1 id="hyperfunctions-are-weird">Hyperfunctions Are Weird</h1>
+<p>Aside from just being kind of weird intuitively, hyperfunctions are weird <em>in theory</em>. Set-theoretically, for instance, you cannot form the set of <code>a -&amp;&gt; b</code>: if you tried, you’d run into those pesky size restrictions which stop us from making things like “the set of all sets”. Haskell types, however, are not sets, precisely because we can define things like <code>a -&amp;&gt; b</code>.</p>
+<p>For slightly different reasons to the set theory restrictions, we can’t define the type of hyperfunctions in Agda. The following will get an error:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">record</span> <span class="ot">_</span>↬<span class="ot">_</span> <span class="ot">(</span>A <span class="ot">:</span> Type a<span class="ot">)</span> <span class="ot">(</span>B <span class="ot">:</span> Type b<span class="ot">)</span> <span class="ot">:</span> Type <span class="ot">(</span>a ℓ⊔ b<span class="ot">)</span> <span class="kw">where</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>  <span class="kw">inductive</span><span class="ot">;</span> <span class="kw">constructor</span> hyp</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  <span class="kw">field</span> invoke <span class="ot">:</span> <span class="ot">(</span>B ↬ A<span class="ot">)</span> <span class="ot">→</span> B</span></code></pre></div>
+<p>And for good reason! Agda doesn’t allow recursive types where the recursive call is in a negative position. If we turn off the positivity checker, we can write Curry’s paradox (example proof taken from <a href="https://stackoverflow.com/a/51253757/4892417">here</a>):</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>yes? <span class="ot">:</span> ⊥ ↬ ⊥</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>yes? <span class="ot">.</span>invoke h <span class="ot">=</span> h <span class="ot">.</span>invoke h</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>no! <span class="ot">:</span> <span class="ot">(</span>⊥ ↬ ⊥<span class="ot">)</span> <span class="ot">→</span> ⊥</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>no! h <span class="ot">=</span> h <span class="ot">.</span>invoke h</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>boom <span class="ot">:</span> ⊥</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>boom <span class="ot">=</span> no! yes?</span></code></pre></div>
+<p>Note that this isn’t an issue with the termination checker: the above example passes all the normal termination conditions without issue (yes, even if <code>↬</code> is marked as <code>coinductive</code>). It’s directly because the type itself is not positive.</p>
+<p>Interestingly, there is a slightly different, and nearly equivalent, definition of hyperfunctions which doesn’t allow us to write the above proof:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">record</span> <span class="ot">_</span>↬<span class="ot">_</span> <span class="ot">(</span>A <span class="ot">:</span> Type a<span class="ot">)</span> <span class="ot">(</span>B <span class="ot">:</span> Type b<span class="ot">)</span> <span class="ot">:</span> Type <span class="ot">(</span>a ℓ⊔ b<span class="ot">)</span> <span class="kw">where</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="kw">inductive</span><span class="ot">;</span> <span class="kw">constructor</span> hyp</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">field</span> invoke <span class="ot">:</span> <span class="ot">((</span>A ↬ B<span class="ot">)</span> <span class="ot">→</span> A<span class="ot">)</span> <span class="ot">→</span> B</span></code></pre></div>
+<p>This is basically a slightly expanded out version of the hyperfunction type, and importantly it’s <em>positive</em>. Not <em>strictly</em> positive however, since the recursive call does occur to the left of a function arrow: it’s just positive, in that it’s to the left of an even number of function arrows.</p>
+<p>I found in a blog post by <span class="citation" data-cites="sjoberg_why_2015">Sjöberg (<a href="#ref-sjoberg_why_2015" role="doc-biblioref">2015</a>)</span> some interesting discussion regarding the question of this extra strictness: in Coq, allowing certain positive but not <em>strictly</em> positive types does indeed introduce an inconsistency <span class="citation" data-cites="coquand_inductively_1990">(Coquand and Paulin <a href="#ref-coquand_inductively_1990" role="doc-biblioref">1990</a>)</span>. However this inconsistency relies on an impredicative universe, which Agda doesn’t have. As far as I understand it, it would likely be safe to allow types like <code>↬</code> above in Agda <span class="citation" data-cites="coquand_agda_2013">(Coquand <a href="#ref-coquand_agda_2013" role="doc-biblioref">2013</a>)</span>, although I’m not certain that with all of Agda’s newer features that’s still the case.</p>
+<p>The connection between non-strictly-positive types and breadth-first traversals has been noticed before: <span class="citation" data-cites="berger_martin_2019">Berger, Matthes, and Setzer (<a href="#ref-berger_martin_2019" role="doc-biblioref">2019</a>)</span> make the argument for their inclusion in Agda and Coq using a breadth-first traversal algorithm by <span class="citation" data-cites="hofmann_non_1993">Hofmann (<a href="#ref-hofmann_non_1993" role="doc-biblioref">1993</a>)</span>, which uses the following type:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Rou</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Over</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Next</span> ((<span class="dt">Rou</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>]) <span class="ot">-&gt;</span> [<span class="dt">Int</span>])</span></code></pre></div>
+<p>Now this type <em>isn’t</em> a hyperfunction (but it’s close); we’ll see soon what kind of thing it is.</p>
+<h1 id="hyperfunctions-are-a-category">Hyperfunctions Are a Category</h1>
+<p>So we’ve seen that hyperfunctions show up kind of incidentally through certain optimisations, and we’ve seen that they occupy a strange space in terms of their theoretical interpretation: we haven’t yet seen much about the type itself in isolation. Luckily Ed Kmett has already written the <a href="https://hackage.haskell.org/package/hyperfunctions">hyperfunctions package</a> <span class="citation" data-cites="kmett_hyperfunctions_2015">(<a href="#ref-kmett_hyperfunctions_2015" role="doc-biblioref">2015</a>)</span>, where a laundry list of instances are provided, which can tell us a little more about what hyperfunctions can actually do on their own.</p>
+<p>The <code>Category</code> instance gives us the following:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Category</span> (<span class="op">-&amp;&gt;</span>) <span class="kw">where</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>  <span class="fu">id</span> <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke k <span class="fu">id</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>  f <span class="op">.</span> g <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke f (g <span class="op">.</span> k))</span></code></pre></div>
+<p>We’ve actually seen the identity function a few times: we used it as the base case for recursion in the breadth-first traversal algorithms.</p>
+<p>Composition we actually have used as well but it’s more obscured. An analogy to help clear things up is to think of hyperfunctions as a kind of <em>stack</em>. <code>id</code> is the empty stack, and we can use the following function to push items onto the stack:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="ot">push ::</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="op">-&amp;&gt;</span> b <span class="ot">-&gt;</span> a <span class="op">-&amp;&gt;</span> b</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>push f q <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> f (invoke k q))</span></code></pre></div>
+<p>Understood in this sense, composition acts like a zipping operation on stacks, since we have the following law:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a>push f p <span class="op">.</span> push g q ≡ push (f <span class="op">.</span> g) (p <span class="op">.</span> q)</span></code></pre></div>
+<p>While we can’t really pop elements off the top of the stack directly, we can get close with <code>invoke</code>, since it satisfies the following law:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>invoke (push f p) q ≡ f (invoke q p)</span></code></pre></div>
+<p>Along with the <code>id</code> implementation we have, this will let us run a hyperfunction, basically folding over the contents of the stack:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">run ::</span> a <span class="op">-&amp;&gt;</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>run f <span class="ot">=</span> invoke f <span class="fu">id</span></span></code></pre></div>
+<p>This analogy helps us understand how the breadth-first traversals worked: the hyperfunctions are kind of like stacks with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math> <code>push</code> and <code>zip</code>, which is precisely what you need for an efficient breadth-first traversal.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="ot">bfe ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>bfe <span class="ot">=</span> run <span class="op">.</span> f</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> push (x<span class="op">:</span>) (zips (<span class="fu">map</span> f xs))</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a>    </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a>    zips <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">.</span>) <span class="fu">id</span></span></code></pre></div>
+<p>Finally, hyperfunctions are of course monads:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Monad</span> ((<span class="op">-&amp;&gt;</span>) a) <span class="kw">where</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>  m <span class="op">&gt;&gt;=</span> f <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke (f (invoke m (<span class="dt">Hyp</span> (invoke k <span class="op">.</span> (<span class="op">&gt;&gt;=</span>f))))) k)</span></code></pre></div>
+<p>I won’t pretend to understand what’s going on here, but it looks a little like a nested reader monad. Perhaps there’s some intuition to be gained from noticing that <code>a -&amp;&gt; a ~ Fix (Cont a)</code>.</p>
+<h1 id="hyper-arrows-are">Hyper Arrows Are…?</h1>
+<p>As I said in the introduction I’m kind of surprised there’s not more research out there on hyperfunctions. Aside from the excellent papers by <span class="citation" data-cites="launchbury_coroutining_2013">Launchbury, Krstic, and Sauerwein (<a href="#ref-launchbury_coroutining_2013" role="doc-biblioref">2013</a>)</span> there’s just not much out there. Maybe it’s that there’s not that much theoretical depth to them, but all the same there are some clear questions worth looking into.</p>
+<p>For example: is there a hyperfunction monad transformer? Or, failing that, can you thread a monad through the type at any point, and do you get anything interesting out?</p>
+<p>I have made a little headway on this question, while fiddling with one of the <code>bfe</code> definitions above. Basically I wanted to remove the <code>Int</code> counter for the terminating <code>bfe</code>, and I wanted to use a <code>Maybe</code> somewhere instead. I ended up generalising from <code>Maybe</code> to any <code>m</code>, yielding the following type:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">HypM</span> m a b <span class="ot">=</span> <span class="dt">HypM</span> {<span class="ot"> invokeM ::</span> m ((<span class="dt">HypM</span> m a b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) }</span></code></pre></div>
+<p>This does the job for the breadth-first traversal:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a>bfe t <span class="ot">=</span> r (f t e)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">HypM</span> <span class="dt">Maybe</span> [a] [a] <span class="ot">-&gt;</span> <span class="dt">HypM</span> <span class="dt">Maybe</span> [a] [a]</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) fw <span class="ot">=</span> <span class="dt">HypM</span> (<span class="dt">Just</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> fromMaybe (\k <span class="ot">-&gt;</span> k e) (invokeM fw) (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)))</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a><span class="ot">    e ::</span> <span class="dt">HypM</span> <span class="dt">Maybe</span> [a] [a]</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">HypM</span> <span class="dt">Nothing</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true"></a>    </span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true"></a><span class="ot">    r ::</span> <span class="dt">HypM</span> <span class="dt">Maybe</span> [a] [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true"></a>    r <span class="ot">=</span> <span class="fu">maybe</span> [] (\k <span class="ot">-&gt;</span> k r) <span class="op">.</span> invokeM</span></code></pre></div>
+<p>(In fact, when <code>m</code> is specialised to <code>Maybe</code> we have the same type as <code>Rou</code>)</p>
+<p>This type has a very practical use, as it happens, which is related to the church-encoded list monad transformer:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">ListT</span> m a <span class="ot">=</span> <span class="dt">ListT</span> {<span class="ot"> runListT ::</span> <span class="kw">forall</span> b<span class="op">.</span> (a <span class="ot">-&gt;</span> m b <span class="ot">-&gt;</span> m b) <span class="ot">-&gt;</span> m b <span class="ot">-&gt;</span> m b }</span></code></pre></div>
+<p>Just like <code>-&amp;&gt;</code> allowed us to write <code>zip</code> on folds (i.e. using <code>foldr</code>), <code>HypM</code> will allow us to write <code>zipM</code> on <code>ListT</code>:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">zipM ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> <span class="dt">ListT</span> m a <span class="ot">-&gt;</span> <span class="dt">ListT</span> m b <span class="ot">-&gt;</span> <span class="dt">ListT</span> m (a,b)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>zipM xs ys <span class="ot">=</span> <span class="dt">ListT</span> (\c n <span class="ot">-&gt;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>  <span class="kw">let</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a>    xf x xk <span class="ot">=</span> <span class="fu">pure</span> (\yk <span class="ot">-&gt;</span> yk (<span class="dt">HypM</span> xk) x)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true"></a>    xb <span class="ot">=</span> <span class="fu">pure</span> (\_ <span class="ot">-&gt;</span> n)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true"></a>    yf y yk <span class="ot">=</span> <span class="fu">pure</span> (\xk x <span class="ot">-&gt;</span> c (x, y) (join (invokeM xk <span class="op">&lt;*&gt;</span> yk)))</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true"></a>    yb <span class="ot">=</span> <span class="fu">pure</span> (\_ _ <span class="ot">-&gt;</span> n)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true"></a>  <span class="kw">in</span> join (runListT xs xf xb <span class="op">&lt;*&gt;</span> runListT ys yf yb))</span></code></pre></div>
+<p>I actually think this function could be used to seriously improve the running time of several of the functions on <a href="https://hackage.haskell.org/package/logict-0.7.1.0/docs/Control-Monad-Logic.html#g:2"><code>LogicT</code></a>: my reading of them suggests that <code>interleave</code> is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math> (or worse), but the zip above could be trivially repurposed to give a <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> <code>interleave</code>. This would also have knock-on effects on, for instance, <code>&gt;&gt;-</code> and so on.</p>
+<p>Another question is regarding the arrows of the hyperfunction. We’ve seen that a hyperfunction kind of adds “stacking” to functions, can it do the same for other arrows? Basically, does the following type do anything useful?</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">HypP</span> p a b <span class="ot">=</span> <span class="dt">HypP</span> {<span class="ot"> invokeP ::</span> p (<span class="dt">HypP</span> p b a) b }</span></code></pre></div>
+<p>Along a similar vein, many of the breadth-first enumeration algorithms seem to use “hyperfunctions over the endomorphism monoid”. Basically, they all produce hyperfunctions of the type <code>[a] -&amp;&gt; [a]</code>, and use them quite similarly to how we would use difference lists. But we know that there are Cayley transforms in other monoidal categories, for instance in the applicative monoidal category: can we construct the “hyperfunction” version of those?</p>
+<hr />
+<h1 class="unnumbered" id="references">References</h1>
+<div id="refs" class="references hanging-indent" role="doc-bibliography">
+<div id="ref-allison_circular_2006">
+<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
+</div>
+<div id="ref-berger_martin_2019">
+<p>Berger, Ulrich, Ralph Matthes, and Anton Setzer. 2019. “Martin Hofmann’s Case for Non-Strictly Positive Data Types.” In <em>24th International Conference on Types for Proofs and Programs (TYPES 2018)</em>, ed by. Peter Dybjer, José Espírito Santo, and Luís Pinto, 130:22. Leibniz International Proceedings in Informatics (LIPIcs). Dagstuhl, Germany: Schloss DagstuhlLeibniz-Zentrum fuer Informatik. doi:<a href="https://doi.org/10.4230/LIPIcs.TYPES.2018.1">10.4230/LIPIcs.TYPES.2018.1</a>. <a href="http://drops.dagstuhl.de/opus/volltexte/2019/11405">http://drops.dagstuhl.de/opus/volltexte/2019/11405</a>.</p>
+</div>
+<div id="ref-coquand_agda_2013">
+<p>Coquand, Thierry. 2013. “[Agda] Defining Coinductive Types.” <a href="https://lists.chalmers.se/pipermail/agda/2013/006189.html">https://lists.chalmers.se/pipermail/agda/2013/006189.html</a>.</p>
+</div>
+<div id="ref-coquand_inductively_1990">
+<p>Coquand, Thierry, and Christine Paulin. 1990. “Inductively Defined Types.” In <em>COLOG-88</em>, ed by. Per Martin-Löf and Grigori Mints, 50–66. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer. doi:<a href="https://doi.org/10.1007/3-540-52335-9_47">10.1007/3-540-52335-9_47</a>.</p>
+</div>
+<div id="ref-ghani_monadic_2005">
+<p>Ghani, Neil, Patricia Johann, Tarmo Uustalu, and Varmo Vene. 2005. “Monadic Augment and Generalised Short Cut Fusion.” In <em>Proceedings of the Tenth ACM SIGPLAN International Conference on Functional Programming</em>, 294–305. ICFP ’05. New York, NY, USA: Association for Computing Machinery. doi:<a href="https://doi.org/10.1145/1086365.1086403">10.1145/1086365.1086403</a>. <a href="https://doi.org/10.1145/1086365.1086403">https://doi.org/10.1145/1086365.1086403</a>.</p>
+</div>
+<div id="ref-hedges_selection_2015">
+<p>Hedges, Jules. 2015. “The Selection Monad as a CPS Transformation.” <em>arXiv:1503.06061 [cs]</em> (March). <a href="http://arxiv.org/abs/1503.06061">http://arxiv.org/abs/1503.06061</a>.</p>
+</div>
+<div id="ref-hofmann_non_1993">
+<p>Hofmann, Martin. 1993. “Non Strictly Positive Datatypes in System F.” <a href="https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html">https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html</a>.</p>
+</div>
+<div id="ref-kmett_hyperfunctions_2015">
+<p>Kmett, Edward. 2015. “Hyperfunctions: Hyperfunctions.” <a href="https://hackage.haskell.org/package/hyperfunctions">https://hackage.haskell.org/package/hyperfunctions</a>.</p>
+</div>
+<div id="ref-krstic_category_2000">
+<p>Krstic, Sava, and John Launchbury. 2000. “A Category of Hyperfunctions.” <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.2421">http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.2421</a>.</p>
+</div>
+<div id="ref-launchbury_coroutining_2013">
+<p>Launchbury, J., S. Krstic, and T. E. Sauerwein. 2013. “Coroutining Folds with Hyperfunctions.” <em>Electron. Proc. Theor. Comput. Sci.</em> 129 (September): 121–135. doi:<a href="https://doi.org/10.4204/EPTCS.129.9">10.4204/EPTCS.129.9</a>. <a href="http://arxiv.org/abs/1309.5135">http://arxiv.org/abs/1309.5135</a>.</p>
+</div>
+<div id="ref-launchbury_zip_2000">
+<p>Launchbury, John, Sava Krstic, and Timothy E. Sauerwein. 2000. <em>Zip Fusion with Hyperfunctions</em>. <a href="http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.4961">http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.36.4961</a>.</p>
+</div>
+<div id="ref-pieters_faster_2019">
+<p>Pieters, Ruben P., and Tom Schrijvers. 2019. “Faster Coroutine Pipelines: A Reconstruction.” In <em>Practical Aspects of Declarative Languages</em>, ed by. José Júlio Alferes and Moa Johansson, 133–149. Lecture Notes in Computer Science. Cham: Springer International Publishing. doi:<a href="https://doi.org/10.1007/978-3-030-05998-9_9">10.1007/978-3-030-05998-9_9</a>. <a href="https://people.cs.kuleuven.be/~tom.schrijvers/portfolio/padl2019.html">https://people.cs.kuleuven.be/~tom.schrijvers/portfolio/padl2019.html</a>.</p>
+</div>
+<div id="ref-sjoberg_why_2015">
+<p>Sjöberg, Vilhelm. 2015. “Why Must Inductive Types Be Strictly Positive?” <em>Code and stuff</em>. <a href="https://vilhelms.github.io/posts/why-must-inductive-types-be-strictly-positive/">https://vilhelms.github.io/posts/why-must-inductive-types-be-strictly-positive/</a>.</p>
+</div>
+<div id="ref-smith_lloyd_2009">
+<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+</div>
+</div>
+]]></description>
+    <pubDate>Sun, 14 Mar 2021 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2021-03-14-hyperfunctions.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Master's Thesis</title>
     <link>https://doisinkidney.com/posts/2021-01-04-masters-thesis.html</link>
     <description><![CDATA[<div class="info">
