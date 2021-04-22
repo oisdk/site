@@ -1,0 +1,16 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Data.Empty</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--without-K</a> <a id="25" class="Pragma">--safe</a> <a id="32" class="Symbol">#-}</a>
+
+<a id="37" class="Keyword">module</a> <a id="44" href="Data.Empty.html" class="Module">Data.Empty</a> <a id="55" class="Keyword">where</a>
+
+<a id="62" class="Keyword">open</a> <a id="67" class="Keyword">import</a> <a id="74" href="Level.html" class="Module">Level</a>
+
+<a id="81" class="Keyword">data</a> <a id="⊥"></a><a id="86" href="Data.Empty.html#86" class="Datatype">⊥</a> <a id="88" class="Symbol">:</a> <a id="90" href="Level.html#242" class="Function">Type₀</a> <a id="96" class="Keyword">where</a>
+
+<a id="103" class="Keyword">infix</a> <a id="109" class="Number">4.5</a> <a id="113" href="Data.Empty.html#116" class="Function Operator">¬_</a>
+<a id="¬_"></a><a id="116" href="Data.Empty.html#116" class="Function Operator">¬_</a> <a id="119" class="Symbol">:</a> <a id="121" href="Level.html#192" class="Function">Type</a> <a id="126" href="Level.html#372" class="Generalizable">a</a> <a id="128" class="Symbol">→</a> <a id="130" href="Level.html#192" class="Function">Type</a> <a id="135" href="Level.html#372" class="Generalizable">a</a>
+<a id="137" href="Data.Empty.html#116" class="Function Operator">¬</a> <a id="139" href="Data.Empty.html#139" class="Bound">A</a> <a id="141" class="Symbol">=</a> <a id="143" href="Data.Empty.html#139" class="Bound">A</a> <a id="145" class="Symbol">→</a> <a id="147" href="Data.Empty.html#86" class="Datatype">⊥</a>
+
+<a id="⊥-elim"></a><a id="150" href="Data.Empty.html#150" class="Function">⊥-elim</a> <a id="157" class="Symbol">:</a> <a id="159" href="Data.Empty.html#86" class="Datatype">⊥</a> <a id="161" class="Symbol">→</a> <a id="163" href="Level.html#388" class="Generalizable">A</a>
+<a id="165" href="Data.Empty.html#150" class="Function">⊥-elim</a> <a id="172" class="Symbol">()</a>
+</pre></body></html>

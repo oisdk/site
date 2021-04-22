@@ -1,0 +1,26 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>HLevels</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="HLevels.html" class="Module">HLevels</a> <a id="50" class="Keyword">where</a>
+
+<a id="57" class="Keyword">open</a> <a id="62" class="Keyword">import</a> <a id="69" href="Path.html" class="Module">Path</a>
+<a id="74" class="Keyword">open</a> <a id="79" class="Keyword">import</a> <a id="86" href="Cubical.Foundations.Everything.html" class="Module">Cubical.Foundations.Everything</a>
+  <a id="119" class="Keyword">using</a> <a id="125" class="Symbol">(</a><a id="126" href="Cubical.Foundations.Id.html#892" class="Function">isProp</a>
+        <a id="141" class="Symbol">;</a><a id="142" href="Cubical.Foundations.Id.html#929" class="Function">isSet</a>
+        <a id="156" class="Symbol">;</a><a id="157" href="Cubical.Foundations.Id.html#854" class="Function">isContr</a>
+        <a id="173" class="Symbol">;</a><a id="174" href="Cubical.Foundations.Prelude.html#10452" class="Function">isPropIsContr</a>
+        <a id="196" class="Symbol">;</a><a id="197" href="Cubical.Foundations.Prelude.html#10959" class="Function">isProp→isSet</a>
+        <a id="218" class="Symbol">;</a><a id="219" href="Cubical.Foundations.HLevels.html#13881" class="Function">isOfHLevel→isOfHLevelDep</a>
+        <a id="252" class="Symbol">;</a><a id="253" href="Cubical.Foundations.HLevels.html#1475" class="Function">hProp</a>
+        <a id="267" class="Symbol">;</a><a id="268" href="Cubical.Foundations.HLevels.html#12375" class="Function">isSetHProp</a>
+        <a id="287" class="Symbol">;</a><a id="288" href="Cubical.Foundations.Prelude.html#11188" class="Function">isPropIsProp</a>
+        <a id="309" class="Symbol">;</a><a id="310" href="Cubical.Foundations.HLevels.html#1481" class="Function">hSet</a>
+        <a id="323" class="Symbol">)</a>
+  <a id="327" class="Keyword">public</a>
+
+<a id="335" class="Keyword">open</a> <a id="340" class="Keyword">import</a> <a id="347" href="Level.html" class="Module">Level</a>
+<a id="353" class="Keyword">open</a> <a id="358" class="Keyword">import</a> <a id="365" href="Data.Sigma.html" class="Module">Data.Sigma</a>
+
+<a id="377" class="Comment">-- hSet : ∀ ℓ → Type (ℓsuc ℓ)</a>
+<a id="407" class="Comment">-- hSet ℓ = Σ (Type ℓ) isSet</a>
+</pre></body></html>
