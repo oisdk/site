@@ -35,6 +35,10 @@ main = hakyll $ do
         route   idRoute
         compile copyFileCompiler
 
+    match "artifacts/*" $ do
+        route idRoute
+        compile copyFileCompiler
+
     match "code/*/*" $ do
         route idRoute
         compile $ getResourceString
