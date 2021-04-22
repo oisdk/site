@@ -1,0 +1,21 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Algebra.Construct.BoolSemimodule</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Markup">\begin{code}</a>
+<a id="14" class="Symbol">{-#</a> <a id="18" class="Keyword">OPTIONS</a> <a id="26" class="Pragma">--cubical</a> <a id="36" class="Pragma">--safe</a> <a id="43" class="Symbol">#-}</a>
+
+<a id="48" class="Keyword">open</a> <a id="53" class="Keyword">import</a> <a id="60" href="Algebra.html" class="Module">Algebra</a>
+
+<a id="69" class="Keyword">module</a> <a id="76" href="Algebra.Construct.BoolSemimodule.html" class="Module">Algebra.Construct.BoolSemimodule</a> <a id="109" class="Symbol">{</a><a id="110" href="Algebra.Construct.BoolSemimodule.html#110" class="Bound">ℓ</a><a id="111" class="Symbol">}</a> <a id="113" class="Symbol">(</a><a id="114" href="Algebra.Construct.BoolSemimodule.html#114" class="Bound">mon</a> <a id="118" class="Symbol">:</a> <a id="120" href="Algebra.html#2116" class="Record">CommutativeMonoid</a> <a id="138" href="Algebra.Construct.BoolSemimodule.html#110" class="Bound">ℓ</a><a id="139" class="Symbol">)</a> <a id="141" class="Keyword">where</a>
+
+<a id="148" class="Keyword">open</a> <a id="153" class="Keyword">import</a> <a id="160" href="Data.Bool.html" class="Module">Data.Bool</a>
+
+<a id="171" class="Keyword">open</a> <a id="176" href="Algebra.html#2116" class="Module">CommutativeMonoid</a> <a id="194" href="Algebra.Construct.BoolSemimodule.html#114" class="Bound">mon</a> <a id="198" class="Keyword">renaming</a> <a id="207" class="Symbol">(</a>𝑆 <a id="210" class="Symbol">to</a> 𝑀<a id="214" class="Symbol">)</a>
+
+<a id="217" class="Markup">\end{code}</a><a id="227" class="Background">
+%&lt;*rtimes&gt;
+</a><a id="239" class="Markup">\begin{code}</a>
+<a id="_⋊_"></a><a id="252" href="Algebra.Construct.BoolSemimodule.html#252" class="Function Operator">_⋊_</a> <a id="256" class="Symbol">:</a> <a id="258" href="Agda.Builtin.Bool.html#163" class="Datatype">Bool</a> <a id="263" class="Symbol">→</a> <a id="265" href="Algebra.Construct.BoolSemimodule.html#213" class="Function">𝑀</a> <a id="267" class="Symbol">→</a> <a id="269" href="Algebra.Construct.BoolSemimodule.html#213" class="Function">𝑀</a>
+<a id="271" href="Agda.Builtin.Bool.html#182" class="InductiveConstructor">false</a>  <a id="278" href="Algebra.Construct.BoolSemimodule.html#252" class="Function Operator">⋊</a> <a id="280" href="Algebra.Construct.BoolSemimodule.html#280" class="Bound">x</a> <a id="282" class="Symbol">=</a> <a id="284" href="Algebra.html#1303" class="Function">ε</a>
+<a id="286" href="Agda.Builtin.Bool.html#188" class="InductiveConstructor">true</a>   <a id="293" href="Algebra.Construct.BoolSemimodule.html#252" class="Function Operator">⋊</a> <a id="295" href="Algebra.Construct.BoolSemimodule.html#295" class="Bound">x</a> <a id="297" class="Symbol">=</a> <a id="299" href="Algebra.Construct.BoolSemimodule.html#295" class="Bound">x</a>
+<a id="301" class="Markup">\end{code}</a><a id="311" class="Background">
+%&lt;/rtimes&gt;
+</a></pre></body></html>

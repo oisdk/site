@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>Path</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--cubical</a> <a id="23" class="Pragma">--safe</a> <a id="30" class="Symbol">#-}</a>
+
+<a id="35" class="Keyword">module</a> <a id="42" href="Path.html" class="Module">Path</a> <a id="47" class="Keyword">where</a>
+
+<a id="54" class="Keyword">open</a> <a id="59" class="Keyword">import</a> <a id="66" href="Cubical.Foundations.Everything.html" class="Module">Cubical.Foundations.Everything</a>
+  <a id="99" class="Keyword">using</a> <a id="105" class="Symbol">(</a> <a id="107" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">_≡_</a>
+        <a id="119" class="Symbol">;</a> <a id="121" href="Cubical.Foundations.Id.html#713" class="Function">sym</a>
+        <a id="133" class="Symbol">;</a> <a id="135" href="Cubical.Foundations.Id.html#570" class="Function">refl</a>
+        <a id="148" class="Symbol">;</a> <a id="150" href="Cubical.Foundations.Prelude.html#6151" class="Function">subst</a>
+        <a id="164" class="Symbol">;</a> <a id="166" href="Cubical.Foundations.Id.html#605" class="Function">transport</a>
+        <a id="184" class="Symbol">;</a> <a id="186" href="Cubical.Core.Primitives.html#1996" class="Function">Path</a>
+        <a id="199" class="Symbol">;</a> <a id="201" href="Agda.Builtin.Cubical.Path.html#190" class="Postulate">PathP</a>
+        <a id="215" class="Symbol">;</a> <a id="217" href="Agda.Primitive.Cubical.html#101" class="Datatype">I</a>
+        <a id="227" class="Symbol">;</a> <a id="229" href="Agda.Primitive.Cubical.html#143" class="InductiveConstructor">i0</a>
+        <a id="240" class="Symbol">;</a> <a id="242" href="Agda.Primitive.Cubical.html#171" class="InductiveConstructor">i1</a>
+        <a id="253" class="Symbol">;</a> <a id="255" href="Cubical.Foundations.Id.html#817" class="Function">funExt</a>
+        <a id="270" class="Symbol">;</a> <a id="272" href="Cubical.Foundations.Id.html#782" class="Function">cong</a>
+        <a id="285" class="Symbol">;</a> <a id="287" href="Cubical.Foundations.Prelude.html#7512" class="Function">toPathP</a>
+        <a id="303" class="Symbol">;</a> <a id="305" href="Cubical.Foundations.Prelude.html#1165" class="Function">cong₂</a>
+        <a id="319" class="Symbol">;</a> <a id="321" href="Cubical.Core.Primitives.html#549" class="Primitive">~_</a>
+        <a id="332" class="Symbol">;</a> <a id="334" href="Cubical.Core.Primitives.html#451" class="Primitive">_∧_</a>
+        <a id="346" class="Symbol">;</a> <a id="348" href="Cubical.Core.Primitives.html#500" class="Primitive">_∨_</a>
+        <a id="360" class="Symbol">;</a> <a id="362" href="Cubical.Core.Primitives.html#667" class="Primitive">hcomp</a>
+        <a id="376" class="Symbol">;</a> <a id="378" href="Cubical.Core.Primitives.html#704" class="Primitive">transp</a>
+        <a id="393" class="Symbol">;</a> <a id="395" href="Cubical.Foundations.Id.html#645" class="Function">J</a>
+        <a id="405" class="Symbol">)</a>
+  <a id="409" class="Keyword">renaming</a> <a id="418" class="Symbol">(</a><a id="419" href="Cubical.Foundations.Id.html#747" class="Function Operator">_∙_</a> <a id="423" class="Symbol">to</a> <a id="Foundations.Prelude._∙_"></a><a id="426" href="Path.html#426" class="Function Operator">_;_</a><a id="429" class="Symbol">)</a>
+  <a id="433" class="Keyword">public</a>
+
+<a id="441" class="Keyword">open</a> <a id="446" class="Keyword">import</a> <a id="453" href="Data.Empty.html" class="Module">Data.Empty</a> <a id="464" class="Keyword">using</a> <a id="470" class="Symbol">(</a><a id="471" href="Data.Empty.html#116" class="Function Operator">¬_</a><a id="473" class="Symbol">)</a>
+<a id="475" class="Keyword">open</a> <a id="480" class="Keyword">import</a> <a id="487" href="Level.html" class="Module">Level</a>
+
+<a id="494" class="Keyword">infix</a> <a id="500" class="Number">4</a> <a id="502" href="Path.html#506" class="Function Operator">_≢_</a>
+<a id="_≢_"></a><a id="506" href="Path.html#506" class="Function Operator">_≢_</a> <a id="510" class="Symbol">:</a> <a id="512" class="Symbol">{</a><a id="513" href="Path.html#513" class="Bound">A</a> <a id="515" class="Symbol">:</a> <a id="517" href="Level.html#192" class="Function">Type</a> <a id="522" href="Level.html#372" class="Generalizable">a</a><a id="523" class="Symbol">}</a> <a id="525" class="Symbol">→</a> <a id="527" href="Path.html#513" class="Bound">A</a> <a id="529" class="Symbol">→</a> <a id="531" href="Path.html#513" class="Bound">A</a> <a id="533" class="Symbol">→</a> <a id="535" href="Level.html#192" class="Function">Type</a> <a id="540" href="Level.html#372" class="Generalizable">a</a>
+<a id="542" href="Path.html#542" class="Bound">x</a> <a id="544" href="Path.html#506" class="Function Operator">≢</a> <a id="546" href="Path.html#546" class="Bound">y</a> <a id="548" class="Symbol">=</a> <a id="550" href="Data.Empty.html#116" class="Function Operator">¬</a> <a id="552" class="Symbol">(</a><a id="553" href="Path.html#542" class="Bound">x</a> <a id="555" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="557" href="Path.html#546" class="Bound">y</a><a id="558" class="Symbol">)</a>
+
+<a id="561" class="Keyword">infix</a> <a id="567" class="Number">4</a> <a id="569" href="Path.html#582" class="Function">PathP-syntax</a>
+<a id="PathP-syntax"></a><a id="582" href="Path.html#582" class="Function">PathP-syntax</a> <a id="595" class="Symbol">=</a> <a id="597" href="Agda.Builtin.Cubical.Path.html#190" class="Postulate">PathP</a>
+<a id="603" class="Symbol">{-#</a> <a id="607" class="Keyword">INLINE</a> <a id="614" href="Path.html#582" class="Function">PathP-syntax</a> <a id="627" class="Symbol">#-}</a>
+
+<a id="632" class="Keyword">syntax</a> <a id="639" href="Path.html#582" class="Function">PathP-syntax</a> <a id="652" class="Symbol">(λ</a> <a id="655" class="Bound">i</a> <a id="657" class="Symbol">→</a> <a id="659" class="Bound">Ty</a><a id="661" class="Symbol">)</a> <a id="663" class="Bound">lhs</a> <a id="667" class="Bound">rhs</a> <a id="671" class="Symbol">=</a> <a id="673" class="Bound">lhs</a> <a id="677" class="Function">≡[</a> <a id="680" class="Bound">i</a> <a id="682" class="Function">≔</a> <a id="684" class="Bound">Ty</a> <a id="687" class="Function">]≡</a> <a id="690" class="Bound">rhs</a>
+
+<a id="695" class="Keyword">import</a> <a id="702" href="Agda.Builtin.Equality.html" class="Module">Agda.Builtin.Equality</a> <a id="724" class="Symbol">as</a> <a id="727" class="Module">MLTT</a>
+
+<a id="builtin-eq-to-path"></a><a id="733" href="Path.html#733" class="Function">builtin-eq-to-path</a> <a id="752" class="Symbol">:</a> <a id="754" class="Symbol">{</a><a id="755" href="Path.html#755" class="Bound">A</a> <a id="757" class="Symbol">:</a> <a id="759" href="Level.html#192" class="Function">Type</a> <a id="764" href="Level.html#372" class="Generalizable">a</a><a id="765" class="Symbol">}</a> <a id="767" class="Symbol">{</a><a id="768" href="Path.html#768" class="Bound">x</a> <a id="770" href="Path.html#770" class="Bound">y</a> <a id="772" class="Symbol">:</a> <a id="774" href="Path.html#755" class="Bound">A</a><a id="775" class="Symbol">}</a> <a id="777" class="Symbol">→</a> <a id="779" href="Path.html#768" class="Bound">x</a> <a id="781" href="Agda.Builtin.Equality.html#151" class="Datatype Operator">MLTT.≡</a> <a id="788" href="Path.html#770" class="Bound">y</a> <a id="790" class="Symbol">→</a> <a id="792" href="Path.html#768" class="Bound">x</a> <a id="794" href="Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="796" href="Path.html#770" class="Bound">y</a>
+<a id="798" href="Path.html#733" class="Function">builtin-eq-to-path</a> <a id="817" class="Symbol">{</a><a id="818" class="Argument">x</a> <a id="820" class="Symbol">=</a> <a id="822" href="Path.html#822" class="Bound">x</a><a id="823" class="Symbol">}</a> <a id="825" href="Agda.Builtin.Equality.html#208" class="InductiveConstructor">MLTT.refl</a> <a id="835" href="Path.html#835" class="Bound">i</a> <a id="837" class="Symbol">=</a> <a id="839" href="Path.html#822" class="Bound">x</a>
+</pre></body></html>
