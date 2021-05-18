@@ -6,6 +6,8 @@ tags: Agda
 The final version of my master's thesis got approved recently so I thought I'd
 post it here for people who might be interested.
 
+[Here's the university record](https://cora.ucc.ie/handle/10468/11338).
+
 [Here's the pdf](../pdfs/masters-thesis.pdf).
 
 And all of the theorems in the thesis have been formalised in Agda.
