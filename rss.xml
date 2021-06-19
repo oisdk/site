@@ -7,8 +7,30 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Sun, 14 Mar 2021 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Mon, 21 Jun 2021 00:00:00 UT</lastBuildDate>
         <item>
+    <title>ICFP Paper—Algebras for Weighted Search</title>
+    <link>https://doisinkidney.com/posts/2021-06-21-icfp-paper.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on June 21, 2021
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Haskell&#39;." href="/tags/Haskell.html">Haskell</a>, <a title="All pages tagged &#39;Agda&#39;." href="/tags/Agda.html">Agda</a>
+    
+</div>
+
+<p>The paper “Algebras for Weighted Search” has just been accepted unconditionally to ICFP. I wrote it with my supervisor, <a href="http://zenzike.com/">Nicolas Wu</a>, and it covers a lot of the topics I’ve written about on this blog (including hyperfunctions and breadth-first traversals).</p>
+<p>The preprint is available <a href="../pdfs/algebras-for-weighted-search.pdf">here</a>.</p>
+]]></description>
+    <pubDate>Mon, 21 Jun 2021 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2021-06-21-icfp-paper.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Hyperfunctions</title>
     <link>https://doisinkidney.com/posts/2021-03-14-hyperfunctions.html</link>
     <description><![CDATA[<div class="info">
