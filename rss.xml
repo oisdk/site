@@ -7,8 +7,32 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Mon, 21 Jun 2021 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Sun, 29 Aug 2021 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Weighted Search Package</title>
+    <link>https://doisinkidney.com/posts/2021-08-29-weighted-search-package.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on August 29, 2021
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Haskell&#39;." href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>I have packaged up the more interesting bits from the <a href="https://dl.acm.org/doi/abs/10.1145/3473577">Algebras for Weighted Search</a> paper and put it up on hackage.</p>
+<p>You can see it <a href="https://hackage.haskell.org/package/monus-weighted-search">here</a>.</p>
+<p>It contains the <code>HeapT</code> monad, the <code>Monus</code> class, and an implementation of Dijkstra’s algorithm, the Viterbi algorithm, and probabilistic parsing.</p>
+<p>Check it out!</p>
+]]></description>
+    <pubDate>Sun, 29 Aug 2021 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2021-08-29-weighted-search-package.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>ICFP Paper—Algebras for Weighted Search</title>
     <link>https://doisinkidney.com/posts/2021-06-21-icfp-paper.html</link>
     <description><![CDATA[<div class="info">
