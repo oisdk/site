@@ -157,7 +157,7 @@
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x,y)<span class="op">:</span>r)</span></code></pre></div>
 <p>And we have our direct-style implementation!</p>
-<p>Note 14/05/2019: the “cancel-out” explanation there is a little handwavy, as I’m sure you’ll notice. However, there are a number of <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">excellent explanations on this stackoverflow thread</a> which explain it much better than I ever could. Thanks to Anders Kaseorg, Will Ness, user11228628, and to Joseph Sible <span class="citation" data-cites="sible_how_2019">(<a href="#ref-sible_how_2019" role="doc-biblioref">2019</a>)</span> for asking the question.</p>
+<p>Note 14/05/2019: the “cancel-out” explanation there is a little handwavy, as I’m sure you’ll notice. However, there are a number of <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">excellent explanations on this stackoverflow thread</a> which explain it much better than I ever could. Thanks to Anders Kaseorg, Will Ness, user11228628, and to Joseph Sible <span class="citation" data-cites="sible_how_2019">(<span class="citeproc-not-found" data-reference-id="sible_how_2019"><strong>???</strong></span>)</span> for asking the question.</p>
 <h1 id="manual-fusion">Manual Fusion</h1>
 <blockquote>
 <p>Detect that a list is a palindrome, in one pass.</p>
@@ -203,7 +203,7 @@
 <blockquote>
 <p>Construct a Braun tree from a list in linear time.</p>
 </blockquote>
-<p>This is also a very well-known trick <span class="citation" data-cites="bird_using_1984">(Bird <a href="#ref-bird_using_1984" role="doc-biblioref">1984</a>)</span>, but today I’m going to use it to write a function for constructing Braun trees.</p>
+<p>This is also a very well-known trick <span class="citation" data-cites="bird_using_1984">(<span class="citeproc-not-found" data-reference-id="bird_using_1984"><strong>???</strong></span>)</span>, but today I’m going to use it to write a function for constructing Braun trees.</p>
 <p>A Braun tree is a peculiar structure. It’s a binary tree, where adjacent branches can differ in size by only 1. When used as an array, it has <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math> lookup times. It’s enumerated like so:</p>
 <pre><code>     ┌─7
    ┌3┤
@@ -220,7 +220,7 @@
    │ ┌10
    └6┤
      └14</code></pre>
-<p>The objective is to construct a tree from a list in linear time, in the order defined above. <span class="citation" data-cites="okasaki_three_1997">Okasaki (<a href="#ref-okasaki_three_1997" role="doc-biblioref">1997</a>)</span> observed that, from the list:</p>
+<p>The objective is to construct a tree from a list in linear time, in the order defined above. <span class="citation" data-cites="okasaki_three_1997">(<span class="citeproc-not-found" data-reference-id="okasaki_three_1997"><strong>???</strong></span>)</span> observed that, from the list:</p>
 <div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a>[<span class="dv">0</span><span class="op">..</span><span class="dv">14</span>]</span></code></pre></div>
 <p>Each level in the tree is constructed from chucks of powers of two. In other words:</p>
 <div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>[[<span class="dv">0</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>],[<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">12</span>,<span class="dv">13</span>,<span class="dv">14</span>]]</span></code></pre></div>
@@ -282,17 +282,8 @@
 <span id="cb32-9"><a href="#cb32-9" aria-hidden="true"></a>    f x k i j <span class="op">~</span>(y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (k (i<span class="op">-</span><span class="dv">1</span>) j ys zs)</span></code></pre></div>
 <h1 class="unnumbered" id="references">References</h1>
 <div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-bird_using_1984">
-<p>Bird, R. S. 1984. “Using Circular Programs to Eliminate Multiple Traversals of Data.” <em>Acta Inf.</em> 21 (3) (October): 239–250. doi:<a href="https://doi.org/10.1007/BF00264249">10.1007/BF00264249</a>. <a href="http://dx.doi.org/10.1007/BF00264249">http://dx.doi.org/10.1007/BF00264249</a>.</p>
-</div>
 <div id="ref-danvy_there_2005">
-<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
-</div>
-<div id="ref-okasaki_three_1997">
-<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
-</div>
-<div id="ref-sible_how_2019">
-<p>Sible, Joseph. 2019. “How Can Two Continuations Cancel Each Other Out?” <em>Stack Overflow</em>. <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out</a>.</p>
+<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>Fundamenta Informaticae</em> 66 (4) (December): 397–413. <a href="https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf">https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf</a>.</p>
 </div>
 </div>
 
