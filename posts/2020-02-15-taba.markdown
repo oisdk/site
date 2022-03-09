@@ -8,7 +8,7 @@ Just a short one again today!
 
 There's an [excellent talk](https://www.youtube.com/watch?v=u_OsUlwkmBQ) by
 Kenneth Foner at Compose from 2016 which goes through a paper by
-@danvy_there_2005 called "There and Back Again" (or TABA).
+@danvy_there_2005 called "There and Back Again" (or TABA) [extended edition @danvy_there_2005a].
 You should watch the talk and read the paper if you're in any way excited by the
 weird and wonderful algorithms we use in functional languages to do simple
 things like reversing a list.
