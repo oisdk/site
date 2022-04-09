@@ -1,0 +1,166 @@
+
+@article{abel_wellfounded_2013,
+  title = {Wellfounded {{Recursion}} with {{Copatterns}}},
+  author = {Abel, Andreas and Pientka, Brigitte},
+  year = {2013},
+  month = jun,
+  number = {0},
+  pages = {25},
+  url = {http://www2.tcs.ifi.lmu.de/%7Eabel/icfp13-long.pdf},
+  abstract = {In this paper, we study strong normalization of a core language based on System F{$\omega$} which supports programming with finite and infinite structures. Building on our prior work, finite data such as finite lists and trees are defined via constructors and manipulated via pattern matching, while infinite data such as streams and infinite trees is defined by observations and synthesized via copattern matching. In this work, we take a type-based approach to strong normalization by tracking size information about finite and infinite data in the type. This guarantees compositionality. More importantly, the duality of pattern and copatterns provide a unifying semantic concept which allows us for the first time to elegantly and uniformly support both well-founded induction and coinduction by mere rewriting. The strong normalization proof is structured around Girard's reducibility candidates. As such our system allows for non-determinism and does not rely on coverage. Since System F{$\omega$} is general enough that it can be the target of compilation for the Calculus of Constructions, this work is a significant step towards representing observation-centric infinite data in proof assistants such as Coq and Agda.},
+  langid = {english}
+}
+
+@article{ahman_directed_2016,
+  title = {Directed {{Containers}} as {{Categories}}},
+  author = {Ahman, Danel and Uustalu, Tarmo},
+  year = {2016},
+  month = apr,
+  doi = {10.4204/EPTCS.207.5},
+  abstract = {Directed containers make explicit the additional structure of those containers whose set functor interpretation carries a comonad structure. The data and laws of a directed container resemble those of a monoid, while the data and laws of a directed container morphism those of a monoid morphism in the reverse direction. With some reorganization, a directed container is the same as a small category, but a directed container morphism is opcleavage-like. We draw some conclusions for comonads from this observation, considering in particular basic constructions and concepts like the opposite category and a groupoid.},
+  langid = {english}
+}
+
+@article{ahman_distributive_2013,
+  title = {Distributive Laws of Directed Containers},
+  author = {Ahman, Danel and Uustalu, Tarmo},
+  year = {2013},
+  month = mar,
+  journal = {Progress in Informatics},
+  number = {10},
+  pages = {3},
+  issn = {1349-8614, 1349-8606},
+  doi = {10.2201/NiiPi.2013.10.2},
+  abstract = {Containers are an elegant representation of a wide class of datatypes in terms of positions and shapes. We have recently introduced directed containers as a special case to account for the common situation where every position in a shape determines another shape, informally the subshape rooted by that position. While containers interpret into set functors via a fully faithful functor, directed containers denote comonads fully faithfully. In fact, directed containers correspond to exactly those containers that carry a comonad structure. Directed containers can also be seen as a generalization (a dependently typed version) of monoids.},
+  langid = {english}
+}
+
+@article{ahman_update_2014,
+  title = {Update {{Monads}}: {{Cointerpreting Directed Containers}}},
+  shorttitle = {Update {{Monads}}},
+  author = {Ahman, Danel and Uustalu, Tarmo},
+  year = {2014},
+  pages = {23 pages},
+  publisher = {{Schloss Dagstuhl - Leibniz-Zentrum fuer Informatik GmbH, Wadern/Saarbruecken, Germany}},
+  doi = {10.4230/LIPICS.TYPES.2013.1},
+  abstract = {We introduce update monads as a generalization of state monads. Update monads are the compatible compositions of reader and writer monads given by a set and a monoid. Distributive laws between such monads are given by actions of the monoid on the set.},
+  collaborator = {Herbstritt, Marc},
+  langid = {english},
+  keywords = {000 Computer science; knowledge; general works,Computer Science}
+}
+
+@inproceedings{ahman_when_2012,
+  title = {When {{Is}} a {{Container}} a {{Comonad}}?},
+  booktitle = {Foundations of {{Software Science}} and {{Computational Structures}}},
+  author = {Ahman, Danel and Chapman, James and Uustalu, Tarmo},
+  year = {2012},
+  month = mar,
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  pages = {74--88},
+  publisher = {{Springer, Berlin, Heidelberg}},
+  doi = {10.1007/978-3-642-28729-9_5},
+  abstract = {Abbott, Altenkirch, Ghani and others have taught us that many parameterized datatypes (set functors) can be usefully analyzed via container representations in terms of a set of shapes and a set of positions in each shape. This paper builds on the observation that datatypes often carry additional structure that containers alone do not account for. We introduce directed containers to capture the common situation where every position in a datastructure determines another datastructure, informally, the sub-datastructure rooted by that position. Some natural examples are non-empty lists and node-labelled trees, and datastructures with a designated position (zippers). While containers denote set functors via a fully-faithful functor, directed containers interpret fully-faithfully into comonads. But more is true: every comonad whose underlying functor is a container is represented by a directed container. In fact, directed containers are the same as containers that are comonads. We also describe some constructions of directed containers. We have formalized our development in the dependently typed programming language Agda.},
+  isbn = {978-3-642-28728-2 978-3-642-28729-9},
+  langid = {english}
+}
+
+@article{amer_equationally_1984,
+  title = {Equationally Complete Classes of Commutative Monoids with Monus},
+  author = {Amer, K.},
+  year = {1984},
+  month = feb,
+  journal = {algebra universalis},
+  volume = {18},
+  number = {1},
+  pages = {129--131},
+  issn = {1420-8911},
+  doi = {10.1007/BF01182254},
+  langid = {english}
+}
+
+@inproceedings{gaboardi_combining_2016,
+  title = {Combining Effects and Coeffects via Grading},
+  booktitle = {Proceedings of the 21st {{ACM SIGPLAN International Conference}} on {{Functional Programming}}},
+  author = {Gaboardi, Marco and Katsumata, Shin-ya and Orchard, Dominic and Breuvart, Flavien and Uustalu, Tarmo},
+  year = {2016},
+  month = sep,
+  pages = {476--489},
+  publisher = {{ACM}},
+  address = {{Nara Japan}},
+  doi = {10.1145/2951913.2951939},
+  abstract = {Effects and coeffects are two general, complementary aspects of program behaviour. They roughly correspond to computations which change the execution context (effects) versus computations which make demands on the context (coeffects). Effectful features include partiality, non-determinism, input-output, state, and exceptions. Coeffectful features include resource demands, variable access, notions of linearity, and data input requirements.},
+  isbn = {978-1-4503-4219-3},
+  langid = {english},
+  keywords = {categorical semantics,coeffects,comonads,distributive laws,effects,grading,monads,types}
+}
+
+@article{kidney_algebras_2021,
+  title = {Algebras for Weighted Search},
+  author = {Kidney, Donnacha Ois{\'i}n and Wu, Nicolas},
+  year = {2021},
+  month = aug,
+  journal = {Proceedings of the ACM on Programming Languages},
+  volume = {5},
+  number = {ICFP},
+  pages = {72:1--72:30},
+  doi = {10.1145/3473577},
+  abstract = {Weighted search is an essential component of many fundamental and useful algorithms. Despite this, it is relatively under explored as a computational effect, receiving not nearly as much attention as either depth- or breadth-first search. This paper explores the algebraic underpinning of weighted search, and demonstrates how to implement it as a monad transformer. The development first explores breadth-first search, which can be expressed as a polynomial over semirings. These polynomials are generalised to the free semimodule monad to capture a wide range of applications, including probability monads, polynomial monads, and monads for weighted search. Finally, a monad transformer based on the free semimodule monad is introduced. Applying optimisations to this type yields an implementation of pairing heaps, which is then used to implement Dijkstra's algorithm and efficient probabilistic sampling. The construction is formalised in Cubical Agda and implemented in Haskell.},
+  keywords = {Agda,graph search,Haskell,monad}
+}
+
+@misc{kmett_how_2015,
+  ids = {kmett_how_2015a},
+  title = {How to {{Replace Failure}} by a {{Heap}} of {{Successes}} - {{School}} of {{Haskell}} | {{School}} of {{Haskell}}},
+  author = {Kmett, Edward},
+  year = {2015},
+  month = may,
+  journal = {School of Haskell},
+  url = {https://www.schoolofhaskell.com/user/edwardk/heap-of-successes},
+  urldate = {2019-04-23},
+  langid = {english}
+}
+
+@misc{kmett_state_2018,
+  type = {Blog},
+  ids = {kmett_state_2018a},
+  title = {The {{State Comonad}}},
+  author = {Kmett, Edward},
+  year = {2018},
+  month = jan,
+  journal = {The Comonad.Reader},
+  url = {http://comonad.com/reader/2018/the-state-comonad/},
+  urldate = {2019-05-05},
+  abstract = {Is State a Comonad? Not Costate or rather, Store as we tend to call it today, but actually State s itself? Let's see!}
+}
+
+@inproceedings{orchard_notation_2013,
+  title = {A {{Notation}} for {{Comonads}}},
+  booktitle = {Implementation and {{Application}} of {{Functional Languages}}},
+  author = {Orchard, Dominic and Mycroft, Alan},
+  editor = {Hinze, Ralf},
+  year = {2013},
+  series = {Lecture {{Notes}} in {{Computer Science}}},
+  pages = {1--17},
+  publisher = {{Springer}},
+  address = {{Berlin, Heidelberg}},
+  doi = {10.1007/978-3-642-41582-1_1},
+  abstract = {The category-theoretic concept of a monad occurs widely as a design pattern for functional programming with effects. The utility and ubiquity of monads is such that some languages provide syntactic sugar for this pattern, further encouraging its use. We argue that comonads, the dual of monads, similarly provide a useful design pattern, capturing notions of context dependence. However, comonads remain relatively under-used compared to monads\textemdash due to a lack of knowledge of the design pattern along with the lack of accompanying simplifying syntax.We propose a lightweight syntax for comonads in Haskell, analogous to the do-notation for monads, and provide examples of its use. Via our notation, we also provide a tutorial on programming with comonads.},
+  isbn = {978-3-642-41582-1},
+  langid = {english},
+  keywords = {Categorical Semantic,Data Type,Design Pattern,Local Operation,Suffix Tree}
+}
+
+@misc{waern_made_2018,
+  type = {Reddit {{Post}}},
+  title = {I Made a Monad That {{I}} Haven't Seen before, and {{I}} Have a Few Questions about It.},
+  author = {Waern, Love},
+  year = {2018},
+  month = jan,
+  journal = {reddit.com/r/haskell},
+  url = {https://www.reddit.com/r/haskell/comments/7oav51/i_made_a_monad_that_i_havent_seen_before_and_i/},
+  urldate = {2021-03-16},
+  abstract = {This came from me wanting to create an applicative that would append two monoids together, but worked differently than the regular writer monad...},
+  langid = {english}
+}
+
+

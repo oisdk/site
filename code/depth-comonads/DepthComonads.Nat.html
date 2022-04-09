@@ -1,0 +1,15 @@
+<!DOCTYPE HTML>
+<html><head><meta charset="utf-8"><title>DepthComonads.Nat</title><link rel="stylesheet" href="Agda.css"></head><body><pre class="Agda"><a id="1" class="Symbol">{-#</a> <a id="5" class="Keyword">OPTIONS</a> <a id="13" class="Pragma">--safe</a> <a id="20" class="Symbol">#-}</a>
+
+<a id="25" class="Keyword">module</a> <a id="32" href="DepthComonads.Nat.html" class="Module">DepthComonads.Nat</a> <a id="50" class="Keyword">where</a>
+
+<a id="57" class="Keyword">open</a> <a id="62" class="Keyword">import</a> <a id="69" href="Agda.Builtin.Nat.html" class="Module">Agda.Builtin.Nat</a>
+  <a id="88" class="Keyword">using</a> <a id="94" class="Symbol">(</a><a id="95" href="Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a><a id="99" class="Symbol">;</a> <a id="101" href="Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a><a id="104" class="Symbol">;</a> <a id="106" href="Agda.Builtin.Nat.html#325" class="Primitive Operator">_+_</a><a id="109" class="Symbol">)</a>
+  <a id="113" class="Keyword">renaming</a> <a id="122" class="Symbol">(</a><a id="123" href="Agda.Builtin.Nat.html#192" class="Datatype">Nat</a> <a id="127" class="Symbol">to</a> <a id="130" class="Datatype">ℕ</a><a id="131" class="Symbol">;</a> <a id="133" href="Agda.Builtin.Nat.html#746" class="Primitive Operator">_&lt;_</a> <a id="137" class="Symbol">to</a> <a id="140" class="Primitive Operator">_&lt;ℕᴮ_</a><a id="145" class="Symbol">)</a>
+  <a id="149" class="Keyword">public</a>
+<a id="156" class="Keyword">open</a> <a id="161" class="Keyword">import</a> <a id="168" href="DepthComonads.Bool.html" class="Module">DepthComonads.Bool</a>
+<a id="187" class="Keyword">open</a> <a id="192" class="Keyword">import</a> <a id="199" href="DepthComonads.Level.html" class="Module">DepthComonads.Level</a>
+
+<a id="_&lt;ℕ_"></a><a id="220" href="DepthComonads.Nat.html#220" class="Function Operator">_&lt;ℕ_</a> <a id="225" class="Symbol">:</a> <a id="227" href="DepthComonads.Nat.html#130" class="Datatype">ℕ</a> <a id="229" class="Symbol">→</a> <a id="231" href="DepthComonads.Nat.html#130" class="Datatype">ℕ</a> <a id="233" class="Symbol">→</a> <a id="235" href="Agda.Primitive.html#326" class="Primitive">Type</a>
+<a id="240" href="DepthComonads.Nat.html#240" class="Bound">n</a> <a id="242" href="DepthComonads.Nat.html#220" class="Function Operator">&lt;ℕ</a> <a id="245" href="DepthComonads.Nat.html#245" class="Bound">m</a> <a id="247" class="Symbol">=</a> <a id="249" href="DepthComonads.Bool.html#743" class="Function">T</a> <a id="251" class="Symbol">(</a><a id="252" href="DepthComonads.Nat.html#240" class="Bound">n</a> <a id="254" href="DepthComonads.Nat.html#140" class="Primitive Operator">&lt;ℕᴮ</a> <a id="258" href="DepthComonads.Nat.html#245" class="Bound">m</a><a id="259" class="Symbol">)</a>
+</pre></body></html>
