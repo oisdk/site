@@ -1,7 +1,10 @@
 ---
-title: Uniqueness and Computation
+title: "Propositional Truncation: It's not what you think!"
 tags: Agda
 ---
+
+One of the big differences between "constructive" and classical mathematics is
+the behaviour of existentials.
 
 The other day there was a discussion on Twitter about propositional truncation
 and decidable equality: I actually made a mistake regarding the uniqueness of
