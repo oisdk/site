@@ -5,6 +5,20 @@ tags: Agda
 
 One of the big differences between "constructive" and classical mathematics is
 the behaviour of existentials.
+What does the following statement mean?
+
+```agda
+∃ n × (n > 100) × isPrime n
+```
+
+Informally, it means "there is a prime number bigger than 100".
+But that's not precise: if we want to talk about the mathematical object that is
+the proof, there are actually a few different possible interpretations.
+
+First, it could mean something like "I have found a number that I have proved is
+bigger than 100, and I have also proved it is prime".
+
+
 
 The other day there was a discussion on Twitter about propositional truncation
 and decidable equality: I actually made a mistake regarding the uniqueness of
