@@ -94,6 +94,7 @@
 </div>
 <p>We have the equivalent in Haskell on the right. We’re also using some fancy syntax for the Agda code: copatterns <span class="citation" data-cites="abel_wellfounded_2013">(Abel and Pientka <a href="#ref-abel_wellfounded_2013" role="doc-biblioref">2013</a>)</span>.</p>
 <p>Note that this type is only definable in a language with some notion of laziness. If we tried to define a value like <code>alternating</code> above in OCaml we would loop. Haskell has no problem, and Agda—through its coinduction mechanism—can handle it as well.</p>
+<p>Update 4-5-22: thanks to Arnaud Spiwack (<a href="https://twitter.com/aspiwack/status/1521745731161313282">@aspiwack</a>) for correcting me on this, it turns out the definition of <code>alternating</code> above <em>can</em> be written in Ocaml, even without laziness. Apparently Ocaml has a facility for strict cyclic data structures. Also, I should be a little more precise with what I’m saying above: even without the extra facility for strict cycles, you can of course write a lazy list with some kind of lazy wrapper type.</p>
 <p>There is, however, an isomorphic type that can be defined without coinduction:</p>
 <div class="row">
 <div class="column">
