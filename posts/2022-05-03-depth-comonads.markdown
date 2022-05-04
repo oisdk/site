@@ -83,6 +83,15 @@ Note that this type is only definable in a language with some notion of laziness
 If we tried to define a value like `alternating` above in OCaml we would loop.
 Haskell has no problem, and Agda---through its coinduction mechanism---can handle  it as well.
 
+Update 4-5-22: thanks to Arnaud Spiwack
+([\@aspiwack](https://twitter.com/aspiwack/status/1521745731161313282)) for
+correcting me on this, it turns out the definition of `alternating` above *can*
+be written in Ocaml, even without laziness.
+Apparently Ocaml has a facility for strict cyclic data structures.
+Also, I should be a little more precise with what I'm saying above: even without
+the extra facility for strict cycles, you can of course write a lazy list with
+some kind of lazy wrapper type.
+
 There is, however, an isomorphic type that can be defined without coinduction:
 
 <div class="row">
