@@ -1929,7 +1929,7 @@ Turn on JavaScript to allow interactive evaluation
 <h1 id="the-minimal-combinators-s-and-k">The Minimal Combinators: S and K</h1>
 <p><code>S</code> is the only combinator we haven’t seen yet. It’s kind of a combination of <code>B</code>, <code>C</code>, and <code>W</code>:</p>
 <pre><code>Sxyz ~&gt; xz(yz)</code></pre>
-<p>It does parenthesising, reordering, <em>and</em> duplication. This allows it to be powerful to be Turing complete only with the addition of <code>K</code>. Try first to construct <code>I</code> given only <code>S</code> and <code>K</code>:</p>
+<p>It does parenthesising, reordering, <em>and</em> duplication. This allows it to be powerful enough to be Turing complete only with the addition of <code>K</code>. Try first to construct <code>I</code> given only <code>S</code> and <code>K</code>:</p>
 <p id="SKtoI">
 </p>
 <script>
