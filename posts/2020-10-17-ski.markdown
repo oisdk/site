@@ -319,7 +319,7 @@ Sxyz ~> xz(yz)
 ```
 
 It does parenthesising, reordering, *and* duplication.
-This allows it to be powerful to be Turing complete only with the addition of
+This allows it to be powerful enough to be Turing complete only with the addition of
 `K`.
 Try first to construct `I` given only `S` and `K`:
 
