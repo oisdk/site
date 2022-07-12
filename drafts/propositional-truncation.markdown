@@ -3,6 +3,15 @@ title: "Propositional Truncation: It's not what you think!"
 tags: Agda
 ---
 
+There's a type in HoTT called `∥_∥` which propositionally truncates a type.
+It comes with a constructor, `∣_∣`:
+
+```agda
+∣_∣ : A → ∥ A ∥
+```
+
+
+
 One of the big differences between "constructive" and classical mathematics is
 the behaviour of existentials.
 What does the following statement mean?
