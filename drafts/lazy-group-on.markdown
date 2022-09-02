@@ -79,9 +79,58 @@ So there is some kind of well-defined lazy semantics for this function.
 The puzzle I was interested in was defining an efficient implementation for this
 semantics.
 
-# A Slow Implementation
+# The Slow Case
 
-The worst solution I could think of that would work was the following:
+The first approximation to a solution I could think of is the following:
+
+```haskell
+groupOn :: Ord k => (a -> k) -> [a] -> [(k, [a])]
+groupOn k = Map.toList . Map.fromListWith (++) . map (\x -> (k x, [x]))
+```
+
+In fact, if you don't care about laziness, this is probably the best solution:
+it's $\mathcal{O}(n \log n)$, it performs well (practically as well as
+asymptotically), and it has the expected results.
+
+However, there are problems.
+Primarily this solution cares about ordering, which we don't want.
+We want to emit the results in the same order that they were in the original
+list, and we don't necessarily want to require an ordering on the elements (for
+the efficient solution we will relax this last constraint).
+
+Instead, let's implement our own "map" type that is inefficient, but more
+general.
+
+```haskell
+type Map a b = [(a,b)]
+
+insertWith :: Eq a => (b -> b -> b) -> a -> b -> Map a b -> Map a b
+insertWith f k v [] = [(k,v)]
+insertWith f k v ((k',v'):xs)
+  | k == k'   = (k',f v v') : xs
+  | otherwise = (k',v') : insertWith f k v xs
+
+groupOn :: Eq k => (a -> k) -> [a] -> [(k, [a])]
+groupOn k = foldr (uncurry (insertWith (++))) [] . map (\x -> (k x, [x]))
+```
+
+The problem here is that it's not lazy enough.
+`insertWith` is strict in its last argument, which means that using `foldr`
+doesn't gain us anything laziness-wise.
+
+There is some extra information we can use to drive the result: we know that the
+result will have keys that are in the same order as they appear in the list,
+with duplicates removed:
+
+```haskell
+groupOn :: Eq k => (a -> k) -> [a] -> [(k, [a])]
+groupOn k xs = map _ ks
+  where
+    ks = map k xs
+```
+
+From here, we can get what the values should be from each key by filtering the
+original list:
 
 ```haskell
 groupOn :: Eq k => (a -> k) -> [a] -> [(k,[a])]
