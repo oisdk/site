@@ -178,6 +178,29 @@ improvements) algorithm that can do `groupOn` with just an `Eq` constraint.
 
 # A Faster Version
 
+The reason that the `groupOn` above is slow is that every element returned has to
+traverse the entire rest of the list to remove duplicates.
+This is a classic pattern of quadratic behaviour: we can improve it by using the
+same trick as quick sort, by partitioning the list into lesser and greater
+elements on every call.
+
+```haskell
+groupOnOrd :: Ord k => (a -> k) -> [a] -> [(k,[a])]
+groupOnOrd key = go . map (\x -> (key x, x)) 
+  where
+    go [] = []
+    go ((k,x):xs) = (k,x:e) : go lt ++ go gt
+      where
+        (e,lt,gt) = foldr split ([],[],[]) xs
+        split ky@(k',y) ~(e,lt,gt) = case compare k' k of
+          LT -> (e, ky:lt, gt)
+          EQ -> (y:e, lt, gt)
+          GT -> (e, lt, ky:gt)
+```
+
+While this is $\mathcal{O}(n \log n)$, and it does group elements, it also
+reorders the underlying list.
+
 ```haskell
 groupOnOrd :: Ord k => (a -> k) -> [a] -> [(k,[a])]
 groupOnOrd k = map (\(_,k,xs) -> (k,xs)) . go . zipWith (\i x -> (i, k x, x)) [0..]
