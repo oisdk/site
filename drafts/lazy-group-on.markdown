@@ -267,7 +267,7 @@ It's $\mathcal{O}(n \log n)$, and fully lazy.
 [1..]
 
 >>> groupOnOrd id $ cycle [1,2,3]
-[(1,repeat 1),(2,repeat 2),(3,repeat 3)]
+(1,repeat 1):(2,repeat 2):(3,repeat 3):⊥
 
 >>> groupOnOrd (`rem` 3) [1..]
 (1,[1,4..]):(2,[2,5..]):(0,[3,6..]):⊥
