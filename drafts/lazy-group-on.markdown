@@ -200,6 +200,8 @@ groupOnOrd key = go . map (\x -> (key x, x))
 
 While this is $\mathcal{O}(n \log n)$, and it does group elements, it also
 reorders the underlying list.
+Let's fix that by tagging the incoming elements with their positions, and then
+using those positions to order them back into their original configuration:
 
 ```haskell
 groupOnOrd :: Ord k => (a -> k) -> [a] -> [(k,[a])]
@@ -208,9 +210,9 @@ groupOnOrd k = map (\(_,k,xs) -> (k,xs)) . go . zipWith (\i x -> (i, k x, x)) [0
     go [] = []
     go ((i, k, x):xs) = (i, k, x : e) : merge (go l) (go g)
       where 
-        (e, l, g) = foldr f ([],[],[]) xs
+        (e, l, g) = foldr split ([],[],[]) xs
         
-        f ky@(_,k',y) ~(e, l, g) = case compare k' k of
+        split ky@(_,k',y) ~(e, l, g) = case compare k' k of
           LT -> (e  , ky : l,      g)
           EQ -> (y:e,      l,      g)
           GT -> (e  ,      l, ky : g)
@@ -221,3 +223,56 @@ groupOnOrd k = map (\(_,k,xs) -> (k,xs)) . go . zipWith (\i x -> (i, k x, x)) [0
       | i <= j    = l : merge lt (g:gt)
       | otherwise = g : merge (l:lt) gt
 ```
+
+This is close, but still not right.
+This isn't yet *lazy*.
+The `merge` function is strict in both arguments.
+
+However, we have all the information we need to unshuffle the lists without
+having to inspect them.
+In `split`, we know which direction we put each element: we can store that info
+without using indices.
+
+```haskell
+groupOnOrd :: Ord k => (a -> k) -> [a] -> [(k,[a])]
+groupOnOrd k = catMaybes . go . map (\x -> (k x, x))
+  where
+    go [] = []
+    go ((k,x):xs) = Just (k, x : e) : merge m (go l) (go g)
+      where 
+        (e, m, l, g) = foldr split ([],[],[],[]) xs
+        
+        split ky@(k',y) ~(e, m, l, g) = case compare k' k of
+          LT -> (  e, Just False : m, ky : l,      g)
+          EQ -> (y:e, Nothing    : m,      l,      g)
+          GT -> (  e, Just True  : m,      l, ky : g)
+          
+    merge []               lt     gt     = []
+    merge (Nothing    :xs) lt     gt     = Nothing : merge xs lt gt
+    merge (Just False :xs) (l:lt) gt     = l       : merge xs lt gt
+    merge (Just True  :xs) lt     (g:gt) = g       : merge xs lt gt
+```
+
+What we generate here is a `[Maybe Bool]`: this list tells us if each element in
+the incoming list is a duplicate (`Nothing`) or less than the head (`Just
+False`) or greater (`Just True`).
+Then, in `merge`, we use this list to rebuild the original list without
+inspecting either `lt` or `gt`.
+
+And this solution works!
+It's $\mathcal{O}(n \log n)$, and fully lazy.
+
+```haskell
+>>> map fst . groupOnOrd id $ [1..]
+[1..]
+
+>>> groupOnOrd id $ cycle [1,2,3]
+[(1,repeat 1),(2,repeat 2),(3,repeat 3)]
+
+>>> groupOnOrd (`rem` 3) [1..]
+(1,[1,4..]):(2,[2,5..]):(0,[3,6..]):⊥
+```
+
+The finished version of these two functions, along with some benchmarks, is
+available
+[here](https://gist.github.com/oisdk/0822477aaced58a5ba937c3d11c19639).
