@@ -7,8 +7,159 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Tue, 03 May 2022 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Mon, 17 Oct 2022 00:00:00 UT</lastBuildDate>
         <item>
+    <title>Lazily Grouping in Haskell</title>
+    <link>https://doisinkidney.com/posts/2022-10-17-lazy-group-on.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on October 17, 2022
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Haskell&#39;." href="/tags/Haskell.html">Haskell</a>
+    
+</div>
+
+<p>Here’s a cool trick:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">minimum</span><span class="ot"> ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">minimum</span> <span class="ot">=</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">sort</span></span></code></pre></div>
+<p>This is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> in Haskell, not <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math> as you might expect. And this isn’t because Haskell is using some weird linear-time sorting algorithm; indeed, the following is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">maximum</span><span class="ot"> ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> a</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">maximum</span> <span class="ot">=</span> <span class="fu">last</span> <span class="op">.</span> <span class="fu">sort</span></span></code></pre></div>
+<p>No: since the implementation of <code>minimum</code> above only demands the first element of the list, and since <code>sort</code> has been carefully implemented, only a linear amount of work will be done to retrieve it.</p>
+<p>It’s not easy to structure programs to have the same property as <code>sort</code> does above: to be maximally lazy, such that unnecessary work is not performed. Today I was working on a maximally lazy implementation of the following program:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>groupOn <span class="ot">=</span> <span class="op">...</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupOn (<span class="ot">`rem`</span> <span class="dv">2</span>) [<span class="dv">1</span><span class="op">..</span><span class="dv">5</span>]</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>[(<span class="dv">1</span>,[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>]),(<span class="dv">0</span>,[<span class="dv">2</span>,<span class="dv">4</span>])]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupOn (<span class="ot">`rem`</span> <span class="dv">3</span>) [<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">2</span>]</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>[(<span class="dv">2</span>,[<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">2</span>]),(<span class="dv">0</span>,[<span class="dv">3</span>,<span class="dv">6</span>])]</span></code></pre></div>
+<p>This function groups the elements of a list according to some key function. The desired behaviour here is a little subtle: we don’t want to just group adjacent elements, for instance.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>groupOn (<span class="ot">`rem`</span> <span class="dv">3</span>) [<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">2</span>] ≢ [(<span class="dv">2</span>,[<span class="dv">5</span>,<span class="dv">8</span>]),(<span class="dv">0</span>,[<span class="dv">3</span>,<span class="dv">6</span>]),(<span class="dv">2</span>,[<span class="dv">2</span>])]</span></code></pre></div>
+<p>And we don’t want to reorder the elements of the list by the keys:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>groupOn (<span class="ot">`rem`</span> <span class="dv">3</span>) [<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">3</span>,<span class="dv">6</span>,<span class="dv">2</span>] ≢ [(<span class="dv">0</span>,[<span class="dv">3</span>,<span class="dv">6</span>]),(<span class="dv">2</span>,[<span class="dv">5</span>,<span class="dv">8</span>,<span class="dv">2</span>])]</span></code></pre></div>
+<p>These constraints make it especially tricky to make this function lazy. In fact, at first glance, it seems impossible. What should, for instance, <code>groupOn id [1..]</code> return? It can’t even fill out the first group, since it will never find another <code>1</code>. However, it <em>can</em> fill out the first key. And, in fact, the second. And it can fill out the first element of the first group. Precisely:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>groupOn <span class="fu">id</span> [<span class="dv">1</span><span class="op">..</span>] ≡ [(<span class="dv">1</span>,<span class="dv">1</span><span class="op">:</span>⊥), (<span class="dv">2</span>,<span class="dv">2</span><span class="op">:</span>⊥), (<span class="dv">3</span>,<span class="dv">3</span><span class="op">:</span>⊥), <span class="op">...</span></span></code></pre></div>
+<p>Another example is <code>groupOn id (repeat 1)</code>, or <code>groupOn id (cycle [1,2,3])</code>. These each have partially-defined answers:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>groupOn <span class="fu">id</span> (<span class="fu">repeat</span> <span class="dv">1</span>)      ≡ (<span class="dv">1</span>,<span class="fu">repeat</span> <span class="dv">1</span>)<span class="op">:</span>⊥</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>groupOn <span class="fu">id</span> (<span class="fu">cycle</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]) ≡ (<span class="dv">1</span>,<span class="fu">repeat</span> <span class="dv">1</span>)<span class="op">:</span>(<span class="dv">2</span>,<span class="fu">repeat</span> <span class="dv">2</span>)<span class="op">:</span>(<span class="dv">3</span>,<span class="fu">repeat</span> <span class="dv">3</span>)<span class="op">:</span>⊥</span></code></pre></div>
+<p>So there is some kind of well-defined lazy semantics for this function. The puzzle I was interested in was defining an efficient implementation for this semantics.</p>
+<h1 id="the-slow-case">The Slow Case</h1>
+<p>The first approximation to a solution I could think of is the following:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Ord</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k, [a])]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>groupOn k <span class="ot">=</span> Map.toList <span class="op">.</span> Map.fromListWith (<span class="op">++</span>) <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (k x, [x]))</span></code></pre></div>
+<p>In fact, if you don’t care about laziness, this is probably the best solution: it’s <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>, it performs well (practically as well as asymptotically), and it has the expected results.</p>
+<p>However, there are problems. Primarily this solution cares about ordering, which we don’t want. We want to emit the results in the same order that they were in the original list, and we don’t necessarily want to require an ordering on the elements (for the efficient solution we will relax this last constraint).</p>
+<p>Instead, let’s implement our own “map” type that is inefficient, but more general.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Map</span> a b <span class="ot">=</span> [(a,b)]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="ot">insertWith ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>insertWith f k v [] <span class="ot">=</span> [(k,v)]</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>insertWith f k v ((k&#39;,v&#39;)<span class="op">:</span>xs)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>  <span class="op">|</span> k <span class="op">==</span> k&#39;   <span class="ot">=</span> (k&#39;,f v v&#39;) <span class="op">:</span> xs</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (k&#39;,v&#39;) <span class="op">:</span> insertWith f k v xs</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k, [a])]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>groupOn k <span class="ot">=</span> <span class="fu">foldr</span> (<span class="fu">uncurry</span> (insertWith (<span class="op">++</span>))) [] <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (k x, [x]))</span></code></pre></div>
+<p>The problem here is that it’s not lazy enough. <code>insertWith</code> is strict in its last argument, which means that using <code>foldr</code> doesn’t gain us anything laziness-wise.</p>
+<p>There is some extra information we can use to drive the result: we know that the result will have keys that are in the same order as they appear in the list, with duplicates removed:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k, [a])]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>groupOn k xs <span class="ot">=</span> <span class="fu">map</span> _ ks</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>    ks <span class="ot">=</span> <span class="fu">map</span> k xs</span></code></pre></div>
+<p>From here, we can get what the values should be from each key by filtering the original list:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>groupOn key xs <span class="ot">=</span> <span class="fu">map</span> (\k <span class="ot">-&gt;</span> (k, <span class="fu">filter</span> ((k<span class="op">==</span>) <span class="op">.</span> key) xs)) (nub (<span class="fu">map</span> key xs))</span></code></pre></div>
+<p>Using a kind of <a href="https://en.wikipedia.org/wiki/Schwartzian_transform">Schwartzian transform</a> yields the following slight improvement:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>groupOn key xs <span class="ot">=</span> <span class="fu">map</span> (\k <span class="ot">-&gt;</span> (k , <span class="fu">map</span> <span class="fu">snd</span> (<span class="fu">filter</span> ((k<span class="op">==</span>) <span class="op">.</span> <span class="fu">fst</span>) ks))) (nub (<span class="fu">map</span> <span class="fu">fst</span> ks))</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    ks <span class="ot">=</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (key x, x)) xs</span></code></pre></div>
+<p>But this traverses the same list multiple times unnecessarily. The problem is that we’re repeating a lot of work between <code>nub</code> and the rest of the algorithm.</p>
+<p>The following is much better:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">groupOn ::</span> <span class="dt">Eq</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>groupOn key <span class="ot">=</span> go <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (key x, x)) </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> []</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>    go ((k,x)<span class="op">:</span>xs) <span class="ot">=</span> (k,x<span class="op">:</span><span class="fu">map</span> <span class="fu">snd</span> y) <span class="op">:</span> go ys</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>        (y,ys) <span class="ot">=</span> partition ((k<span class="op">==</span>)<span class="op">.</span><span class="fu">fst</span>) xs</span></code></pre></div>
+<p>First, we perform the Schwartzian transform optimisation. The work of the algorithm is done in the <code>go</code> helper. The idea is to filter out duplicates as we encounter them: when we encounter <code>(k,x)</code> we can keep it immediately, but then we split the rest of the list into the components that have the same key as this element, and the ones that differ. The ones that have the same key can form the collection for this key, and those that differ are what we recurse on.</p>
+<p>This partitioning also avoids re-traversing elements we know to be already accounted for in a previous group. I think that this is the most efficient (modulo some inlining and strictness improvements) algorithm that can do <code>groupOn</code> with just an <code>Eq</code> constraint.</p>
+<h1 id="a-faster-version">A Faster Version</h1>
+<p>The reason that the <code>groupOn</code> above is slow is that every element returned has to traverse the entire rest of the list to remove duplicates. This is a classic pattern of quadratic behaviour: we can improve it by using the same trick as quick sort, by partitioning the list into lesser and greater elements on every call.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">groupOnOrd ::</span> <span class="dt">Ord</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>groupOnOrd key <span class="ot">=</span> go <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (key x, x)) </span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> []</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    go ((k,x)<span class="op">:</span>xs) <span class="ot">=</span> (k,x<span class="op">:</span>e) <span class="op">:</span> go lt <span class="op">++</span> go gt</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>        (e,lt,gt) <span class="ot">=</span> <span class="fu">foldr</span> split ([],[],[]) xs</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>        split ky<span class="op">@</span>(k&#39;,y) <span class="op">~</span>(e,lt,gt) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> k&#39; k <span class="kw">of</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>          <span class="dt">LT</span> <span class="ot">-&gt;</span> (e, ky<span class="op">:</span>lt, gt)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>          <span class="dt">EQ</span> <span class="ot">-&gt;</span> (y<span class="op">:</span>e, lt, gt)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a>          <span class="dt">GT</span> <span class="ot">-&gt;</span> (e, lt, ky<span class="op">:</span>gt)</span></code></pre></div>
+<p>While this is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>, and it does group elements, it also reorders the underlying list. Let’s fix that by tagging the incoming elements with their positions, and then using those positions to order them back into their original configuration:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">groupOnOrd ::</span> <span class="dt">Ord</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>groupOnOrd k <span class="ot">=</span> <span class="fu">map</span> (\(_,k,xs) <span class="ot">-&gt;</span> (k,xs)) <span class="op">.</span> go <span class="op">.</span> <span class="fu">zipWith</span> (\i x <span class="ot">-&gt;</span> (i, k x, x)) [<span class="dv">0</span><span class="op">..</span>]</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> []</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    go ((i, k, x)<span class="op">:</span>xs) <span class="ot">=</span> (i, k, x <span class="op">:</span> e) <span class="op">:</span> merge (go l) (go g)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>      <span class="kw">where</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>        (e, l, g) <span class="ot">=</span> <span class="fu">foldr</span> split ([],[],[]) xs</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>        </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>        split ky<span class="op">@</span>(_,k&#39;,y) <span class="op">~</span>(e, l, g) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> k&#39; k <span class="kw">of</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>          <span class="dt">LT</span> <span class="ot">-&gt;</span> (e  , ky <span class="op">:</span> l,      g)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>          <span class="dt">EQ</span> <span class="ot">-&gt;</span> (y<span class="op">:</span>e,      l,      g)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>          <span class="dt">GT</span> <span class="ot">-&gt;</span> (e  ,      l, ky <span class="op">:</span> g)</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>          </span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>    merge [] gt <span class="ot">=</span> gt</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>    merge lt [] <span class="ot">=</span> lt</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a>    merge (l<span class="op">@</span>(i,_,_)<span class="op">:</span>lt) (g<span class="op">@</span>(j,_,_)<span class="op">:</span>gt)</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>      <span class="op">|</span> i <span class="op">&lt;=</span> j    <span class="ot">=</span> l <span class="op">:</span> merge lt (g<span class="op">:</span>gt)</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> g <span class="op">:</span> merge (l<span class="op">:</span>lt) gt</span></code></pre></div>
+<p>This is close, but still not right. This isn’t yet <em>lazy</em>. The <code>merge</code> function is strict in both arguments.</p>
+<p>However, we have all the information we need to unshuffle the lists without having to inspect them. In <code>split</code>, we know which direction we put each element: we can store that info without using indices.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">groupOnOrd ::</span> <span class="dt">Ord</span> k <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> k) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [(k,[a])]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>groupOnOrd k <span class="ot">=</span> catMaybes <span class="op">.</span> go <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> (k x, x))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> []</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>    go ((k,x)<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (k, x <span class="op">:</span> e) <span class="op">:</span> merge m (go l) (go g)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>      <span class="kw">where</span> </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>        (e, m, l, g) <span class="ot">=</span> <span class="fu">foldr</span> split ([],[],[],[]) xs</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>        </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a>        split ky<span class="op">@</span>(k&#39;,y) <span class="op">~</span>(e, m, l, g) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> k&#39; k <span class="kw">of</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a>          <span class="dt">LT</span> <span class="ot">-&gt;</span> (  e, <span class="dt">Just</span> <span class="dt">False</span> <span class="op">:</span> m, ky <span class="op">:</span> l,      g)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>          <span class="dt">EQ</span> <span class="ot">-&gt;</span> (y<span class="op">:</span>e, <span class="dt">Nothing</span>    <span class="op">:</span> m,      l,      g)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a>          <span class="dt">GT</span> <span class="ot">-&gt;</span> (  e, <span class="dt">Just</span> <span class="dt">True</span>  <span class="op">:</span> m,      l, ky <span class="op">:</span> g)</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>          </span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>    merge []               lt     gt     <span class="ot">=</span> []</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>    merge (<span class="dt">Nothing</span>    <span class="op">:</span>xs) lt     gt     <span class="ot">=</span> <span class="dt">Nothing</span> <span class="op">:</span> merge xs lt gt</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a>    merge (<span class="dt">Just</span> <span class="dt">False</span> <span class="op">:</span>xs) (l<span class="op">:</span>lt) gt     <span class="ot">=</span> l       <span class="op">:</span> merge xs lt gt</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>    merge (<span class="dt">Just</span> <span class="dt">True</span>  <span class="op">:</span>xs) lt     (g<span class="op">:</span>gt) <span class="ot">=</span> g       <span class="op">:</span> merge xs lt gt</span></code></pre></div>
+<p>What we generate here is a <code>[Maybe Bool]</code>: this list tells us if each element in the incoming list is a duplicate (<code>Nothing</code>) or less than the head (<code>Just False</code>) or greater (<code>Just True</code>). Then, in <code>merge</code>, we use this list to rebuild the original list without inspecting either <code>lt</code> or <code>gt</code>.</p>
+<p>And this solution works! It’s <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>, and fully lazy.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">map</span> <span class="fu">fst</span> <span class="op">.</span> groupOnOrd <span class="fu">id</span> <span class="op">$</span> [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>[<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupOnOrd <span class="fu">id</span> <span class="op">$</span> <span class="fu">cycle</span> [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a>(<span class="dv">1</span>,<span class="fu">repeat</span> <span class="dv">1</span>)<span class="op">:</span>(<span class="dv">2</span>,<span class="fu">repeat</span> <span class="dv">2</span>)<span class="op">:</span>(<span class="dv">3</span>,<span class="fu">repeat</span> <span class="dv">3</span>)<span class="op">:</span>⊥</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupOnOrd (<span class="ot">`rem`</span> <span class="dv">3</span>) [<span class="dv">1</span><span class="op">..</span>]</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a>(<span class="dv">1</span>,[<span class="dv">1</span>,<span class="dv">4</span><span class="op">..</span>])<span class="op">:</span>(<span class="dv">2</span>,[<span class="dv">2</span>,<span class="dv">5</span><span class="op">..</span>])<span class="op">:</span>(<span class="dv">0</span>,[<span class="dv">3</span>,<span class="dv">6</span><span class="op">..</span>])<span class="op">:</span>⊥</span></code></pre></div>
+<p>The finished version of these two functions, along with some benchmarks, is available <a href="https://gist.github.com/oisdk/0822477aaced58a5ba937c3d11c19639">here</a>.</p>
+]]></description>
+    <pubDate>Mon, 17 Oct 2022 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2022-10-17-lazy-group-on.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Depth Comonads</title>
     <link>https://doisinkidney.com/posts/2022-05-03-depth-comonads.html</link>
     <description><![CDATA[<div class="info">
