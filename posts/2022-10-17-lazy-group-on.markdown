@@ -243,21 +243,20 @@ groupOnOrd k = catMaybes . go . map (\x -> (k x, x))
         (e, m, l, g) = foldr split ([],[],[],[]) xs
         
         split ky@(k',y) ~(e, m, l, g) = case compare k' k of
-          LT -> (  e, Just False : m, ky : l,      g)
-          EQ -> (y:e, Nothing    : m,      l,      g)
-          GT -> (  e, Just True  : m,      l, ky : g)
+          LT -> (  e, LT : m, ky : l,      g)
+          EQ -> (y:e, EQ : m,      l,      g)
+          GT -> (  e, GT : m,      l, ky : g)
           
-    merge []               lt     gt     = []
-    merge (Nothing    :xs) lt     gt     = Nothing : merge xs lt gt
-    merge (Just False :xs) (l:lt) gt     = l       : merge xs lt gt
-    merge (Just True  :xs) lt     (g:gt) = g       : merge xs lt gt
+    merge []        lt     gt     = []
+    merge (EQ : xs) lt     gt     = Nothing : merge xs lt gt
+    merge (LT : xs) (l:lt) gt     = l       : merge xs lt gt
+    merge (GT : xs) lt     (g:gt) = g       : merge xs lt gt
 ```
 
-What we generate here is a `[Maybe Bool]`: this list tells us if each element in
-the incoming list is a duplicate (`Nothing`) or less than the head (`Just
-False`) or greater (`Just True`).
-Then, in `merge`, we use this list to rebuild the original list without
-inspecting either `lt` or `gt`.
+What we generate here is a `[Ordering]`: this list tells us the result of all
+the compare operations on the input list. 
+Then, in `merge`, we invert the action of `split`, rebuilding the original list
+without inspecting either `lt` or `gt`.
 
 And this solution works!
 It's $\mathcal{O}(n \log n)$, and fully lazy.
