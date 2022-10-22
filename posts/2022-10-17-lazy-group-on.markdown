@@ -76,7 +76,7 @@ groupOn id (cycle [1,2,3]) ≡ (1,repeat 1):(2,repeat 2):(3,repeat 3):⊥
 ```
 
 So there is some kind of well-defined lazy semantics for this function.
-The puzzle I was interested in was defining an efficient implementation for this
+The puzzle I was interested in was defining an efficient implementation for these
 semantics.
 
 # The Slow Case
