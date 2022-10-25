@@ -858,7 +858,7 @@ A recursive function might have the form `a -> b`, where `a` is the thing being 
 If we're using well-founded recursion to show that it's terminating, though, we add an extra parameter, an `Acc _<_` proof, turning this function into `Acc _<_ w × a -> b`.
 The `Acc _<_` here is the graded comonad, and this recursive function is precisely the "handler". 
 
-Other examples might be provacy or permissions: a function might be able to work on some value, but only if it has particular *permission* regarding that value.
+Other examples might be privacy or permissions: a function might be able to work on some value, but only if it has particular *permission* regarding that value.
 The permission here is the monoid.
 
 There are other examples I'm sure, those are just the couple that I have been thinking about.
