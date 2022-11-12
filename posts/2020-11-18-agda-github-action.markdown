@@ -8,7 +8,7 @@ tags: Agda
 The best approach to this now is probably to use this action, specifically set up
 for Agda:
 
-* https://github.com/wenkokke/setup-agda
+* [github.com/wenkokke/setup-agda](https://github.com/wenkokke/setup-agda)
 
 I'll leave the rest of this post here, but bear in mind the advice is outdated.
 
