@@ -3,6 +3,17 @@ title: How to set up GitHub Actions for your Agda project
 tags: Agda
 ---
 
+## Update 2022-11-12
+
+The best approach to this now is probably to use this action, specifically set up
+for Agda:
+
+* https://github.com/wenkokke/setup-agda
+
+I'll leave the rest of this post here, but bear in mind the advice is outdated.
+
+---
+
 Recently travis-ci.org announced that they were closing down, and moving to
 travis-ci.com.
 For people who use the service, this basically means that the free component is
