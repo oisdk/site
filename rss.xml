@@ -1730,7 +1730,7 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
 <h2 id="update-2022-11-12">Update 2022-11-12</h2>
 <p>The best approach to this now is probably to use this action, specifically set up for Agda:</p>
 <ul>
-<li>https://github.com/wenkokke/setup-agda</li>
+<li><a href="https://github.com/wenkokke/setup-agda">github.com/wenkokke/setup-agda</a></li>
 </ul>
 <p>I’ll leave the rest of this post here, but bear in mind the advice is outdated.</p>
 <hr />
