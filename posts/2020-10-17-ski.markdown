@@ -393,7 +393,7 @@ puzzle(
 </script><noscript>Turn on JavaScript to allow interactive evaluation</noscript>
 <details><summary>Answer</summary>
 ```
-S = SS(SK) = SS(KI)
+W = SS(SK) = SS(KI)
 ```
 </details>
 
