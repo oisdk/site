@@ -2166,7 +2166,7 @@ Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
 <p><summary>Answer</summary></p>
-<pre><code>S = SS(SK) = SS(KI)</code></pre>
+<pre><code>W = SS(SK) = SS(KI)</code></pre>
 </details>
 <h1 id="recursion">Recursion</h1>
 <p>The next task is to encode the <code>Y</code> combinator. This is a combinator that evaluates to the following:</p>
