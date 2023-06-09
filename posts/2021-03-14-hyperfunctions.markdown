@@ -200,17 +200,15 @@ Will it shock you to find out this solution can also be encoded with a
 hyperfunction?
 
 ```haskell
-bfe t = invoke (f t e) e 1
+bfe t = invoke (f t (Hyp b)) e 1
   where
     f :: Tree a -> (Int -> [a]) -&> (Int -> [a]) 
                 -> (Int -> [a]) -&> (Int -> [a])
     f (x :& xs) fw =
-      Hyp (\bw n -> x :
-            invoke fw
-              (Hyp (invoke bw . flip (foldr f) xs)) (n+1))
-
+      Hyp (\bw n -> x : invoke fw (Hyp (\k m -> invoke bw (foldr f k xs) (m+1))) n)
+              
     e :: (Int -> [a]) -&> (Int -> [a])
-    e = Hyp b
+    e = Hyp (\k -> invoke k e)
     
     b x 0 = []
     b x n = invoke x (Hyp b) (n-1)
