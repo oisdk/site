@@ -126,20 +126,18 @@
 <span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="ot">    e ::</span> [a] <span class="op">-&amp;&gt;</span> [a]</span>
 <span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke k e)</span></code></pre></div>
 <p>One of the problems I had with the above function was that it didn’t terminate: it could enumerate all the elements of the tree but it didn’t know when to stop. A similar program <span class="citation" data-cites="allison_circular_2006 smith_lloyd_2009">(Allison <a href="#ref-allison_circular_2006" role="doc-biblioref">2006</a>; described and translated to Haskell in Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>)</span> manages to solve the problem with a counter. Will it shock you to find out this solution can also be encoded with a hyperfunction?</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>bfe t <span class="ot">=</span> invoke (f t e) e <span class="dv">1</span></span>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>bfe t <span class="ot">=</span> invoke (f t (<span class="dt">Hyp</span> b)) e <span class="dv">1</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) </span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>                <span class="ot">-&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a])</span>
 <span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) fw <span class="ot">=</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>      <span class="dt">Hyp</span> (\bw n <span class="ot">-&gt;</span> x <span class="op">:</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>            invoke fw</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>              (<span class="dt">Hyp</span> (invoke bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)) (n<span class="op">+</span><span class="dv">1</span>))</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="ot">    e ::</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a])</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Hyp</span> b</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>    </span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a>    b x <span class="dv">0</span> <span class="ot">=</span> []</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a>    b x n <span class="ot">=</span> invoke x (<span class="dt">Hyp</span> b) (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>      <span class="dt">Hyp</span> (\bw n <span class="ot">-&gt;</span> x <span class="op">:</span> invoke fw (<span class="dt">Hyp</span> (\k m <span class="ot">-&gt;</span> invoke bw (<span class="fu">foldr</span> f k xs) (m<span class="op">+</span><span class="dv">1</span>))) n)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>              </span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a><span class="ot">    e ::</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a]) <span class="op">-&amp;&gt;</span> (<span class="dt">Int</span> <span class="ot">-&gt;</span> [a])</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Hyp</span> (\k <span class="ot">-&gt;</span> invoke k e)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a>    </span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>    b x <span class="dv">0</span> <span class="ot">=</span> []</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>    b x n <span class="ot">=</span> invoke x (<span class="dt">Hyp</span> b) (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
 <p><span class="citation" data-cites="smith_lloyd_2009">(my version here is actually a good bit different from the one in Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>, but the basic idea is the same)</span></p>
 <h3 id="coroutines">Coroutines</h3>
 <p>Hyperfunctions seem to me to be quite deeply related to coroutines. At the very least several of the types involved in coroutine implementations are actual hyperfunctions. The <code>ProdPar</code> and <code>ConsPar</code> types from <span class="citation" data-cites="pieters_faster_2019">Pieters and Schrijvers (<a href="#ref-pieters_faster_2019" role="doc-biblioref">2019</a>)</span> are good examples:</p>
