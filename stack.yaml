@@ -1,10 +1,9 @@
-resolver: lts-16.1
+resolver: lts-21.12
 
 packages:
 - .
 
 extra-deps:
-- pandoc-citeproc-0.17.0.1
 - git: https://github.com/oisdk/hakyll-series
   commit: "abf54b49db5fbc06471af38e2aa7b30c392a52b3"
 

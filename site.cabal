@@ -9,10 +9,9 @@ executable site
   build-depends:    base == 4.*
                   , hakyll >= 4.12
                   , pandoc
-                  , pandoc-citeproc >= 0.17.0.1
                   , hakyll-series >= 0.1 && <= 0.2
                   , containers
-                  , pandoc-citeproc
+                  , citeproc
                   , pandoc-types
   ghc-options:      -threaded
   default-language: Haskell2010

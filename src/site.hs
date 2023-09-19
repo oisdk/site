@@ -13,9 +13,10 @@ import           Data.Monoid
 
 import           Hakyll
 import           Hakyll.Web.Series
+import           Hakyll.Web.Pandoc.Biblio
 
-import qualified Text.CSL            as CSL
-import           Text.CSL.Pandoc     (processCites)
+import           Citeproc.Style
+import           Text.Pandoc.Citeproc (processCitations)
 import           Text.Pandoc
 import           Text.Pandoc.Highlighting
 
@@ -142,23 +143,6 @@ cssTemplateCompiler :: Compiler (Item Hakyll.Template)
 cssTemplateCompiler = cached "Hakyll.Web.Template.cssTemplateCompiler" $
     fmap (readTemplate . compressCss) <$> getResourceString
 
-readPandocBiblioLinkCit :: ReaderOptions
-                   -> Item CSL
-                   -> Item Biblio
-                   -> Item String
-                   -> Compiler (Item Pandoc)
-readPandocBiblioLinkCit ropt csl biblio item = do
-    -- Parse CSL file, if given
-    style <- unsafeCompiler $ CSL.readCSLFile Nothing . toFilePath . itemIdentifier $ csl
-
-    -- We need to know the citation keys, add them *before* actually parsing the
-    -- actual page. If we don't do this, pandoc won't even consider them
-    -- citations!
-    let Biblio refs = itemBody biblio
-    pandoc <- itemBody <$> readPandocWith ropt item
-    let pandoc' = processCites style refs (addLinkCitations pandoc) -- here's the change
-
-    return $ fmap (const pandoc') item
 
 addLinkCitations :: Pandoc -> Pandoc
 addLinkCitations (Pandoc meta a) =
@@ -182,7 +166,7 @@ readPandocOptionalBiblio = do
     Nothing -> readPandocWith options =<< getResourceBody
     Just bibFile -> do
       maybeCsl <- getMetadataField item "csl"
-      join $ readPandocBiblioLinkCit options
+      join $ readPandocBiblio options
                           <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
                           <*> load (fromFilePath ("assets/bib/" ++ bibFile))
                           <*> getResourceBody
