@@ -88,7 +88,13 @@ main = hakyll $ do
               >>= saveSnapshot "content"
               >>= loadAndApplyTemplate "templates/default.html" ctx
               >>= relativizeUrls
-
+              
+    match "pubs/*" $ do
+        route $ setExtension "html"
+        compile $ postCompiler
+              >>= loadAndApplyTemplate "templates/pub.html" postCtx
+              >>= saveSnapshot "content"
+              >>= relativizeUrls
 
     match "snippets/*" $ do
         let ctx = defaultContext
@@ -107,6 +113,15 @@ main = hakyll $ do
                 >>= applyAsTemplate indexCtx
                 >>= loadAndApplyTemplate "templates/default.html" indexCtx
                 >>= relativizeUrls
+
+    match "publications.html" $ do
+      route idRoute
+      compile $ do
+        let indexCtx = pubListCtx "Publications" $ recentFirst =<< loadAll "pubs/*"
+        getResourceBody
+            >>= applyAsTemplate indexCtx
+            >>= loadAndApplyTemplate "templates/default.html" indexCtx
+            >>= relativizeUrls
 
     version "redirects" $ createRedirects oldLinks
 
@@ -185,6 +200,12 @@ postFullCtx tags series = mconcat
 postListCtx :: String -> Compiler [Item String] -> Context String
 postListCtx title posts = mconcat
   [ listField "posts" postCtx posts
+  , constField "title" title
+  , defaultContext ]
+  
+pubListCtx :: String -> Compiler [Item String] -> Context String
+pubListCtx title pubs = mconcat
+  [ listField "pubs" postCtx pubs
   , constField "title" title
   , defaultContext ]
 
