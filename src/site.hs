@@ -2,21 +2,20 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-import           Control.Monad
+import           Control.Monad             (join)
 
-import           Data.Char           (toUpper)
+import           Data.Char                 (toUpper)
 
-import qualified Data.Map            as Map
+import qualified Data.Map                  as Map
 
-import           Data.Maybe
-import           Data.Monoid
+import           Data.Maybe                (fromMaybe)
 
 import           Hakyll
 import           Hakyll.Web.Series
-import           Hakyll.Web.Pandoc.Biblio
+-- import           Hakyll.Web.Pandoc.Biblio
 
-import           Citeproc.Style
-import           Text.Pandoc.Citeproc (processCitations)
+-- import           Citeproc.Style
+-- import           Text.Pandoc.Citeproc (processCitations)
 import           Text.Pandoc
 import           Text.Pandoc.Highlighting
 
@@ -71,8 +70,8 @@ main = hakyll $ do
                 >>= loadAndApplyTemplate "templates/default.html" ctx
                 >>= relativizeUrls
 
-    tagsRules series $ \(s:erie) pattrn -> do
-        let title = toUpper s : erie
+    tagsRules series $ \serie pattrn -> do
+        let title = head_ toUpper serie
         route idRoute
         compile $ do
             let ctx = postListCtx title $ chronological =<< loadAll pattrn
@@ -133,6 +132,11 @@ main = hakyll $ do
 
 --------------------------------------------------------------------------------
 
+head_ :: (a -> a) -> [a] -> [a]
+head_ f (x:xs) = f x : xs
+head_ _ xs = xs
+
+
 postCompiler :: Compiler (Item String)
 postCompiler =
   writePandocWith (def { writerHTMLMathMethod = MathML
@@ -166,10 +170,11 @@ readPandocOptionalBiblio = do
     Nothing -> readPandocWith options =<< getResourceBody
     Just bibFile -> do
       maybeCsl <- getMetadataField item "csl"
-      join $ readPandocBiblio options
+      res <- join $ readPandocBiblio options
                           <$> load (fromFilePath ("assets/csl/" ++ fromMaybe "chicago.csl" maybeCsl))
                           <*> load (fromFilePath ("assets/bib/" ++ bibFile))
                           <*> getResourceBody
+      return res
 
 --------------------------------------------------------------------------------
 
