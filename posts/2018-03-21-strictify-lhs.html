@@ -30,72 +30,76 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>Adapted from <a href="https://www.reddit.com/r/haskell/comments/86021n/strictifying_traversals/">this post</a> on reddit. It’s possible to take a lazy traversal and make it strict.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE BangPatterns #-}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Seq</span> (fmap',traverse') <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Coerce</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Applicative</span> (liftA2)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Seq</span> a <span class="ot">=</span> <span class="dt">Seq</span> {<span class="ot"> unSeq ::</span> a }</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Seq</span> <span class="kw">where</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>  <span class="fu">fmap</span> f x <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>vx <span class="ot">=</span> unSeq x <span class="kw">in</span> <span class="dt">Seq</span> (f vx)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>  <span class="ot">{-# INLINE fmap #-}</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>  x <span class="op">&lt;$</span> xs <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq xs <span class="kw">in</span> <span class="dt">Seq</span> x</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>  <span class="ot">{-# INLINE (&lt;$) #-}</span></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Seq</span> <span class="kw">where</span></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Seq</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a>  <span class="ot">{-# INLINE pure #-}</span></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a>  fs <span class="op">&lt;*&gt;</span> xs <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>vx <span class="ot">=</span> unSeq xs <span class="kw">in</span> <span class="dt">Seq</span> (unSeq fs vx)</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a>  <span class="ot">{-# INLINE (&lt;*&gt;) #-}</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a>  xs <span class="op">*&gt;</span> ys <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq xs <span class="kw">in</span> ys</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a>  <span class="ot">{-# INLINE (*&gt;) #-}</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>  xs <span class="op">&lt;*</span> ys <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq ys <span class="kw">in</span> xs</span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>  <span class="ot">{-# INLINE (&lt;*) #-}</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="ot">fmap' ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a>fmap' <span class="ot">=</span> (<span class="ot">coerce ::</span> ((a <span class="ot">-&gt;</span> <span class="dt">Seq</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Seq</span> (f b)) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b) <span class="fu">traverse</span></span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a><span class="ot">{-# INLINE fmap' #-}</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">SeqT</span> f a <span class="ot">=</span> <span class="dt">SeqT</span> {<span class="ot"> unSeqT ::</span> f a }</span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">SeqT</span> f) <span class="kw">where</span></span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a>  <span class="fu">fmap</span> f <span class="ot">=</span> <span class="dt">SeqT</span> <span class="op">#.</span> <span class="fu">fmap</span> (\ <span class="op">!</span>vx <span class="ot">-&gt;</span> f vx) <span class="op">.#</span> unSeqT</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a>  <span class="ot">{-# INLINE fmap #-}</span></span>
-<span id="cb1-35"><a href="#cb1-35" aria-hidden="true"></a></span>
-<span id="cb1-36"><a href="#cb1-36" aria-hidden="true"></a><span class="ot">(#.) ::</span> <span class="dt">Coercible</span> b c <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
-<span id="cb1-37"><a href="#cb1-37" aria-hidden="true"></a>(<span class="op">#.</span>) _ <span class="ot">=</span> coerce</span>
-<span id="cb1-38"><a href="#cb1-38" aria-hidden="true"></a><span class="ot">{-# INLINE (#.) #-}</span></span>
-<span id="cb1-39"><a href="#cb1-39" aria-hidden="true"></a></span>
-<span id="cb1-40"><a href="#cb1-40" aria-hidden="true"></a><span class="ot">(.#) ::</span> <span class="dt">Coercible</span> a b <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
-<span id="cb1-41"><a href="#cb1-41" aria-hidden="true"></a>(<span class="op">.#</span>) f _ <span class="ot">=</span> coerce f</span>
-<span id="cb1-42"><a href="#cb1-42" aria-hidden="true"></a><span class="ot">{-# INLINE (.#) #-}</span></span>
-<span id="cb1-43"><a href="#cb1-43" aria-hidden="true"></a></span>
-<span id="cb1-44"><a href="#cb1-44" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">SeqT</span> f) <span class="kw">where</span></span>
-<span id="cb1-45"><a href="#cb1-45" aria-hidden="true"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">SeqT</span> <span class="op">#.</span> <span class="fu">pure</span></span>
-<span id="cb1-46"><a href="#cb1-46" aria-hidden="true"></a>  <span class="ot">{-# INLINE pure #-}</span></span>
-<span id="cb1-47"><a href="#cb1-47" aria-hidden="true"></a>  (<span class="op">&lt;*&gt;</span>) <span class="ot">=</span> (<span class="ot">coerce ::</span> (f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> (<span class="dt">SeqT</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b)) (liftA2 (\fs <span class="op">!</span>vx <span class="ot">-&gt;</span> fs vx))</span>
-<span id="cb1-48"><a href="#cb1-48" aria-hidden="true"></a>  <span class="ot">{-# INLINE (&lt;*&gt;) #-}</span></span>
-<span id="cb1-49"><a href="#cb1-49" aria-hidden="true"></a>  liftA2 f <span class="ot">=</span> (<span class="ot">coerce ::</span> (f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> (<span class="dt">SeqT</span> f a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f c)) (liftA2 (\ <span class="op">!</span>x <span class="op">!</span>y <span class="ot">-&gt;</span> f x y))</span>
-<span id="cb1-50"><a href="#cb1-50" aria-hidden="true"></a>  <span class="ot">{-# INLINE liftA2 #-}</span></span>
-<span id="cb1-51"><a href="#cb1-51" aria-hidden="true"></a></span>
-<span id="cb1-52"><a href="#cb1-52" aria-hidden="true"></a><span class="ot">traverse' ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)</span>
-<span id="cb1-53"><a href="#cb1-53" aria-hidden="true"></a>traverse' <span class="ot">=</span> (<span class="ot">coerce ::</span> ((a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f (t b)) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)) <span class="fu">traverse</span></span>
-<span id="cb1-54"><a href="#cb1-54" aria-hidden="true"></a><span class="ot">{-# INLINE traverse' #-}</span></span></code></pre></div>
-<p>You need traversable in order to get the strictness: there’s a similar way to get a stricter fmap <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad.html#v:-60--36--33--62-">with monad instead</a>:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">(&lt;$!&gt;) ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m b</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="ot">{-# INLINE (&lt;$!&gt;) #-}</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>f <span class="op">&lt;$!&gt;</span> m <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>  x <span class="ot">&lt;-</span> m</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>  <span class="kw">let</span> z <span class="ot">=</span> f x</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  z <span class="ot">`seq`</span> <span class="fu">return</span> z</span></code></pre></div>
+<p>Adapted from <a href="https://www.reddit.com/r/haskell/comments/86021n/strictifying_traversals/">this
+post</a> on reddit. It’s possible to take a lazy traversal and make it
+strict.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE BangPatterns #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Seq</span> (fmap',traverse') <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Coerce</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Control.Applicative</span> (liftA2)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Seq</span> a <span class="ot">=</span> <span class="dt">Seq</span> {<span class="ot"> unSeq ::</span> a }</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Functor</span> <span class="dt">Seq</span> <span class="kw">where</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmap</span> f x <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>vx <span class="ot">=</span> unSeq x <span class="kw">in</span> <span class="dt">Seq</span> (f vx)</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE fmap #-}</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  x <span class="op">&lt;$</span> xs <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq xs <span class="kw">in</span> <span class="dt">Seq</span> x</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE (&lt;$) #-}</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applicative</span> <span class="dt">Seq</span> <span class="kw">where</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Seq</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE pure #-}</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  fs <span class="op">&lt;*&gt;</span> xs <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>vx <span class="ot">=</span> unSeq xs <span class="kw">in</span> <span class="dt">Seq</span> (unSeq fs vx)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE (&lt;*&gt;) #-}</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">*&gt;</span> ys <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq xs <span class="kw">in</span> ys</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE (*&gt;) #-}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">&lt;*</span> ys <span class="ot">=</span> <span class="kw">let</span> <span class="op">!</span>_ <span class="ot">=</span> unSeq ys <span class="kw">in</span> xs</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE (&lt;*) #-}</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="ot">fmap' ::</span> <span class="dt">Traversable</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>fmap' <span class="ot">=</span> (<span class="ot">coerce ::</span> ((a <span class="ot">-&gt;</span> <span class="dt">Seq</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Seq</span> (f b)) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b) <span class="fu">traverse</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE fmap' #-}</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">SeqT</span> f a <span class="ot">=</span> <span class="dt">SeqT</span> {<span class="ot"> unSeqT ::</span> f a }</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">SeqT</span> f) <span class="kw">where</span></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmap</span> f <span class="ot">=</span> <span class="dt">SeqT</span> <span class="op">#.</span> <span class="fu">fmap</span> (\ <span class="op">!</span>vx <span class="ot">-&gt;</span> f vx) <span class="op">.#</span> unSeqT</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE fmap #-}</span></span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a><span class="ot">(#.) ::</span> <span class="dt">Coercible</span> b c <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>(<span class="op">#.</span>) _ <span class="ot">=</span> coerce</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE (#.) #-}</span></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a><span class="ot">(.#) ::</span> <span class="dt">Coercible</span> a b <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>(<span class="op">.#</span>) f _ <span class="ot">=</span> coerce f</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE (.#) #-}</span></span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">SeqT</span> f) <span class="kw">where</span></span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">SeqT</span> <span class="op">#.</span> <span class="fu">pure</span></span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE pure #-}</span></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>  (<span class="op">&lt;*&gt;</span>) <span class="ot">=</span> (<span class="ot">coerce ::</span> (f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> (<span class="dt">SeqT</span> f (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b)) (liftA2 (\fs <span class="op">!</span>vx <span class="ot">-&gt;</span> fs vx))</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE (&lt;*&gt;) #-}</span></span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>  liftA2 f <span class="ot">=</span> (<span class="ot">coerce ::</span> (f a <span class="ot">-&gt;</span> f b <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> (<span class="dt">SeqT</span> f a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f c)) (liftA2 (\ <span class="op">!</span>x <span class="op">!</span>y <span class="ot">-&gt;</span> f x y))</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE liftA2 #-}</span></span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a><span class="ot">traverse' ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a>traverse' <span class="ot">=</span> (<span class="ot">coerce ::</span> ((a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> <span class="dt">SeqT</span> f (t b)) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> t a <span class="ot">-&gt;</span> f (t b)) <span class="fu">traverse</span></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE traverse' #-}</span></span></code></pre></div>
+<p>You need traversable in order to get the strictness: there’s a
+similar way to get a stricter fmap <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad.html#v:-60--36--33--62-">with
+monad instead</a>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">(&lt;$!&gt;) ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> m a <span class="ot">-&gt;</span> m b</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE (&lt;$!&gt;) #-}</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>f <span class="op">&lt;$!&gt;</span> m <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> m</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> z <span class="ot">=</span> f x</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">`seq`</span> <span class="fu">return</span> z</span></code></pre></div>
 
         </div>
     </body>

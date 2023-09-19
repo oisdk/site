@@ -30,167 +30,294 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
-<p>In dependently typed languages, it’s often important to figure out a good “low-level” representation for some concept. The natural numbers, for instance:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span></code></pre></div>
-<p>For “real” applications, of course, these numbers are offensively inefficient, in terms of both space and time. But that’s not what I’m after here: I’m looking for a type which best describes the essence of the natural numbers, and that can be used to prove and think about them. In that sense, this representation is second to none: it’s basically the simplest possible type which <em>can</em> represent the naturals.</p>
-<p>Let’s nail down that idea a little better. What do we mean when a type is a “good” representation for some concept.</p>
+<p>In dependently typed languages, it’s often important to figure out a
+good “low-level” representation for some concept. The natural numbers,
+for instance:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span></code></pre></div>
+<p>For “real” applications, of course, these numbers are offensively
+inefficient, in terms of both space and time. But that’s not what I’m
+after here: I’m looking for a type which best describes the essence of
+the natural numbers, and that can be used to prove and think about them.
+In that sense, this representation is second to none: it’s basically the
+simplest possible type which <em>can</em> represent the naturals.</p>
+<p>Let’s nail down that idea a little better. What do we mean when a
+type is a “good” representation for some concept.</p>
 <ul>
-<li><p>There should be no redundancy. The type for the natural numbers above has this property: every natural number as one (and only one) canonical representative in <code>Nat</code>. Compare that to the following possible representation for the integers:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Int</span> <span class="ot">=</span> <span class="dt">Neg</span> <span class="dt">Nat</span> <span class="op">|</span> <span class="dt">Pos</span> <span class="dt">Nat</span></span></code></pre></div>
-<p>There are two ways to represent <code>0</code> here: as <code>Pos Z</code> or <code>Neg Z</code>.</p>
-<p>Of course, you can quotient out the redundancy in Cubical Agda, or normalise on construction every time, but either of these workarounds gets your representation a demerit.</p></li>
-<li><p>Operations should be definable simply and directly on the representation. Points docked for converting to and from some non-normalised form.</p></li>
-<li><p>That conversion, however, can exist, and ideally should exist, in some fundamental way. You should be able to establish an efficient isomorphism with other representations of the same concept.</p></li>
-<li><p>Properties about the type should correspond to intuitive properties about the representation. For <code>Nat</code> above, this means things like order: the usual order on the natural numbers again has a straightforward analogue on <code>Nat</code>.</p></li>
+<li><p>There should be no redundancy. The type for the natural numbers
+above has this property: every natural number as one (and only one)
+canonical representative in <code>Nat</code>. Compare that to the
+following possible representation for the integers:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Int</span> <span class="ot">=</span> <span class="dt">Neg</span> <span class="dt">Nat</span> <span class="op">|</span> <span class="dt">Pos</span> <span class="dt">Nat</span></span></code></pre></div>
+<p>There are two ways to represent <code>0</code> here: as
+<code>Pos Z</code> or <code>Neg Z</code>.</p>
+<p>Of course, you can quotient out the redundancy in Cubical Agda, or
+normalise on construction every time, but either of these workarounds
+gets your representation a demerit.</p></li>
+<li><p>Operations should be definable simply and directly on the
+representation. Points docked for converting to and from some
+non-normalised form.</p></li>
+<li><p>That conversion, however, can exist, and ideally should exist, in
+some fundamental way. You should be able to establish an efficient
+isomorphism with other representations of the same concept.</p></li>
+<li><p>Properties about the type should correspond to intuitive
+properties about the representation. For <code>Nat</code> above, this
+means things like order: the usual order on the natural numbers again
+has a straightforward analogue on <code>Nat</code>.</p></li>
 </ul>
-<p>With that laundry list of requirements, it’s no wonder that it’s often tricky to figure out the “right” type for a concept.</p>
-<p>In this post, I’m going to talk about a type for the rational numbers, and I’m going to try satisfy those requirements as best I can.</p>
-<h1 id="the-rationals-as-a-pair-of-numbers">The Rationals as a Pair of Numbers</h1>
-<p>Our first attempt at representing the rationals might use a fraction:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Frac</span> <span class="ot">=</span> <span class="dt">Integer</span> <span class="op">:/</span> <span class="dt">Integer</span></span></code></pre></div>
-<p>This obviously fails the redundancy property. The fractions <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>4</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{4}</annotation></semantics></math> represent the same number, but have different underlying values.</p>
-<p>So the type isn’t suitable as a potential representation for the rationals. That’s not to say that this type is useless: far from it! Indeed, Haskell’s <a href="https://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Ratio.html">Data.Ratio</a> uses something quite like this to implement rationals.</p>
-<p>If you’re going to deal with redundant elements, there are two broad ways to deal with it. Data.Ratio’s approach is to normalise on construction, and only export a constructor which does this. This gives you a pretty good guarantee that there won’t be any unreduced fractions lying around in you program. Agda’s standard library also uses an approach like this, although the fact that the numerator and denominator are coprime is statically verified by way of a proof carried in the type.</p>
-<p>The other way to deal with redundancy is by quotient. In Haskell, that kind of means doing the following:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Eq</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  (x <span class="op">:/</span> xd) <span class="op">==</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd) <span class="op">==</span> (y <span class="op">*</span> xd)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Ord</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>  <span class="fu">compare</span> (x <span class="op">:/</span> xd) (y <span class="op">:/</span> yd) <span class="ot">=</span> <span class="fu">compare</span> (x <span class="op">*</span> yd) (y <span class="op">*</span> xd)</span></code></pre></div>
-<p>We don’t have real quotient types in Haskell, but this gets the idea across: we haven’t normalised our representation internally, but as far as anyone <em>using</em> the type is concerned, they shouldn’t be able to tell the difference between <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>4</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{4}</annotation></semantics></math>.</p>
-<p>Th <code>Num</code> instance is pretty much just a restating of the axioms for fractions.</p>
+<p>With that laundry list of requirements, it’s no wonder that it’s
+often tricky to figure out the “right” type for a concept.</p>
+<p>In this post, I’m going to talk about a type for the rational
+numbers, and I’m going to try satisfy those requirements as best I
+can.</p>
+<h1 id="the-rationals-as-a-pair-of-numbers">The Rationals as a Pair of
+Numbers</h1>
+<p>Our first attempt at representing the rationals might use a
+fraction:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Frac</span> <span class="ot">=</span> <span class="dt">Integer</span> <span class="op">:/</span> <span class="dt">Integer</span></span></code></pre></div>
+<p>This obviously fails the redundancy property. The fractions
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>4</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{4}</annotation></semantics></math>
+represent the same number, but have different underlying values.</p>
+<p>So the type isn’t suitable as a potential representation for the
+rationals. That’s not to say that this type is useless: far from it!
+Indeed, Haskell’s <a href="https://hackage.haskell.org/package/base-4.12.0.0/docs/Data-Ratio.html">Data.Ratio</a>
+uses something quite like this to implement rationals.</p>
+<p>If you’re going to deal with redundant elements, there are two broad
+ways to deal with it. Data.Ratio’s approach is to normalise on
+construction, and only export a constructor which does this. This gives
+you a pretty good guarantee that there won’t be any unreduced fractions
+lying around in you program. Agda’s standard library also uses an
+approach like this, although the fact that the numerator and denominator
+are coprime is statically verified by way of a proof carried in the
+type.</p>
+<p>The other way to deal with redundancy is by quotient. In Haskell,
+that kind of means doing the following:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Eq</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  (x <span class="op">:/</span> xd) <span class="op">==</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd) <span class="op">==</span> (y <span class="op">*</span> xd)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Ord</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compare</span> (x <span class="op">:/</span> xd) (y <span class="op">:/</span> yd) <span class="ot">=</span> <span class="fu">compare</span> (x <span class="op">*</span> yd) (y <span class="op">*</span> xd)</span></code></pre></div>
+<p>We don’t have real quotient types in Haskell, but this gets the idea
+across: we haven’t normalised our representation internally, but as far
+as anyone <em>using</em> the type is concerned, they shouldn’t be able
+to tell the difference between
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>4</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{4}</annotation></semantics></math>.</p>
+<p>Th <code>Num</code> instance is pretty much just a restating of the
+axioms for fractions.</p>
 <details>
-<p><summary> <code>Num</code> instance for <code>Frac</code>. </summary></p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="fu">fromInteger</span> n <span class="ot">=</span> n <span class="op">:/</span> <span class="dv">1</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  (x <span class="op">:/</span> xd) <span class="op">*</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> y) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  (x <span class="op">:/</span> xd) <span class="op">+</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd <span class="op">+</span> y <span class="op">*</span> xd) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  <span class="fu">signum</span> (n <span class="op">:/</span> d) <span class="ot">=</span> <span class="fu">signum</span> (n <span class="op">*</span> d) <span class="op">:/</span> <span class="dv">1</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>  <span class="fu">abs</span> n <span class="ot">=</span> <span class="fu">signum</span> n <span class="op">*</span> n</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>  (x <span class="op">:/</span> xd) <span class="op">-</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd <span class="op">-</span> y <span class="op">*</span> xd) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span></code></pre></div>
+<summary>
+<code>Num</code> instance for <code>Frac</code>.
+</summary>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Frac</span> <span class="kw">where</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fromInteger</span> n <span class="ot">=</span> n <span class="op">:/</span> <span class="dv">1</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  (x <span class="op">:/</span> xd) <span class="op">*</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> y) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  (x <span class="op">:/</span> xd) <span class="op">+</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd <span class="op">+</span> y <span class="op">*</span> xd) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">signum</span> (n <span class="op">:/</span> d) <span class="ot">=</span> <span class="fu">signum</span> (n <span class="op">*</span> d) <span class="op">:/</span> <span class="dv">1</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abs</span> n <span class="ot">=</span> <span class="fu">signum</span> n <span class="op">*</span> n</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  (x <span class="op">:/</span> xd) <span class="op">-</span> (y <span class="op">:/</span> yd) <span class="ot">=</span> (x <span class="op">*</span> yd <span class="op">-</span> y <span class="op">*</span> xd) <span class="op">:/</span> (xd <span class="op">*</span> yd)</span></code></pre></div>
 </details>
-<p>Cubical Agda, of course, <em>does</em> have real quotient types. There, the <code>Eq</code> instance becomes a path constructor.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">data</span> ℚ <span class="ot">:</span> Type₀ <span class="kw">where</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="ot">_</span>÷<span class="ot">_</span> <span class="ot">:</span> <span class="ot">(</span>n d <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">→</span> ℚ</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  reduce <span class="ot">:</span> <span class="ot">∀</span> xⁿ xᵈ yⁿ yᵈ <span class="ot">→</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>           xⁿ ℕ* yᵈ ≡ yⁿ ℕ* xᵈ <span class="ot">→</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>           xⁿ ÷ xᵈ ≡ yⁿ ÷ yᵈ</span></code></pre></div>
+<p>Cubical Agda, of course, <em>does</em> have real quotient types.
+There, the <code>Eq</code> instance becomes a path constructor.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ℚ <span class="ot">:</span> Type₀ <span class="kw">where</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">_</span>÷<span class="ot">_</span> <span class="ot">:</span> <span class="ot">(</span>n d <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">→</span> ℚ</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  reduce <span class="ot">:</span> <span class="ot">∀</span> xⁿ xᵈ yⁿ yᵈ <span class="ot">→</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>           xⁿ ℕ* yᵈ ≡ yⁿ ℕ* xᵈ <span class="ot">→</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>           xⁿ ÷ xᵈ ≡ yⁿ ÷ yᵈ</span></code></pre></div>
 <p>But we’ll leave the Agda stuff for another post.</p>
-<h1 id="the-rationals-as-a-trace-of-euclids-algorithm">The Rationals as a Trace of Euclid’s Algorithm</h1>
-<p>Now we get to the cool stuff. To reduce a fraction, we usually do something like getting the greatest common divisor of each operand. One nice way to do that is to use Euclid’s algorithm:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="fu">gcd</span><span class="ot"> ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="fu">gcd</span> n m <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> n m <span class="kw">of</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="dt">EQ</span> <span class="ot">-&gt;</span> n</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> n (m <span class="op">-</span> n)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (n <span class="op">-</span> m) m</span></code></pre></div>
-<p>Let’s run that function on three different inputs: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math>, <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>4</mn><mn>6</mn></mfrac><annotation encoding="application/x-tex">\frac{4}{6}</annotation></semantics></math>, and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>5</mn><mn>6</mn></mfrac><annotation encoding="application/x-tex">\frac{5}{6}</annotation></semantics></math>.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="fu">gcd</span> <span class="dv">2</span> <span class="dv">3</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">3</span> <span class="kw">of</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">2</span> (<span class="dv">3</span> <span class="op">-</span> <span class="dv">2</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">1</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">1</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="fu">gcd</span> <span class="dv">4</span> <span class="dv">6</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">6</span> <span class="kw">of</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">4</span> (<span class="dv">6</span> <span class="op">-</span> <span class="dv">4</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">2</span> <span class="kw">of</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">4</span> <span class="op">-</span> <span class="dv">2</span>) <span class="dv">2</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">2</span> <span class="kw">of</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">2</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a><span class="fu">gcd</span> <span class="dv">5</span> <span class="dv">6</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">5</span> <span class="dv">6</span> <span class="kw">of</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">5</span> (<span class="dv">6</span> <span class="op">-</span> <span class="dv">5</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">5</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">5</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">4</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">3</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>        <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">3</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>          <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">1</span> <span class="dv">1</span> <span class="kw">of</span></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>            <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">1</span></span></code></pre></div>
-<p>Those all return the right things, but that’s not what’s interesting here: look at the chain of comparison results. For the two fractions which are equivalent, their <em>chains</em> are equal.</p>
-<p>This turns out to hold in general. Every rational number can be (uniquely!) represented as a list of bits, where each bit is a comparison result from Euclid’s algorithm.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Bit</span> <span class="ot">=</span> <span class="dt">O</span> <span class="op">|</span> <span class="dt">I</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Rational</span> <span class="ot">=</span> [<span class="dt">Bit</span>]</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="fu">abs</span><span class="ot"> ::</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Rational</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="fu">abs</span> <span class="ot">=</span> unfoldr f</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>    f (n <span class="op">:/</span> d) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> n d <span class="kw">of</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, n <span class="op">:/</span> (d <span class="op">-</span> n))</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, (n <span class="op">-</span> d) <span class="op">:/</span> d)</span></code></pre></div>
-<p>And since we used <code>unfoldr</code>, it’s easy to reverse the algorithm to convert from the representation to a pair of numbers.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">rep ::</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>rep <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="dv">1</span> <span class="op">:/</span> <span class="dv">1</span>)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>    f <span class="dt">I</span> (n <span class="op">:/</span> d) <span class="ot">=</span> (n <span class="op">+</span> d) <span class="op">:/</span> d</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    f <span class="dt">O</span> (n <span class="op">:/</span> d) <span class="ot">=</span> n <span class="op">:/</span> (n <span class="op">+</span> d)</span></code></pre></div>
-<p>Now <code>abs . rep</code> is the identity function, and <code>rep . abs</code> reduces a fraction! We have identified an isomorphism between our type (a list of bits) and the rational numbers!</p>
-<p>Well, between the positive rational numbers. Not to worry: we can add a sign before it. And, because our type doesn’t actually include 0, we don’t get the duplicate 0 problems we did with <code>Int</code>.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Q</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Neg</span> <span class="dt">Rational</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Zero</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Pos</span> <span class="dt">Rational</span> </span></code></pre></div>
-<p>We can also define some operations on the type, by converting back and forth.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Rational</span> <span class="kw">where</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="fu">fromInteger</span> n <span class="ot">=</span> <span class="fu">abs</span> (n <span class="op">:/</span> <span class="dv">1</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  </span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>  xs <span class="op">+</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">+</span> rep ys)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>  xs <span class="op">*</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">*</span> rep ys)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>  xs <span class="op">-</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">-</span> rep ys)</span></code></pre></div>
-<h1 id="rationals-as-a-path-into-the-stern-brocot-tree">Rationals as a Path into The Stern-Brocot Tree</h1>
-<p>So we have a construction that has our desired property of canonicity. Even better, there’s a reasonably efficient algorithm to convert to and from it! Our next task will be examining the representation itself, and seeing what information we can get from it.</p>
-<p>To do so we’ll turn to the subject of the title of this post: the <a href="https://en.wikipedia.org/wiki/Stern%E2%80%93Brocot_tree">Stern-Brocot tree</a>.</p>
+<h1 id="the-rationals-as-a-trace-of-euclids-algorithm">The Rationals as
+a Trace of Euclid’s Algorithm</h1>
+<p>Now we get to the cool stuff. To reduce a fraction, we usually do
+something like getting the greatest common divisor of each operand. One
+nice way to do that is to use Euclid’s algorithm:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcd</span><span class="ot"> ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gcd</span> n m <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> n m <span class="kw">of</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">EQ</span> <span class="ot">-&gt;</span> n</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> n (m <span class="op">-</span> n)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (n <span class="op">-</span> m) m</span></code></pre></div>
+<p>Let’s run that function on three different inputs:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math>,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>4</mn><mn>6</mn></mfrac><annotation encoding="application/x-tex">\frac{4}{6}</annotation></semantics></math>,
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>5</mn><mn>6</mn></mfrac><annotation encoding="application/x-tex">\frac{5}{6}</annotation></semantics></math>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">gcd</span> <span class="dv">2</span> <span class="dv">3</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">3</span> <span class="kw">of</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">2</span> (<span class="dv">3</span> <span class="op">-</span> <span class="dv">2</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">1</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">1</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">gcd</span> <span class="dv">4</span> <span class="dv">6</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">6</span> <span class="kw">of</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">4</span> (<span class="dv">6</span> <span class="op">-</span> <span class="dv">4</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">2</span> <span class="kw">of</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">4</span> <span class="op">-</span> <span class="dv">2</span>) <span class="dv">2</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">2</span> <span class="kw">of</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">2</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="fu">gcd</span> <span class="dv">5</span> <span class="dv">6</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">5</span> <span class="dv">6</span> <span class="kw">of</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> <span class="dv">5</span> (<span class="dv">6</span> <span class="op">-</span> <span class="dv">5</span>) <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">5</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">5</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">4</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">4</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">3</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">3</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">2</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>          <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="fu">gcd</span> (<span class="dv">2</span> <span class="op">-</span> <span class="dv">1</span>) <span class="dv">1</span> <span class="ot">=&gt;</span> <span class="kw">case</span> <span class="fu">compare</span> <span class="dv">1</span> <span class="dv">1</span> <span class="kw">of</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>            <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dv">1</span></span></code></pre></div>
+<p>Those all return the right things, but that’s not what’s interesting
+here: look at the chain of comparison results. For the two fractions
+which are equivalent, their <em>chains</em> are equal.</p>
+<p>This turns out to hold in general. Every rational number can be
+(uniquely!) represented as a list of bits, where each bit is a
+comparison result from Euclid’s algorithm.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Bit</span> <span class="ot">=</span> <span class="dt">O</span> <span class="op">|</span> <span class="dt">I</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Rational</span> <span class="ot">=</span> [<span class="dt">Bit</span>]</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">abs</span><span class="ot"> ::</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Rational</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">abs</span> <span class="ot">=</span> unfoldr f</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    f (n <span class="op">:/</span> d) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> n d <span class="kw">of</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, n <span class="op">:/</span> (d <span class="op">-</span> n))</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, (n <span class="op">-</span> d) <span class="op">:/</span> d)</span></code></pre></div>
+<p>And since we used <code>unfoldr</code>, it’s easy to reverse the
+algorithm to convert from the representation to a pair of numbers.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">rep ::</span> <span class="dt">Rational</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>rep <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="dv">1</span> <span class="op">:/</span> <span class="dv">1</span>)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">I</span> (n <span class="op">:/</span> d) <span class="ot">=</span> (n <span class="op">+</span> d) <span class="op">:/</span> d</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">O</span> (n <span class="op">:/</span> d) <span class="ot">=</span> n <span class="op">:/</span> (n <span class="op">+</span> d)</span></code></pre></div>
+<p>Now <code>abs . rep</code> is the identity function, and
+<code>rep . abs</code> reduces a fraction! We have identified an
+isomorphism between our type (a list of bits) and the rational
+numbers!</p>
+<p>Well, between the positive rational numbers. Not to worry: we can add
+a sign before it. And, because our type doesn’t actually include 0, we
+don’t get the duplicate 0 problems we did with <code>Int</code>.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Q</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Neg</span> <span class="dt">Rational</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Zero</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Pos</span> <span class="dt">Rational</span> </span></code></pre></div>
+<p>We can also define some operations on the type, by converting back
+and forth.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Rational</span> <span class="kw">where</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fromInteger</span> n <span class="ot">=</span> <span class="fu">abs</span> (n <span class="op">:/</span> <span class="dv">1</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">+</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">+</span> rep ys)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">*</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">*</span> rep ys)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">-</span> ys <span class="ot">=</span> <span class="fu">abs</span> (rep xs <span class="op">-</span> rep ys)</span></code></pre></div>
+<h1 id="rationals-as-a-path-into-the-stern-brocot-tree">Rationals as a
+Path into The Stern-Brocot Tree</h1>
+<p>So we have a construction that has our desired property of
+canonicity. Even better, there’s a reasonably efficient algorithm to
+convert to and from it! Our next task will be examining the
+representation itself, and seeing what information we can get from
+it.</p>
+<p>To do so we’ll turn to the subject of the title of this post: the <a href="https://en.wikipedia.org/wiki/Stern%E2%80%93Brocot_tree">Stern-Brocot
+tree</a>.</p>
 <figure>
-<img src="https://upload.wikimedia.org/wikipedia/commons/3/37/SternBrocotTree.svg" alt /><figcaption>The Stern-Brocot Tree. By Aaron Rotenberg, CC BY-SA 3.0, from Wikimedia Commons.</figcaption>
+<img src="https://upload.wikimedia.org/wikipedia/commons/3/37/SternBrocotTree.svg" alt="The Stern-Brocot Tree. By Aaron Rotenberg, CC BY-SA 3.0, from Wikimedia Commons." />
+<figcaption aria-hidden="true">The Stern-Brocot Tree. By Aaron
+Rotenberg, CC BY-SA 3.0, from Wikimedia Commons.</figcaption>
 </figure>
 <p>This tree, pictured above, has some incredible properties:</p>
 <ul>
-<li>It contains every rational number (in reduced form) exactly once.</li>
+<li>It contains every rational number (in reduced form) exactly
+once.</li>
 <li>It is a binary search tree.</li>
 </ul>
-<p>Both of these properties make it an excellent candidate for basing a representation on. As it turns out, that’s what we already did! Our list of bits above is precisely a path into the Stern-Brocot tree, where every <code>O</code> is a left turn and every <code>I</code> right.</p>
+<p>Both of these properties make it an excellent candidate for basing a
+representation on. As it turns out, that’s what we already did! Our list
+of bits above is precisely a path into the Stern-Brocot tree, where
+every <code>O</code> is a left turn and every <code>I</code> right.</p>
 <h1 id="incrementalising">Incrementalising</h1>
-<p>The most important fact we’ve gleaned so far from the Stern-Brocot tree is that our representation is lexicographically ordered. While that may not seem like much, it turns our list of bits into a progressively-narrowing interval, which generates more and more accurate estimates of the true value. When we see a <code>O</code> at the head of the list, we know that the result must be smaller than <code>1</code>; what follows will tell us on what side of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math> the answer lies, and so on.</p>
-<p>This turns out to be quite a useful property: we often don’t need <em>exact</em> precision for some calculation, but rather some approximate answer. It’s even rarer still that we know exactly how much precision we need for a given expression (which is what floating point demands). Usually, the precision we need changes quite dynamically. If a particular number plays a more influential role in some expression, for instance, its precision is more important than the others!</p>
-<p>By producing a lazy list of bits, however, we can allow the <em>consumer</em> to specify the precision they need, by demanding those bits as they go along. (In the literature, this kind of thing is referred to as “lazy exact arithmetic”, and it’s quite fascinating. The representation presented here, however, is not very suitable for any real computation: it’s incredibly slow. There is a paper on the topic: <span class="citation" data-cites="niquiExactArithmeticStern2007">Niqui (<a href="#ref-niquiExactArithmeticStern2007" role="doc-biblioref">2007</a>)</span>, which examines the Stern-Brocot numbers in Coq).</p>
-<p>In proofs, the benefit is even more pronounced: finding out that a number is in a given range by just inspecting the first element of the list gives an excellent recursion strategy. We can do case analysis on: “what if it’s 1”, “what if it’s less than 1”, and “what if it’s greater than 1”, which is quite intuitive.</p>
-<p>There’s one problem: our evaluation function is defined as a <code>foldr</code>, and forces the accumulator at every step. We will need to figure out another evaluator which folds from the left.</p>
+<p>The most important fact we’ve gleaned so far from the Stern-Brocot
+tree is that our representation is lexicographically ordered. While that
+may not seem like much, it turns our list of bits into a
+progressively-narrowing interval, which generates more and more accurate
+estimates of the true value. When we see a <code>O</code> at the head of
+the list, we know that the result must be smaller than <code>1</code>;
+what follows will tell us on what side of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>
+the answer lies, and so on.</p>
+<p>This turns out to be quite a useful property: we often don’t need
+<em>exact</em> precision for some calculation, but rather some
+approximate answer. It’s even rarer still that we know exactly how much
+precision we need for a given expression (which is what floating point
+demands). Usually, the precision we need changes quite dynamically. If a
+particular number plays a more influential role in some expression, for
+instance, its precision is more important than the others!</p>
+<p>By producing a lazy list of bits, however, we can allow the
+<em>consumer</em> to specify the precision they need, by demanding those
+bits as they go along. (In the literature, this kind of thing is
+referred to as “lazy exact arithmetic”, and it’s quite fascinating. The
+representation presented here, however, is not very suitable for any
+real computation: it’s incredibly slow. There is a paper on the topic:
+<span class="citation" data-cites="niquiExactArithmeticStern2007">Niqui
+(2007)</span>, which examines the Stern-Brocot numbers in Coq).</p>
+<p>In proofs, the benefit is even more pronounced: finding out that a
+number is in a given range by just inspecting the first element of the
+list gives an excellent recursion strategy. We can do case analysis on:
+“what if it’s 1”, “what if it’s less than 1”, and “what if it’s greater
+than 1”, which is quite intuitive.</p>
+<p>There’s one problem: our evaluation function is defined as a
+<code>foldr</code>, and forces the accumulator at every step. We will
+need to figure out another evaluator which folds from the left.</p>
 <h1 id="intervals">Intervals</h1>
-<p>So let’s look more at the “interval” interpretation of the Stern-Brocot tree. The first interval is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mn>0</mn><mn>1</mn></mfrac><mo>,</mo><mfrac><mn>1</mn><mn>0</mn></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\left(\frac{0}{1},\frac{1}{0}\right)</annotation></semantics></math>: neither of these values are actually members of the type, which is why we’re not breaking any major rules with the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>0</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{0}</annotation></semantics></math>. To move left (to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math> in the diagram), we need to use a peculiar operation called “child’s addition”, often denoted with a <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>⊕</mo><annotation encoding="application/x-tex">\oplus</annotation></semantics></math>.</p>
+<p>So let’s look more at the “interval” interpretation of the
+Stern-Brocot tree. The first interval is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mn>0</mn><mn>1</mn></mfrac><mo>,</mo><mfrac><mn>1</mn><mn>0</mn></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\left(\frac{0}{1},\frac{1}{0}\right)</annotation></semantics></math>:
+neither of these values are actually members of the type, which is why
+we’re not breaking any major rules with the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>0</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{0}</annotation></semantics></math>.
+To move left (to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>
+in the diagram), we need to use a peculiar operation called “child’s
+addition”, often denoted with a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>⊕</mo><annotation encoding="application/x-tex">\oplus</annotation></semantics></math>.</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>⊕</mo><mfrac><mi>c</mi><mi>d</mi></mfrac><mo>=</mo><mfrac><mrow><mi>a</mi><mo>+</mo><mi>c</mi></mrow><mrow><mi>b</mi><mo>+</mo><mi>d</mi></mrow></mfrac></mrow><annotation encoding="application/x-tex"> \frac{a}{b} \oplus \frac{c}{d} = \frac{a+c}{b+d} </annotation></semantics></math></p>
-<p>The name comes from the fact that it’s a very common mistaken definition of addition on fractions.</p>
-<p>Right, next steps: to move <em>left</em> in an interval, we do the following:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">left</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>,</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>,</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>⊕</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \text{left} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}, \mathit{lb} \oplus \mathit{ub} \right) </annotation></semantics></math></p>
-<p>In other words, we narrow the right-hand-side of the interval. To move right is the opposite:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">right</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>,</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>⊕</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo>,</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \text{right} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}
+<p>The name comes from the fact that it’s a very common mistaken
+definition of addition on fractions.</p>
+<p>Right, next steps: to move <em>left</em> in an interval, we do the
+following:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">left</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>,</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>,</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>⊕</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \text{left} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}, \mathit{lb} \oplus \mathit{ub} \right) </annotation></semantics></math></p>
+<p>In other words, we narrow the right-hand-side of the interval. To
+move right is the opposite:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">right</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>,</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>⊕</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo>,</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \text{right} \left(\mathit{lb},\mathit{ub} \right) = \left( \mathit{lb}
 \oplus \mathit{ub} , \mathit{ub} \right) </annotation></semantics></math></p>
-<p>And finally, when we hit the end of the sequence, we take the <em>mediant</em> value.</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">mediant</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>,</mo><mstyle mathvariant="italic"><mi>𝑢</mi><mi>𝑏</mi></mstyle><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mstyle mathvariant="italic"><mi>𝑙</mi><mi>𝑏</mi></mstyle><mo>⊕</mo><mstyle mathvariant="italic"><mi>𝑟</mi><mi>𝑏</mi></mstyle></mrow><annotation encoding="application/x-tex"> \text{mediant}\left(\mathit{lb} , \mathit{ub}\right) = \mathit{lb} \oplus
+<p>And finally, when we hit the end of the sequence, we take the
+<em>mediant</em> value.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">mediant</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>,</mo><mrow><mi>𝑢</mi><mi>𝑏</mi></mrow><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mi>𝑙</mi><mi>𝑏</mi></mrow><mo>⊕</mo><mrow><mi>𝑟</mi><mi>𝑏</mi></mrow></mrow><annotation encoding="application/x-tex"> \text{mediant}\left(\mathit{lb} , \mathit{ub}\right) = \mathit{lb} \oplus
 \mathit{rb} </annotation></semantics></math></p>
-<p>From this, we get a straightforward left fold which can compute our fraction.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>infix <span class="dv">6</span> <span class="op">:-:</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Interval</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>  <span class="ot">=</span> (<span class="op">:-:</span>)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  {<span class="ot"> lb ::</span> <span class="dt">Frac</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>  ,<span class="ot"> ub ::</span> <span class="dt">Frac</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>  }</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a><span class="ot">mediant ::</span> <span class="dt">Interval</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>mediant (b <span class="op">:/</span> d <span class="op">:-:</span> a <span class="op">:/</span> c) <span class="ot">=</span> (a<span class="op">+</span>b) <span class="op">:/</span> (c<span class="op">+</span>d)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>left,<span class="ot"> right ::</span> <span class="dt">Interval</span> <span class="ot">-&gt;</span> <span class="dt">Interval</span></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>left  x <span class="ot">=</span> lb x <span class="op">:-:</span> mediant x</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a>right x <span class="ot">=</span> mediant x <span class="op">:-:</span> ub x</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a></span>
-<span id="cb13-15"><a href="#cb13-15" aria-hidden="true"></a><span class="ot">rep' ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
-<span id="cb13-16"><a href="#cb13-16" aria-hidden="true"></a>rep' <span class="ot">=</span> mediant <span class="op">.</span> <span class="fu">foldl</span> f ((<span class="dv">0</span> <span class="op">:/</span> <span class="dv">1</span>) <span class="op">:-:</span> (<span class="dv">1</span> <span class="op">:/</span> <span class="dv">0</span>))</span>
-<span id="cb13-17"><a href="#cb13-17" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb13-18"><a href="#cb13-18" aria-hidden="true"></a>    f a <span class="dt">I</span> <span class="ot">=</span> right a</span>
-<span id="cb13-19"><a href="#cb13-19" aria-hidden="true"></a>    f a <span class="dt">O</span> <span class="ot">=</span> left a</span></code></pre></div>
+<p>From this, we get a straightforward left fold which can compute our
+fraction.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>infix <span class="dv">6</span> <span class="op">:-:</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Interval</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> (<span class="op">:-:</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> lb ::</span> <span class="dt">Frac</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> ub ::</span> <span class="dt">Frac</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="ot">mediant ::</span> <span class="dt">Interval</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>mediant (b <span class="op">:/</span> d <span class="op">:-:</span> a <span class="op">:/</span> c) <span class="ot">=</span> (a<span class="op">+</span>b) <span class="op">:/</span> (c<span class="op">+</span>d)</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>left,<span class="ot"> right ::</span> <span class="dt">Interval</span> <span class="ot">-&gt;</span> <span class="dt">Interval</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>left  x <span class="ot">=</span> lb x <span class="op">:-:</span> mediant x</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>right x <span class="ot">=</span> mediant x <span class="op">:-:</span> ub x</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="ot">rep' ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> <span class="dt">Frac</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>rep' <span class="ot">=</span> mediant <span class="op">.</span> <span class="fu">foldl</span> f ((<span class="dv">0</span> <span class="op">:/</span> <span class="dv">1</span>) <span class="op">:-:</span> (<span class="dv">1</span> <span class="op">:/</span> <span class="dv">0</span>))</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    f a <span class="dt">I</span> <span class="ot">=</span> right a</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    f a <span class="dt">O</span> <span class="ot">=</span> left a</span></code></pre></div>
 <h1 id="monoids-and-matrices">Monoids and Matrices</h1>
-<p>Before diving in and using this new evaluator to incrementalise our functions, let’s take a look at what’s going on behind the scenes of the “interval narrowing” idea.</p>
-<p>It turns out that the “interval” is really a <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2\times2</annotation></semantics></math> square matrix in disguise (albeit a little reordered).</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>,</mo><mfrac><mi>c</mi><mi>d</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mi>c</mi></mtd><mtd columnalign="center"><mi>a</mi></mtd></mtr><mtr><mtd columnalign="center"><mi>d</mi></mtd><mtd columnalign="center"><mi>b</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \left( \frac{a}{b} , \frac{c}{d} \right) =
+<p>Before diving in and using this new evaluator to incrementalise our
+functions, let’s take a look at what’s going on behind the scenes of the
+“interval narrowing” idea.</p>
+<p>It turns out that the “interval” is really a
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>2</mn><mo>×</mo><mn>2</mn></mrow><annotation encoding="application/x-tex">2\times2</annotation></semantics></math>
+square matrix in disguise (albeit a little reordered).</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mi>a</mi><mi>b</mi></mfrac><mo>,</mo><mfrac><mi>c</mi><mi>d</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mi>c</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>a</mi></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mi>d</mi></mtd><mtd columnalign="center" style="text-align: center"><mi>b</mi></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> \left( \frac{a}{b} , \frac{c}{d} \right) =
 \left(
 \begin{matrix} 
   c &amp; a \\ 
@@ -198,8 +325,14 @@
 \end{matrix} 
 \right)
 </annotation></semantics></math></p>
-<p>Seen in this way, the beginning interval—<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mn>0</mn><mn>1</mn></mfrac><mo>,</mo><mfrac><mn>1</mn><mn>0</mn></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\left(\frac{0}{1} , \frac{1}{0}\right)</annotation></semantics></math>—is actually the identity matrix. Also, the two values in the second row of the tree correspond to special matrices which we will refer to as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>.</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mn>1</mn></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>1</mn></mtd><mtd columnalign="center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mi>R</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mn>1</mn></mtd><mtd columnalign="center"><mn>1</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> L = 
+<p>Seen in this way, the beginning
+interval—<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">(</mo><mfrac><mn>0</mn><mn>1</mn></mfrac><mo>,</mo><mfrac><mn>1</mn><mn>0</mn></mfrac><mo stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\left(\frac{0}{1} , \frac{1}{0}\right)</annotation></semantics></math>—is
+actually the identity matrix. Also, the two values in the second row of
+the tree correspond to special matrices which we will refer to as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mi>R</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> L = 
 \left(
 \begin{matrix} 
   1 &amp; 0 \\ 
@@ -214,95 +347,160 @@ R =
 \end{matrix} 
 \right)
 </annotation></semantics></math></p>
-<p>It turns out that the left and right functions we defined earlier correspond to multiplication by these matrices.</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">left</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>x</mi><mi>L</mi></mrow><annotation encoding="application/x-tex"> \text{left}(x) = xL </annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">right</mtext><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>x</mi><mi>R</mi></mrow><annotation encoding="application/x-tex"> \text{right}(x) = xR </annotation></semantics></math></p>
-<p>Since matrix multiplication is associative, what we have here is a monoid. <code>mempty</code> is the open interval at the beginning, and <code>mappend</code> is matrix multiplication. This is the property that lets us incrementalise the whole thing, by the way: associativity allows us to decide when to start and stop the calculation.</p>
+<p>It turns out that the left and right functions we defined earlier
+correspond to multiplication by these matrices.</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">left</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>x</mi><mi>L</mi></mrow><annotation encoding="application/x-tex"> \text{left}(x) = xL </annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext mathvariant="normal">right</mtext><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>x</mi><mi>R</mi></mrow><annotation encoding="application/x-tex"> \text{right}(x) = xR </annotation></semantics></math></p>
+<p>Since matrix multiplication is associative, what we have here is a
+monoid. <code>mempty</code> is the open interval at the beginning, and
+<code>mappend</code> is matrix multiplication. This is the property that
+lets us incrementalise the whole thing, by the way: associativity allows
+us to decide when to start and stop the calculation.</p>
 <h1 id="incrementalising-1">Incrementalising!</h1>
-<p>We now have all the parts we need. First, we will write an evaluator that returns increasingly precise intervals. Our friend <code>scanl</code> fits the requirement precisely.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">approximate ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>approximate <span class="ot">=</span> <span class="fu">scanl</span> f <span class="fu">mempty</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    f i <span class="dt">I</span> <span class="ot">=</span> right i</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    f i <span class="dt">O</span> <span class="ot">=</span> left  i</span></code></pre></div>
-<p>Next, we will need to combine two of these lists with some operation on fractions.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">interleave ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>interleave (<span class="op">*</span>) [xi] ys <span class="ot">=</span> <span class="fu">map</span> (\y <span class="ot">-&gt;</span> x <span class="op">*</span> lb y <span class="op">:-:</span> x <span class="op">*</span> ub y) ys</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>  <span class="kw">where</span> x <span class="ot">=</span> mediant xi</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>interleave (<span class="op">*</span>) (x<span class="op">:</span>xs) ys<span class="op">@</span>(y<span class="op">:</span>_) <span class="ot">=</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>  (((<span class="op">*</span>) <span class="ot">`on`</span> lb) x y <span class="op">:-:</span> ((<span class="op">*</span>) <span class="ot">`on`</span> ub) x y) <span class="op">:</span> interleave (<span class="op">*</span>) ys xs</span></code></pre></div>
-<p>The operation must respect orders in the proper way for this to be valid.</p>
-<p>This pops one bit from each list in turn: one of the many possible optimisations would be to pull more information from the more informative value, in some clever way.</p>
-<p>Finally, we have a function which incrementally runs some binary operator lazily on a list of bits.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">quad ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>quad (<span class="op">*</span>) xs ys <span class="ot">=</span> <span class="fu">foldr</span> f (unfoldr p) zs <span class="fu">mempty</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>    zs <span class="ot">=</span> (interleave (<span class="op">*</span>) <span class="ot">`on`</span> approximate) xs ys</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>    </span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a>    f x xs c</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a>      <span class="op">|</span> mediant c <span class="op">&lt;</span> lb x <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> f x xs (right c)</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>      <span class="op">|</span> mediant c <span class="op">&gt;</span> ub x <span class="ot">=</span> <span class="dt">O</span> <span class="op">:</span> f x xs (left  c)</span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> xs c</span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>        </span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>    t <span class="ot">=</span> mediant (<span class="fu">last</span> zs)</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>    </span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a>    p c <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> (mediant c) t <span class="kw">of</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, right c)</span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, left  c)</span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
-<p>The function only ever inspects the next bit when it absolutely needs to.</p>
-<p>The helper function <code>f</code> here is the “incremental” version. <code>p</code> takes over when the precision of the input is exhausted.</p>
-<p>We can use this to write an addition function (with some added special cases to speed things up).</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="ot">add ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>add [] ys <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> ys</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>add xs [] <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> xs</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>add (<span class="dt">I</span><span class="op">:</span>xs) ys <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> add xs ys</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a>add xs (<span class="dt">I</span><span class="op">:</span>ys) <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> add xs ys</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a>add xs ys <span class="ot">=</span> quad (<span class="op">+</span>) xs ys</span></code></pre></div>
-<p>We (could) also try and optimise the times we look for a new bit. Above we have noticed every case where one of the rationals is preceded by a whole part. After you encounter two <code>O</code>s, in addition if the two strings are inverses of each other the result will be 1. i.e. <code>OOIOOI</code> + <code>OIOIIO</code> = <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>1</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{1}</annotation></semantics></math>. We could try and spot this, only testing with comparison of the mediant when the bits are the same. You’ve doubtless spotted some other possible optimisations: I have yet to look into them!</p>
+<p>We now have all the parts we need. First, we will write an evaluator
+that returns increasingly precise intervals. Our friend
+<code>scanl</code> fits the requirement precisely.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ot">approximate ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>approximate <span class="ot">=</span> <span class="fu">scanl</span> f <span class="fu">mempty</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    f i <span class="dt">I</span> <span class="ot">=</span> right i</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    f i <span class="dt">O</span> <span class="ot">=</span> left  i</span></code></pre></div>
+<p>Next, we will need to combine two of these lists with some operation
+on fractions.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ot">interleave ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>           <span class="ot">-&gt;</span> [<span class="dt">Interval</span>]</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>interleave (<span class="op">*</span>) [xi] ys <span class="ot">=</span> <span class="fu">map</span> (\y <span class="ot">-&gt;</span> x <span class="op">*</span> lb y <span class="op">:-:</span> x <span class="op">*</span> ub y) ys</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span> x <span class="ot">=</span> mediant xi</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>interleave (<span class="op">*</span>) (x<span class="op">:</span>xs) ys<span class="op">@</span>(y<span class="op">:</span>_) <span class="ot">=</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  (((<span class="op">*</span>) <span class="ot">`on`</span> lb) x y <span class="op">:-:</span> ((<span class="op">*</span>) <span class="ot">`on`</span> ub) x y) <span class="op">:</span> interleave (<span class="op">*</span>) ys xs</span></code></pre></div>
+<p>The operation must respect orders in the proper way for this to be
+valid.</p>
+<p>This pops one bit from each list in turn: one of the many possible
+optimisations would be to pull more information from the more
+informative value, in some clever way.</p>
+<p>Finally, we have a function which incrementally runs some binary
+operator lazily on a list of bits.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">quad ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>quad (<span class="op">*</span>) xs ys <span class="ot">=</span> <span class="fu">foldr</span> f (unfoldr p) zs <span class="fu">mempty</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    zs <span class="ot">=</span> (interleave (<span class="op">*</span>) <span class="ot">`on`</span> approximate) xs ys</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    f x xs c</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> mediant c <span class="op">&lt;</span> lb x <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> f x xs (right c)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> mediant c <span class="op">&gt;</span> ub x <span class="ot">=</span> <span class="dt">O</span> <span class="op">:</span> f x xs (left  c)</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> xs c</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    t <span class="ot">=</span> mediant (<span class="fu">last</span> zs)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    p c <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> (mediant c) t <span class="kw">of</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, right c)</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, left  c)</span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
+<p>The function only ever inspects the next bit when it absolutely needs
+to.</p>
+<p>The helper function <code>f</code> here is the “incremental” version.
+<code>p</code> takes over when the precision of the input is
+exhausted.</p>
+<p>We can use this to write an addition function (with some added
+special cases to speed things up).</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">add ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>add [] ys <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> ys</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>add xs [] <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> xs</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>add (<span class="dt">I</span><span class="op">:</span>xs) ys <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> add xs ys</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>add xs (<span class="dt">I</span><span class="op">:</span>ys) <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> add xs ys</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>add xs ys <span class="ot">=</span> quad (<span class="op">+</span>) xs ys</span></code></pre></div>
+<p>We (could) also try and optimise the times we look for a new bit.
+Above we have noticed every case where one of the rationals is preceded
+by a whole part. After you encounter two <code>O</code>s, in addition if
+the two strings are inverses of each other the result will be 1.
+i.e. <code>OOIOOI</code> + <code>OIOIIO</code> =
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>1</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{1}</annotation></semantics></math>.
+We could try and spot this, only testing with comparison of the mediant
+when the bits are the same. You’ve doubtless spotted some other possible
+optimisations: I have yet to look into them!</p>
 <h1 id="inverting-functions">Inverting Functions</h1>
-<p>One of the other applications of lazy rationals is that they can begin to <em>look</em> like the real numbers. For instance, the <code>p</code> helper function above is basically defined extensionally. Instead of stating the value of the number, we give a function which tells us when we’ve made something too big or too small (which sounds an awful lot like a Dedekind cut to my ears). Here’s a function which <em>inverts</em> a given function on fractions, for instance.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="ot">inv ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>) <span class="ot">-&gt;</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>inv o n <span class="ot">=</span> unfoldr f <span class="fu">mempty</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>    t <span class="ot">=</span> fromQ n</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>    </span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>    f c <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> (o (mediant c)) t <span class="kw">of</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, right c)</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, left  c)</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
-<p>Of course, the function has to satisfy all kinds of extra properties that I haven’t really thought a lot about yet, but no matter. We can use it to invert a squaring function:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="fu">sqrt</span><span class="ot"> ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a><span class="fu">sqrt</span> <span class="ot">=</span> inv (\x <span class="ot">-&gt;</span> x <span class="op">*</span> x)</span></code></pre></div>
-<p>And we can use <em>this</em> to get successive approximations to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msqrt><mn>2</mn></msqrt><annotation encoding="application/x-tex">\sqrt{2}</annotation></semantics></math>!</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>root2Approx</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="fu">map</span> (toDouble <span class="op">.</span> mediant) (approximate (<span class="fu">sqrt</span> (<span class="fu">abs</span> (<span class="dv">2</span> <span class="op">:/</span> <span class="dv">1</span>))))</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  </span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">mapM_</span> <span class="fu">print</span> root2Approx</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a><span class="fl">1.0</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a><span class="fl">2.0</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a><span class="fl">1.5</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a><span class="fl">1.3333333333333333</span></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true"></a><span class="fl">1.4</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true"></a><span class="fl">1.4285714285714286</span></span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true"></a><span class="fl">1.4166666666666667</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true"></a><span class="fl">1.411764705882353</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true"></a><span class="fl">1.4137931034482758</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true"></a><span class="fl">1.4146341463414633</span></span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true"></a><span class="op">...</span></span></code></pre></div>
+<p>One of the other applications of lazy rationals is that they can
+begin to <em>look</em> like the real numbers. For instance, the
+<code>p</code> helper function above is basically defined extensionally.
+Instead of stating the value of the number, we give a function which
+tells us when we’ve made something too big or too small (which sounds an
+awful lot like a Dedekind cut to my ears). Here’s a function which
+<em>inverts</em> a given function on fractions, for instance.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="ot">inv ::</span> (<span class="dt">Frac</span> <span class="ot">-&gt;</span> <span class="dt">Frac</span>) <span class="ot">-&gt;</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>inv o n <span class="ot">=</span> unfoldr f <span class="fu">mempty</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    t <span class="ot">=</span> fromQ n</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    f c <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> (o (mediant c)) t <span class="kw">of</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>      <span class="dt">LT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">I</span>, right c)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>      <span class="dt">GT</span> <span class="ot">-&gt;</span> <span class="dt">Just</span> (<span class="dt">O</span>, left  c)</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>      <span class="dt">EQ</span> <span class="ot">-&gt;</span> <span class="dt">Nothing</span></span></code></pre></div>
+<p>Of course, the function has to satisfy all kinds of extra properties
+that I haven’t really thought a lot about yet, but no matter. We can use
+it to invert a squaring function:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span><span class="ot"> ::</span> [<span class="dt">Bit</span>] <span class="ot">-&gt;</span> [<span class="dt">Bit</span>]</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sqrt</span> <span class="ot">=</span> inv (\x <span class="ot">-&gt;</span> x <span class="op">*</span> x)</span></code></pre></div>
+<p>And we can use <em>this</em> to get successive approximations to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msqrt><mn>2</mn></msqrt><annotation encoding="application/x-tex">\sqrt{2}</annotation></semantics></math>!</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>root2Approx</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="fu">map</span> (toDouble <span class="op">.</span> mediant) (approximate (<span class="fu">sqrt</span> (<span class="fu">abs</span> (<span class="dv">2</span> <span class="op">:/</span> <span class="dv">1</span>))))</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">mapM_</span> <span class="fu">print</span> root2Approx</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="fl">1.0</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fl">2.0</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="fl">1.5</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="fl">1.3333333333333333</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="fl">1.4</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fl">1.4285714285714286</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="fl">1.4166666666666667</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="fl">1.411764705882353</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="fl">1.4137931034482758</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="fl">1.4146341463414633</span></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a><span class="op">...</span></span></code></pre></div>
 <h1 id="conclusions-and-related-work">Conclusions and Related Work</h1>
-<p>Using the Stern-Brocot tree to represent the rationals was formalised in Coq in <span class="citation" data-cites="bertotSimpleCanonicalRepresentation2003">Bertot (<a href="#ref-bertotSimpleCanonicalRepresentation2003" role="doc-biblioref">2003</a>)</span>. The corresponding lazy operations are formalised in <a href="https://github.com/coq-community/qarith-stern-brocot">QArith</a>. Its theory and implementation is described in <span class="citation" data-cites="niquiExactArithmeticStern2007">Niqui (<a href="#ref-niquiExactArithmeticStern2007" role="doc-biblioref">2007</a>)</span>. Unfortunately, I found most of the algorithms impenetrably complex, so I can’t really judge how they compare to the ones I have here.</p>
-<p>I mentioned that one of the reasons you might want lazy rational arithmetic is that it can help with certain proofs. While this is true, in general the two main reasons people reach for lazy arithmetic is efficiency and as a way to get to the real numbers.</p>
-<p>From the perspective of efficiency, the Stern-Brocot tree is probably a bad idea. You may have noticed that the right branch of the tree contains all the whole numbers: this means that the whole part is encoded in unary. Beyond that, we generally have to convert to some fraction in order to do any calculation, which is massively expensive.</p>
-<p>The problem is that bits in the same position in different numbers don’t necessarily correspond to the same quantities. In base 10, for instance, the numbers 561 and 1024 have values in the “ones” position of 1 and 4, respectively. We can work with those two values independent of the rest of the number, which can lead to quicker algorithms.</p>
-<p>Looking at the Stern-Brocot encoding, the numbers <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math> and 3 are represented by <code>OI</code> and <code>II</code>, respectively. That second <code>I</code> in each, despite being in the same position, corresponds to <em>different values</em>: <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{3}</annotation></semantics></math> in the first, and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>3</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{3}{2}</annotation></semantics></math> in the second.</p>
-<p>Solutions to both of these problems necessitate losing the one-to-one property of the representation. We could improve the size of the representation of terms by having our <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math> matrices be the following <span class="citation" data-cites="kurkaExactRealArithmetic2014">(Kůrka <a href="#ref-kurkaExactRealArithmetic2014" role="doc-biblioref">2014</a>)</span>:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mn>1</mn></mtd><mtd columnalign="center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>1</mn></mtd><mtd columnalign="center"><mn>2</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mi>R</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center"><mn>2</mn></mtd><mtd columnalign="center"><mn>1</mn></mtd></mtr><mtr><mtd columnalign="center"><mn>0</mn></mtd><mtd columnalign="center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> L = \left( 
+<p>Using the Stern-Brocot tree to represent the rationals was formalised
+in Coq in <span class="citation" data-cites="bertotSimpleCanonicalRepresentation2003">Bertot
+(2003)</span>. The corresponding lazy operations are formalised in <a href="https://github.com/coq-community/qarith-stern-brocot">QArith</a>.
+Its theory and implementation is described in <span class="citation" data-cites="niquiExactArithmeticStern2007">Niqui (2007)</span>.
+Unfortunately, I found most of the algorithms impenetrably complex, so I
+can’t really judge how they compare to the ones I have here.</p>
+<p>I mentioned that one of the reasons you might want lazy rational
+arithmetic is that it can help with certain proofs. While this is true,
+in general the two main reasons people reach for lazy arithmetic is
+efficiency and as a way to get to the real numbers.</p>
+<p>From the perspective of efficiency, the Stern-Brocot tree is probably
+a bad idea. You may have noticed that the right branch of the tree
+contains all the whole numbers: this means that the whole part is
+encoded in unary. Beyond that, we generally have to convert to some
+fraction in order to do any calculation, which is massively
+expensive.</p>
+<p>The problem is that bits in the same position in different numbers
+don’t necessarily correspond to the same quantities. In base 10, for
+instance, the numbers 561 and 1024 have values in the “ones” position of
+1 and 4, respectively. We can work with those two values independent of
+the rest of the number, which can lead to quicker algorithms.</p>
+<p>Looking at the Stern-Brocot encoding, the numbers
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>2</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{2}{3}</annotation></semantics></math>
+and 3 are represented by <code>OI</code> and <code>II</code>,
+respectively. That second <code>I</code> in each, despite being in the
+same position, corresponds to <em>different values</em>:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>3</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{3}</annotation></semantics></math>
+in the first, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>3</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{3}{2}</annotation></semantics></math>
+in the second.</p>
+<p>Solutions to both of these problems necessitate losing the one-to-one
+property of the representation. We could improve the size of the
+representation of terms by having our
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>L</mi><annotation encoding="application/x-tex">L</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>R</mi><annotation encoding="application/x-tex">R</annotation></semantics></math>
+matrices be the following <span class="citation" data-cites="kurkaExactRealArithmetic2014">(Kůrka 2014)</span>:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>L</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>2</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mi>R</mi><mo>=</mo><mrow><mo stretchy="true" form="prefix">(</mo><mtable><mtr><mtd columnalign="center" style="text-align: center"><mn>2</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd></mtr><mtr><mtd columnalign="center" style="text-align: center"><mn>0</mn></mtd><mtd columnalign="center" style="text-align: center"><mn>1</mn></mtd></mtr></mtable><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex"> L = \left( 
 \begin{matrix}
   1 &amp; 0 \\
   1 &amp; 2
@@ -314,24 +512,49 @@ R =
   0 &amp; 1
 \end{matrix}
 \right) </annotation></semantics></math></p>
-<p>But now there will be gaps in the tree. This basically means we’ll have to use infinite repeating bits to represent terms like <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>.</p>
-<p>We could solve the other problem by throwing out the Stern-Brocot tree entirely and using a more traditional positional number system. Again, this introduces redundancy: in order to represent some fraction which doesn’t divide properly into the base of the number system you have to use repeating decimals.</p>
-<p>The second reason for lazy rational arithmetic is that it can be a crucial component in building a constructive interpretation of the real numbers. This in particular is an area of real excitement at the moment: HoTT has opened up some interesting avenues that weren’t possible before for constructing the reals <span class="citation" data-cites="bauerRealNumbersHomotopy2016">(Bauer <a href="#ref-bauerRealNumbersHomotopy2016" role="doc-biblioref">2016</a>)</span>.</p>
-<p>In a future post, I might present a formalisation of these numbers in Agda. I also intend to look at the dyadic numbers.</p>
-<p>Update 26/12/2019: thanks Anton Felix Lorenzen and Joseph C. Sible for spotting some mistakes in this post.</p>
+<p>But now there will be gaps in the tree. This basically means we’ll
+have to use infinite repeating bits to represent terms like
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mfrac><mn>1</mn><mn>2</mn></mfrac><annotation encoding="application/x-tex">\frac{1}{2}</annotation></semantics></math>.</p>
+<p>We could solve the other problem by throwing out the Stern-Brocot
+tree entirely and using a more traditional positional number system.
+Again, this introduces redundancy: in order to represent some fraction
+which doesn’t divide properly into the base of the number system you
+have to use repeating decimals.</p>
+<p>The second reason for lazy rational arithmetic is that it can be a
+crucial component in building a constructive interpretation of the real
+numbers. This in particular is an area of real excitement at the moment:
+HoTT has opened up some interesting avenues that weren’t possible before
+for constructing the reals <span class="citation" data-cites="bauerRealNumbersHomotopy2016">(Bauer 2016)</span>.</p>
+<p>In a future post, I might present a formalisation of these numbers in
+Agda. I also intend to look at the dyadic numbers.</p>
+<p>Update 26/12/2019: thanks Anton Felix Lorenzen and Joseph C. Sible
+for spotting some mistakes in this post.</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-bauerRealNumbersHomotopy2016">
-<p>Bauer, Andrej. 2016. “The Real Numbers in Homotopy Type Theory.” Faro, Portugal. <a href="http://math.andrej.com/wp-content/uploads/2016/06/hott-reals-cca2016.pdf">http://math.andrej.com/wp-content/uploads/2016/06/hott-reals-cca2016.pdf</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bauerRealNumbersHomotopy2016" class="csl-entry" role="listitem">
+Bauer, Andrej. 2016. <span>“The real numbers in homotopy type
+theory.”</span> <span>Faro, Portugal</span>. <a href="http://math.andrej.com/wp-content/uploads/2016/06/hott-reals-cca2016.pdf">http://math.andrej.com/wp-content/uploads/2016/06/hott-reals-cca2016.pdf</a>.
 </div>
-<div id="ref-bertotSimpleCanonicalRepresentation2003">
-<p>Bertot, Yves. 2003. “A Simple Canonical Representation of Rational Numbers.” <em>Electronic Notes in Theoretical Computer Science</em> 85 (7). Mathematics, Logic and Computation (Satellite Event of ICALP 2003) (September): 1–16. doi:<a href="https://doi.org/10.1016/S1571-0661(04)80754-0">10.1016/S1571-0661(04)80754-0</a>. <a href="http://www.sciencedirect.com/science/article/pii/S1571066104807540">http://www.sciencedirect.com/science/article/pii/S1571066104807540</a>.</p>
+<div id="ref-bertotSimpleCanonicalRepresentation2003" class="csl-entry" role="listitem">
+Bertot, Yves. 2003. <span>“A simple canonical representation of rational
+numbers.”</span> <em>Electronic Notes in Theoretical Computer
+Science</em> 85 (7). Mathematics, <span>Logic</span> and
+<span>Computation</span> (<span>Satellite Event</span> of
+<span>ICALP</span> 2003) (September): 1–16. doi:<a href="https://doi.org/10.1016/S1571-0661(04)80754-0">10.1016/S1571-0661(04)80754-0</a>.
+<a href="http://www.sciencedirect.com/science/article/pii/S1571066104807540">http://www.sciencedirect.com/science/article/pii/S1571066104807540</a>.
 </div>
-<div id="ref-kurkaExactRealArithmetic2014">
-<p>Kůrka, Petr. 2014. “Exact Real Arithmetic for Interval Number Systems.” <em>Theoretical Computer Science</em> 542 (July): 32–43. doi:<a href="https://doi.org/10.1016/j.tcs.2014.04.030">10.1016/j.tcs.2014.04.030</a>. <a href="http://www.sciencedirect.com/science/article/pii/S0304397514003351">http://www.sciencedirect.com/science/article/pii/S0304397514003351</a>.</p>
+<div id="ref-kurkaExactRealArithmetic2014" class="csl-entry" role="listitem">
+Kůrka, Petr. 2014. <span>“Exact real arithmetic for interval number
+systems.”</span> <em>Theoretical Computer Science</em> 542 (July):
+32–43. doi:<a href="https://doi.org/10.1016/j.tcs.2014.04.030">10.1016/j.tcs.2014.04.030</a>.
+<a href="http://www.sciencedirect.com/science/article/pii/S0304397514003351">http://www.sciencedirect.com/science/article/pii/S0304397514003351</a>.
 </div>
-<div id="ref-niquiExactArithmeticStern2007">
-<p>Niqui, Milad. 2007. “Exact Arithmetic on the SternBrocot Tree.” <em>Journal of Discrete Algorithms</em> 5 (2). 2004 Symposium on String Processing and Information Retrieval (June): 356–379. doi:<a href="https://doi.org/10.1016/j.jda.2005.03.007">10.1016/j.jda.2005.03.007</a>. <a href="http://www.sciencedirect.com/science/article/pii/S1570866706000311">http://www.sciencedirect.com/science/article/pii/S1570866706000311</a>.</p>
+<div id="ref-niquiExactArithmeticStern2007" class="csl-entry" role="listitem">
+Niqui, Milad. 2007. <span>“Exact arithmetic on the <span>Stern</span>
+tree.”</span> <em>Journal of Discrete Algorithms</em> 5 (2). 2004
+<span>Symposium</span> on <span>String Processing</span> and
+<span>Information Retrieval</span> (June): 356–379. doi:<a href="https://doi.org/10.1016/j.jda.2005.03.007">10.1016/j.jda.2005.03.007</a>.
+<a href="http://www.sciencedirect.com/science/article/pii/S1570866706000311">http://www.sciencedirect.com/science/article/pii/S1570866706000311</a>.
 </div>
 </div>
 

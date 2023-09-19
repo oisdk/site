@@ -32,12 +32,14 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
 <details>
-<p><summary> Imports </summary></p>
+<summary>
+Imports
+</summary>
 <pre class="Agda"><a id="192" class="Symbol">{-#</a> <a id="196" class="Keyword">OPTIONS</a> <a id="204" class="Pragma">--cubical</a> <a id="214" class="Pragma">--sized-types</a> <a id="228" class="Symbol">#-}</a>
 
 <a id="233" class="Keyword">module</a> <a id="240" href class="Module">Post</a> <a id="245" class="Keyword">where</a>
@@ -45,23 +47,38 @@
 <a id="252" class="Keyword">open</a> <a id="257" class="Keyword">import</a> <a id="264" href="../code/terminating-tricky-traversals/Post.Prelude.html" class="Module">../code/terminating-tricky-traversals/Post.Prelude</a>
 </pre>
 </details>
-<p>Just a short one today. I’m going to look at a couple of algorithms for breadth-first traversals with complex termination proofs.</p>
-<h1 id="breadth-first-graph-traversal">Breadth-First Graph Traversal</h1>
-<p>In a previous post I talked about breadth-first traversals over graphs, and the difficulties that cycles cause. Graphs are especially tricky to work with in a purely functional language, because so many of the basic algorithms are described in explicitly mututing terms (i.e. “mark off a node as you see it”), with no obvious immutable translation. The following is the last algoirthm I came up with:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">bfs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>bfs g r <span class="ot">=</span> <span class="fu">takeWhile</span> (<span class="fu">not</span><span class="op">.</span><span class="fu">null</span>) (<span class="fu">map</span> <span class="fu">fst</span> (fix (f r <span class="op">.</span> push)))</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    push xs <span class="ot">=</span> ([],Set.empty) <span class="op">:</span> [ ([],seen) <span class="op">|</span> (_,seen) <span class="ot">&lt;-</span> xs ]</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>    f x q<span class="op">@</span>((l,s)<span class="op">:</span>qs)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>      <span class="op">|</span> Set.member x s <span class="ot">=</span> q</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (x<span class="op">:</span>l, Set.insert x s) <span class="op">:</span> <span class="fu">foldr</span> f qs (g x)</span></code></pre></div>
-<p>As difficult as it is to work with graphs in a pure functional language, it’s even <em>more</em> difficult to work in a <em>total</em> language, like Agda. Looking at the above function, there are several bits that we can see right off the bat won’t translate over easily. Let’s start with <code>fix</code>.</p>
-<p>We shouldn’t expect to be able to write <code>fix</code> in Agda as-is. Just look at its Haskell implementation:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>fix f <span class="ot">=</span> f (fix f)</span></code></pre></div>
+<p>Just a short one today. I’m going to look at a couple of algorithms
+for breadth-first traversals with complex termination proofs.</p>
+<h1 id="breadth-first-graph-traversal">Breadth-First Graph
+Traversal</h1>
+<p>In a previous post I talked about breadth-first traversals over
+graphs, and the difficulties that cycles cause. Graphs are especially
+tricky to work with in a purely functional language, because so many of
+the basic algorithms are described in explicitly mututing terms
+(i.e. “mark off a node as you see it”), with no obvious immutable
+translation. The following is the last algoirthm I came up with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bfs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>bfs g r <span class="ot">=</span> <span class="fu">takeWhile</span> (<span class="fu">not</span><span class="op">.</span><span class="fu">null</span>) (<span class="fu">map</span> <span class="fu">fst</span> (fix (f r <span class="op">.</span> push)))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    push xs <span class="ot">=</span> ([],Set.empty) <span class="op">:</span> [ ([],seen) <span class="op">|</span> (_,seen) <span class="ot">&lt;-</span> xs ]</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    f x q<span class="op">@</span>((l,s)<span class="op">:</span>qs)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> Set.member x s <span class="ot">=</span> q</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (x<span class="op">:</span>l, Set.insert x s) <span class="op">:</span> <span class="fu">foldr</span> f qs (g x)</span></code></pre></div>
+<p>As difficult as it is to work with graphs in a pure functional
+language, it’s even <em>more</em> difficult to work in a <em>total</em>
+language, like Agda. Looking at the above function, there are several
+bits that we can see right off the bat won’t translate over easily.
+Let’s start with <code>fix</code>.</p>
+<p>We shouldn’t expect to be able to write <code>fix</code> in Agda
+as-is. Just look at its Haskell implementation:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">fix ::</span> (a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>fix f <span class="ot">=</span> f (fix f)</span></code></pre></div>
 <p>It’s obviously non total!</p>
-<p>(this is actually a non-memoizing version of <code>fix</code>, which is different from the <a href="https://stackoverflow.com/questions/37366222/why-is-this-version-of-fix-more-efficient-in-haskell/37366374">usual one</a>)</p>
-<p>We can write a function <em>like</em> <code>fix</code>, though, using coinduction and sized types.</p>
+<p>(this is actually a non-memoizing version of <code>fix</code>, which
+is different from the <a href="https://stackoverflow.com/questions/37366222/why-is-this-version-of-fix-more-efficient-in-haskell/37366374">usual
+one</a>)</p>
+<p>We can write a function <em>like</em> <code>fix</code>, though, using
+coinduction and sized types.</p>
 <pre class="Agda"><a id="1890" class="Keyword">record</a> <a id="Thunk"></a><a id="1897" href="#1897" class="Record">Thunk</a> <a id="1903" class="Symbol">(</a><a id="1904" href="#1904" class="Bound">A</a> <a id="1906" class="Symbol">:</a> <a id="1908" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#179" class="Postulate">Size</a> <a id="1913" class="Symbol">→</a> <a id="1915" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1920" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="1921" class="Symbol">)</a> <a id="1923" class="Symbol">(</a><a id="1924" href="#1924" class="Bound">i</a> <a id="1926" class="Symbol">:</a> <a id="1928" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#179" class="Postulate">Size</a><a id="1932" class="Symbol">)</a> <a id="1934" class="Symbol">:</a> <a id="1936" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="1941" href="#1920" class="Bound">a</a> <a id="1943" class="Keyword">where</a>
   <a id="1951" class="Keyword">coinductive</a>
   <a id="1965" class="Keyword">field</a> <a id="Thunk.force"></a><a id="1971" href="#1971" class="Field">force</a> <a id="1977" class="Symbol">:</a> <a id="1979" class="Symbol">∀</a> <a id="1981" class="Symbol">{</a><a id="1982" href="#1982" class="Bound">j</a> <a id="1984" class="Symbol">:</a> <a id="1986" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#211" class="Postulate Operator">Size&lt;</a> <a id="1992" href="#1924" class="Bound">i</a><a id="1993" class="Symbol">}</a> <a id="1995" class="Symbol">→</a> <a id="1997" href="#1904" class="Bound">A</a> <a id="1999" href="#1982" class="Bound">j</a>
@@ -70,8 +87,15 @@
 <a id="fix"></a><a id="2020" href="#2020" class="Function">fix</a> <a id="2024" class="Symbol">:</a> <a id="2026" class="Symbol">(</a><a id="2027" href="#2027" class="Bound">A</a> <a id="2029" class="Symbol">:</a> <a id="2031" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#179" class="Postulate">Size</a> <a id="2036" class="Symbol">→</a> <a id="2038" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="2043" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="2044" class="Symbol">)</a> <a id="2046" class="Symbol">→</a> <a id="2048" class="Symbol">(∀</a> <a id="2051" class="Symbol">{</a><a id="2052" href="#2052" class="Bound">i</a><a id="2053" class="Symbol">}</a> <a id="2055" class="Symbol">→</a> <a id="2057" href="#1897" class="Record">Thunk</a> <a id="2063" href="#2027" class="Bound">A</a> <a id="2065" href="#2052" class="Bound">i</a> <a id="2067" class="Symbol">→</a> <a id="2069" href="#2027" class="Bound">A</a> <a id="2071" href="#2052" class="Bound">i</a><a id="2072" class="Symbol">)</a> <a id="2074" class="Symbol">→</a> <a id="2076" class="Symbol">∀</a> <a id="2078" class="Symbol">{</a><a id="2079" href="#2079" class="Bound">j</a><a id="2080" class="Symbol">}</a> <a id="2082" class="Symbol">→</a> <a id="2084" href="#2027" class="Bound">A</a> <a id="2086" href="#2079" class="Bound">j</a>
 <a id="2088" href="#2020" class="Function">fix</a> <a id="2092" href="#2092" class="Bound">A</a> <a id="2094" href="#2094" class="Bound">f</a> <a id="2096" class="Symbol">=</a> <a id="2098" href="#2094" class="Bound">f</a> <a id="2100" class="Symbol">λ</a> <a id="2102" class="Keyword">where</a> <a id="2108" class="Symbol">.</a><a id="2109" href="#1971" class="Field">force</a> <a id="2115" class="Symbol">→</a> <a id="2117" href="#2020" class="Function">fix</a> <a id="2121" href="#2092" class="Bound">A</a> <a id="2123" href="#2094" class="Bound">f</a>
 </pre>
-<p>Coinductive types are the dual to inductive types. Totality-wise, a coinductive type must be “productive”; i.e. a coinductive list can be infinitely long, but it must be provably able to evaluate to a constructor (cons or nil) in finite time.</p>
-<p>Sized types also help us out here: they’re quite subtle, and a little finicky to use occasionally, but they are invaluable when it comes to proving termination or productivity of complex (especially higher-order) functions. The canonical example is mapping over the following tree type:</p>
+<p>Coinductive types are the dual to inductive types. Totality-wise, a
+coinductive type must be “productive”; i.e. a coinductive list can be
+infinitely long, but it must be provably able to evaluate to a
+constructor (cons or nil) in finite time.</p>
+<p>Sized types also help us out here: they’re quite subtle, and a little
+finicky to use occasionally, but they are invaluable when it comes to
+proving termination or productivity of complex (especially higher-order)
+functions. The canonical example is mapping over the following tree
+type:</p>
 <pre class="Agda"><a id="2670" class="Keyword">module</a> <a id="NonTerminating"></a><a id="2677" href="#2677" class="Module">NonTerminating</a> <a id="2692" class="Keyword">where</a>
   <a id="2700" class="Keyword">data</a> <a id="NonTerminating.Tree"></a><a id="2705" href="#2705" class="Datatype">Tree</a> <a id="2710" class="Symbol">(</a><a id="2711" href="#2711" class="Bound">A</a> <a id="2713" class="Symbol">:</a> <a id="2715" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="2720" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="2721" class="Symbol">)</a> <a id="2723" class="Symbol">:</a> <a id="2725" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="2730" href="#2720" class="Bound">a</a> <a id="2732" class="Keyword">where</a>
     <a id="NonTerminating.Tree._&amp;_"></a><a id="2742" href="#2742" class="InductiveConstructor Operator">_&amp;_</a> <a id="2746" class="Symbol">:</a> <a id="2748" href="#2711" class="Bound">A</a> <a id="2750" class="Symbol">→</a> <a id="2752" href="../code/terminating-tricky-traversals/Post.Prelude.html#507" class="Datatype">List</a> <a id="2757" class="Symbol">(</a><a id="2758" href="#2705" class="Datatype">Tree</a> <a id="2763" href="#2711" class="Bound">A</a><a id="2764" class="Symbol">)</a> <a id="2766" class="Symbol">→</a> <a id="2768" href="#2705" class="Datatype">Tree</a> <a id="2773" href="#2711" class="Bound">A</a>
@@ -80,7 +104,11 @@
   <a id="NonTerminating.mapTree"></a><a id="2800" href="#2800" class="Function">mapTree</a> <a id="2808" class="Symbol">:</a> <a id="2810" class="Symbol">(</a><a id="2811" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="2813" class="Symbol">→</a> <a id="2815" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a><a id="2816" class="Symbol">)</a> <a id="2818" class="Symbol">→</a> <a id="2820" href="#2705" class="Datatype">Tree</a> <a id="2825" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="2827" class="Symbol">→</a> <a id="2829" href="#2705" class="Datatype">Tree</a> <a id="2834" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a>
   <a id="2838" href="#2800" class="Function">mapTree</a> <a id="2846" href="#2846" class="Bound">f</a> <a id="2848" class="Symbol">(</a><a id="2849" href="#2849" class="Bound">x</a> <a id="2851" href="#2742" class="InductiveConstructor Operator">&amp;</a> <a id="2853" href="#2853" class="Bound">xs</a><a id="2855" class="Symbol">)</a> <a id="2857" class="Symbol">=</a> <a id="2859" href="#2846" class="Bound">f</a> <a id="2861" href="#2849" class="Bound">x</a> <a id="2863" href="#2742" class="InductiveConstructor Operator">&amp;</a> <a id="2865" href="../code/terminating-tricky-traversals/Post.Prelude.html#678" class="Function">map</a> <a id="2869" class="Symbol">(</a><a id="2870" href="#2800" class="Function">mapTree</a> <a id="2878" href="#2846" class="Bound">f</a><a id="2879" class="Symbol">)</a> <a id="2881" href="#2853" class="Bound">xs</a>
 </pre>
-<p>The compiler can’t tell that the recursive call in the <code>mapTree</code> function will only be called on subnodes of the argument: it can’t tell that it’s structurally recursive, in other words. Annoyingly, we can fix the problem by inlining <code>map</code>.</p>
+<p>The compiler can’t tell that the recursive call in the
+<code>mapTree</code> function will only be called on subnodes of the
+argument: it can’t tell that it’s structurally recursive, in other
+words. Annoyingly, we can fix the problem by inlining
+<code>map</code>.</p>
 <pre class="Agda">  <a id="3141" class="Keyword">mutual</a>
     <a id="NonTerminating.mapTree′"></a><a id="3152" href="#3152" class="Function">mapTree′</a> <a id="3161" class="Symbol">:</a> <a id="3163" class="Symbol">(</a><a id="3164" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="3166" class="Symbol">→</a> <a id="3168" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a><a id="3169" class="Symbol">)</a> <a id="3171" class="Symbol">→</a> <a id="3173" href="#2705" class="Datatype">Tree</a> <a id="3178" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="3180" class="Symbol">→</a> <a id="3182" href="#2705" class="Datatype">Tree</a> <a id="3187" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a>
     <a id="3193" href="#3152" class="Function">mapTree′</a> <a id="3202" href="#3202" class="Bound">f</a> <a id="3204" class="Symbol">(</a><a id="3205" href="#3205" class="Bound">x</a> <a id="3207" href="#2742" class="InductiveConstructor Operator">&amp;</a> <a id="3209" href="#3209" class="Bound">xs</a><a id="3211" class="Symbol">)</a> <a id="3213" class="Symbol">=</a> <a id="3215" href="#3202" class="Bound">f</a> <a id="3217" href="#3205" class="Bound">x</a> <a id="3219" href="#2742" class="InductiveConstructor Operator">&amp;</a> <a id="3221" href="#3241" class="Function">mapForest</a> <a id="3231" href="#3202" class="Bound">f</a> <a id="3233" href="#3209" class="Bound">xs</a>
@@ -89,14 +117,18 @@
     <a id="3297" href="#3241" class="Function">mapForest</a> <a id="3307" href="#3307" class="Bound">f</a> <a id="3309" href="../code/terminating-tricky-traversals/Post.Prelude.html#542" class="InductiveConstructor">[]</a> <a id="3312" class="Symbol">=</a> <a id="3314" href="../code/terminating-tricky-traversals/Post.Prelude.html#542" class="InductiveConstructor">[]</a>
     <a id="3321" href="#3241" class="Function">mapForest</a> <a id="3331" href="#3331" class="Bound">f</a> <a id="3333" class="Symbol">(</a><a id="3334" href="#3334" class="Bound">x</a> <a id="3336" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="3338" href="#3338" class="Bound">xs</a><a id="3340" class="Symbol">)</a> <a id="3342" class="Symbol">=</a> <a id="3344" href="#3152" class="Function">mapTree′</a> <a id="3353" href="#3331" class="Bound">f</a> <a id="3355" href="#3334" class="Bound">x</a> <a id="3357" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="3359" href="#3241" class="Function">mapForest</a> <a id="3369" href="#3331" class="Bound">f</a> <a id="3371" href="#3338" class="Bound">xs</a>
 </pre>
-<p>The other solution is to give the tree a size parameter. This way, all submodes of a given tree will have smaller sizes, which will give the compiler a finite descending chain condition it can use to prove termination.</p>
+<p>The other solution is to give the tree a size parameter. This way,
+all submodes of a given tree will have smaller sizes, which will give
+the compiler a finite descending chain condition it can use to prove
+termination.</p>
 <pre class="Agda"><a id="3606" class="Keyword">data</a> <a id="Tree"></a><a id="3611" href="#3611" class="Datatype">Tree</a> <a id="3616" class="Symbol">(</a><a id="3617" href="#3617" class="Bound">A</a> <a id="3619" class="Symbol">:</a> <a id="3621" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="3626" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="3627" class="Symbol">)</a> <a id="3629" class="Symbol">(</a><a id="3630" href="#3630" class="Bound">i</a> <a id="3632" class="Symbol">:</a> <a id="3634" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#179" class="Postulate">Size</a><a id="3638" class="Symbol">)</a> <a id="3640" class="Symbol">:</a> <a id="3642" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="3647" href="#3626" class="Bound">a</a> <a id="3649" class="Keyword">where</a>
   <a id="Tree._&amp;_"></a><a id="3657" href="#3657" class="InductiveConstructor Operator">_&amp;_</a> <a id="3661" class="Symbol">:</a> <a id="3663" href="#3617" class="Bound">A</a> <a id="3665" class="Symbol">→</a> <a id="3667" class="Symbol">∀</a> <a id="3669" class="Symbol">{</a><a id="3670" href="#3670" class="Bound">j</a> <a id="3672" class="Symbol">:</a> <a id="3674" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#211" class="Postulate Operator">Size&lt;</a> <a id="3680" href="#3630" class="Bound">i</a><a id="3681" class="Symbol">}</a> <a id="3683" class="Symbol">→</a> <a id="3685" href="../code/terminating-tricky-traversals/Post.Prelude.html#507" class="Datatype">List</a> <a id="3690" class="Symbol">(</a><a id="3691" href="#3611" class="Datatype">Tree</a> <a id="3696" href="#3617" class="Bound">A</a> <a id="3698" href="#3670" class="Bound">j</a><a id="3699" class="Symbol">)</a> <a id="3701" class="Symbol">→</a> <a id="3703" href="#3611" class="Datatype">Tree</a> <a id="3708" href="#3617" class="Bound">A</a> <a id="3710" href="#3630" class="Bound">i</a>
 
 <a id="mapTree"></a><a id="3713" href="#3713" class="Function">mapTree</a> <a id="3721" class="Symbol">:</a> <a id="3723" class="Symbol">(</a><a id="3724" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="3726" class="Symbol">→</a> <a id="3728" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a><a id="3729" class="Symbol">)</a> <a id="3731" class="Symbol">→</a> <a id="3733" href="#3611" class="Datatype">Tree</a> <a id="3738" href="../code/terminating-tricky-traversals/Post.Prelude.html#237" class="Generalizable">A</a> <a id="3740" href="../code/terminating-tricky-traversals/Post.Prelude.html#276" class="Generalizable">i</a> <a id="3742" class="Symbol">→</a> <a id="3744" href="#3611" class="Datatype">Tree</a> <a id="3749" href="../code/terminating-tricky-traversals/Post.Prelude.html#250" class="Generalizable">B</a> <a id="3751" href="../code/terminating-tricky-traversals/Post.Prelude.html#276" class="Generalizable">i</a>
 <a id="3753" href="#3713" class="Function">mapTree</a> <a id="3761" href="#3761" class="Bound">f</a> <a id="3763" class="Symbol">(</a><a id="3764" href="#3764" class="Bound">x</a> <a id="3766" href="#3657" class="InductiveConstructor Operator">&amp;</a> <a id="3768" href="#3768" class="Bound">xs</a><a id="3770" class="Symbol">)</a> <a id="3772" class="Symbol">=</a> <a id="3774" href="#3761" class="Bound">f</a> <a id="3776" href="#3764" class="Bound">x</a> <a id="3778" href="#3657" class="InductiveConstructor Operator">&amp;</a> <a id="3780" href="../code/terminating-tricky-traversals/Post.Prelude.html#678" class="Function">map</a> <a id="3784" class="Symbol">(</a><a id="3785" href="#3713" class="Function">mapTree</a> <a id="3793" href="#3761" class="Bound">f</a><a id="3794" class="Symbol">)</a> <a id="3796" href="#3768" class="Bound">xs</a>
 </pre>
-<p>So how do we use this stuff in our graph traversal? Well first we’ll need a coinductive Stream type:</p>
+<p>So how do we use this stuff in our graph traversal? Well first we’ll
+need a coinductive Stream type:</p>
 <pre class="Agda"><a id="3914" class="Keyword">record</a> <a id="Stream"></a><a id="3921" href="#3921" class="Record">Stream</a> <a id="3928" class="Symbol">(</a><a id="3929" href="#3929" class="Bound">A</a> <a id="3931" class="Symbol">:</a> <a id="3933" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="3938" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="3939" class="Symbol">)</a> <a id="3941" class="Symbol">(</a><a id="3942" href="#3942" class="Bound">i</a> <a id="3944" class="Symbol">:</a> <a id="3946" href="../code/terminating-tricky-traversals/Agda.Builtin.Size.html#179" class="Postulate">Size</a><a id="3950" class="Symbol">)</a> <a id="3952" class="Symbol">:</a> <a id="3954" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="3959" href="#3938" class="Bound">a</a> <a id="3961" class="Keyword">where</a>
   <a id="3969" class="Keyword">coinductive</a>
   <a id="3983" class="Keyword">field</a>
@@ -122,26 +154,40 @@
   <a id="4583" class="Symbol">...</a> <a id="4587" class="Symbol">|</a> <a id="4589" href="../code/terminating-tricky-traversals/Agda.Builtin.Bool.html#154" class="InductiveConstructor">false</a> <a id="4595" class="Symbol">=</a> <a id="4597" class="Symbol">λ</a> <a id="4599" class="Keyword">where</a> <a id="4605" class="Symbol">.</a><a id="4606" href="#3993" class="Field">head</a> <a id="4611" class="Symbol">→</a> <a id="4613" class="Symbol">(</a><a id="4614" class="Bound">x</a> <a id="4616" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="4618" class="Bound">qs</a> <a id="4621" class="Symbol">.</a><a id="4622" href="#3993" class="Field">head</a> <a id="4627" class="Symbol">.</a><a id="4628" href="../code/terminating-tricky-traversals/Agda.Builtin.Sigma.html#225" class="Field">fst</a> <a id="4632" href="../code/terminating-tricky-traversals/Agda.Builtin.Sigma.html#209" class="InductiveConstructor Operator">,</a> <a id="4634" class="Bound">x</a> <a id="4636" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="4638" class="Bound">qs</a> <a id="4641" class="Symbol">.</a><a id="4642" href="#3993" class="Field">head</a> <a id="4647" class="Symbol">.</a><a id="4648" href="../code/terminating-tricky-traversals/Agda.Builtin.Sigma.html#237" class="Field">snd</a><a id="4651" class="Symbol">)</a>
                         <a id="4677" class="Symbol">.</a><a id="4678" href="#4006" class="Field">tail</a> <a id="4683" class="Symbol">→</a> <a id="4685" href="../code/terminating-tricky-traversals/Post.Prelude.html#583" class="Function">foldr</a> <a id="4691" href="#4490" class="Function">f</a> <a id="4693" class="Symbol">(</a><a id="4694" class="Bound">qs</a> <a id="4697" class="Symbol">.</a><a id="4698" href="#4006" class="Field">tail</a><a id="4702" class="Symbol">)</a> <a id="4704" class="Symbol">(</a><a id="4705" href="#4315" class="Bound">g</a> <a id="4707" class="Bound">x</a><a id="4708" class="Symbol">)</a>
 </pre>
-<p>How do we convert this to a list of lists? Well, for this condition we would actually need to prove that there are only finitely many elements in the graph. We could actually use <a href="https://arxiv.org/abs/1604.01186">Noetherian finiteness</a> for this: though I have a working implementation, I’m still figuring out how to clean this up, so I will leave it for another post.</p>
+<p>How do we convert this to a list of lists? Well, for this condition
+we would actually need to prove that there are only finitely many
+elements in the graph. We could actually use <a href="https://arxiv.org/abs/1604.01186">Noetherian finiteness</a> for
+this: though I have a working implementation, I’m still figuring out how
+to clean this up, so I will leave it for another post.</p>
 <h1 id="traversing-a-braun-tree">Traversing a Braun Tree</h1>
-<p>A recent paper <span class="citation" data-cites="NipkowS-CPP20">(Nipkow and Sewell <a href="#ref-NipkowS-CPP20" role="doc-biblioref">2020</a>)</span> provided Coq proofs for some algorithms on Braun trees <span class="citation" data-cites="okasakiThreeAlgorithmsBraun1997">(Okasaki <a href="#ref-okasakiThreeAlgorithmsBraun1997" role="doc-biblioref">1997</a>)</span>, which prompted me to take a look at them again. This time, I came up with an interesting linear-time <code>toList</code> function, which relies on the following peculiar type:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> a</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  }</span></code></pre></div>
-<p>Even after coming up with the type myself, I still can’t really make heads nor tails of it. If I squint, it starts to look like some bizarre church-encoded binary number (but I have to <em>really</em> squint). It certainly seems related to corecursive queues <span class="citation" data-cites="smith_lloyd_2009">(Smith <a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>)</span>.</p>
-<p>Anyway, we can use the type to write the following lovely <code>toList</code> function on a Braun tree.</p>
+<p>A recent paper <span class="citation" data-cites="NipkowS-CPP20">(Nipkow and Sewell 2020)</span> provided Coq
+proofs for some algorithms on Braun trees <span class="citation" data-cites="okasakiThreeAlgorithmsBraun1997">(Okasaki 1997)</span>,
+which prompted me to take a look at them again. This time, I came up
+with an interesting linear-time <code>toList</code> function, which
+relies on the following peculiar type:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> a</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>Even after coming up with the type myself, I still can’t really make
+heads nor tails of it. If I squint, it starts to look like some bizarre
+church-encoded binary number (but I have to <em>really</em> squint). It
+certainly seems related to corecursive queues <span class="citation" data-cites="smith_lloyd_2009">(Smith 2009)</span>.</p>
+<p>Anyway, we can use the type to write the following lovely
+<code>toList</code> function on a Braun tree.</p>
 <p><span id="toListImpl"></p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>toList t <span class="ot">=</span> unQ2 (f t b) <span class="fu">id</span> <span class="fu">id</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> x <span class="op">:</span> unQ2 xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r))</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         xs <span class="ot">=</span> <span class="dt">Q2</span> (\_  _  <span class="ot">-&gt;</span> [])</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    b <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> unQ2 (ls (rs b)) <span class="fu">id</span> <span class="fu">id</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>toList t <span class="ot">=</span> unQ2 (f t b) <span class="fu">id</span> <span class="fu">id</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x l r) xs <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> x <span class="op">:</span> unQ2 xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r))</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">Leaf</span>         xs <span class="ot">=</span> <span class="dt">Q2</span> (\_  _  <span class="ot">-&gt;</span> [])</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> <span class="dt">Q2</span> (\ls rs <span class="ot">-&gt;</span> unQ2 (ls (rs b)) <span class="fu">id</span> <span class="fu">id</span>)</span></code></pre></div>
 <p></span></p>
 <p>So can we convert it to Agda?</p>
-<p>Not really! As it turns out, this function is even more difficult to implement than one might expect. We can’t even <em>write</em> the <code>Q2</code> type in Agda without getting in trouble.</p>
+<p>Not really! As it turns out, this function is even more difficult to
+implement than one might expect. We can’t even <em>write</em> the
+<code>Q2</code> type in Agda without getting in trouble.</p>
 <pre class="Agda"><a id="6242" class="Symbol">{-#</a> <a id="6246" class="Keyword">NO_POSITIVITY_CHECK</a> <a id="6266" class="Symbol">#-}</a>
 <a id="6270" class="Keyword">record</a> <a id="Q2"></a><a id="6277" href="#6277" class="Record">Q2</a> <a id="6280" class="Symbol">(</a><a id="6281" href="#6281" class="Bound">A</a> <a id="6283" class="Symbol">:</a> <a id="6285" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="6290" href="../code/terminating-tricky-traversals/Post.Prelude.html#221" class="Generalizable">a</a><a id="6291" class="Symbol">)</a> <a id="6293" class="Symbol">:</a> <a id="6295" href="../code/terminating-tricky-traversals/Cubical.Core.Primitives.html#957" class="Function">Type</a> <a id="6300" href="#6290" class="Bound">a</a> <a id="6302" class="Keyword">where</a>
   <a id="6310" class="Keyword">inductive</a>
@@ -163,13 +209,20 @@
   <a id="6629" href="#6587" class="Function">f</a> <a id="6631" href="../code/terminating-tricky-traversals/Post.Prelude.html#4113" class="InductiveConstructor">leaf</a>         <a id="6644" href="#6644" class="Bound">xs</a> <a id="6647" class="Symbol">.</a><a id="6648" href="#6332" class="Field">q2</a> <a id="6651" href="#6651" class="Bound">ls</a> <a id="6654" href="#6654" class="Bound">rs</a> <a id="6657" class="Symbol">=</a> <a id="6659" href="../code/terminating-tricky-traversals/Post.Prelude.html#542" class="InductiveConstructor">[]</a>
   <a id="6664" href="#6587" class="Function">f</a> <a id="6666" class="Symbol">(</a><a id="6667" href="../code/terminating-tricky-traversals/Post.Prelude.html#4130" class="InductiveConstructor">node</a> <a id="6672" href="#6672" class="Bound">x</a> <a id="6674" href="#6674" class="Bound">l</a> <a id="6676" href="#6676" class="Bound">r</a><a id="6677" class="Symbol">)</a> <a id="6679" href="#6679" class="Bound">xs</a> <a id="6682" class="Symbol">.</a><a id="6683" href="#6332" class="Field">q2</a> <a id="6686" href="#6686" class="Bound">ls</a> <a id="6689" href="#6689" class="Bound">rs</a> <a id="6692" class="Symbol">=</a> <a id="6694" href="#6672" class="Bound">x</a> <a id="6696" href="../code/terminating-tricky-traversals/Post.Prelude.html#556" class="InductiveConstructor Operator">∷</a> <a id="6698" href="#6679" class="Bound">xs</a> <a id="6701" class="Symbol">.</a><a id="6702" href="#6332" class="Field">q2</a> <a id="6705" class="Symbol">(</a><a id="6706" href="#6686" class="Bound">ls</a> <a id="6709" href="../code/terminating-tricky-traversals/Post.Prelude.html#434" class="Function Operator">∘</a> <a id="6711" href="#6587" class="Function">f</a> <a id="6713" href="#6674" class="Bound">l</a><a id="6714" class="Symbol">)</a> <a id="6716" class="Symbol">(</a><a id="6717" href="#6689" class="Bound">rs</a> <a id="6720" href="../code/terminating-tricky-traversals/Post.Prelude.html#434" class="Function Operator">∘</a> <a id="6722" href="#6587" class="Function">f</a> <a id="6724" href="#6676" class="Bound">r</a><a id="6725" class="Symbol">)</a>
 </pre>
-<p>Apparently this problem of strict positivity for breadth-first traversals has come up before: <span class="citation" data-cites="bergerMartinHofmannCase2019">Berger, Matthes, and Setzer (<a href="#ref-bergerMartinHofmannCase2019" role="doc-biblioref">2019</a>)</span>; <span class="citation" data-cites="hofmannNonStrictlyPositive1993">Hofmann (<a href="#ref-hofmannNonStrictlyPositive1993" role="doc-biblioref">1993</a>)</span>.</p>
+<p>Apparently this problem of strict positivity for breadth-first
+traversals has come up before: <span class="citation" data-cites="bergerMartinHofmannCase2019">Berger, Matthes, and Setzer
+(2019)</span>; <span class="citation" data-cites="hofmannNonStrictlyPositive1993">Hofmann (1993)</span>.</p>
 <h1 id="waitwhere-did-q2-come-from">Wait—Where did Q2 Come From?</h1>
 <p>Update 31/01/2020</p>
-<p>Daniel Peebles (<a href="https://twitter.com/copumpkin">@copumpkin</a> on twitter) replied to my tweet about this post with the following:</p>
+<p>Daniel Peebles (<a href="https://twitter.com/copumpkin">@copumpkin</a> on twitter) replied
+to my tweet about this post with the following:</p>
 <blockquote>
-<p>Interesting! Curious <em>how</em> you came up with that weird type at the end. It doesn’t exactly feel like the first thing one might reach for and it would be interesting to see some writing on the thought process that led to it</p>
-<p><a href="https://twitter.com/copumpkin/status/1222681927854936065">Dan P (@copumpkin), Jan 30, 2020.</a></p>
+<p>Interesting! Curious <em>how</em> you came up with that weird type at
+the end. It doesn’t exactly feel like the first thing one might reach
+for and it would be interesting to see some writing on the thought
+process that led to it</p>
+<p><a href="https://twitter.com/copumpkin/status/1222681927854936065">Dan P
+(@copumpkin), Jan 30, 2020.</a></p>
 </blockquote>
 <p>So that’s what I’m going to add here!</p>
 <p>Let’s take the Braun tree of the numbers 1 to 15:</p>
@@ -188,7 +241,16 @@
    │ ┌11
    └7┤
      └15</code></pre>
-<p>Doing a normal breadth-first traversal for the first two levels is fine (1, 2, 3): it starts to fall apart at the third level (4, 6, 5, 7). Here’s the way we should traverse it: “all of the left branches, and then all of the right branches”. So, we will have a queue of trees. We take the root element of each tree in the queue, and emit it, and then we add all of the <em>left</em> children of the trees in the queue to one queue, and then all the <em>right</em> children to another, and then concatenate them into a new queue and we start again. We can stop whenever we hit an empty tree because of the structure of the Braun tree. Here’s an ascii diagram to show what’s going on:</p>
+<p>Doing a normal breadth-first traversal for the first two levels is
+fine (1, 2, 3): it starts to fall apart at the third level (4, 6, 5, 7).
+Here’s the way we should traverse it: “all of the left branches, and
+then all of the right branches”. So, we will have a queue of trees. We
+take the root element of each tree in the queue, and emit it, and then
+we add all of the <em>left</em> children of the trees in the queue to
+one queue, and then all the <em>right</em> children to another, and then
+concatenate them into a new queue and we start again. We can stop
+whenever we hit an empty tree because of the structure of the Braun
+tree. Here’s an ascii diagram to show what’s going on:</p>
 <pre><code>     ┌8   |     ┌8    |     ┌8     |       8
    ┌4┤    |   ┌4┤     |    4┤      |
    │ └12  |   │ └12   |     └12    |       9
@@ -206,57 +268,93 @@
      └15  |     └15   |     └15    |       15
 
          1,         2, 3,       4, 5, 6, 7,   8, 9, 10, 11, 12, 13, 14, 15</code></pre>
-<p>If we want to do this in Haskell, we have a number of options for how we would represent queues: as ever, though, I much prefer to use vanilla lists and time the reversals so that they stay linear. Here’s what that looks like:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f t b [] []</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _ _  _  <span class="ot">=</span> []</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldr</span> f b (<span class="fu">reverse</span> ls <span class="op">++</span> <span class="fu">reverse</span> rs) [] []</span></code></pre></div>
-<p>Any place we see a <code>foldr</code> being run after a reverse or a concatenation, we know that we can remove a pass (in actual fact rewrite rules will likely do this automatically for us).</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f b t [] []</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _  _  _  <span class="ot">=</span> []</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">flip</span> f) (<span class="fu">foldl</span> (<span class="fu">flip</span> f) b rs) ls [] []</span></code></pre></div>
-<p>Finally, since we’re building up the lists with <code>:</code> (in a linear way, i.e. we will not use the intermediate queues more than once), and we’re immediately consuming them with a fold, we can deforest the intermediate list, replacing every <code>:</code> with <code>f</code> (actually, it’s a little more tricky than that, since we replace the <code>:</code> with the <em>reversed</em> version of <code>f</code>, i.e. the one you would pass to <code>foldr</code> if you wanted it to act like <code>foldl</code>. This trick is explained in more detail in <a href="2019-05-08-list-manipulation-tricks.html">this post</a>).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>toList t <span class="ot">=</span> f t b <span class="fu">id</span> <span class="fu">id</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    f <span class="dt">Leaf</span>         _ _ _ <span class="ot">=</span> []</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>    b ls rs <span class="ot">=</span> ls (rs b) <span class="fu">id</span> <span class="fu">id</span></span></code></pre></div>
-<p>Once you do that, however, you run into the “cannot construct the infinite type” error. To be precise:</p>
+<p>If we want to do this in Haskell, we have a number of options for how
+we would represent queues: as ever, though, I much prefer to use vanilla
+lists and time the reversals so that they stay linear. Here’s what that
+looks like:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>toList t <span class="ot">=</span> f t b [] []</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">Leaf</span>         _ _  _  <span class="ot">=</span> []</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldr</span> f b (<span class="fu">reverse</span> ls <span class="op">++</span> <span class="fu">reverse</span> rs) [] []</span></code></pre></div>
+<p>Any place we see a <code>foldr</code> being run after a reverse or a
+concatenation, we know that we can remove a pass (in actual fact rewrite
+rules will likely do this automatically for us).</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>toList t <span class="ot">=</span> f b t [] []</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (l <span class="op">:</span> ls) (r <span class="op">:</span> rs)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">Leaf</span>         _  _  _  <span class="ot">=</span> []</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    b ls rs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">flip</span> f) (<span class="fu">foldl</span> (<span class="fu">flip</span> f) b rs) ls [] []</span></code></pre></div>
+<p>Finally, since we’re building up the lists with <code>:</code> (in a
+linear way, i.e. we will not use the intermediate queues more than
+once), and we’re immediately consuming them with a fold, we can deforest
+the intermediate list, replacing every <code>:</code> with
+<code>f</code> (actually, it’s a little more tricky than that, since we
+replace the <code>:</code> with the <em>reversed</em> version of
+<code>f</code>, i.e. the one you would pass to <code>foldr</code> if you
+wanted it to act like <code>foldl</code>. This trick is explained in
+more detail in <a href="2019-05-08-list-manipulation-tricks.html">this
+post</a>).</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">toList ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>toList t <span class="ot">=</span> f t b <span class="fu">id</span> <span class="fu">id</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x l r) xs ls rs <span class="ot">=</span> x <span class="op">:</span> xs (ls <span class="op">.</span> f l) (rs <span class="op">.</span> f r)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">Leaf</span>         _ _ _ <span class="ot">=</span> []</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    b ls rs <span class="ot">=</span> ls (rs b) <span class="fu">id</span> <span class="fu">id</span></span></code></pre></div>
+<p>Once you do that, however, you run into the “cannot construct the
+infinite type” error. To be precise:</p>
 <blockquote>
 <pre><code>• Occurs check: cannot construct the infinite type:
     a3 ~ (a3 -&gt; c0) -&gt; (a3 -&gt; c1) -&gt; [a2]</code></pre>
 </blockquote>
-<p>And this gives us the template for our newtype! It requires some trial and error, but you can see where some of the recursive calls are, and what you eventually get is the following:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> [a]</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  }</span></code></pre></div>
-<p>(You can remove the list type constructor at the end, I did as I thought it made it slightly more general). And from there we get back to <a href="#toListImpl">the <code>toList</code> function</a>.</p>
+<p>And this gives us the template for our newtype! It requires some
+trial and error, but you can see where some of the recursive calls are,
+and what you eventually get is the following:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q2</span> a</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Q2</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> unQ2 ::</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> (<span class="dt">Q2</span> a <span class="ot">-&gt;</span> <span class="dt">Q2</span> a) <span class="ot">-&gt;</span> [a]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
+<p>(You can remove the list type constructor at the end, I did as I
+thought it made it slightly more general). And from there we get back to
+<a href="#toListImpl">the <code>toList</code> function</a>.</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-bergerMartinHofmannCase2019">
-<p>Berger, Ulrich, Ralph Matthes, and Anton Setzer. 2019. “Martin Hofmann’s Case for Non-Strictly Positive Data Types.” In <em>24th International Conference on Types for Proofs and Programs (TYPES 2018)</em>, ed by. Peter Dybjer, José Espírito Santo, and Luís Pinto, 130:22. Leibniz International Proceedings in Informatics (LIPIcs). Dagstuhl, Germany: Schloss DagstuhlLeibniz-Zentrum fuer Informatik. doi:<a href="https://doi.org/10.4230/LIPIcs.TYPES.2018.1">10.4230/LIPIcs.TYPES.2018.1</a>. <a href="http://drops.dagstuhl.de/opus/volltexte/2019/11405">http://drops.dagstuhl.de/opus/volltexte/2019/11405</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bergerMartinHofmannCase2019" class="csl-entry" role="listitem">
+Berger, Ulrich, Ralph Matthes, and Anton Setzer. 2019. <span>“Martin
+<span>Hofmann</span>’s <span>Case</span> for
+<span>Non</span>-<span>Strictly Positive Data Types</span>.”</span> In
+<em>24th international conference on types for proofs and programs
+(<span>TYPES</span> 2018)</em>, ed by. Peter Dybjer, José Espírito
+Santo, and Luís Pinto, 130:22. Leibniz international proceedings in
+informatics (<span>LIPIcs</span>). <span>Dagstuhl, Germany</span>:
+<span>Schloss DagstuhlLeibniz-Zentrum fuer Informatik</span>. doi:<a href="https://doi.org/10.4230/LIPIcs.TYPES.2018.1">10.4230/LIPIcs.TYPES.2018.1</a>.
+<a href="http://drops.dagstuhl.de/opus/volltexte/2019/11405">http://drops.dagstuhl.de/opus/volltexte/2019/11405</a>.
 </div>
-<div id="ref-hofmannNonStrictlyPositive1993">
-<p>Hofmann, Martin. 1993. “Non Strictly Positive Datatypes in System F.” <a href="https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html">https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html</a>.</p>
+<div id="ref-hofmannNonStrictlyPositive1993" class="csl-entry" role="listitem">
+Hofmann, Martin. 1993. <span>“Non <span>Strictly Positive
+Datatypes</span> in <span>System F</span>.”</span> <a href="https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html">https://www.seas.upenn.edu/~sweirich/types/archive/1993/msg00027.html</a>.
 </div>
-<div id="ref-NipkowS-CPP20">
-<p>Nipkow, Tobias, and Thomas Sewell. 2020. “Proof Pearl: Braun Trees.” In <em>Certified Programs and Proofs, CPP 2020</em>, ed by. J. Blanchette and C. Hritcu, –. ACM. <a href="http://www21.in.tum.de/~nipkow/pubs/cpp20.html">http://www21.in.tum.de/~nipkow/pubs/cpp20.html</a>.</p>
+<div id="ref-NipkowS-CPP20" class="csl-entry" role="listitem">
+Nipkow, Tobias, and Thomas Sewell. 2020. <span>“Proof pearl:
+<span>Braun</span> trees.”</span> In <em>Certified programs and proofs,
+<span>CPP</span> 2020</em>, ed by. J. Blanchette and C. Hritcu, –.
+<span>ACM</span>. <a href="http://www21.in.tum.de/~nipkow/pubs/cpp20.html">http://www21.in.tum.de/~nipkow/pubs/cpp20.html</a>.
 </div>
-<div id="ref-okasakiThreeAlgorithmsBraun1997">
-<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>. <a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.</p>
+<div id="ref-okasakiThreeAlgorithmsBraun1997" class="csl-entry" role="listitem">
+Okasaki, Chris. 1997. <span>“Three <span>Algorithms</span> on
+<span>Braun Trees</span>.”</span> <em>Journal of Functional
+Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>.
+<a href="https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf">https://www.eecs.northwestern.edu/~robby/courses/395-495-2013-fall/three-algorithms-on-braun-trees.pdf</a>.
 </div>
-<div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+<div id="ref-smith_lloyd_2009" class="csl-entry" role="listitem">
+Smith, Leon P. 2009. <span>“Lloyd <span>Allison</span>’s
+<span>Corecursive Queues</span>: <span>Why Continuations
+Matter</span>.”</span> <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.
 </div>
 </div>
 

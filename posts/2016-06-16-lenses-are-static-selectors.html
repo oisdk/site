@@ -30,119 +30,166 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Swift'." href="../tags/Swift.html">Swift</a>
+        Tags: <a title="All pages tagged 'Swift'." href="../tags/Swift.html" rel="tag">Swift</a>
     
 </div>
 
-<p>So I don’t really know what <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html">KVC</a> is, or much about <code class="sourceCode scala">performSelector</code> functions. <a href="http://inessential.com/2016/05/20/updating_local_objects_with_server_objec">This</a> blogpost, from Brent Simmons, let me know a little bit about why I would want to use them.</p>
+<p>So I don’t really know what <a href="https://developer.apple.com/library/mac/documentation/Cocoa/Conceptual/KeyValueCoding/Articles/KeyValueCoding.html">KVC</a>
+is, or much about <code class="sourceCode scala">performSelector</code>
+functions. <a href="http://inessential.com/2016/05/20/updating_local_objects_with_server_objec">This</a>
+blogpost, from Brent Simmons, let me know a little bit about why I would
+want to use them.</p>
 <p>It centred around removing code repetition of this type:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>}</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span> <span class="co">// There was an (intentional)</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>}                                    <span class="co">// bug here in the original post</span></span></code></pre></div>
-<p>To clean up the code, Brent used selector methods. At first, I was a little uncomfortable with the solution. As far as I could tell, the basis of a lot of this machinery used functions with types like this:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>func <span class="fu">get</span>(fromSelector: String) -&gt; AnyObject?</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>func <span class="fu">set</span>(forSelector: String) -&gt; ()</span></code></pre></div>
-<p>Which <em>seems</em> to be extremely dynamic. Stringly-typed and all that. Except that there are two different things going on here. One is the dynamic stuff; the ability to get rid of types when you need to. The other, though, has <em>nothing</em> to do with types. The other idea is being able to pass around something which can access the property (or method) of an object. Let’s look at the code that was being repeated:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">if</span> localObject.<span class="fu">foo</span> != serverObject.<span class="fu">foo</span> {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  localObject.<span class="fu">foo</span> = serverObject.<span class="fu">foo</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>}</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="kw">if</span> localObject.<span class="fu">bar</span> != serverObject.<span class="fu">bar</span> {</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>  localObject.<span class="fu">bar</span> = serverObject.<span class="fu">bar</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The logical, obvious thing to do here is try refactor out the common elements. In fact, the only things that <em>differ</em> between the two actions above are the <code class="sourceCode scala">foo</code> and <code class="sourceCode scala">bar</code>. It would be great to be able to write a function like this:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>func <span class="fu">checkThenUpdate</span>(selector) {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="kw">if</span> localObject.<span class="fu">selector</span> != serverObject.<span class="fu">selector</span> {</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    localObject.<span class="fu">selector</span> = serverObject.<span class="fu">selector</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  }</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> localObject<span class="op">.</span>foo <span class="op">!=</span> serverObject<span class="op">.</span>foo <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  localObject<span class="op">.</span>foo <span class="op">=</span> serverObject<span class="op">.</span>foo</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> localObject<span class="op">.</span>bar <span class="op">!=</span> serverObject<span class="op">.</span>bar <span class="op">{</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  localObject<span class="op">.</span>bar <span class="op">=</span> serverObject<span class="op">.</span>bar <span class="co">// There was an (intentional)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span>                                    <span class="co">// bug here in the original post</span></span></code></pre></div>
+<p>To clean up the code, Brent used selector methods. At first, I was a
+little uncomfortable with the solution. As far as I could tell, the
+basis of a lot of this machinery used functions with types like
+this:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>func <span class="fu">get</span><span class="op">(</span>fromSelector<span class="op">:</span> <span class="ex">String</span><span class="op">)</span> <span class="op">-&gt;</span> AnyObject<span class="op">?</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>func <span class="fu">set</span><span class="op">(</span>forSelector<span class="op">:</span> <span class="ex">String</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="op">()</span></span></code></pre></div>
+<p>Which <em>seems</em> to be extremely dynamic. Stringly-typed and all
+that. Except that there are two different things going on here. One is
+the dynamic stuff; the ability to get rid of types when you need to. The
+other, though, has <em>nothing</em> to do with types. The other idea is
+being able to pass around something which can access the property (or
+method) of an object. Let’s look at the code that was being
+repeated:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> localObject<span class="op">.</span>foo <span class="op">!=</span> serverObject<span class="op">.</span>foo <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  localObject<span class="op">.</span>foo <span class="op">=</span> serverObject<span class="op">.</span>foo</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> localObject<span class="op">.</span>bar <span class="op">!=</span> serverObject<span class="op">.</span>bar <span class="op">{</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  localObject<span class="op">.</span>bar <span class="op">=</span> serverObject<span class="op">.</span>bar</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The logical, obvious thing to do here is try refactor out the common
+elements. In fact, the only things that <em>differ</em> between the two
+actions above are the <code class="sourceCode scala">foo</code> and
+<code class="sourceCode scala">bar</code>. It would be great to be able
+to write a function like this:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>func <span class="fu">checkThenUpdate</span><span class="op">(</span>selector<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> localObject<span class="op">.</span>selector <span class="op">!=</span> serverObject<span class="op">.</span>selector <span class="op">{</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    localObject<span class="op">.</span>selector <span class="op">=</span> serverObject<span class="op">.</span>selector</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>And then maybe a single line like this:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>[foo, bar, baz].<span class="fu">forEach</span>(checkThenUpdate)</span></code></pre></div>
-<p>That’s pretty obviously better. It’s just good programming: when faced with repetition, find the repeated part, and abstract it out. Is it more <em>dynamic</em> than the repetition, though? I don’t think so. All you have to figure out is an appropriate type for the selector, and you can keep all of your static checking. To me, it seems a lot like a <a href="https://hackage.haskell.org/package/lens">lens</a>:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>struct Lens&lt;Whole, Part&gt; {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  let get: Whole -&gt; Part</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  let set: (Whole, Part) -&gt; Whole</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>(This is a lens similar to the ones used in the <a href="http://hackage.haskell.org/package/data-lens">data-lens</a> library, in contrast to van Laarhoven lenses, or LensFamilies. LensFamilies are used in the <a href="https://hackage.haskell.org/package/lens">lens</a> package, and they allow you to change the type of the <code class="sourceCode scala">Part</code>. They’re also just normal functions, rather than a separate type, so you can manipulate them in a pretty standard way. Swift’s type system isn’t able to model those lenses, though, unfortunately.) It has two things: a getter and a setter. The getter is pretty obvious: it takes the object, and returns the property. The setter is a little more confusing. It’s taking an object, and the new property you want to stick in to the object, and returns the object with that property updated. For instance, if we were to make a <code class="sourceCode scala">Person</code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>struct LocalPerson {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>  <span class="kw">var</span> age: Int</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">var</span> name: String</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">[</span>foo<span class="op">,</span> bar<span class="op">,</span> baz<span class="op">].</span><span class="fu">forEach</span><span class="op">(</span>checkThenUpdate<span class="op">)</span></span></code></pre></div>
+<p>That’s pretty obviously better. It’s just good programming: when
+faced with repetition, find the repeated part, and abstract it out. Is
+it more <em>dynamic</em> than the repetition, though? I don’t think so.
+All you have to figure out is an appropriate type for the selector, and
+you can keep all of your static checking. To me, it seems a lot like a
+<a href="https://hackage.haskell.org/package/lens">lens</a>:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>struct Lens<span class="op">&lt;</span>Whole<span class="op">,</span> Part<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  let get<span class="op">:</span> Whole <span class="op">-&gt;</span> Part</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  let set<span class="op">:</span> <span class="op">(</span>Whole<span class="op">,</span> Part<span class="op">)</span> <span class="op">-&gt;</span> Whole</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>(This is a lens similar to the ones used in the <a href="http://hackage.haskell.org/package/data-lens">data-lens</a>
+library, in contrast to van Laarhoven lenses, or LensFamilies.
+LensFamilies are used in the <a href="https://hackage.haskell.org/package/lens">lens</a> package, and
+they allow you to change the type of the <code class="sourceCode scala">Part</code>. They’re also just normal
+functions, rather than a separate type, so you can manipulate them in a
+pretty standard way. Swift’s type system isn’t able to model those
+lenses, though, unfortunately.) It has two things: a getter and a
+setter. The getter is pretty obvious: it takes the object, and returns
+the property. The setter is a little more confusing. It’s taking an
+object, and the new property you want to stick in to the object, and
+returns the object with that property updated. For instance, if we were
+to make a <code class="sourceCode scala">Person</code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>struct LocalPerson <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> age<span class="op">:</span> <span class="bu">Int</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> name<span class="op">:</span> <span class="ex">String</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>We could then have a lens for the <code class="sourceCode scala">name</code> field like this:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>let localName: Lens&lt;LocalPerson,String&gt; = <span class="fu">Lens</span>(</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  get: { p in p.<span class="fu">name</span> },</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  set: { (oldPerson,newName) in</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    <span class="kw">var</span> newPerson = oldPerson</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    newPerson.<span class="fu">name</span> = newName</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>    <span class="kw">return</span> newPerson</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>  }</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>let localName<span class="op">:</span> Lens<span class="op">&lt;</span>LocalPerson<span class="op">,</span><span class="ex">String</span><span class="op">&gt;</span> <span class="op">=</span> <span class="fu">Lens</span><span class="op">(</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  get<span class="op">:</span> <span class="op">{</span> p in p<span class="op">.</span>name <span class="op">},</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  set<span class="op">:</span> <span class="op">{</span> <span class="op">(</span>oldPerson<span class="op">,</span>newName<span class="op">)</span> in</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> newPerson <span class="op">=</span> oldPerson</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    newPerson<span class="op">.</span>name <span class="op">=</span> newName</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> newPerson</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span></code></pre></div>
 <p>And you’d use it like this:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>let caoimhe = <span class="fu">LocalPerson</span>(age: <span class="dv">46</span>, name: <span class="st">&quot;caoimhe&quot;</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>localName.<span class="fu">get</span>(caoimhe) <span class="co">// 46</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>localName.<span class="fu">set</span>(caoimhe, <span class="st">&quot;breifne&quot;</span>) <span class="co">// LocalPerson(age: 46, name: &quot;breifne&quot;)</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>let caoimhe <span class="op">=</span> <span class="fu">LocalPerson</span><span class="op">(</span>age<span class="op">:</span> <span class="dv">46</span><span class="op">,</span> name<span class="op">:</span> <span class="st">&quot;caoimhe&quot;</span><span class="op">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>localName<span class="op">.</span><span class="fu">get</span><span class="op">(</span>caoimhe<span class="op">)</span> <span class="co">// 46</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>localName<span class="op">.</span><span class="fu">set</span><span class="op">(</span>caoimhe<span class="op">,</span> <span class="st">&quot;breifne&quot;</span><span class="op">)</span> <span class="co">// LocalPerson(age: 46, name: &quot;breifne&quot;)</span></span></code></pre></div>
 <p>Straight away, we’re able to do (something) like the <code class="sourceCode scala">checkThenUpdate</code> function:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>func checkThenUpdate</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  &lt;A: Equatable&gt;</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  (localLens: Lens&lt;LocalPerson,A&gt;, serverLens: Lens&lt;ServerPerson,A&gt;) {</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>  let serverProp = serverLens.<span class="fu">get</span>(serverObject)</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>  <span class="kw">if</span> localLens.<span class="fu">get</span>(localObject) != serverProp {</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>    localObject = localLens.<span class="fu">set</span>(localObject,serverProp)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>  }</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>func checkThenUpdate</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;</span>A<span class="op">:</span> Equatable<span class="op">&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">(</span>localLens<span class="op">:</span> Lens<span class="op">&lt;</span>LocalPerson<span class="op">,</span>A<span class="op">&gt;,</span> serverLens<span class="op">:</span> Lens<span class="op">&lt;</span>ServerPerson<span class="op">,</span>A<span class="op">&gt;)</span> <span class="op">{</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  let serverProp <span class="op">=</span> serverLens<span class="op">.</span><span class="fu">get</span><span class="op">(</span>serverObject<span class="op">)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> localLens<span class="op">.</span><span class="fu">get</span><span class="op">(</span>localObject<span class="op">)</span> <span class="op">!=</span> serverProp <span class="op">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    localObject <span class="op">=</span> localLens<span class="op">.</span><span class="fu">set</span><span class="op">(</span>localObject<span class="op">,</span>serverProp<span class="op">)</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>And it could be called pretty tersely:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="fu">checkThenUpdate</span>(localName, serverLens: serverName)</span></code></pre></div>
-<p>The biggest problem with this approach, obviously, is the boilerplate. In Haskell, that’s solved with Template Haskell, so the lens code is generated for you. (I’d love to see something like that in Swift) There’s a protocol-oriented spin on lenses, also. One of the variants on lenses in Haskell are called “classy-lenses”. That’s where, instead of just generating a lens with the same name as the field it looks into, you generate a typeclass (protocol) for anything with that lens. In Swift, it might work something like this:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>struct Place {</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="kw">var</span> name: String</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>}</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a><span class="co">// Instead of just having a lens for the name field, have a whole protocol</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a><span class="co">// for things with a name field:</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>protocol HasName {</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>  associatedtype Name</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; { get }</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>  <span class="kw">var</span> name: Name { get set }</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>}</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a><span class="co">// Because the mutable property is included in the protocol, you can rely on</span></span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true"></a><span class="co">// it in extensions:</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true"></a></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true"></a>extension HasName {</span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true"></a>  static <span class="kw">var</span> name: Lens&lt;Self,Name&gt; {</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">Lens</span>(</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true"></a>      get: {$<span class="fl">0.</span>name},</span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true"></a>      set: { (w,p) in </span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true"></a>        <span class="kw">var</span> n = w</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true"></a>        n.<span class="fu">name</span> = p</span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true"></a>        <span class="kw">return</span> n</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true"></a>      }</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true"></a>    )</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true"></a>  }</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true"></a>  <span class="kw">var</span> name: Name {</span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true"></a>    get { <span class="kw">return</span> Self.<span class="fu">name</span>.<span class="fu">get</span>(self) }</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true"></a>    set { self = Self.<span class="fu">name</span>.<span class="fu">set</span>(self,newValue) }</span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true"></a>  }</span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true"></a>}</span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true"></a></span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true"></a><span class="co">// This way, you can provide either the lens or the property, and you get the</span></span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true"></a><span class="co">// other for free.</span></span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true"></a></span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true"></a>extension Place: HasName {}</span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true"></a></span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true"></a><span class="co">// Then, you can rely on that protocol, and all of the types:</span></span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true"></a></span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true"></a>func checkEqualOnNames</span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true"></a>  &lt;A,B where A: HasName, B: HasName, A.<span class="fu">Name</span>: Equatable, A.<span class="fu">Name</span> == B.<span class="fu">Name</span>&gt;</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true"></a>  (x: A, _ y: B) -&gt; Bool {</span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true"></a>    <span class="kw">return</span> x.<span class="fu">name</span> == y.<span class="fu">name</span></span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the types intact. Other people have spoken about the other things you can do with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams - Lenses in Swift</a>), like composing them together, chaining operations, etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method cascading</a>) Unfortunately, in current Swift, the boilerplate makes all of this a little unpleasant. Still, they’re an interesting idea, and they show how a good type system needn’t always get in the way.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">checkThenUpdate</span><span class="op">(</span>localName<span class="op">,</span> serverLens<span class="op">:</span> serverName<span class="op">)</span></span></code></pre></div>
+<p>The biggest problem with this approach, obviously, is the
+boilerplate. In Haskell, that’s solved with Template Haskell, so the
+lens code is generated for you. (I’d love to see something like that in
+Swift) There’s a protocol-oriented spin on lenses, also. One of the
+variants on lenses in Haskell are called “classy-lenses”. That’s where,
+instead of just generating a lens with the same name as the field it
+looks into, you generate a typeclass (protocol) for anything with that
+lens. In Swift, it might work something like this:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>struct Place <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> name<span class="op">:</span> <span class="ex">String</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co">// Instead of just having a lens for the name field, have a whole protocol</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="co">// for things with a name field:</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>protocol HasName <span class="op">{</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  associatedtype <span class="ex">Name</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  static <span class="kw">var</span> name<span class="op">:</span> Lens<span class="op">&lt;</span>Self<span class="op">,</span><span class="ex">Name</span><span class="op">&gt;</span> <span class="op">{</span> get <span class="op">}</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> name<span class="op">:</span> <span class="ex">Name</span> <span class="op">{</span> get set <span class="op">}</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="co">// Because the mutable property is included in the protocol, you can rely on</span></span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="co">// it in extensions:</span></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>extension HasName <span class="op">{</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  static <span class="kw">var</span> name<span class="op">:</span> Lens<span class="op">&lt;</span>Self<span class="op">,</span><span class="ex">Name</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">Lens</span><span class="op">(</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>      get<span class="op">:</span> <span class="op">{</span>$<span class="fl">0.</span>name<span class="op">},</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>      set<span class="op">:</span> <span class="op">{</span> <span class="op">(</span>w<span class="op">,</span>p<span class="op">)</span> in </span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">var</span> n <span class="op">=</span> w</span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>        n<span class="op">.</span>name <span class="op">=</span> p</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> n</span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> name<span class="op">:</span> <span class="ex">Name</span> <span class="op">{</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>    get <span class="op">{</span> <span class="cf">return</span> Self<span class="op">.</span>name<span class="op">.</span><span class="fu">get</span><span class="op">(</span>self<span class="op">)</span> <span class="op">}</span></span>
+<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>    set <span class="op">{</span> self <span class="op">=</span> Self<span class="op">.</span>name<span class="op">.</span><span class="fu">set</span><span class="op">(</span>self<span class="op">,</span>newValue<span class="op">)</span> <span class="op">}</span></span>
+<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a><span class="co">// This way, you can provide either the lens or the property, and you get the</span></span>
+<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a><span class="co">// other for free.</span></span>
+<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>extension Place<span class="op">:</span> HasName <span class="op">{}</span></span>
+<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a><span class="co">// Then, you can rely on that protocol, and all of the types:</span></span>
+<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a>func checkEqualOnNames</span>
+<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>  <span class="op">&lt;</span>A<span class="op">,</span>B where A<span class="op">:</span> HasName<span class="op">,</span> B<span class="op">:</span> HasName<span class="op">,</span> A<span class="op">.</span><span class="ex">Name</span><span class="op">:</span> Equatable<span class="op">,</span> A<span class="op">.</span><span class="ex">Name</span> <span class="op">==</span> B<span class="op">.</span><span class="ex">Name</span><span class="op">&gt;</span></span>
+<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a>  <span class="op">(</span>x<span class="op">:</span> A<span class="op">,</span> _ y<span class="op">:</span> B<span class="op">)</span> <span class="op">-&gt;</span> Bool <span class="op">{</span></span>
+<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x<span class="op">.</span>name <span class="op">==</span> y<span class="op">.</span>name</span>
+<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This protocol lets you do a kind of static <code class="sourceCode scala">respondsToSelector</code>, with all of the
+types intact. Other people have spoken about the other things you can do
+with lenses in Swift (<a href="https://www.youtube.com/watch?v=ofjehH9f-CU">Brandon Williams -
+Lenses in Swift</a>), like composing them together, chaining operations,
+etc. (One other thing they can emulate is <a href="https://gist.github.com/erica/6794d48d917e2084d6ed">method
+cascading</a>) Unfortunately, in current Swift, the boilerplate makes
+all of this a little unpleasant. Still, they’re an interesting idea, and
+they show how a good type system needn’t always get in the way.</p>
 
         </div>
     </body>

@@ -30,96 +30,144 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
-<p>A naive—and wrong—way to shuffle a list is to assign each element in the list a random number, and then sort it. It might not be immediately obvious why: <span class="citation" data-cites="kiselyov_provably_2002">Kiselyov (<a href="#ref-kiselyov_provably_2002" role="doc-biblioref">2002</a>)</span> has a good explanation as to the problem. One way to think about it is like this: choosing <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> random numbers each in the range <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">[0,n)</annotation></semantics></math> has <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>n</mi><mi>n</mi></msup><annotation encoding="application/x-tex">n^n</annotation></semantics></math> possible outcomes, whereas there are <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math> permutations. Since these don’t necessarily divide evenly into each other, you’re going to have some bias.</p>
+<p>A naive—and wrong—way to shuffle a list is to assign each element in
+the list a random number, and then sort it. It might not be immediately
+obvious why: <span class="citation" data-cites="kiselyov_provably_2002">Kiselyov (2002)</span> has a good
+explanation as to the problem. One way to think about it is like this:
+choosing
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+random numbers each in the range
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">[0,n)</annotation></semantics></math>
+has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msup><mi>n</mi><mi>n</mi></msup><annotation encoding="application/x-tex">n^n</annotation></semantics></math>
+possible outcomes, whereas there are
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math>
+permutations. Since these don’t necessarily divide evenly into each
+other, you’re going to have some bias.</p>
 <h1 id="factorial-numbers">Factorial Numbers</h1>
-<p>The first part of the fix is to figure out a way to get some random data that has only <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math> possible values. The trick here will be to mimic the structure of a factorial itself: taking <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>, the previous technique would have yielded:</p>
+<p>The first part of the fix is to figure out a way to get some random
+data that has only
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mi>!</mi></mrow><annotation encoding="application/x-tex">n!</annotation></semantics></math>
+possible values. The trick here will be to mimic the structure of a
+factorial itself: taking
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>,
+the previous technique would have yielded:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>×</mo><mn>5</mn><mo>=</mo><msup><mn>5</mn><mn>5</mn></msup></mrow><annotation encoding="application/x-tex">5 \times 5 \times 5 \times 5 \times 5 = 5^5</annotation></semantics></math></p>
 <p>possible values. But we want:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mo>×</mo><mn>4</mn><mo>×</mo><mn>3</mn><mo>×</mo><mn>2</mn><mo>×</mo><mn>1</mn><mo>=</mo><mn>5</mn><mi>!</mi></mrow><annotation encoding="application/x-tex">5 \times 4 \times 3 \times 2 \times 1 = 5!</annotation></semantics></math></p>
-<p>The solution is simple, then! Simply decrement the range by one for each position in the output list. In Haskell:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">nums ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Int</span>]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>nums <span class="dv">0</span> <span class="ot">=</span> <span class="fu">pure</span> []</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>nums n <span class="ot">=</span> (<span class="op">:</span>) <span class="op">&lt;$&gt;</span> randomR (<span class="dv">0</span>,n) <span class="op">&lt;*&gt;</span> nums (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
-<p>As an aside, what we’ve done here is constructed a list of digits in the <a href="https://en.wikipedia.org/wiki/Factorial_number_system">factorial number system</a>.</p>
+<p>The solution is simple, then! Simply decrement the range by one for
+each position in the output list. In Haskell:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">nums ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> [<span class="dt">Int</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>nums <span class="dv">0</span> <span class="ot">=</span> <span class="fu">pure</span> []</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>nums n <span class="ot">=</span> (<span class="op">:</span>) <span class="op">&lt;$&gt;</span> randomR (<span class="dv">0</span>,n) <span class="op">&lt;*&gt;</span> nums (n<span class="op">-</span><span class="dv">1</span>)</span></code></pre></div>
+<p>As an aside, what we’ve done here is constructed a list of digits in
+the <a href="https://en.wikipedia.org/wiki/Factorial_number_system">factorial
+number system</a>.</p>
 <h1 id="sorts">Sorts</h1>
-<p>Unfortunately, while we’ve figured out a way to get properly distributed random data, we can’t yet sort it to shuffle our list. If we look at the 6 factorial numbers generated for <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>, we can see the problem:</p>
+<p>Unfortunately, while we’ve figured out a way to get properly
+distributed random data, we can’t yet sort it to shuffle our list. If we
+look at the 6 factorial numbers generated for
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>=</mo><mn>5</mn></mrow><annotation encoding="application/x-tex">n = 5</annotation></semantics></math>,
+we can see the problem:</p>
 <pre><code>000
 010
 100
 110
 200
 210</code></pre>
-<p>Different values in the list will produce the same sort: <code>100</code> and <code>200</code>, for instance.</p>
+<p>Different values in the list will produce the same sort:
+<code>100</code> and <code>200</code>, for instance.</p>
 <h1 id="lehmer-codes">Lehmer Codes</h1>
-<p>We need a way to map the numbers above to a particular permutations: that’s precisely the problem solved by <a href="https://en.wikipedia.org/wiki/Lehmer_code">Lehmer codes</a>. For the numbers <code>110</code>, we can think of each digit as the relative position to put that item from the string into. Some Haskell code might make it clear:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">insert ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>insert <span class="dv">0</span> x xs <span class="ot">=</span> x <span class="op">:</span> xs</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>insert i x (y<span class="op">:</span>ys) <span class="ot">=</span> y <span class="op">:</span> insert (i<span class="op">-</span><span class="dv">1</span>) x ys</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>shuffle xs ys <span class="ot">=</span> <span class="fu">foldr</span> (<span class="fu">uncurry</span> insert) [] (<span class="fu">zip</span> ys xs)</span></code></pre></div>
+<p>We need a way to map the numbers above to a particular permutations:
+that’s precisely the problem solved by <a href="https://en.wikipedia.org/wiki/Lehmer_code">Lehmer codes</a>. For
+the numbers <code>110</code>, we can think of each digit as the relative
+position to put that item from the string into. Some Haskell code might
+make it clear:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">insert ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>insert <span class="dv">0</span> x xs <span class="ot">=</span> x <span class="op">:</span> xs</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>insert i x (y<span class="op">:</span>ys) <span class="ot">=</span> y <span class="op">:</span> insert (i<span class="op">-</span><span class="dv">1</span>) x ys</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>shuffle xs ys <span class="ot">=</span> <span class="fu">foldr</span> (<span class="fu">uncurry</span> insert) [] (<span class="fu">zip</span> ys xs)</span></code></pre></div>
 <p>And we can step through its execution:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>shuffle <span class="st">&quot;abc&quot;</span> [<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">foldr</span> (<span class="fu">uncurry</span> insert) [] [(<span class="dv">1</span>,<span class="ch">'a'</span>),(<span class="dv">1</span>,<span class="ch">'b'</span>),(<span class="dv">0</span>,<span class="ch">'c'</span>)]</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> (insert <span class="dv">1</span> <span class="ch">'b'</span> (insert <span class="dv">0</span> <span class="ch">'c'</span> []))</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> (insert <span class="dv">1</span> <span class="ch">'b'</span> <span class="st">&quot;c&quot;</span>)</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> <span class="st">&quot;cb&quot;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="ch">'c'</span> <span class="op">:</span> insert <span class="dv">0</span> <span class="ch">'a'</span> <span class="st">&quot;b&quot;</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a><span class="st">&quot;cab&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>shuffle <span class="st">&quot;abc&quot;</span> [<span class="dv">1</span>,<span class="dv">1</span>,<span class="dv">0</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">foldr</span> (<span class="fu">uncurry</span> insert) [] [(<span class="dv">1</span>,<span class="ch">'a'</span>),(<span class="dv">1</span>,<span class="ch">'b'</span>),(<span class="dv">0</span>,<span class="ch">'c'</span>)]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> (insert <span class="dv">1</span> <span class="ch">'b'</span> (insert <span class="dv">0</span> <span class="ch">'c'</span> []))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> (insert <span class="dv">1</span> <span class="ch">'b'</span> <span class="st">&quot;c&quot;</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>insert <span class="dv">1</span> <span class="ch">'a'</span> <span class="st">&quot;cb&quot;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="ch">'c'</span> <span class="op">:</span> insert <span class="dv">0</span> <span class="ch">'a'</span> <span class="st">&quot;b&quot;</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;cab&quot;</span></span></code></pre></div>
 <h1 id="dualities-of-sorts">Dualities of Sorts</h1>
-<p>Notice the similarity of the function above to a standard insertion sort:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>insert x [] <span class="ot">=</span> x <span class="op">:</span> []</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>insert x (y<span class="op">:</span>ys)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a> <span class="op">|</span> x <span class="op">&lt;=</span> y <span class="ot">=</span> x <span class="op">:</span> y <span class="op">:</span> ys</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a> <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> y <span class="op">:</span> insert x ys</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a><span class="ot">insertSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>insertSort <span class="ot">=</span> <span class="fu">foldr</span> insert []</span></code></pre></div>
-<p>The “comparison” is a little strange—we have to take into account relative position—but the shape is almost identical. Once I spot something like that, my first thought is to see if the relationship extends to a better <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math> sort, but there’s something else I’d like to look at first.</p>
-<p>“A Duality of Sorts” <span class="citation" data-cites="hinze_duality_2013">(Hinze, Magalhães, and Wu <a href="#ref-hinze_duality_2013" role="doc-biblioref">2013</a>)</span> is a paper based on the interesting symmetry between insertion sort and selection sort <span class="citation" data-cites="haran_sorting_2016">(There’s also a video of Graham Hutton explaining the idea; Haran <a href="#ref-haran_sorting_2016" role="doc-biblioref">2016</a>)</span>.</p>
-<p>With that paper in mind, can we rewrite <code>shuffle</code> as a selection-based algorithm? We can indeed!</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">pop ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [(<span class="dt">Int</span>,a)])</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>pop [] <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>pop ((<span class="dv">0</span>,x)<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x, xs)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>pop ((i,x)<span class="op">:</span>xs) <span class="ot">=</span> (<span class="fu">fmap</span><span class="op">.</span><span class="fu">fmap</span>) ((i<span class="op">-</span><span class="dv">1</span>,x)<span class="op">:</span>) (pop xs)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>shuffle xs ys <span class="ot">=</span> unfoldr pop (<span class="fu">zip</span> ys xs)</span></code></pre></div>
-<p>While the symmetry is pleasing, the paper details how to make the relationship explicit, using the same function for both selection and insertion sort:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>swop <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">Nil</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>swop (<span class="dt">Cons</span> a (x , <span class="dt">Nil</span>)) <span class="ot">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>swop (<span class="dt">Cons</span> a (x , <span class="dt">Cons</span> b x'))</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">fst</span> a <span class="op">==</span> <span class="dv">0</span> <span class="ot">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span>  <span class="ot">=</span> <span class="dt">Cons</span> b (<span class="dt">Right</span> (<span class="dt">Cons</span> (first <span class="fu">pred</span> a) x'))</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>  </span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a><span class="ot">ishuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>ishuffle <span class="ot">=</span> cata (apo (swop <span class="op">.</span> <span class="fu">fmap</span> (<span class="fu">id</span> <span class="op">&amp;&amp;&amp;</span> project)))</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a><span class="ot">sshuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>sshuffle <span class="ot">=</span> ana (para (<span class="fu">fmap</span> (<span class="fu">id</span> <span class="op">|||</span> embed) <span class="op">.</span> swop))</span></code></pre></div>
+<p>Notice the similarity of the function above to a standard insertion
+sort:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>insert x [] <span class="ot">=</span> x <span class="op">:</span> []</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>insert x (y<span class="op">:</span>ys)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a> <span class="op">|</span> x <span class="op">&lt;=</span> y <span class="ot">=</span> x <span class="op">:</span> y <span class="op">:</span> ys</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a> <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> y <span class="op">:</span> insert x ys</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="ot">insertSort ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>insertSort <span class="ot">=</span> <span class="fu">foldr</span> insert []</span></code></pre></div>
+<p>The “comparison” is a little strange—we have to take into account
+relative position—but the shape is almost identical. Once I spot
+something like that, my first thought is to see if the relationship
+extends to a better
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>
+sort, but there’s something else I’d like to look at first.</p>
+<p>“A Duality of Sorts” <span class="citation" data-cites="hinze_duality_2013">(Hinze, Magalhães, and Wu 2013)</span>
+is a paper based on the interesting symmetry between insertion sort and
+selection sort [There’s also a video of Graham Hutton explaining the
+idea; <span class="citation" data-cites="haran_sorting_2016">Haran
+(2016)</span>].</p>
+<p>With that paper in mind, can we rewrite <code>shuffle</code> as a
+selection-based algorithm? We can indeed!</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">pop ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, [(<span class="dt">Int</span>,a)])</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>pop [] <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pop ((<span class="dv">0</span>,x)<span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">Just</span> (x, xs)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>pop ((i,x)<span class="op">:</span>xs) <span class="ot">=</span> (<span class="fu">fmap</span><span class="op">.</span><span class="fu">fmap</span>) ((i<span class="op">-</span><span class="dv">1</span>,x)<span class="op">:</span>) (pop xs)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>shuffle xs ys <span class="ot">=</span> unfoldr pop (<span class="fu">zip</span> ys xs)</span></code></pre></div>
+<p>While the symmetry is pleasing, the paper details how to make the
+relationship explicit, using the same function for both selection and
+insertion sort:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>swop <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">Nil</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>swop (<span class="dt">Cons</span> a (x , <span class="dt">Nil</span>)) <span class="ot">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>swop (<span class="dt">Cons</span> a (x , <span class="dt">Cons</span> b x'))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">fst</span> a <span class="op">==</span> <span class="dv">0</span> <span class="ot">=</span> <span class="dt">Cons</span> a (<span class="dt">Left</span> x)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span>  <span class="ot">=</span> <span class="dt">Cons</span> b (<span class="dt">Right</span> (<span class="dt">Cons</span> (first <span class="fu">pred</span> a) x'))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="ot">ishuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>ishuffle <span class="ot">=</span> cata (apo (swop <span class="op">.</span> <span class="fu">fmap</span> (<span class="fu">id</span> <span class="op">&amp;&amp;&amp;</span> project)))</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="ot">sshuffle ::</span> [(<span class="dt">Int</span>,a)] <span class="ot">-&gt;</span> [(<span class="dt">Int</span>,a)]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>sshuffle <span class="ot">=</span> ana (para (<span class="fu">fmap</span> (<span class="fu">id</span> <span class="op">|||</span> embed) <span class="op">.</span> swop))</span></code></pre></div>
 <h1 id="improved-efficiency">Improved Efficiency</h1>
-<p>So now we have to upgrade our sorts: in the paper, merge sort is the more efficient sort chosen, similarly to what I chose <a href="2018-12-21-balancing-scans.html#random-shuffles">previously</a>.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>merge [] ys <span class="ot">=</span> ys</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>merge xs [] <span class="ot">=</span> xs</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>merge ((x,i)<span class="op">:</span>xs) ((y,j)<span class="op">:</span>ys)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>  <span class="op">|</span> i <span class="op">&lt;=</span> j    <span class="ot">=</span> (x,i) <span class="op">:</span> merge xs ((y,j<span class="op">-</span>i)<span class="op">:</span>ys)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (y,j) <span class="op">:</span> merge ((x,i<span class="op">-</span>j<span class="op">-</span><span class="dv">1</span>)<span class="op">:</span>xs) ys</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>  </span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>treeFold f <span class="ot">=</span> go</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>    go x [] <span class="ot">=</span> x</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>    go a (b<span class="op">:</span>l) <span class="ot">=</span> go (f a b) (pairMap l)</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>    pairMap (x<span class="op">:</span>y<span class="op">:</span>rest) <span class="ot">=</span> f x y <span class="op">:</span> pairMap rest</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    pairMap xs <span class="ot">=</span> xs</span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>    </span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>shuffle xs inds <span class="ot">=</span> <span class="fu">map</span> <span class="fu">fst</span> <span class="op">$</span> treeFold merge [] <span class="op">$</span> <span class="fu">map</span> <span class="fu">pure</span> <span class="op">$</span> <span class="fu">zip</span> xs inds</span></code></pre></div>
-<p>However, I feel like merge sort is an upgrade of <em>insertion</em> sort, not selection sort. Indeed, if you do the “split” step of merge sort badly, i.e. by splitting very unevenly, merge sort in fact <em>becomes</em> insertion sort!</p>
+<p>So now we have to upgrade our sorts: in the paper, merge sort is the
+more efficient sort chosen, similarly to what I chose <a href="2018-12-21-balancing-scans.html#random-shuffles">previously</a>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>merge [] ys <span class="ot">=</span> ys</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>merge xs [] <span class="ot">=</span> xs</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>merge ((x,i)<span class="op">:</span>xs) ((y,j)<span class="op">:</span>ys)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> i <span class="op">&lt;=</span> j    <span class="ot">=</span> (x,i) <span class="op">:</span> merge xs ((y,j<span class="op">-</span>i)<span class="op">:</span>ys)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> (y,j) <span class="op">:</span> merge ((x,i<span class="op">-</span>j<span class="op">-</span><span class="dv">1</span>)<span class="op">:</span>xs) ys</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="ot">treeFold ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> a</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>treeFold f <span class="ot">=</span> go</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    go x [] <span class="ot">=</span> x</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>    go a (b<span class="op">:</span>l) <span class="ot">=</span> go (f a b) (pairMap l)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    pairMap (x<span class="op">:</span>y<span class="op">:</span>rest) <span class="ot">=</span> f x y <span class="op">:</span> pairMap rest</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    pairMap xs <span class="ot">=</span> xs</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>shuffle xs inds <span class="ot">=</span> <span class="fu">map</span> <span class="fu">fst</span> <span class="op">$</span> treeFold merge [] <span class="op">$</span> <span class="fu">map</span> <span class="fu">pure</span> <span class="op">$</span> <span class="fu">zip</span> xs inds</span></code></pre></div>
+<p>However, I feel like merge sort is an upgrade of <em>insertion</em>
+sort, not selection sort. Indeed, if you do the “split” step of merge
+sort badly, i.e. by splitting very unevenly, merge sort in fact
+<em>becomes</em> insertion sort!</p>
 <p>So there’s a missing bit of this table:</p>
 <table>
 <thead>
@@ -131,46 +179,78 @@
 </thead>
 <tbody>
 <tr class="odd">
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math></td>
 <td style="text-align: center;">Insertion sort</td>
 <td style="text-align: center;">Selection sort</td>
 </tr>
 <tr class="even">
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math></td>
 <td style="text-align: center;">Merge sort</td>
 <td style="text-align: center;">???</td>
 </tr>
 </tbody>
 </table>
-<p>I think it’s clear that quicksort is the algorithm that fits in there: again, done badly it degrades to selection sort (if you intentionally pick the pivot to be the worst element possible, i.e. the smallest element).</p>
-<p>There are more symmetries: merge sort splits the lists using their structure, and merges them using the ordering of the elements. Quicksort is the opposite, merging by concatenation, but splitting using order. Finally, in merge sort adjacent elements are in the correct order after the recursive call, but the two sides of the split are not. Again, quicksort is precisely the opposite: adjacent elements have not been compared (<em>before</em> the recursive call), but the two sides of the split are correctly ordered.</p>
-<p>Anyway, I haven’t yet formalised this duality (and I don’t know if I can), but we <em>can</em> use it to produce a quicksort-based shuffle algorithm:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>partition <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> ([],[]))</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    f (y,j) ys i</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>      <span class="op">|</span> i <span class="op">&lt;=</span> j    <span class="ot">=</span> <span class="fu">fmap</span>  ((y,j<span class="op">-</span>i)<span class="op">:</span>) (ys i)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> first ((y,j)<span class="op">:</span>) (ys (i<span class="op">-</span><span class="dv">1</span>))</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>      </span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>shuffle xs ys <span class="ot">=</span> go (<span class="fu">zip</span> xs ys)</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>    go [] <span class="ot">=</span> []</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>    go ((x,i)<span class="op">:</span>xs) <span class="ot">=</span> <span class="kw">case</span> partition xs i <span class="kw">of</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>        (ls,rs) <span class="ot">-&gt;</span> go ls <span class="op">++</span> [x] <span class="op">++</span> go rs</span></code></pre></div>
-<p>That’s all for this post! The algorithms can all be translated into Agda or Idris: I’m currently working on a way to represent permutations that isn’t <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math> using them. If I figure out a way to properly dualise quicksort and merge sort I’ll do a small write up as well <span class="citation" data-cites="hinze_sorting_2012">(I’m currently working my way through Hinze et al. <a href="#ref-hinze_sorting_2012" role="doc-biblioref">2012</a> for ideas)</span>. Finally, I’d like to explore some other sorting algorithms as permutation algorithms: sorting networks seem especially related to “permutations by swapping”.</p>
+<p>I think it’s clear that quicksort is the algorithm that fits in
+there: again, done badly it degrades to selection sort (if you
+intentionally pick the pivot to be the worst element possible, i.e. the
+smallest element).</p>
+<p>There are more symmetries: merge sort splits the lists using their
+structure, and merges them using the ordering of the elements. Quicksort
+is the opposite, merging by concatenation, but splitting using order.
+Finally, in merge sort adjacent elements are in the correct order after
+the recursive call, but the two sides of the split are not. Again,
+quicksort is precisely the opposite: adjacent elements have not been
+compared (<em>before</em> the recursive call), but the two sides of the
+split are correctly ordered.</p>
+<p>Anyway, I haven’t yet formalised this duality (and I don’t know if I
+can), but we <em>can</em> use it to produce a quicksort-based shuffle
+algorithm:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>partition <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> ([],[]))</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    f (y,j) ys i</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> i <span class="op">&lt;=</span> j    <span class="ot">=</span> <span class="fu">fmap</span>  ((y,j<span class="op">-</span>i)<span class="op">:</span>) (ys i)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> first ((y,j)<span class="op">:</span>) (ys (i<span class="op">-</span><span class="dv">1</span>))</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="ot">shuffle ::</span> [a] <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>shuffle xs ys <span class="ot">=</span> go (<span class="fu">zip</span> xs ys)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    go [] <span class="ot">=</span> []</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    go ((x,i)<span class="op">:</span>xs) <span class="ot">=</span> <span class="kw">case</span> partition xs i <span class="kw">of</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        (ls,rs) <span class="ot">-&gt;</span> go ls <span class="op">++</span> [x] <span class="op">++</span> go rs</span></code></pre></div>
+<p>That’s all for this post! The algorithms can all be translated into
+Agda or Idris: I’m currently working on a way to represent permutations
+that isn’t
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>
+using them. If I figure out a way to properly dualise quicksort and
+merge sort I’ll do a small write up as well <span class="citation" data-cites="hinze_sorting_2012">(I’m currently working my way through
+Hinze et al. 2012 for ideas)</span>. Finally, I’d like to explore some
+other sorting algorithms as permutation algorithms: sorting networks
+seem especially related to “permutations by swapping”.</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-haran_sorting_2016">
-<p>Haran, Brady. 2016. “Sorting Secret.” <a href="https://www.youtube.com/watch?v=pcJHkWwjNl4">https://www.youtube.com/watch?v=pcJHkWwjNl4</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-haran_sorting_2016" class="csl-entry" role="listitem">
+Haran, Brady. 2016. <span>“Sorting <span>Secret</span>.”</span> <a href="https://www.youtube.com/watch?v=pcJHkWwjNl4" class="uri">https://www.youtube.com/watch?v=pcJHkWwjNl4</a>.
 </div>
-<div id="ref-hinze_sorting_2012">
-<p>Hinze, Ralf, Daniel W. H. James, Thomas Harper, Nicolas Wu, and José Pedro Magalhães. 2012. “Sorting with Bialgebras and Distributive Laws.” In <em>Proceedings of the 8th ACM SIGPLAN Workshop on Generic Programming - WGP ’12</em>, 69. Copenhagen, Denmark: ACM Press. doi:<a href="https://doi.org/10.1145/2364394.2364405">10.1145/2364394.2364405</a>.</p>
+<div id="ref-hinze_sorting_2012" class="csl-entry" role="listitem">
+Hinze, Ralf, Daniel W. H. James, Thomas Harper, Nicolas Wu, and José
+Pedro Magalhães. 2012. <span>“Sorting with bialgebras and distributive
+laws.”</span> In <em>Proceedings of the 8th <span>ACM SIGPLAN</span>
+workshop on <span>Generic</span> programming - <span>WGP</span>
+’12</em>, 69. Copenhagen, Denmark: <span>ACM Press</span>. doi:<a href="https://doi.org/10.1145/2364394.2364405">10.1145/2364394.2364405</a>.
 </div>
-<div id="ref-hinze_duality_2013">
-<p>Hinze, Ralf, José Pedro Magalhães, and Nicolas Wu. 2013. “A Duality of Sorts.” In <em>The Beauty of Functional Code: Essays Dedicated to Rinus Plasmeijer on the Occasion of His 61st Birthday</em>, ed by. Peter Achten and Pieter Koopman, 151–167. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer Berlin Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-40355-2_11">10.1007/978-3-642-40355-2_11</a>.</p>
+<div id="ref-hinze_duality_2013" class="csl-entry" role="listitem">
+Hinze, Ralf, José Pedro Magalhães, and Nicolas Wu. 2013. <span>“A
+<span>Duality</span> of <span>Sorts</span>.”</span> In <em>The
+<span>Beauty</span> of <span>Functional Code</span>: <span>Essays
+Dedicated</span> to <span>Rinus Plasmeijer</span> on the
+<span>Occasion</span> of <span>His</span> 61st
+<span>Birthday</span></em>, ed by. Peter Achten and Pieter Koopman,
+151–167. Lecture <span>Notes</span> in <span>Computer Science</span>.
+Berlin, Heidelberg: <span>Springer Berlin Heidelberg</span>. doi:<a href="https://doi.org/10.1007/978-3-642-40355-2_11">10.1007/978-3-642-40355-2_11</a>.
 </div>
-<div id="ref-kiselyov_provably_2002">
-<p>Kiselyov, Oleg. 2002. “Provably Perfect Random Shuffling and Its Pure Functional Implementations.” <em>http://okmij.org</em>. <a href="http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle">http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle</a>.</p>
+<div id="ref-kiselyov_provably_2002" class="csl-entry" role="listitem">
+Kiselyov, Oleg. 2002. <span>“Provably perfect random shuffling and its
+pure functional implementations.”</span> <em>http://okmij.org</em>. <a href="http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle" class="uri">http://okmij.org/ftp/Haskell/AlgorithmsH.html#perfect-shuffle</a>.
 </div>
 </div>
 

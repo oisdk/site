@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
@@ -48,7 +48,14 @@
     clear: both;
 }
 </style>
-<p>I haven’t written much on this blog recently: since starting a PhD all of my writing output has gone towards paper drafts and similar things. Recently, though, I’ve been thinking about streams, monoids, and comonads and I haven’t manage to wrangle those thoughts into something coherent enough for a paper. This blog post is a collection of those (pretty disorganised) thoughts. The hope is that writing them down will force me to clarify things, but consider this a warning that the rest of this post may well be muddled and confusing.</p>
+<p>I haven’t written much on this blog recently: since starting a PhD
+all of my writing output has gone towards paper drafts and similar
+things. Recently, though, I’ve been thinking about streams, monoids, and
+comonads and I haven’t manage to wrangle those thoughts into something
+coherent enough for a paper. This blog post is a collection of those
+(pretty disorganised) thoughts. The hope is that writing them down will
+force me to clarify things, but consider this a warning that the rest of
+this post may well be muddled and confusing.</p>
 <!--
 <pre class="Agda"><a id="791" class="Symbol">{-#</a> <a id="795" class="Keyword">OPTIONS</a> <a id="803" class="Pragma">--no-positivity-check</a> <a id="825" class="Pragma">--allow-unsolved-metas</a> <a id="848" class="Pragma">--guardedness</a> <a id="862" class="Symbol">#-}</a>
 
@@ -78,7 +85,11 @@
 <!--
 <pre class="Agda"><a id="1423" class="Keyword">open</a> <a id="1428" href="#1323" class="Module">Stream</a>
 </pre>-->
-<p>This representation is <em>coinductive</em>: the type above contains infinite values. Agda, unlike Haskell, treats inductive and coinductive types differently (this is why we need the <code>coinductive</code> keyword in the definition). One of the differences is that it doesn’t check termination for construction of these values:</p>
+<p>This representation is <em>coinductive</em>: the type above contains
+infinite values. Agda, unlike Haskell, treats inductive and coinductive
+types differently (this is why we need the <code>coinductive</code>
+keyword in the definition). One of the differences is that it doesn’t
+check termination for construction of these values:</p>
 <div class="row">
 <div class="column">
 <pre class="Agda"><a id="alternating"></a><a id="1801" href="#1801" class="Function">alternating</a> <a id="1813" class="Symbol">:</a> <a id="1815" href="#1323" class="Record">Stream</a> <a id="1822" href="../code/depth-comonads/Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
@@ -88,14 +99,25 @@
 </pre>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">alternating ::</span> [<span class="dt">Bool</span>]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>alternating <span class="ot">=</span> <span class="dt">True</span> <span class="op">:</span> <span class="dt">False</span> <span class="op">:</span> alternating</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">alternating ::</span> [<span class="dt">Bool</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>alternating <span class="ot">=</span> <span class="dt">True</span> <span class="op">:</span> <span class="dt">False</span> <span class="op">:</span> alternating</span></code></pre></div>
 </div>
 </div>
-<p>We have the equivalent in Haskell on the right. We’re also using some fancy syntax for the Agda code: copatterns <span class="citation" data-cites="abel_wellfounded_2013">(Abel and Pientka <a href="#ref-abel_wellfounded_2013" role="doc-biblioref">2013</a>)</span>.</p>
-<p>Note that this type is only definable in a language with some notion of laziness. If we tried to define a value like <code>alternating</code> above in OCaml we would loop. Haskell has no problem, and Agda—through its coinduction mechanism—can handle it as well.</p>
-<p>Update 4-5-22: thanks to Arnaud Spiwack (<a href="https://twitter.com/aspiwack/status/1521745731161313282">@aspiwack</a>) for correcting me on this, it turns out the definition of <code>alternating</code> above <em>can</em> be written in Ocaml, even without laziness. Apparently Ocaml has a facility for strict cyclic data structures. Also, I should be a little more precise with what I’m saying above: even without the extra facility for strict cycles, you can of course write a lazy list with some kind of lazy wrapper type.</p>
-<p>There is, however, an isomorphic type that can be defined without coinduction:</p>
+<p>We have the equivalent in Haskell on the right. We’re also using some
+fancy syntax for the Agda code: copatterns <span class="citation" data-cites="abel_wellfounded_2013">(Abel and Pientka 2013)</span>.</p>
+<p>Note that this type is only definable in a language with some notion
+of laziness. If we tried to define a value like <code>alternating</code>
+above in OCaml we would loop. Haskell has no problem, and Agda—through
+its coinduction mechanism—can handle it as well.</p>
+<p>Update 4-5-22: thanks to Arnaud Spiwack (<a href="https://twitter.com/aspiwack/status/1521745731161313282">@aspiwack</a>)
+for correcting me on this, it turns out the definition of
+<code>alternating</code> above <em>can</em> be written in Ocaml, even
+without laziness. Apparently Ocaml has a facility for strict cyclic data
+structures. Also, I should be a little more precise with what I’m saying
+above: even without the extra facility for strict cycles, you can of
+course write a lazy list with some kind of lazy wrapper type.</p>
+<p>There is, however, an isomorphic type that can be defined without
+coinduction:</p>
 <div class="row">
 <div class="column">
 <pre class="Agda"><a id="ℕ-Stream"></a><a id="2573" href="#2573" class="Function">ℕ-Stream</a> <a id="2582" class="Symbol">:</a> <a id="2584" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="2589" class="Symbol">→</a> <a id="2591" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
@@ -110,15 +132,22 @@
 </pre>
 </div>
 </div>
-<p>(notice that, in this form, the function <code>ℕ-alternating</code> is the same function as <code>even : ℕ → Bool</code>)</p>
-<p>In fact, we can convert from the coinductive representation to the inductive one. This conversion function is more familiarly recognisable as the indexing function:</p>
+<p>(notice that, in this form, the function <code>ℕ-alternating</code>
+is the same function as <code>even : ℕ → Bool</code>)</p>
+<p>In fact, we can convert from the coinductive representation to the
+inductive one. This conversion function is more familiarly recognisable
+as the indexing function:</p>
 <pre class="Agda"><a id="_[_]"></a><a id="3088" href="#3088" class="Function Operator">_[_]</a> <a id="3093" class="Symbol">:</a> <a id="3095" href="#1323" class="Record">Stream</a> <a id="3102" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="3104" class="Symbol">→</a> <a id="3106" href="#2573" class="Function">ℕ-Stream</a> <a id="3115" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="3117" href="#3117" class="Bound">xs</a> <a id="3120" href="#3088" class="Function Operator">[</a> <a id="3122" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>  <a id="3128" href="#3088" class="Function Operator">]</a> <a id="3130" class="Symbol">=</a> <a id="3132" href="#3117" class="Bound">xs</a> <a id="3135" class="Symbol">.</a><a id="3136" href="#1376" class="Field">head</a>
 <a id="3141" href="#3141" class="Bound">xs</a> <a id="3144" href="#3088" class="Function Operator">[</a> <a id="3146" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="3150" href="#3150" class="Bound">n</a> <a id="3152" href="#3088" class="Function Operator">]</a> <a id="3154" class="Symbol">=</a> <a id="3156" href="#3141" class="Bound">xs</a> <a id="3159" class="Symbol">.</a><a id="3160" href="#1393" class="Field">tail</a> <a id="3165" href="#3088" class="Function Operator">[</a> <a id="3167" href="#3150" class="Bound">n</a> <a id="3169" href="#3088" class="Function Operator">]</a>
 </pre>
-<p>I’m not just handwaving when I say the two representations are isomorphic: we can prove this isomorphism, and, in Cubical Agda, we can use this to transport programs on one representation to the other.</p>
+<p>I’m not just handwaving when I say the two representations are
+isomorphic: we can prove this isomorphism, and, in Cubical Agda, we can
+use this to transport programs on one representation to the other.</p>
 <details>
-<p><summary> Proof of isomorphism </summary></p>
+<summary>
+Proof of isomorphism
+</summary>
 <pre class="Agda"><a id="tabulate"></a><a id="3437" href="#3437" class="Function">tabulate</a> <a id="3446" class="Symbol">:</a> <a id="3448" href="#2573" class="Function">ℕ-Stream</a> <a id="3457" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="3459" class="Symbol">→</a> <a id="3461" href="#1323" class="Record">Stream</a> <a id="3468" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="3470" href="#3437" class="Function">tabulate</a> <a id="3479" href="#3479" class="Bound">xs</a> <a id="3482" class="Symbol">.</a><a id="3483" href="#1376" class="Field">head</a> <a id="3488" class="Symbol">=</a> <a id="3490" href="#3479" class="Bound">xs</a> <a id="3493" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>
 <a id="3498" href="#3437" class="Function">tabulate</a> <a id="3507" href="#3507" class="Bound">xs</a> <a id="3510" class="Symbol">.</a><a id="3511" href="#1393" class="Field">tail</a> <a id="3516" class="Symbol">=</a> <a id="3518" href="#3437" class="Function">tabulate</a> <a id="3527" class="Symbol">(</a><a id="3528" href="#3507" class="Bound">xs</a> <a id="3531" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="3533" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a><a id="3536" class="Symbol">)</a>
@@ -138,7 +167,8 @@
 <a id="3951" href="#3827" class="Function">stream-reps</a> <a id="3963" class="Symbol">.</a><a id="3964" href="Cubical.Foundations.Isomorphism.html#945" class="Field">leftInv</a> <a id="3972" href="#3972" class="Bound">xs</a> <a id="3975" class="Symbol">=</a> <a id="3977" href="Cubical.Foundations.Id.html#807" class="Function">funExt</a> <a id="3984" class="Symbol">(</a><a id="3985" href="#3679" class="Function">stream-linv</a> <a id="3997" href="#3972" class="Bound">xs</a><a id="3999" class="Symbol">)</a>
 </pre>
 </details>
-<p>One final observation about streams: another way to define a stream is as the cofree comonad of the identity functor.</p>
+<p>One final observation about streams: another way to define a stream
+is as the cofree comonad of the identity functor.</p>
 <pre class="Agda"><a id="4142" class="Keyword">record</a> <a id="Cofree"></a><a id="4149" href="#4149" class="Record">Cofree</a> <a id="4156" class="Symbol">(</a><a id="4157" href="#4157" class="Bound">F</a> <a id="4159" class="Symbol">:</a> <a id="4161" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="4166" class="Symbol">→</a> <a id="4168" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="4172" class="Symbol">)</a> <a id="4174" class="Symbol">(</a><a id="4175" href="#4175" class="Bound">A</a> <a id="4177" class="Symbol">:</a> <a id="4179" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="4183" class="Symbol">)</a> <a id="4185" class="Symbol">:</a> <a id="4187" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="4192" class="Keyword">where</a>
   <a id="4200" class="Keyword">coinductive</a>
   <a id="4214" class="Keyword">field</a> <a id="Cofree.root"></a><a id="4220" href="#4220" class="Field">root</a> <a id="4225" class="Symbol">:</a> <a id="4227" href="#4175" class="Bound">A</a>
@@ -150,13 +180,24 @@
 <!--
 <pre class="Agda"><a id="4318" class="Keyword">open</a> <a id="4323" href="#4149" class="Module">Cofree</a>
 </pre>-->
-<p>Concretely, the <code>Cofree F A</code> type is a possibly infinite tree, with branches shaped like <code>F</code>, and internal nodes labelled with <code>A</code>. It has the following characteristic function:</p>
+<p>Concretely, the <code>Cofree F A</code> type is a possibly infinite
+tree, with branches shaped like <code>F</code>, and internal nodes
+labelled with <code>A</code>. It has the following characteristic
+function:</p>
 <pre class="Agda"><a id="4522" class="Symbol">{-#</a> <a id="4526" class="Keyword">NON_TERMINATING</a> <a id="4542" class="Symbol">#-}</a>
 <a id="trace"></a><a id="4546" href="#4546" class="Function">trace</a> <a id="4552" class="Symbol">:</a> <a id="4554" class="Symbol">⦃</a> <a id="4556" href="#4556" class="Bound">_</a> <a id="4558" class="Symbol">:</a> <a id="4560" href="../code/depth-comonads/DepthComonads.Algebra.html#4107" class="Record">Functor</a> <a id="4568" href="#1226" class="Generalizable">𝐹</a> <a id="4570" class="Symbol">⦄</a> <a id="4572" class="Symbol">→</a> <a id="4574" class="Symbol">(</a><a id="4575" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="4577" class="Symbol">→</a> <a id="4579" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a><a id="4580" class="Symbol">)</a> <a id="4582" class="Symbol">→</a> <a id="4584" class="Symbol">(</a><a id="4585" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="4587" class="Symbol">→</a> <a id="4589" href="#1226" class="Generalizable">𝐹</a> <a id="4591" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a><a id="4592" class="Symbol">)</a> <a id="4594" class="Symbol">→</a> <a id="4596" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="4598" class="Symbol">→</a> <a id="4600" href="#4149" class="Record">Cofree</a> <a id="4607" href="#1226" class="Generalizable">𝐹</a> <a id="4609" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a>
 <a id="4611" href="#4546" class="Function">trace</a> <a id="4617" href="#4617" class="Bound">ϕ</a> <a id="4619" href="#4619" class="Bound">ρ</a> <a id="4621" href="#4621" class="Bound">x</a> <a id="4623" class="Symbol">.</a><a id="4624" href="#4220" class="Field">root</a> <a id="4629" class="Symbol">=</a> <a id="4631" href="#4617" class="Bound">ϕ</a> <a id="4633" href="#4621" class="Bound">x</a>
 <a id="4635" href="#4546" class="Function">trace</a> <a id="4641" href="#4641" class="Bound">ϕ</a> <a id="4643" href="#4643" class="Bound">ρ</a> <a id="4645" href="#4645" class="Bound">x</a> <a id="4647" class="Symbol">.</a><a id="4648" href="#4237" class="Field">step</a> <a id="4653" class="Symbol">=</a> <a id="4655" href="../code/depth-comonads/DepthComonads.Algebra.html#4153" class="Field">map</a> <a id="4659" class="Symbol">(</a><a id="4660" href="#4546" class="Function">trace</a> <a id="4666" href="#4641" class="Bound">ϕ</a> <a id="4668" href="#4643" class="Bound">ρ</a><a id="4669" class="Symbol">)</a> <a id="4671" class="Symbol">(</a><a id="4672" href="#4643" class="Bound">ρ</a> <a id="4674" href="#4645" class="Bound">x</a><a id="4675" class="Symbol">)</a>
 </pre>
-<p>Like how the free monad turns any functor into a monad, the cofree comonad turns any functor into a comonad. Comonads are less popular and widely-used than monads, as there are less well-known examples of them. I have found it helpful to think about comonads through spatial analogies. A lot of comonads can represent a kind of walk through some space: the <code>extract</code> operation tells you “what is immediately here”, and the <code>duplicate</code> operation tells you “what can I see from each point”. For the stream, these two operations are inhabited by <code>head</code> and the following:</p>
+<p>Like how the free monad turns any functor into a monad, the cofree
+comonad turns any functor into a comonad. Comonads are less popular and
+widely-used than monads, as there are less well-known examples of them.
+I have found it helpful to think about comonads through spatial
+analogies. A lot of comonads can represent a kind of walk through some
+space: the <code>extract</code> operation tells you “what is immediately
+here”, and the <code>duplicate</code> operation tells you “what can I
+see from each point”. For the stream, these two operations are inhabited
+by <code>head</code> and the following:</p>
 <pre class="Agda"><a id="duplicate"></a><a id="5257" href="#5257" class="Function">duplicate</a> <a id="5267" class="Symbol">:</a> <a id="5269" href="#1323" class="Record">Stream</a> <a id="5276" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="5278" class="Symbol">→</a> <a id="5280" href="#1323" class="Record">Stream</a> <a id="5287" class="Symbol">(</a><a id="5288" href="#1323" class="Record">Stream</a> <a id="5295" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a><a id="5296" class="Symbol">)</a>
 <a id="5298" href="#5257" class="Function">duplicate</a> <a id="5308" href="#5308" class="Bound">xs</a> <a id="5311" class="Symbol">.</a><a id="5312" href="#1376" class="Field">head</a> <a id="5317" class="Symbol">=</a> <a id="5319" href="#5308" class="Bound">xs</a>
 <a id="5322" href="#5257" class="Function">duplicate</a> <a id="5332" href="#5332" class="Bound">xs</a> <a id="5335" class="Symbol">.</a><a id="5336" href="#1393" class="Field">tail</a> <a id="5341" class="Symbol">=</a> <a id="5343" href="#5257" class="Function">duplicate</a> <a id="5353" class="Symbol">(</a><a id="5354" href="#5332" class="Bound">xs</a> <a id="5357" class="Symbol">.</a><a id="5358" href="#1393" class="Field">tail</a><a id="5362" class="Symbol">)</a>
@@ -164,12 +205,22 @@
 <h1 id="generalising-streams">Generalising Streams</h1>
 <p>There were three key observations in the last section:</p>
 <ol>
-<li>Streams are coinductive. This requires a different termination checker in Agda, and a different evaluation model in strict languages.</li>
-<li>They have an isomorphic representation based on <em>indexing</em>. This isomorphic representation doesn’t need coinduction or laziness.</li>
+<li>Streams are coinductive. This requires a different termination
+checker in Agda, and a different evaluation model in strict
+languages.</li>
+<li>They have an isomorphic representation based on <em>indexing</em>.
+This isomorphic representation doesn’t need coinduction or
+laziness.</li>
 <li>They are a special case of the cofree comonad.</li>
 </ol>
-<p>Going forward, we’re going to look at generalisations of streams, and we’re going to see what these observations mean in the contexts of the new generalisations.</p>
-<p>The thing we’ll be generalising is the index of the stream. Currently, streams are basically structures that assign a value to every <code>ℕ</code>: what does a stream of—for instance—rational numbers look like? To drive the intuition for this generalisation let’s first look at the comonad instance on the <code>ℕ-Stream</code> type:</p>
+<p>Going forward, we’re going to look at generalisations of streams, and
+we’re going to see what these observations mean in the contexts of the
+new generalisations.</p>
+<p>The thing we’ll be generalising is the index of the stream.
+Currently, streams are basically structures that assign a value to every
+<code>ℕ</code>: what does a stream of—for instance—rational numbers look
+like? To drive the intuition for this generalisation let’s first look at
+the comonad instance on the <code>ℕ-Stream</code> type:</p>
 <pre class="Agda"><a id="ℕ-extract"></a><a id="6260" href="#6260" class="Function">ℕ-extract</a> <a id="6270" class="Symbol">:</a> <a id="6272" href="#2573" class="Function">ℕ-Stream</a> <a id="6281" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="6283" class="Symbol">→</a> <a id="6285" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="6287" href="#6260" class="Function">ℕ-extract</a> <a id="6297" href="#6297" class="Bound">xs</a> <a id="6300" class="Symbol">=</a> <a id="6302" href="#6297" class="Bound">xs</a> <a id="6305" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>
 
@@ -177,8 +228,13 @@
 <a id="6360" href="#6311" class="Function">ℕ-duplicate</a> <a id="6372" href="#6372" class="Bound">xs</a> <a id="6375" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>    <a id="6383" class="Symbol">=</a> <a id="6385" href="#6372" class="Bound">xs</a>
 <a id="6388" href="#6311" class="Function">ℕ-duplicate</a> <a id="6400" href="#6400" class="Bound">xs</a> <a id="6403" class="Symbol">(</a><a id="6404" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="6408" href="#6408" class="Bound">n</a><a id="6409" class="Symbol">)</a> <a id="6411" class="Symbol">=</a> <a id="6413" href="#6311" class="Function">ℕ-duplicate</a> <a id="6425" class="Symbol">(</a><a id="6426" href="#6400" class="Bound">xs</a> <a id="6429" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="6431" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a><a id="6434" class="Symbol">)</a> <a id="6436" href="#6408" class="Bound">n</a>
 </pre>
-<p>This is the same instance as is on the <code>Stream</code> type, transported along the isomorphism between the two types (we could have transported the instance automatically, using <code>subst</code> or <code>transport</code>; I have written it out here manually in full for illustration purposes).</p>
-<p>The <code>ℕ-duplicate</code> method here can changed a little to reveal something interesting:</p>
+<p>This is the same instance as is on the <code>Stream</code> type,
+transported along the isomorphism between the two types (we could have
+transported the instance automatically, using <code>subst</code> or
+<code>transport</code>; I have written it out here manually in full for
+illustration purposes).</p>
+<p>The <code>ℕ-duplicate</code> method here can changed a little to
+reveal something interesting:</p>
 <pre class="Agda"><a id="ℕ-duplicate₂"></a><a id="6800" href="#6800" class="Function">ℕ-duplicate₂</a> <a id="6813" class="Symbol">:</a> <a id="6815" href="#2573" class="Function">ℕ-Stream</a> <a id="6824" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="6826" class="Symbol">→</a> <a id="6828" href="#2573" class="Function">ℕ-Stream</a> <a id="6837" class="Symbol">(</a><a id="6838" href="#2573" class="Function">ℕ-Stream</a> <a id="6847" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a><a id="6848" class="Symbol">)</a>
 <a id="6850" href="#6800" class="Function">ℕ-duplicate₂</a> <a id="6863" href="#6863" class="Bound">xs</a> <a id="6866" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>    <a id="6874" href="#6874" class="Bound">m</a> <a id="6876" class="Symbol">=</a> <a id="6878" href="#6863" class="Bound">xs</a> <a id="6881" href="#6874" class="Bound">m</a>
 <a id="6883" href="#6800" class="Function">ℕ-duplicate₂</a> <a id="6896" href="#6896" class="Bound">xs</a> <a id="6899" class="Symbol">(</a><a id="6900" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="6904" href="#6904" class="Bound">n</a><a id="6905" class="Symbol">)</a> <a id="6907" href="#6907" class="Bound">m</a> <a id="6909" class="Symbol">=</a> <a id="6911" href="#6800" class="Function">ℕ-duplicate₂</a> <a id="6924" class="Symbol">(</a><a id="6925" href="#6896" class="Bound">xs</a> <a id="6928" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="6930" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a><a id="6933" class="Symbol">)</a> <a id="6935" href="#6904" class="Bound">n</a> <a id="6937" href="#6907" class="Bound">m</a>
@@ -194,7 +250,12 @@
 <a id="7149" href="#7099" class="Function">ℕ-duplicate₄</a> <a id="7162" href="#7162" class="Bound">xs</a> <a id="7165" href="#7165" class="Bound">n</a> <a id="7167" href="#7167" class="Bound">m</a> <a id="7169" class="Symbol">=</a> <a id="7171" href="#7162" class="Bound">xs</a> <a id="7174" class="Symbol">(</a><a id="7175" href="#7165" class="Bound">n</a> <a id="7177" href="../code/depth-comonads/Agda.Builtin.Nat.html#325" class="Primitive Operator">+</a> <a id="7179" href="#7167" class="Bound">m</a><a id="7180" class="Symbol">)</a>
 </pre>
 <p>In other words, <code>duplicate</code> basically adds indices.</p>
-<p>There is something distinctly <em>monoidal</em> about what’s going on here: taking the <code>(ℕ, +, 0)</code> monoid as focus, the <code>extract</code> method above corresponds to the monoidal empty element, and the <code>duplicate</code> method corresponds to the binary operator on monoids. In actual fact, there is a comonad for any function from a monoid, often called the <code>Traced</code> comonad.</p>
+<p>There is something distinctly <em>monoidal</em> about what’s going on
+here: taking the <code>(ℕ, +, 0)</code> monoid as focus, the
+<code>extract</code> method above corresponds to the monoidal empty
+element, and the <code>duplicate</code> method corresponds to the binary
+operator on monoids. In actual fact, there is a comonad for any function
+from a monoid, often called the <code>Traced</code> comonad.</p>
 <!--
 <pre class="Agda"><a id="7605" class="Keyword">variable</a> <a id="7614" href="#7614" class="Generalizable">E</a> <a id="7616" class="Symbol">:</a> <a id="7618" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 </pre>-->
@@ -208,37 +269,65 @@
 <a id="7816" href="#7749" class="Function">duplicateᵀ</a> <a id="7827" href="#7827" class="Bound">xs</a> <a id="7830" href="#7830" class="Bound">e₁</a> <a id="7833" href="#7833" class="Bound">e₂</a> <a id="7836" class="Symbol">=</a> <a id="7838" href="#7827" class="Bound">xs</a> <a id="7841" class="Symbol">(</a><a id="7842" href="#7830" class="Bound">e₁</a> <a id="7845" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="7847" href="#7833" class="Bound">e₂</a><a id="7849" class="Symbol">)</a>
 </pre>
 <h1 id="reifying-traced">Reifying Traced</h1>
-<p>The second observation we made about streams was that they had an isomorphic representation which didn’t need coinduction. What we can see above, with <code>Traced</code>, is a representation that <em>also</em> doesn’t need coinduction. So what is the corresponding coinductive representation? What does a generalised <em>reified</em> stream look like?</p>
-<p>So the first approach to reifying a function to a data structure is to simply represent the function as a list of pairs.</p>
+<p>The second observation we made about streams was that they had an
+isomorphic representation which didn’t need coinduction. What we can see
+above, with <code>Traced</code>, is a representation that <em>also</em>
+doesn’t need coinduction. So what is the corresponding coinductive
+representation? What does a generalised <em>reified</em> stream look
+like?</p>
+<p>So the first approach to reifying a function to a data structure is
+to simply represent the function as a list of pairs.</p>
 <pre class="Agda"><a id="C-Traced"></a><a id="8330" href="#8330" class="Function">C-Traced</a> <a id="8339" class="Symbol">:</a> <a id="8341" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="8346" class="Symbol">→</a> <a id="8348" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="8353" class="Symbol">→</a> <a id="8355" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="8360" href="#8330" class="Function">C-Traced</a> <a id="8369" href="#8369" class="Bound">E</a> <a id="8371" href="#8371" class="Bound">A</a> <a id="8373" class="Symbol">=</a> <a id="8375" href="#1323" class="Record">Stream</a> <a id="8382" class="Symbol">(</a><a id="8383" href="#8369" class="Bound">E</a> <a id="8385" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="8387" href="#8371" class="Bound">A</a><a id="8388" class="Symbol">)</a>
 </pre>
-<p>This representation obviously isn’t ideal: it isn’t possible to construct an isomorphism between <code>C-Traced</code> and <code>Traced</code>. We can—kind of—go in one direction, but even that function isn’t terminating:</p>
+<p>This representation obviously isn’t ideal: it isn’t possible to
+construct an isomorphism between <code>C-Traced</code> and
+<code>Traced</code>. We can—kind of—go in one direction, but even that
+function isn’t terminating:</p>
 <pre class="Agda"><a id="8604" class="Symbol">{-#</a> <a id="8608" class="Keyword">NON_TERMINATING</a> <a id="8624" class="Symbol">#-}</a>
 <a id="lookup-env"></a><a id="8628" href="#8628" class="Function">lookup-env</a> <a id="8639" class="Symbol">:</a> <a id="8641" class="Symbol">⦃</a> <a id="8643" href="#8643" class="Bound">_</a> <a id="8645" class="Symbol">:</a> <a id="8647" href="../code/depth-comonads/DepthComonads.Discrete.html#228" class="Record">IsDiscrete</a> <a id="8658" href="#7614" class="Generalizable">E</a> <a id="8660" class="Symbol">⦄</a> <a id="8662" class="Symbol">→</a> <a id="8664" href="#8330" class="Function">C-Traced</a> <a id="8673" href="#7614" class="Generalizable">E</a> <a id="8675" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="8677" class="Symbol">→</a> <a id="8679" href="#7636" class="Function">Traced</a> <a id="8686" href="#7614" class="Generalizable">E</a> <a id="8688" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="8690" href="#8628" class="Function">lookup-env</a> <a id="8701" href="#8701" class="Bound">xs</a> <a id="8704" href="#8704" class="Bound">x</a> <a id="8706" class="Symbol">=</a> <a id="8708" href="../code/depth-comonads/DepthComonads.Bool.html#563" class="Function Operator">if</a> <a id="8711" href="../code/depth-comonads/DepthComonads.Dec.html#354" class="Field">does</a> <a id="8716" class="Symbol">(</a><a id="8717" href="#8704" class="Bound">x</a> <a id="8719" href="../code/depth-comonads/DepthComonads.Discrete.html#289" class="Field Operator">≟</a> <a id="8721" href="#8701" class="Bound">xs</a> <a id="8724" class="Symbol">.</a><a id="8725" href="#1376" class="Field">head</a> <a id="8730" class="Symbol">.</a><a id="8731" href="../code/depth-comonads/Agda.Builtin.Sigma.html#252" class="Field">fst</a><a id="8734" class="Symbol">)</a>
                      <a id="8757" href="../code/depth-comonads/DepthComonads.Bool.html#563" class="Function Operator">then</a> <a id="8762" href="#8701" class="Bound">xs</a> <a id="8765" class="Symbol">.</a><a id="8766" href="#1376" class="Field">head</a> <a id="8771" class="Symbol">.</a><a id="8772" href="../code/depth-comonads/Agda.Builtin.Sigma.html#264" class="Field">snd</a>
                      <a id="8797" href="../code/depth-comonads/DepthComonads.Bool.html#563" class="Function Operator">else</a> <a id="8802" href="#8628" class="Function">lookup-env</a> <a id="8813" class="Symbol">(</a><a id="8814" href="#8701" class="Bound">xs</a> <a id="8817" class="Symbol">.</a><a id="8818" href="#1393" class="Field">tail</a><a id="8822" class="Symbol">)</a> <a id="8824" href="#8704" class="Bound">x</a>
 </pre>
-<p>I’m not too concerned with being fast and loose with termination and isomorphisms for the time being, though. At the moment, I’m just interested in exploring the relationship between streams and the indexing functions.</p>
-<p>As a result, let’s try and push on this representation a little and see if it’s possible to get something interesting and <em>almost</em> isomorphic.</p>
+<p>I’m not too concerned with being fast and loose with termination and
+isomorphisms for the time being, though. At the moment, I’m just
+interested in exploring the relationship between streams and the
+indexing functions.</p>
+<p>As a result, let’s try and push on this representation a little and
+see if it’s possible to get something interesting and <em>almost</em>
+isomorphic.</p>
 <h1 id="segmented-streams">Segmented Streams</h1>
-<p>To get a slightly nicer representation we can exploit the monoid a little bit. We can do this by storing <em>offsets</em> instead of the absolute indices for each entry. The data structure I have in mind here looks a little like this:</p>
+<p>To get a slightly nicer representation we can exploit the monoid a
+little bit. We can do this by storing <em>offsets</em> instead of the
+absolute indices for each entry. The data structure I have in mind here
+looks a little like this:</p>
 <pre class="ascii-art">
 ┏━━━━━━━━━━┳━━━━━━┳━━━━━━┉
 ┃x         ┃y     ┃z     ┉
 ┡━━━━━━━━━━╇━━━━━━╇━━━━━━┉
 ╵⇤a╌╌╌╌╌╌╌⇥╵⇤b╌╌╌⇥╵⇤c╌╌╌╌┈
 </pre>
-<p>Above is a stream containing the values <code>x</code>, <code>y</code>, and <code>z</code>. Instead of each value corresponding to a single entry in the stream, however, they each correspond to a <em>segment</em>. The value <code>x</code>, for instance, labels the first segment in the stream, which has a length given by <code>a</code>. <code>y</code> labels the second segment, with length <code>b</code>, <code>z</code> with length <code>c</code>, and so on.</p>
-<p>The <code>Traced</code> version of the above structure might be something like this:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">str ::</span> <span class="dt">Traced</span> m a</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>str i <span class="op">|</span> i <span class="op">&lt;</span> a         <span class="ot">=</span> x</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>      <span class="op">|</span> i <span class="op">&lt;</span> a <span class="op">+</span> b     <span class="ot">=</span> y</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>      <span class="op">|</span> i <span class="op">&lt;</span> a <span class="op">+</span> b <span class="op">+</span> c <span class="ot">=</span> z</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>      <span class="op">|</span> <span class="op">...</span></span></code></pre></div>
-<p>So the index-value mapping is also segmented. The stream, in this way, is kind of like a ruler, where different values mark out different quantities along the ruler, and the index function takes in a quantity and tells you which entry in the ruler that quantity corresponds to.</p>
-<p>In code, we might represent the above data structure with the following type:</p>
+<p>Above is a stream containing the values <code>x</code>,
+<code>y</code>, and <code>z</code>. Instead of each value corresponding
+to a single entry in the stream, however, they each correspond to a
+<em>segment</em>. The value <code>x</code>, for instance, labels the
+first segment in the stream, which has a length given by <code>a</code>.
+<code>y</code> labels the second segment, with length <code>b</code>,
+<code>z</code> with length <code>c</code>, and so on.</p>
+<p>The <code>Traced</code> version of the above structure might be
+something like this:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">str ::</span> <span class="dt">Traced</span> m a</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>str i <span class="op">|</span> i <span class="op">&lt;</span> a         <span class="ot">=</span> x</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> i <span class="op">&lt;</span> a <span class="op">+</span> b     <span class="ot">=</span> y</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> i <span class="op">&lt;</span> a <span class="op">+</span> b <span class="op">+</span> c <span class="ot">=</span> z</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="op">...</span></span></code></pre></div>
+<p>So the index-value mapping is also segmented. The stream, in this
+way, is kind of like a ruler, where different values mark out different
+quantities along the ruler, and the index function takes in a quantity
+and tells you which entry in the ruler that quantity corresponds to.</p>
+<p>In code, we might represent the above data structure with the
+following type:</p>
 <pre class="Agda"><a id="10503" class="Keyword">record</a> <a id="Segments"></a><a id="10510" href="#10510" class="Record">Segments</a> <a id="10519" class="Symbol">(</a><a id="10520" href="#10520" class="Bound">E</a> <a id="10522" class="Symbol">:</a> <a id="10524" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="10528" class="Symbol">)</a> <a id="10530" class="Symbol">(</a><a id="10531" href="#10531" class="Bound">A</a> <a id="10533" class="Symbol">:</a> <a id="10535" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="10539" class="Symbol">)</a> <a id="10541" class="Symbol">:</a> <a id="10543" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="10548" class="Keyword">where</a>
   <a id="10556" class="Keyword">field</a>
     <a id="Segments.length"></a><a id="10566" href="#10566" class="Field">length</a> <a id="10573" class="Symbol">:</a> <a id="10575" href="#10520" class="Bound">E</a>
@@ -247,14 +336,24 @@
 
 <a id="10619" class="Keyword">open</a> <a id="10624" href="#10510" class="Module">Segments</a>
 </pre>
-<p>The question is, then, how do we convert <em>this</em> structure to an <code>Traced</code> representation?</p>
+<p>The question is, then, how do we convert <em>this</em> structure to
+an <code>Traced</code> representation?</p>
 <h1 id="monuses">Monuses</h1>
-<p>We need some extra operations on the monoid in the segments in order to enable this conversion to the <code>Traced</code> representation. The extra operations are encapsulated by the monus algebra: I wrote about this in the paper I submitted with Nicolas Wu to ICFP last year <span class="citation" data-cites="kidney_algebras_2021">(<a href="#ref-kidney_algebras_2021" role="doc-biblioref">2021</a>)</span>. It’s a simple algebra on monoids which basically encapsulates monoids which are ordered in a sensible way.</p>
-<p>The basic idea is that we construct an order on monoids which says “x is smaller than y if there is some z that we can add to x to get to y”.</p>
+<p>We need some extra operations on the monoid in the segments in order
+to enable this conversion to the <code>Traced</code> representation. The
+extra operations are encapsulated by the monus algebra: I wrote about
+this in the paper I submitted with Nicolas Wu to ICFP last year <span class="citation" data-cites="kidney_algebras_2021">(2021)</span>. It’s a
+simple algebra on monoids which basically encapsulates monoids which are
+ordered in a sensible way.</p>
+<p>The basic idea is that we construct an order on monoids which says “x
+is smaller than y if there is some z that we can add to x to get to
+y”.</p>
 <pre class="Agda"><a id="_≼_"></a><a id="11285" href="#11285" class="Function Operator">_≼_</a> <a id="11289" class="Symbol">:</a> <a id="11291" class="Symbol">⦃</a> <a id="11293" href="#11293" class="Bound">_</a> <a id="11295" class="Symbol">:</a> <a id="11297" href="../code/depth-comonads/DepthComonads.Algebra.html#1492" class="Record">Monoid</a> <a id="11304" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="11306" class="Symbol">⦄</a> <a id="11308" class="Symbol">→</a> <a id="11310" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="11312" class="Symbol">→</a> <a id="11314" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="11316" class="Symbol">→</a> <a id="11318" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="11323" class="Symbol">_</a>
 <a id="11325" href="#11325" class="Bound">x</a> <a id="11327" href="#11285" class="Function Operator">≼</a> <a id="11329" href="#11329" class="Bound">y</a> <a id="11331" class="Symbol">=</a> <a id="11333" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">∃</a> <a id="11335" href="#11335" class="Bound">z</a> <a id="11337" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">×</a> <a id="11339" class="Symbol">(</a><a id="11340" href="#11329" class="Bound">y</a> <a id="11342" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="11344" href="#11325" class="Bound">x</a> <a id="11346" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="11348" href="#11335" class="Bound">z</a><a id="11349" class="Symbol">)</a>
 </pre>
-<p>A monus is a monoid where we can extract that <code>z</code>, when it exists. On the monoid <code>(ℕ, +, 0)</code>, for instance, this order corresponds to the normal ordering on <code>ℕ</code>.</p>
+<p>A monus is a monoid where we can extract that <code>z</code>, when it
+exists. On the monoid <code>(ℕ, +, 0)</code>, for instance, this order
+corresponds to the normal ordering on <code>ℕ</code>.</p>
 <!--
 
 <pre class="Agda"><a id="11529" class="Keyword">open</a> <a id="11534" class="Keyword">import</a> <a id="11541" href="../code/depth-comonads/DepthComonads.Nat.Properties.html" class="Module">DepthComonads.Nat.Properties</a>
@@ -269,20 +368,23 @@
                       <a id="11817" class="Symbol">}</a>
 </pre>
 -->
-<p>Extracting the <code>z</code> above corresponds to a kind of difference operator:</p>
+<p>Extracting the <code>z</code> above corresponds to a kind of
+difference operator:</p>
 <pre class="Agda"><a id="_∸_"></a><a id="11907" href="#11907" class="Function Operator">_∸_</a> <a id="11911" class="Symbol">:</a> <a id="11913" href="../code/depth-comonads/Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a> <a id="11915" class="Symbol">→</a> <a id="11917" href="../code/depth-comonads/Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a> <a id="11919" class="Symbol">→</a> <a id="11921" href="../code/depth-comonads/Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a>
 <a id="11923" href="#11923" class="Bound">x</a>     <a id="11929" href="#11907" class="Function Operator">∸</a> <a id="11931" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>  <a id="11937" class="Symbol">=</a> <a id="11939" href="#11923" class="Bound">x</a>
 <a id="11941" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="11945" href="#11945" class="Bound">x</a> <a id="11947" href="#11907" class="Function Operator">∸</a> <a id="11949" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="11953" href="#11953" class="Bound">y</a> <a id="11955" class="Symbol">=</a> <a id="11957" href="#11945" class="Bound">x</a> <a id="11959" href="#11907" class="Function Operator">∸</a> <a id="11961" href="#11953" class="Bound">y</a>
 <a id="11963" class="CatchallClause Symbol">_</a><a id="11964" class="CatchallClause">     </a><a id="11969" href="#11907" class="CatchallClause Function Operator">∸</a><a id="11970" class="CatchallClause"> </a><a id="11971" class="CatchallClause Symbol">_</a>     <a id="11977" class="Symbol">=</a> <a id="11979" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>
 </pre>
-<p>This operator is sometimes called the monus. It is a kind of partial, or truncating, subtraction:</p>
+<p>This operator is sometimes called the monus. It is a kind of partial,
+or truncating, subtraction:</p>
 <pre class="Agda"><a id="12093" href="#12093" class="Function">_</a> <a id="12095" class="Symbol">:</a> <a id="12097" class="Number">5</a> <a id="12099" href="#11907" class="Function Operator">∸</a> <a id="12101" class="Number">2</a> <a id="12103" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="12105" class="Number">3</a>
 <a id="12107" class="Symbol">_</a> <a id="12109" class="Symbol">=</a> <a id="12111" href="Cubical.Foundations.Id.html#560" class="Function">refl</a>
 
 <a id="12117" href="#12117" class="Function">_</a> <a id="12119" class="Symbol">:</a> <a id="12121" class="Number">2</a> <a id="12123" href="#11907" class="Function Operator">∸</a> <a id="12125" class="Number">5</a> <a id="12127" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="12129" class="Number">0</a>
 <a id="12131" class="Symbol">_</a> <a id="12133" class="Symbol">=</a> <a id="12135" href="Cubical.Foundations.Id.html#560" class="Function">refl</a>
 </pre>
-<p>And, indeed, this operator “extracts” the <code>z</code>, when it exists.</p>
+<p>And, indeed, this operator “extracts” the <code>z</code>, when it
+exists.</p>
 <pre class="Agda"><a id="∸‿is-monus"></a><a id="12213" href="#12213" class="Function">∸‿is-monus</a> <a id="12224" class="Symbol">:</a> <a id="12226" class="Symbol">∀</a> <a id="12228" href="#12228" class="Bound">x</a> <a id="12230" href="#12230" class="Bound">y</a> <a id="12232" class="Symbol">→</a> <a id="12234" class="Symbol">(</a><a id="12235" href="#12235" class="Bound">x≼y</a> <a id="12239" class="Symbol">:</a> <a id="12241" href="#12228" class="Bound">x</a> <a id="12243" href="#11285" class="Function Operator">≼</a> <a id="12245" href="#12230" class="Bound">y</a><a id="12246" class="Symbol">)</a> <a id="12248" class="Symbol">→</a> <a id="12250" href="#12230" class="Bound">y</a> <a id="12252" href="#11907" class="Function Operator">∸</a> <a id="12254" href="#12228" class="Bound">x</a> <a id="12256" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="12258" href="../code/depth-comonads/Agda.Builtin.Sigma.html#252" class="Field">fst</a> <a id="12262" href="#12235" class="Bound">x≼y</a>
 <a id="12266" href="#12213" class="Function">∸‿is-monus</a> <a id="12277" href="../code/depth-comonads/Agda.Builtin.Nat.html#210" class="InductiveConstructor">zero</a>    <a id="12285" class="Symbol">_</a>       <a id="12293" class="Symbol">(</a><a id="12294" href="#12294" class="Bound">z</a> <a id="12296" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="12298" href="#12298" class="Bound">y≡0+z</a><a id="12303" class="Symbol">)</a> <a id="12305" class="Symbol">=</a> <a id="12307" href="#12298" class="Bound">y≡0+z</a>
 <a id="12313" href="#12213" class="Function">∸‿is-monus</a> <a id="12324" class="Symbol">(</a><a id="12325" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="12329" href="#12329" class="Bound">x</a><a id="12330" class="Symbol">)</a> <a id="12332" class="Symbol">(</a><a id="12333" href="../code/depth-comonads/Agda.Builtin.Nat.html#223" class="InductiveConstructor">suc</a> <a id="12337" href="#12337" class="Bound">y</a><a id="12338" class="Symbol">)</a> <a id="12340" class="Symbol">(</a><a id="12341" href="#12341" class="Bound">z</a> <a id="12343" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="12345" href="#12345" class="Bound">y≡x+z</a><a id="12350" class="Symbol">)</a> <a id="12352" class="Symbol">=</a> <a id="12354" href="#12213" class="Function">∸‿is-monus</a> <a id="12365" href="#12329" class="Bound">x</a> <a id="12367" href="#12337" class="Bound">y</a> <a id="12369" class="Symbol">(</a><a id="12370" href="#12341" class="Bound">z</a> <a id="12372" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="12374" href="../code/depth-comonads/DepthComonads.Nat.Properties.html#415" class="Function">suc-inj</a> <a id="12382" href="#12345" class="Bound">y≡x+z</a><a id="12387" class="Symbol">)</a>
@@ -294,21 +396,34 @@
 <a id="12536" class="Keyword">open</a> <a id="12541" href="#12529" class="Module">Monus</a> <a id="12547" class="Symbol">⦃</a> <a id="12549" class="Symbol">...</a> <a id="12553" class="Symbol">⦄</a> <a id="12555" class="Keyword">hiding</a> <a id="12562" class="Symbol">(</a><a id="12563" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Function Operator">_∙_</a><a id="12566" class="Symbol">;</a> <a id="12568" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Function">ε</a><a id="12569" class="Symbol">;</a> <a id="12571" href="../code/depth-comonads/DepthComonads.Algebra.html#1572" class="Function">assoc</a><a id="12576" class="Symbol">;</a> <a id="12578" href="../code/depth-comonads/DepthComonads.Algebra.html#1650" class="Function">∙ε</a><a id="12580" class="Symbol">;</a> <a id="12582" href="../code/depth-comonads/DepthComonads.Algebra.html#1623" class="Function">ε∙</a><a id="12584" class="Symbol">;</a> <a id="12586" href="../code/depth-comonads/DepthComonads.Algebra.html#2675" class="Function">monoid</a><a id="12592" class="Symbol">)</a>
 </pre>
 -->
-<p>Our definition of a monus is simple: a monus is anything where the order ≼, sometimes called the “algebraic preorder”, is total and antisymmetric. This is precisely what lets us write a function which takes the <code>Segments</code> type and converts it back to the <code>Traced</code> type.</p>
+<p>Our definition of a monus is simple: a monus is anything where the
+order ≼, sometimes called the “algebraic preorder”, is total and
+antisymmetric. This is precisely what lets us write a function which
+takes the <code>Segments</code> type and converts it back to the
+<code>Traced</code> type.</p>
 <pre class="Agda"><a id="12879" class="Symbol">{-#</a> <a id="12883" class="Keyword">NON_TERMINATING</a> <a id="12899" class="Symbol">#-}</a>
 <a id="Segments→Traced"></a><a id="12903" href="#12903" class="Function">Segments→Traced</a> <a id="12919" class="Symbol">:</a> <a id="12921" class="Symbol">⦃</a> <a id="12923" href="#12923" class="Bound">_</a> <a id="12925" class="Symbol">:</a> <a id="12927" href="#12529" class="Record">Monus</a> <a id="12933" href="#7614" class="Generalizable">E</a> <a id="12935" class="Symbol">⦄</a> <a id="12937" class="Symbol">→</a> <a id="12939" href="#10510" class="Record">Segments</a> <a id="12948" href="#7614" class="Generalizable">E</a> <a id="12950" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="12952" class="Symbol">→</a> <a id="12954" href="#7636" class="Function">Traced</a> <a id="12961" href="#7614" class="Generalizable">E</a> <a id="12963" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="12965" href="#12903" class="Function">Segments→Traced</a> <a id="12981" href="#12981" class="Bound">xs</a> <a id="12984" href="#12984" class="Bound">i</a> <a id="12986" class="Keyword">with</a> <a id="12991" href="#12981" class="Bound">xs</a> <a id="12994" class="Symbol">.</a><a id="12995" href="#10566" class="Field">length</a> <a id="13002" href="../code/depth-comonads/DepthComonads.Relation.Binary.html#3314" class="Function Operator">≤?</a> <a id="13005" href="#12984" class="Bound">i</a>
 <a id="13007" class="Symbol">...</a> <a id="13011" class="Symbol">|</a> <a id="13013" href="../code/depth-comonads/DepthComonads.Dec.html#420" class="InductiveConstructor">yes</a> <a id="13017" class="Symbol">(</a><a id="13018" href="#13018" class="Bound">j</a> <a id="13020" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="13022" href="#13022" class="Bound">i≡xsₗ∙j</a><a id="13029" class="Symbol">)</a> <a id="13031" class="Symbol">=</a> <a id="13033" href="#12903" class="Function">Segments→Traced</a> <a id="13049" class="Symbol">(</a><a id="13050" class="Bound">xs</a> <a id="13053" class="Symbol">.</a><a id="13054" href="#10596" class="Field">next</a><a id="13058" class="Symbol">)</a> <a id="13060" href="#13018" class="Bound">j</a>
 <a id="13062" class="Symbol">...</a> <a id="13066" class="Symbol">|</a> <a id="13068" href="../code/depth-comonads/DepthComonads.Dec.html#454" class="InductiveConstructor">no</a>  <a id="13072" class="Symbol">_</a>             <a id="13086" class="Symbol">=</a> <a id="13088" class="Bound">xs</a> <a id="13091" class="Symbol">.</a><a id="13092" href="#10581" class="Field">label</a>
 </pre>
-<p>This function takes an index, and checks if that length is greater than or equal to the first segment in the stream of segments. If it is, then it continues searching through the rest of the segments with the index reduced by the size of that first segment. If not, then it returns the label of the first segment.</p>
+<p>This function takes an index, and checks if that length is greater
+than or equal to the first segment in the stream of segments. If it is,
+then it continues searching through the rest of the segments with the
+index reduced by the size of that first segment. If not, then it returns
+the label of the first segment.</p>
 <p>Taking the old example, we are basically converting to ∸ from +:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">str ::</span> <span class="dt">Traced</span> m a</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>str i <span class="op">|</span> i         <span class="op">&lt;</span> a <span class="ot">=</span> x</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>      <span class="op">|</span> i ∸ a     <span class="op">&lt;</span> b <span class="ot">=</span> y</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>      <span class="op">|</span> i ∸ a ∸ b <span class="op">&lt;</span> c <span class="ot">=</span> z</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>      <span class="op">|</span> <span class="op">...</span></span></code></pre></div>
-<p>The first issue here is that this definition is not terminating. That might seem an insurmountable problem at first—we are searching through an infinite stream, after all—but notice that there is one paremeter which is decreasing on each recursive call: the index. Well, it only decreases if the segment is non-zero: this can be enforced by changing the definition of the segments type:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">str ::</span> <span class="dt">Traced</span> m a</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>str i <span class="op">|</span> i         <span class="op">&lt;</span> a <span class="ot">=</span> x</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> i ∸ a     <span class="op">&lt;</span> b <span class="ot">=</span> y</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> i ∸ a ∸ b <span class="op">&lt;</span> c <span class="ot">=</span> z</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="op">...</span></span></code></pre></div>
+<p>The first issue here is that this definition is not terminating. That
+might seem an insurmountable problem at first—we are searching through
+an infinite stream, after all—but notice that there is one paremeter
+which is decreasing on each recursive call: the index. Well, it only
+decreases if the segment is non-zero: this can be enforced by changing
+the definition of the segments type:</p>
 <pre class="Agda"><a id="14004" class="Keyword">record</a> <a id="ℱ-Segments"></a><a id="14011" href="#14011" class="Record">ℱ-Segments</a> <a id="14022" class="Symbol">(</a><a id="14023" href="#14023" class="Bound">E</a> <a id="14025" class="Symbol">:</a> <a id="14027" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="14031" class="Symbol">)</a> <a id="14033" class="Symbol">⦃</a> <a id="14035" href="#14035" class="Bound">_</a> <a id="14037" class="Symbol">:</a> <a id="14039" href="#12529" class="Record">Monus</a> <a id="14045" href="#14023" class="Bound">E</a> <a id="14047" class="Symbol">⦄</a> <a id="14049" class="Symbol">(</a><a id="14050" href="#14050" class="Bound">A</a> <a id="14052" class="Symbol">:</a> <a id="14054" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="14058" class="Symbol">)</a> <a id="14060" class="Symbol">:</a> <a id="14062" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="14067" class="Keyword">where</a>
   <a id="14075" class="Keyword">coinductive</a>
   <a id="14089" class="Keyword">field</a>
@@ -330,13 +445,26 @@
   <a id="14571" href="#14571" class="Function">ℱ-Segments→Traced</a> <a id="14589" class="Symbol">:</a> <a id="14591" href="#14011" class="Record">ℱ-Segments</a> <a id="14602" href="#14288" class="Bound">E</a> <a id="14604" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="14606" class="Symbol">→</a> <a id="14608" href="#7636" class="Function">Traced</a> <a id="14615" href="#14288" class="Bound">E</a> <a id="14617" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
   <a id="14621" href="#14571" class="Function">ℱ-Segments→Traced</a> <a id="14639" href="#14639" class="Bound">xs</a> <a id="14642" href="#14642" class="Bound">i</a> <a id="14644" class="Symbol">=</a> <a id="14646" href="#14323" class="Function">wf-index</a> <a id="14655" href="#14639" class="Bound">xs</a> <a id="14658" href="#14642" class="Bound">i</a> <a id="14660" class="Symbol">(</a><a id="14661" href="#14293" class="Bound">wf</a> <a id="14664" href="#14642" class="Bound">i</a><a id="14665" class="Symbol">)</a>
 </pre>
-<h1 id="trying-to-build-an-isomorphism">Trying to build an isomorphism</h1>
-<p>So the <code>ℱ-Segments</code> type is interesting, but it only really gives one side of the isomorphism. There is no way to write a function <code>Traced E A → ℱ-Segments E A</code>.</p>
-<p>The problem is that there’s no way to get the “next” segment from a function <code>E → A</code>. We can find the label of the first segment, by applying the function to <code>ε</code>, but there’s no real way to figure out the <em>size</em> of this segment. We can change <code>Traced</code> little to <em>provide</em> this size, though.</p>
+<h1 id="trying-to-build-an-isomorphism">Trying to build an
+isomorphism</h1>
+<p>So the <code>ℱ-Segments</code> type is interesting, but it only
+really gives one side of the isomorphism. There is no way to write a
+function <code>Traced E A → ℱ-Segments E A</code>.</p>
+<p>The problem is that there’s no way to get the “next” segment from a
+function <code>E → A</code>. We can find the label of the first segment,
+by applying the function to <code>ε</code>, but there’s no real way to
+figure out the <em>size</em> of this segment. We can change
+<code>Traced</code> little to <em>provide</em> this size, though.</p>
 <pre class="Agda"><a id="Ind"></a><a id="15166" href="#15166" class="Function">Ind</a> <a id="15170" class="Symbol">:</a> <a id="15172" class="Symbol">∀</a> <a id="15174" href="#15174" class="Bound">E</a> <a id="15176" class="Symbol">→</a> <a id="15178" class="Symbol">⦃</a> <a id="15180" href="#15180" class="Bound">_</a> <a id="15182" class="Symbol">:</a> <a id="15184" href="#12529" class="Record">Monus</a> <a id="15190" href="#15174" class="Bound">E</a> <a id="15192" class="Symbol">⦄</a> <a id="15194" class="Symbol">→</a> <a id="15196" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="15201" class="Symbol">→</a> <a id="15203" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="15208" href="#15166" class="Function">Ind</a> <a id="15212" href="#15212" class="Bound">E</a> <a id="15214" href="#15214" class="Bound">A</a> <a id="15216" class="Symbol">=</a> <a id="15218" href="#15212" class="Bound">E</a> <a id="15220" class="Symbol">→</a> <a id="15222" href="#15214" class="Bound">A</a> <a id="15224" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="15226" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">Σ[</a> <a id="15229" href="#15229" class="Bound">length</a> <a id="15236" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">⦂</a> <a id="15238" href="#15212" class="Bound">E</a> <a id="15240" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">]</a> <a id="15242" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">×</a> <a id="15244" class="Symbol">(</a><a id="15245" href="#15229" class="Bound">length</a> <a id="15252" href="../code/depth-comonads/DepthComonads.Path.html#561" class="Function Operator">≢</a> <a id="15254" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a><a id="15255" class="Symbol">)</a>
 </pre>
-<p>This new type will return a tuple consisting of the value indicated by the supplied index, along with the distance to the next segment. For instance, on the example stream given in the diagram earlier, supplying an index <code>i</code> that is bigger than <code>a</code> but smaller than <code>a + b</code>, this function should return <code>y</code> along with some <code>j</code> such that <code>i + j ≡ a + b</code>. Diagrammatically:</p>
+<p>This new type will return a tuple consisting of the value indicated
+by the supplied index, along with the distance to the next segment. For
+instance, on the example stream given in the diagram earlier, supplying
+an index <code>i</code> that is bigger than <code>a</code> but smaller
+than <code>a + b</code>, this function should return <code>y</code>
+along with some <code>j</code> such that <code>i + j ≡ a + b</code>.
+Diagrammatically:</p>
 <pre class="ascii-art">
 ╷⇤i╌╌╌╌╌╌╌╌⇥╷⇤j╌╌⇥╷
 ┢━━━━━━━━┳━━┷━━━━━╈━━━━━━┉
@@ -357,7 +485,9 @@
   <a id="16208" href="#16208" class="Function">ℱ-Segments→Ind</a> <a id="16223" class="Symbol">:</a> <a id="16225" href="../code/depth-comonads/DepthComonads.WellFounded.html#230" class="Function">WellFounded</a> <a id="16237" href="../code/depth-comonads/DepthComonads.Algebra.Monus.html#2522" class="Function Operator">_≺_</a> <a id="16241" class="Symbol">→</a> <a id="16243" href="#14011" class="Record">ℱ-Segments</a> <a id="16254" href="#15862" class="Bound">E</a> <a id="16256" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="16258" class="Symbol">→</a> <a id="16260" href="#15166" class="Function">Ind</a> <a id="16264" href="#15862" class="Bound">E</a> <a id="16266" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
   <a id="16270" href="#16208" class="Function">ℱ-Segments→Ind</a> <a id="16285" href="#16285" class="Bound">wf</a> <a id="16288" href="#16288" class="Bound">xs</a> <a id="16291" href="#16291" class="Bound">i</a> <a id="16293" class="Symbol">=</a> <a id="16295" href="#15874" class="Function">wf-ind</a> <a id="16302" href="#16288" class="Bound">xs</a> <a id="16305" href="#16291" class="Bound">i</a> <a id="16307" class="Symbol">(</a><a id="16308" href="#16285" class="Bound">wf</a> <a id="16311" href="#16291" class="Bound">i</a><a id="16312" class="Symbol">)</a>
 </pre>
-<p>Again, if the monus has finite descending chains, this function is terminating. And the nice thing about this is that it’s possible to write a function in the other direction:</p>
+<p>Again, if the monus has finite descending chains, this function is
+terminating. And the nice thing about this is that it’s possible to
+write a function in the other direction:</p>
 <pre class="Agda"><a id="Ind→ℱ-Segments"></a><a id="16500" href="#16500" class="Function">Ind→ℱ-Segments</a> <a id="16515" class="Symbol">:</a> <a id="16517" class="Symbol">⦃</a> <a id="16519" href="#16519" class="Bound">_</a> <a id="16521" class="Symbol">:</a> <a id="16523" href="#12529" class="Record">Monus</a> <a id="16529" href="#7614" class="Generalizable">E</a> <a id="16531" class="Symbol">⦄</a> <a id="16533" class="Symbol">→</a> <a id="16535" href="#15166" class="Function">Ind</a> <a id="16539" href="#7614" class="Generalizable">E</a> <a id="16541" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="16543" class="Symbol">→</a> <a id="16545" href="#14011" class="Record">ℱ-Segments</a> <a id="16556" href="#7614" class="Generalizable">E</a> <a id="16558" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="16560" href="#16500" class="Function">Ind→ℱ-Segments</a> <a id="16575" href="#16575" class="Bound">ind</a> <a id="16579" class="Symbol">=</a>
   <a id="16583" class="Keyword">let</a> <a id="16587" href="#16587" class="Bound">x</a> <a id="16589" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="16591" href="#16591" class="Bound">s</a> <a id="16593" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="16595" href="#16595" class="Bound">s≢ε</a> <a id="16599" class="Symbol">=</a> <a id="16601" href="#16575" class="Bound">ind</a> <a id="16605" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a>
@@ -366,17 +496,29 @@
              <a id="16674" class="Symbol">.</a><a id="16675" href="#14133" class="Field">length≢ε</a> <a id="16684" class="Symbol">→</a> <a id="16686" href="#16595" class="Bound">s≢ε</a>
              <a id="16703" class="Symbol">.</a><a id="16704" href="#14159" class="Field">next</a>     <a id="16713" class="Symbol">→</a> <a id="16715" href="#16500" class="Function">Ind→ℱ-Segments</a> <a id="16730" class="Symbol">(</a><a id="16731" href="#16575" class="Bound">ind</a> <a id="16735" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="16737" class="Symbol">(</a><a id="16738" href="#16591" class="Bound">s</a> <a id="16740" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙_</a><a id="16742" class="Symbol">))</a>
 </pre>
-<p>The problem here is that this isomorphism is only half correct. We can prove that converting to <code>Ind</code> and back is the identity, but not the other direction. There are too many functions in <code>Ind</code>.</p>
+<p>The problem here is that this isomorphism is only half correct. We
+can prove that converting to <code>Ind</code> and back is the identity,
+but not the other direction. There are too many functions in
+<code>Ind</code>.</p>
 <p>Nonetheless, it’s still interesting!</p>
 <h1 id="state-comonad">State Comonad</h1>
-<p>There is a comonad on state <span class="citation" data-cites="waern_made_2018 kmett_state_2018">(Waern <a href="#ref-waern_made_2018" role="doc-biblioref">2018</a>; Kmett <a href="#ref-kmett_state_2018" role="doc-biblioref">2018</a>)</span> that is different from store. Notice that above the <code>Ind</code> type has the same type (almost) as <code>State E A</code>.</p>
-<p>This is interesting in two ways: first, it gives some concrete, spatial intuition for what’s going on with the state comonad.</p>
-<p>Second, it gives a kind of interesting <em>monad</em> instance on the stream. If we apply the <code>Ind→ℱ-Segments</code> function to the implementation of <code>join</code> on state, we <em>should</em> get a <code>join</code> on <code>ℱ-Segments</code>. And we do!</p>
+<p>There is a comonad on state <span class="citation" data-cites="waern_made_2018 kmett_state_2018">(Waern 2018; Kmett
+2018)</span> that is different from store. Notice that above the
+<code>Ind</code> type has the same type (almost) as
+<code>State E A</code>.</p>
+<p>This is interesting in two ways: first, it gives some concrete,
+spatial intuition for what’s going on with the state comonad.</p>
+<p>Second, it gives a kind of interesting <em>monad</em> instance on the
+stream. If we apply the <code>Ind→ℱ-Segments</code> function to the
+implementation of <code>join</code> on state, we <em>should</em> get a
+<code>join</code> on <code>ℱ-Segments</code>. And we do!</p>
 <p>First, we need to redefine <code>Ind</code> to the following:</p>
 <pre class="Agda"><a id="𝒜-Ind"></a><a id="17567" href="#17567" class="Function">𝒜-Ind</a> <a id="17573" class="Symbol">:</a> <a id="17575" class="Symbol">∀</a> <a id="17577" href="#17577" class="Bound">E</a> <a id="17579" class="Symbol">→</a> <a id="17581" class="Symbol">⦃</a> <a id="17583" href="#17583" class="Bound">_</a> <a id="17585" class="Symbol">:</a> <a id="17587" href="#12529" class="Record">Monus</a> <a id="17593" href="#17577" class="Bound">E</a> <a id="17595" class="Symbol">⦄</a> <a id="17597" class="Symbol">→</a> <a id="17599" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="17604" class="Symbol">→</a> <a id="17606" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="17611" href="#17567" class="Function">𝒜-Ind</a> <a id="17617" href="#17617" class="Bound">E</a> <a id="17619" href="#17619" class="Bound">A</a> <a id="17621" class="Symbol">=</a> <a id="17623" class="Symbol">(</a><a id="17624" href="#17624" class="Bound">i</a> <a id="17626" class="Symbol">:</a> <a id="17628" href="#17617" class="Bound">E</a><a id="17629" class="Symbol">)</a> <a id="17631" class="Symbol">→</a> <a id="17633" href="#17619" class="Bound">A</a> <a id="17635" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="17637" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">Σ[</a> <a id="17640" href="#17640" class="Bound">length</a> <a id="17647" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">⦂</a> <a id="17649" href="#17617" class="Bound">E</a> <a id="17651" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">]</a> <a id="17653" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">×</a> <a id="17655" class="Symbol">(</a><a id="17656" href="#17624" class="Bound">i</a> <a id="17658" href="../code/depth-comonads/DepthComonads.Algebra.Monus.html#2522" class="Function Operator">≺</a> <a id="17660" href="#17640" class="Bound">length</a><a id="17666" class="Symbol">)</a>
 </pre>
-<p>This is actually isomorphic to the previous definition, but we return the absolute value of the next segment, rather than the distance to the next segment.</p>
+<p>This is actually isomorphic to the previous definition, but we return
+the absolute value of the next segment, rather than the distance to the
+next segment.</p>
 <pre class="Agda"><a id="𝒜-iso"></a><a id="17834" href="#17834" class="Function">𝒜-iso</a> <a id="17840" class="Symbol">:</a> <a id="17842" class="Symbol">⦃</a> <a id="17844" href="#17844" class="Bound">_</a> <a id="17846" class="Symbol">:</a> <a id="17848" href="#12529" class="Record">Monus</a> <a id="17854" href="#7614" class="Generalizable">E</a> <a id="17856" class="Symbol">⦄</a> <a id="17858" class="Symbol">→</a> <a id="17860" href="#17567" class="Function">𝒜-Ind</a> <a id="17866" href="#7614" class="Generalizable">E</a> <a id="17868" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="17870" href="../code/depth-comonads/DepthComonads.Function.Isomorphism.html#308" class="Function Operator">⇔</a> <a id="17872" href="#15166" class="Function">Ind</a> <a id="17876" href="#7614" class="Generalizable">E</a> <a id="17878" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="17880" href="#17834" class="Function">𝒜-iso</a> <a id="17886" class="Symbol">.</a><a id="17887" href="Cubical.Foundations.Isomorphism.html#882" class="Field">fun</a> <a id="17891" href="#17891" class="Bound">xs</a> <a id="17894" href="#17894" class="Bound">i</a> <a id="17896" class="Symbol">=</a>
   <a id="17900" class="Keyword">let</a> <a id="17904" href="#17904" class="Bound">x</a> <a id="17906" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="17908" href="#17908" class="Bound">s</a> <a id="17910" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="17912" href="#17912" class="Bound">k</a> <a id="17914" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="17916" href="#17916" class="Bound">s≡i∙k</a> <a id="17922" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="17924" href="#17924" class="Bound">k≢ε</a> <a id="17928" class="Symbol">=</a> <a id="17930" href="#17891" class="Bound">xs</a> <a id="17933" href="#17894" class="Bound">i</a>
@@ -389,15 +531,20 @@
   <a id="18082" class="Keyword">let</a> <a id="18086" href="#18086" class="Bound">x</a> <a id="18088" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18090" href="#18090" class="Bound">s</a>           <a id="18102" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18104" href="#18104" class="Bound">k</a> <a id="18106" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18108" href="#18108" class="Bound">s≡i∙k</a>                   <a id="18132" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18134" href="#18134" class="Bound">k≢ε</a> <a id="18138" class="Symbol">=</a> <a id="18140" href="#18070" class="Bound">xs</a> <a id="18143" href="#18075" class="Bound">i</a>
   <a id="18147" class="Keyword">in</a>  <a id="18151" href="#18086" class="Bound">x</a> <a id="18153" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18155" href="#18108" class="Bound">s≡i∙k</a> <a id="18161" class="Symbol">(</a><a id="18162" href="Cubical.Core.Primitives.html#539" class="Primitive Operator">~</a> <a id="18164" href="#18073" class="Bound">p</a><a id="18165" class="Symbol">)</a> <a id="18167" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18169" href="#18104" class="Bound">k</a> <a id="18171" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18173" class="Symbol">(λ</a> <a id="18176" href="#18176" class="Bound">q</a> <a id="18178" class="Symbol">→</a> <a id="18180" href="#18108" class="Bound">s≡i∙k</a> <a id="18186" class="Symbol">(</a><a id="18187" href="Cubical.Core.Primitives.html#539" class="Primitive Operator">~</a> <a id="18189" href="#18073" class="Bound">p</a> <a id="18191" href="Cubical.Core.Primitives.html#490" class="Primitive Operator">∨</a> <a id="18193" href="#18176" class="Bound">q</a><a id="18194" class="Symbol">))</a> <a id="18197" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18199" href="#18134" class="Bound">k≢ε</a>
 </pre>
-<p>The implemention of <code>join</code> on this type is the following:</p>
+<p>The implemention of <code>join</code> on this type is the
+following:</p>
 <pre class="Agda"><a id="𝒜-join"></a><a id="18271" href="#18271" class="Function">𝒜-join</a> <a id="18278" class="Symbol">:</a> <a id="18280" class="Symbol">⦃</a> <a id="18282" href="#18282" class="Bound">_</a> <a id="18284" class="Symbol">:</a> <a id="18286" href="#12529" class="Record">Monus</a> <a id="18292" href="#7614" class="Generalizable">E</a> <a id="18294" class="Symbol">⦄</a> <a id="18296" class="Symbol">→</a> <a id="18298" href="#17567" class="Function">𝒜-Ind</a> <a id="18304" href="#7614" class="Generalizable">E</a> <a id="18306" class="Symbol">(</a><a id="18307" href="#17567" class="Function">𝒜-Ind</a> <a id="18313" href="#7614" class="Generalizable">E</a> <a id="18315" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a><a id="18316" class="Symbol">)</a> <a id="18318" class="Symbol">→</a> <a id="18320" href="#17567" class="Function">𝒜-Ind</a> <a id="18326" href="#7614" class="Generalizable">E</a> <a id="18328" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="18330" href="#18271" class="Function">𝒜-join</a> <a id="18337" href="#18337" class="Bound">xs</a> <a id="18340" href="#18340" class="Bound">i</a> <a id="18342" class="Symbol">=</a>
   <a id="18346" class="Keyword">let</a> <a id="18350" href="#18350" class="Bound">x</a> <a id="18352" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18354" href="#18354" class="Bound">j</a> <a id="18356" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18358" href="#18358" class="Bound">i&lt;j</a> <a id="18362" class="Symbol">=</a> <a id="18364" href="#18337" class="Bound">xs</a> <a id="18367" href="#18340" class="Bound">i</a>
       <a id="18375" href="#18375" class="Bound">y</a> <a id="18377" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18379" href="#18379" class="Bound">k</a> <a id="18381" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18383" href="#18383" class="Bound">k&lt;j</a> <a id="18387" class="Symbol">=</a> <a id="18389" href="#18350" class="Bound">x</a> <a id="18391" href="#18354" class="Bound">j</a>
   <a id="18395" class="Keyword">in</a>  <a id="18399" href="#18375" class="Bound">y</a> <a id="18401" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18403" href="#18379" class="Bound">k</a> <a id="18405" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="18407" href="../code/depth-comonads/DepthComonads.Algebra.Monus.html#5397" class="Function">≺-trans</a> <a id="18415" href="#18358" class="Bound">i&lt;j</a> <a id="18419" href="#18383" class="Bound">k&lt;j</a>
 </pre>
-<p>This is the same definition of <code>join</code> as for <code>State</code>, modulo the <code>&lt;</code> fiddling.</p>
-<p>On a stream, this operation corresponds to taking a stream of streams and collapsing it to a single stream. It does this by taking a prefix of each internal stream equal in size to the segment of the outer entry. Diagrammatically:</p>
+<p>This is the same definition of <code>join</code> as for
+<code>State</code>, modulo the <code>&lt;</code> fiddling.</p>
+<p>On a stream, this operation corresponds to taking a stream of streams
+and collapsing it to a single stream. It does this by taking a prefix of
+each internal stream equal in size to the segment of the outer entry.
+Diagrammatically:</p>
 <pre class="ascii-art">
 ┏━━━━━━━━━━┳━━━━━━┳━━━━━━┉
 ┃xs        ┃ys    ┃zs    ┉
@@ -414,8 +561,15 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
      ┡━━━━━━━╇━━━━━━╇━━━━┉
      ╵⇤aʸ╌╌╌⇥╵⇤bʸ╌╌⇥╵⇤cʸ╌┈
 </pre>
-<p>Here we start with a stream consisting of the streams <code>xs</code>, <code>ys</code>, and <code>zs</code>, followed by some other streams. Zooming in on <code>ys</code>, we see that it is in a segment of length <code>b</code>, and consists of three values <code>xʸ</code>, <code>yʸ</code>, and <code>zʸ</code>, with segment lengths <code>aʸ</code>, <code>bʸ</code>, and <code>cʸ</code>, respectively.</p>
-<p>Calling <code>join</code> on this stream will give us the following stream:</p>
+<p>Here we start with a stream consisting of the streams
+<code>xs</code>, <code>ys</code>, and <code>zs</code>, followed by some
+other streams. Zooming in on <code>ys</code>, we see that it is in a
+segment of length <code>b</code>, and consists of three values
+<code>xʸ</code>, <code>yʸ</code>, and <code>zʸ</code>, with segment
+lengths <code>aʸ</code>, <code>bʸ</code>, and <code>cʸ</code>,
+respectively.</p>
+<p>Calling <code>join</code> on this stream will give us the following
+stream:</p>
 <pre class="ascii-art">
 ┏━┉━┳━━━━┳━━━━┳━━━━━┳━━━━┉
 ┃ ┉ ┃xʸ  ┃yʸ  ┃zʸ   ┃    ┉
@@ -423,15 +577,36 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
 │   │⇤aʸ⇥╵⇤bʸ⇥╵⇤╌╌┈⇥│
 ╵⇤a⇥╵⇤b╌╌╌╌╌╌╌╌╌╌╌╌⇥╵⇤c╌╌┈
 </pre>
-<p>Again, we’re focusing on the <code>ys</code> section here, which occupies the segment from <code>a</code> to <code>a ∙ b</code>. After <code>join</code>, this segment is occupied by three elements, <code>xʸ</code>, <code>yʸ</code>, and <code>zʸ</code>.</p>
-<p>Notice that this isn’t quite the normal <code>join</code> on streams. That <code>join</code> takes a stream of streams, and turns the <code>i</code>th entry into the <code>i</code>th entry in the underlying stream. It’s a diagonalisation, in other words.</p>
-<p>This one is kind of similar, but it takes chunks of the outer stream.</p>
+<p>Again, we’re focusing on the <code>ys</code> section here, which
+occupies the segment from <code>a</code> to <code>a ∙ b</code>. After
+<code>join</code>, this segment is occupied by three elements,
+<code>xʸ</code>, <code>yʸ</code>, and <code>zʸ</code>.</p>
+<p>Notice that this isn’t quite the normal <code>join</code> on streams.
+That <code>join</code> takes a stream of streams, and turns the
+<code>i</code>th entry into the <code>i</code>th entry in the underlying
+stream. It’s a diagonalisation, in other words.</p>
+<p>This one is kind of similar, but it takes chunks of the outer
+stream.</p>
 <h1 id="theory">Theory</h1>
-<p>All of this so far is very hand-wavy. We have an almost isomorphism (a split surjection, to be precise), but not much in the way of concrete theoretical insights, just some vague gesturing towards spatial metaphors and so on.</p>
-<p>Thankfully, there are two seperate areas of more serious research that seem related to the stuff I’ve talked about here. The first is update monads and directed containers, and the second is graded comonads. I think I understand graded comonads and the related work better out of the two, but update monads and directed containers seems more closely related to what I’m doing here.</p>
-<h1 id="update-monads-and-directed-containers">Update Monads and Directed Containers</h1>
-<p>There are a few papers on this topic: <span class="citation" data-cites="ahman_when_2012">Ahman, Chapman, and Uustalu (<a href="#ref-ahman_when_2012" role="doc-biblioref">2012</a>)</span>, <span class="citation" data-cites="ahman_distributive_2013 ahman_update_2014 ahman_directed_2016">Ahman and Uustalu (<a href="#ref-ahman_distributive_2013" role="doc-biblioref">2013</a>; Ahman and Uustalu <a href="#ref-ahman_update_2014" role="doc-biblioref">2014</a>; Ahman and Uustalu <a href="#ref-ahman_directed_2016" role="doc-biblioref">2016</a>)</span>.</p>
-<p>The first of these, “When Is a Container a Comonad?” constructs, as the title suggests, a class for containers which are comonads in a standard way.</p>
+<p>All of this so far is very hand-wavy. We have an almost isomorphism
+(a split surjection, to be precise), but not much in the way of concrete
+theoretical insights, just some vague gesturing towards spatial
+metaphors and so on.</p>
+<p>Thankfully, there are two seperate areas of more serious research
+that seem related to the stuff I’ve talked about here. The first is
+update monads and directed containers, and the second is graded
+comonads. I think I understand graded comonads and the related work
+better out of the two, but update monads and directed containers seems
+more closely related to what I’m doing here.</p>
+<h1 id="update-monads-and-directed-containers">Update Monads and
+Directed Containers</h1>
+<p>There are a few papers on this topic: <span class="citation" data-cites="ahman_when_2012">Ahman, Chapman, and Uustalu (2012)</span>,
+<span class="citation" data-cites="ahman_distributive_2013 ahman_update_2014 ahman_directed_2016">Ahman
+and Uustalu (2013; Ahman and Uustalu 2014; Ahman and Uustalu
+2016)</span>.</p>
+<p>The first of these, “When Is a Container a Comonad?” constructs, as
+the title suggests, a class for containers which are comonads in a
+standard way.</p>
 <p>Here’s the definition of a container:</p>
 <pre class="Agda"><a id="Container"></a><a id="21080" href="#21080" class="Function">Container</a> <a id="21090" class="Symbol">:</a> <a id="21092" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type₁</a>
 <a id="21098" href="#21080" class="Function">Container</a> <a id="21108" class="Symbol">=</a> <a id="21110" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">Σ[</a> <a id="21113" href="#21113" class="Bound">Shape</a> <a id="21119" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">⦂</a> <a id="21121" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="21126" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">]</a> <a id="21128" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">×</a> <a id="21130" class="Symbol">(</a><a id="21131" href="#21113" class="Bound">Shape</a> <a id="21137" class="Symbol">→</a> <a id="21139" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="21143" class="Symbol">)</a>
@@ -439,7 +614,13 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
 <a id="⟦_⟧"></a><a id="21146" href="#21146" class="Function Operator">⟦_⟧</a> <a id="21150" class="Symbol">:</a> <a id="21152" href="#21080" class="Function">Container</a> <a id="21162" class="Symbol">→</a> <a id="21164" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="21169" class="Symbol">→</a> <a id="21171" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="21176" href="#21146" class="Function Operator">⟦</a> <a id="21178" href="#21178" class="Bound">S</a> <a id="21180" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="21182" href="#21182" class="Bound">P</a> <a id="21184" href="#21146" class="Function Operator">⟧</a> <a id="21186" href="#21186" class="Bound">X</a> <a id="21188" class="Symbol">=</a> <a id="21190" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">Σ[</a> <a id="21193" href="#21193" class="Bound">s</a> <a id="21195" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">⦂</a> <a id="21197" href="#21178" class="Bound">S</a> <a id="21199" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">]</a> <a id="21201" href="../code/depth-comonads/DepthComonads.Sigma.html#407" class="Function">×</a> <a id="21203" class="Symbol">(</a><a id="21204" href="#21182" class="Bound">P</a> <a id="21206" href="#21193" class="Bound">s</a> <a id="21208" class="Symbol">→</a> <a id="21210" href="#21186" class="Bound">X</a><a id="21211" class="Symbol">)</a>
 </pre>
-<p>Containers are a generic way to describe a class of well-behaved functors. Any container is a pair of a shape and position. Lists, for instance, are containers, where their shape is described by the natural numbers (the shape here is the length of the list). The positions in such a list are the numbers smaller than the length, in dependently-typed programming we usually use the <code>Fin</code> type for this:</p>
+<p>Containers are a generic way to describe a class of well-behaved
+functors. Any container is a pair of a shape and position. Lists, for
+instance, are containers, where their shape is described by the natural
+numbers (the shape here is the length of the list). The positions in
+such a list are the numbers smaller than the length, in
+dependently-typed programming we usually use the <code>Fin</code> type
+for this:</p>
 <pre class="Agda"><a id="Fin"></a><a id="21625" href="#21625" class="Function">Fin</a> <a id="21629" class="Symbol">:</a> <a id="21631" href="../code/depth-comonads/Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a> <a id="21633" class="Symbol">→</a> <a id="21635" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="21640" href="#21625" class="Function">Fin</a> <a id="21644" href="#21644" class="Bound">n</a> <a id="21646" class="Symbol">=</a> <a id="21648" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">∃</a> <a id="21650" href="#21650" class="Bound">m</a> <a id="21652" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">×</a> <a id="21654" class="Symbol">(</a><a id="21655" href="#21650" class="Bound">m</a> <a id="21657" href="../code/depth-comonads/DepthComonads.Nat.html#220" class="Function Operator">&lt;ℕ</a> <a id="21660" href="#21644" class="Bound">n</a><a id="21661" class="Symbol">)</a>
 </pre>
@@ -447,7 +628,8 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
 <pre class="Agda"><a id="ℒ𝒾𝓈𝓉"></a><a id="21729" href="#21729" class="Function">ℒ𝒾𝓈𝓉</a> <a id="21734" class="Symbol">:</a> <a id="21736" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="21741" class="Symbol">→</a> <a id="21743" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="21748" href="#21729" class="Function">ℒ𝒾𝓈𝓉</a> <a id="21753" class="Symbol">=</a> <a id="21755" href="#21146" class="Function Operator">⟦</a> <a id="21757" href="../code/depth-comonads/Agda.Builtin.Nat.html#192" class="Datatype">ℕ</a> <a id="21759" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="21761" href="#21625" class="Function">Fin</a> <a id="21765" href="#21146" class="Function Operator">⟧</a>
 </pre>
-<p>Here’s the same list represented in the standard way, and as a container:</p>
+<p>Here’s the same list represented in the standard way, and as a
+container:</p>
 <div class="row">
 <div class="column">
 <pre class="Agda"><a id="someBools"></a><a id="21890" href="#21890" class="Function">someBools</a> <a id="21900" class="Symbol">:</a> <a id="21902" href="../code/depth-comonads/Agda.Builtin.List.html#148" class="Datatype">List</a> <a id="21907" href="../code/depth-comonads/Agda.Builtin.Bool.html#163" class="Datatype">Bool</a>
@@ -464,15 +646,28 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
 </pre>
 </div>
 </div>
-<p>The benefit of using containers is that it gives a standard, generic, and composable way to construct functors that have some nice properties (like strict positivity). They’re pretty annoying to use in practice, though, which is a shame.</p>
-<p>Directed containers are container that have three extra operations.</p>
+<p>The benefit of using containers is that it gives a standard, generic,
+and composable way to construct functors that have some nice properties
+(like strict positivity). They’re pretty annoying to use in practice,
+though, which is a shame.</p>
+<p>Directed containers are container that have three extra
+operations.</p>
 <ul>
-<li>A <code>tail</code>-like operation, where a position can be converted into the shape of containers that the suffic from that position.</li>
-<li>A <code>head</code>-like operation, where you can always return the root position.</li>
-<li>A <code>+</code>-like operation, where you take a position on some tail and translate it into a position on the original container, by adding it.</li>
+<li>A <code>tail</code>-like operation, where a position can be
+converted into the shape of containers that the suffic from that
+position.</li>
+<li>A <code>head</code>-like operation, where you can always return the
+root position.</li>
+<li>A <code>+</code>-like operation, where you take a position on some
+tail and translate it into a position on the original container, by
+adding it.</li>
 </ul>
-<p>As the paper observes, these are very similar to a “dependently-typed” version of the monoid methods. This seems to me to be very similar to the indexing stuff we were doing earlier on.</p>
-<p>The real interesting part is in the paper “Updated Monads: Cointerpreting Directed Containers” <span class="citation" data-cites="ahman_update_2014">(Ahman and Uustalu <a href="#ref-ahman_update_2014" role="doc-biblioref">2014</a>)</span>. This paper presents a variant on state monads, called “update monads”.</p>
+<p>As the paper observes, these are very similar to a
+“dependently-typed” version of the monoid methods. This seems to me to
+be very similar to the indexing stuff we were doing earlier on.</p>
+<p>The real interesting part is in the paper “Updated Monads:
+Cointerpreting Directed Containers” <span class="citation" data-cites="ahman_update_2014">(Ahman and Uustalu 2014)</span>. This
+paper presents a variant on state monads, called “update monads”.</p>
 <p>These are monads that use a monoid action:</p>
 <pre class="Agda"><a id="23249" class="Keyword">record</a> <a id="RightAction"></a><a id="23256" href="#23256" class="Record">RightAction</a> <a id="23268" class="Symbol">(</a><a id="23269" href="#23269" class="Bound">𝑃</a> <a id="23271" class="Symbol">:</a> <a id="23273" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="23277" class="Symbol">)</a> <a id="23279" class="Symbol">(</a><a id="23280" href="#23280" class="Bound">𝑆</a> <a id="23282" class="Symbol">:</a> <a id="23284" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="23288" class="Symbol">)</a> <a id="23290" class="Symbol">:</a> <a id="23292" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="23297" class="Keyword">where</a>
   <a id="23305" class="Keyword">infixl</a> <a id="23312" class="Number">5</a> <a id="23314" href="#23359" class="Field Operator">_↓_</a>
@@ -486,8 +681,14 @@ ys = ┃xʸ     ┃yʸ    ┃zʸ  ┉
 <pre class="Agda"><a id="23465" class="Keyword">open</a> <a id="23470" href="#23256" class="Module">RightAction</a> <a id="23482" class="Symbol">⦃</a> <a id="23484" class="Symbol">...</a> <a id="23488" class="Symbol">⦄</a>
 <a id="23490" class="Keyword">variable</a> <a id="23499" href="#23499" class="Generalizable">𝑃</a> <a id="23501" href="#23501" class="Generalizable">𝑆</a> <a id="23503" class="Symbol">:</a> <a id="23505" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 </pre>-->
-<p>A (right) monoid action is a monoid along with a function <code>↓</code> that “acts” on some other set, in a way that coheres with the monoid methods. The definition is given above. One way to think about it is that if a monoid <code>𝑃</code> has an action on <code>𝑆</code> it means that elements of <code>𝑃</code> can kind of be transformed into elements of <code>𝑆 → 𝑆</code>.</p>
-This can be used to construct a monad that looks suspiciously like the state monad:
+<p>A (right) monoid action is a monoid along with a function
+<code>↓</code> that “acts” on some other set, in a way that coheres with
+the monoid methods. The definition is given above. One way to think
+about it is that if a monoid <code>𝑃</code> has an action on
+<code>𝑆</code> it means that elements of <code>𝑃</code> can kind of be
+transformed into elements of <code>𝑆 → 𝑆</code>.</p>
+This can be used to construct a monad that looks suspiciously like the
+state monad:
 <pre class="Agda"><a id="Upd"></a><a id="23934" href="#23934" class="Function">Upd</a> <a id="23938" class="Symbol">:</a> <a id="23940" class="Symbol">(</a><a id="23941" href="#23941" class="Bound">𝑃</a> <a id="23943" href="#23943" class="Bound">𝑆</a> <a id="23945" class="Symbol">:</a> <a id="23947" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="23951" class="Symbol">)</a> <a id="23953" class="Symbol">⦃</a> <a id="23955" href="#23955" class="Bound">_</a> <a id="23957" class="Symbol">:</a> <a id="23959" href="#23256" class="Record">RightAction</a> <a id="23971" href="#23941" class="Bound">𝑃</a> <a id="23973" href="#23943" class="Bound">𝑆</a> <a id="23975" class="Symbol">⦄</a> <a id="23977" class="Symbol">→</a> <a id="23979" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="23984" class="Symbol">→</a> <a id="23986" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="23991" href="#23934" class="Function">Upd</a> <a id="23995" href="#23995" class="Bound">𝑃</a> <a id="23997" href="#23997" class="Bound">𝑆</a> <a id="23999" href="#23999" class="Bound">X</a> <a id="24001" class="Symbol">=</a> <a id="24003" href="#23997" class="Bound">𝑆</a> <a id="24005" class="Symbol">→</a> <a id="24007" href="#23995" class="Bound">𝑃</a> <a id="24009" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="24011" href="#23999" class="Bound">X</a>
 
@@ -499,11 +700,23 @@ This can be used to construct a monad that looks suspiciously like the state mon
              <a id="24174" href="#24174" class="Bound">q</a> <a id="24176" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="24178" href="#24178" class="Bound">y</a> <a id="24180" class="Symbol">=</a> <a id="24182" href="#24152" class="Bound">x</a> <a id="24184" class="Symbol">(</a><a id="24185" href="#24140" class="Bound">s</a> <a id="24187" href="#23359" class="Field Operator">↓</a> <a id="24189" href="#24148" class="Bound">p</a><a id="24190" class="Symbol">)</a>
          <a id="24201" class="Keyword">in</a>  <a id="24205" class="Symbol">(</a><a id="24206" href="#24148" class="Bound">p</a> <a id="24208" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="24210" href="#24174" class="Bound">q</a> <a id="24212" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a> <a id="24214" href="#24178" class="Bound">y</a><a id="24215" class="Symbol">)</a>
 </pre>
-<p>It turns out that the dependently-typed version of this gives directed containers.</p>
-<h1 id="grading-and-the-cofree-comonad">Grading and the Cofree Comonad</h1>
-<p>I’m still in the early stages of understanding all of this material, but at the moment graded comonads and transformers are concepts that I’m much more familiar and comfortable with.</p>
-<p>The idea behind graded monads and comonads is similar to the idea behind any indexed monad: we’re adding an extra type parameter to the monad or type, which can constrain the operations involved. The <em>graded</em> monads and comonads use a monoid as that index. This works particularly nicely, in my opinion: just allowing any index at all sometimes feels a little unstructured. The grading construction seems to constrain things to the right degree: the use of the monoid, as well, works really well with comonads.</p>
-<p>That preamble out of the way, here’s the definition of a graded comonad:</p>
+<p>It turns out that the dependently-typed version of this gives
+directed containers.</p>
+<h1 id="grading-and-the-cofree-comonad">Grading and the Cofree
+Comonad</h1>
+<p>I’m still in the early stages of understanding all of this material,
+but at the moment graded comonads and transformers are concepts that I’m
+much more familiar and comfortable with.</p>
+<p>The idea behind graded monads and comonads is similar to the idea
+behind any indexed monad: we’re adding an extra type parameter to the
+monad or type, which can constrain the operations involved. The
+<em>graded</em> monads and comonads use a monoid as that index. This
+works particularly nicely, in my opinion: just allowing any index at all
+sometimes feels a little unstructured. The grading construction seems to
+constrain things to the right degree: the use of the monoid, as well,
+works really well with comonads.</p>
+<p>That preamble out of the way, here’s the definition of a graded
+comonad:</p>
 <!--
 <pre class="Agda"><a id="25119" class="Keyword">variable</a> <a id="25128" href="#25128" class="Generalizable">x</a> <a id="25130" href="#25130" class="Generalizable">y</a> <a id="25132" href="#25132" class="Generalizable">z</a> <a id="25134" class="Symbol">:</a> <a id="25136" href="#23501" class="Generalizable">𝑆</a>
 <a id="25138" class="Keyword">variable</a> <a id="25147" href="#25147" class="Generalizable">A₀</a> <a id="25150" href="#25150" class="Generalizable">B₀</a> <a id="25153" href="#25153" class="Generalizable">C₀</a> <a id="25156" href="#25156" class="Generalizable">D₀</a> <a id="25159" class="Symbol">:</a> <a id="25161" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
@@ -513,7 +726,8 @@ This can be used to construct a monad that looks suspiciously like the state mon
     <a id="GradedComonad.extract"></a><a id="25276" href="#25276" class="Field">extract</a> <a id="25284" class="Symbol">:</a> <a id="25286" href="#25229" class="Bound">𝐶</a> <a id="25288" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a> <a id="25290" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="25292" class="Symbol">→</a> <a id="25294" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
     <a id="GradedComonad.extend"></a><a id="25300" href="#25300" class="Field">extend</a>  <a id="25308" class="Symbol">:</a> <a id="25310" class="Symbol">(</a><a id="25311" href="#25229" class="Bound">𝐶</a> <a id="25313" href="#25130" class="Generalizable">y</a> <a id="25315" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="25317" class="Symbol">→</a> <a id="25319" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a><a id="25320" class="Symbol">)</a> <a id="25322" class="Symbol">→</a> <a id="25324" href="#25229" class="Bound">𝐶</a> <a id="25326" class="Symbol">(</a><a id="25327" href="#25128" class="Generalizable">x</a> <a id="25329" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="25331" href="#25130" class="Generalizable">y</a><a id="25332" class="Symbol">)</a> <a id="25334" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="25336" class="Symbol">→</a> <a id="25338" href="#25229" class="Bound">𝐶</a> <a id="25340" href="#25128" class="Generalizable">x</a> <a id="25342" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a>
 </pre>
-This also has a few laws, which are expressed cleaner using cokleisli composition:
+This also has a few laws, which are expressed cleaner using cokleisli
+composition:
 <pre class="Agda">  <a id="GradedComonad._=&lt;=_"></a><a id="25437" href="#25437" class="Function Operator">_=&lt;=_</a> <a id="25443" class="Symbol">:</a> <a id="25445" class="Symbol">(</a><a id="25446" href="#25229" class="Bound">𝐶</a> <a id="25448" href="#25128" class="Generalizable">x</a> <a id="25450" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a> <a id="25452" class="Symbol">→</a> <a id="25454" href="../code/depth-comonads/DepthComonads.Level.html#297" class="Generalizable">C</a><a id="25455" class="Symbol">)</a> <a id="25457" class="Symbol">→</a> <a id="25459" class="Symbol">(</a><a id="25460" href="#25229" class="Bound">𝐶</a> <a id="25462" href="#25130" class="Generalizable">y</a> <a id="25464" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="25466" class="Symbol">→</a> <a id="25468" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a><a id="25469" class="Symbol">)</a> <a id="25471" class="Symbol">→</a> <a id="25473" href="#25229" class="Bound">𝐶</a> <a id="25475" class="Symbol">(</a><a id="25476" href="#25128" class="Generalizable">x</a> <a id="25478" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="25480" href="#25130" class="Generalizable">y</a><a id="25481" class="Symbol">)</a> <a id="25483" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="25485" class="Symbol">→</a> <a id="25487" href="../code/depth-comonads/DepthComonads.Level.html#297" class="Generalizable">C</a>
   <a id="25491" class="Symbol">(</a><a id="25492" href="#25492" class="Bound">g</a> <a id="25494" href="#25437" class="Function Operator">=&lt;=</a> <a id="25498" href="#25498" class="Bound">f</a><a id="25499" class="Symbol">)</a> <a id="25501" href="#25501" class="Bound">x</a> <a id="25503" class="Symbol">=</a> <a id="25505" href="#25492" class="Bound">g</a> <a id="25507" class="Symbol">(</a><a id="25508" href="#25300" class="Field">extend</a> <a id="25515" href="#25498" class="Bound">f</a> <a id="25517" href="#25501" class="Bound">x</a><a id="25518" class="Symbol">)</a>
 
@@ -523,8 +737,12 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
     <a id="GradedComonad.c-assoc"></a><a id="25695" href="#25695" class="Field">c-assoc</a> <a id="25703" class="Symbol">:</a> <a id="25705" class="Symbol">(</a><a id="25706" href="#25706" class="Bound">f</a> <a id="25708" class="Symbol">:</a> <a id="25710" href="#25229" class="Bound">𝐶</a> <a id="25712" href="#25128" class="Generalizable">x</a> <a id="25714" href="#25153" class="Generalizable">C₀</a> <a id="25717" class="Symbol">→</a> <a id="25719" href="#25156" class="Generalizable">D₀</a><a id="25721" class="Symbol">)</a> <a id="25723" class="Symbol">(</a><a id="25724" href="#25724" class="Bound">g</a> <a id="25726" class="Symbol">:</a> <a id="25728" href="#25229" class="Bound">𝐶</a> <a id="25730" href="#25130" class="Generalizable">y</a> <a id="25732" href="#25150" class="Generalizable">B₀</a> <a id="25735" class="Symbol">→</a> <a id="25737" href="#25153" class="Generalizable">C₀</a><a id="25739" class="Symbol">)</a> <a id="25741" class="Symbol">(</a><a id="25742" href="#25742" class="Bound">h</a> <a id="25744" class="Symbol">:</a> <a id="25746" href="#25229" class="Bound">𝐶</a> <a id="25748" href="#25132" class="Generalizable">z</a> <a id="25750" href="#25147" class="Generalizable">A₀</a> <a id="25753" class="Symbol">→</a> <a id="25755" href="#25150" class="Generalizable">B₀</a><a id="25757" class="Symbol">)</a> <a id="25759" class="Symbol">→</a>
           <a id="25771" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#190" class="Postulate">PathP</a> <a id="25777" class="Symbol">(λ</a> <a id="25780" href="#25780" class="Bound">i</a> <a id="25782" class="Symbol">→</a> <a id="25784" href="#25229" class="Bound">𝐶</a> <a id="25786" class="Symbol">(</a><a id="25787" href="../code/depth-comonads/DepthComonads.Algebra.html#1572" class="Field">assoc</a> <a id="25793" href="#25128" class="Generalizable">x</a> <a id="25795" href="#25130" class="Generalizable">y</a> <a id="25797" href="#25132" class="Generalizable">z</a> <a id="25799" href="#25780" class="Bound">i</a><a id="25800" class="Symbol">)</a> <a id="25802" href="#25147" class="Generalizable">A₀</a> <a id="25805" class="Symbol">→</a> <a id="25807" href="#25156" class="Generalizable">D₀</a><a id="25809" class="Symbol">)</a> <a id="25811" class="Symbol">((</a><a id="25813" href="#25706" class="Bound">f</a> <a id="25815" href="#25437" class="Function Operator">=&lt;=</a> <a id="25819" href="#25724" class="Bound">g</a><a id="25820" class="Symbol">)</a> <a id="25822" href="#25437" class="Function Operator">=&lt;=</a> <a id="25826" href="#25742" class="Bound">h</a><a id="25827" class="Symbol">)</a> <a id="25829" class="Symbol">(</a><a id="25830" href="#25706" class="Bound">f</a> <a id="25832" href="#25437" class="Function Operator">=&lt;=</a> <a id="25836" class="Symbol">(</a><a id="25837" href="#25724" class="Bound">g</a> <a id="25839" href="#25437" class="Function Operator">=&lt;=</a> <a id="25843" href="#25742" class="Bound">h</a><a id="25844" class="Symbol">))</a>
 </pre>
-<p>This seems to clearly be related to the stream constructions. Grading is all about the monoidal information about a comonad: the streams above are a comonad which indexes its entries with a monoid.</p>
-<p>There are now two constructions I want to show that suggest a link betweent the stream constructions and graded comonads. First of these is the <em>Cofree degrading comonad</em>:</p>
+<p>This seems to clearly be related to the stream constructions. Grading
+is all about the monoidal information about a comonad: the streams above
+are a comonad which indexes its entries with a monoid.</p>
+<p>There are now two constructions I want to show that suggest a link
+betweent the stream constructions and graded comonads. First of these is
+the <em>Cofree degrading comonad</em>:</p>
 <pre class="Agda"><a id="26228" class="Keyword">record</a> <a id="G-CofreeF"></a><a id="26235" href="#26235" class="Record">G-CofreeF</a> <a id="26245" class="Symbol">(</a><a id="26246" href="#26246" class="Bound">𝐹</a> <a id="26248" class="Symbol">:</a> <a id="26250" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26255" class="Symbol">→</a> <a id="26257" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="26261" class="Symbol">)</a> <a id="26263" class="Symbol">(</a><a id="26264" href="#26264" class="Bound">𝐶</a> <a id="26266" class="Symbol">:</a> <a id="26268" href="#23501" class="Generalizable">𝑆</a> <a id="26270" class="Symbol">→</a> <a id="26272" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26277" class="Symbol">→</a> <a id="26279" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="26283" class="Symbol">)</a> <a id="26285" class="Symbol">(</a><a id="26286" href="#26286" class="Bound">A</a> <a id="26288" class="Symbol">:</a> <a id="26290" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="26294" class="Symbol">)</a> <a id="26296" class="Symbol">:</a> <a id="26298" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26303" class="Keyword">where</a>
   <a id="26311" class="Keyword">coinductive</a><a id="26322" class="Symbol">;</a> <a id="26324" class="Keyword">constructor</a> <a id="_◃_"></a><a id="26336" href="#26336" class="CoinductiveConstructor Operator">_◃_</a>
   <a id="26342" class="Keyword">field</a> <a id="G-CofreeF.here"></a><a id="26348" href="#26348" class="Field">here</a> <a id="26353" class="Symbol">:</a> <a id="26355" href="#26286" class="Bound">A</a>
@@ -534,7 +752,11 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
 <a id="G-Cofree"></a><a id="26420" href="#26420" class="Function">G-Cofree</a> <a id="26429" class="Symbol">:</a> <a id="26431" class="Symbol">⦃</a> <a id="26433" href="#26433" class="Bound">_</a> <a id="26435" class="Symbol">:</a> <a id="26437" href="../code/depth-comonads/DepthComonads.Algebra.html#1492" class="Record">Monoid</a> <a id="26444" href="#23501" class="Generalizable">𝑆</a> <a id="26446" class="Symbol">⦄</a> <a id="26448" class="Symbol">→</a> <a id="26450" class="Symbol">(</a><a id="26451" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26456" class="Symbol">→</a> <a id="26458" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="26462" class="Symbol">)</a> <a id="26464" class="Symbol">→</a> <a id="26466" class="Symbol">(</a><a id="26467" href="#23501" class="Generalizable">𝑆</a> <a id="26469" class="Symbol">→</a> <a id="26471" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26476" class="Symbol">→</a> <a id="26478" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="26482" class="Symbol">)</a> <a id="26484" class="Symbol">→</a> <a id="26486" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="26491" class="Symbol">→</a> <a id="26493" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
 <a id="26498" href="#26420" class="Function">G-Cofree</a> <a id="26507" href="#26507" class="Bound">𝐹</a> <a id="26509" href="#26509" class="Bound">𝐶</a> <a id="26511" href="#26511" class="Bound">A</a> <a id="26513" class="Symbol">=</a> <a id="26515" href="#26509" class="Bound">𝐶</a> <a id="26517" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a> <a id="26519" class="Symbol">(</a><a id="26520" href="#26235" class="Record">G-CofreeF</a> <a id="26530" href="#26507" class="Bound">𝐹</a> <a id="26532" href="#26509" class="Bound">𝐶</a> <a id="26534" href="#26511" class="Bound">A</a><a id="26535" class="Symbol">)</a>
 </pre>
-<p>This construction is similar to the cofree comonad transformer: it is based on the cofree comonad, but with an extra (graded) comonad wrapped around each level. For any functor 𝐹 and graded comonad 𝐶, <code>G-Cofree 𝐹 𝐶</code> is a comonad. The implementation of <code>extract</code> is simple:</p>
+<p>This construction is similar to the cofree comonad transformer: it is
+based on the cofree comonad, but with an extra (graded) comonad wrapped
+around each level. For any functor 𝐹 and graded comonad 𝐶,
+<code>G-Cofree 𝐹 𝐶</code> is a comonad. The implementation of
+<code>extract</code> is simple:</p>
 <!--
 <pre class="Agda"><a id="26825" class="Keyword">open</a> <a id="26830" href="#25186" class="Module">GradedComonad</a> <a id="26844" class="Symbol">⦃</a> <a id="26846" class="Symbol">...</a> <a id="26850" class="Symbol">⦄</a>
 
@@ -544,13 +766,17 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
 <pre class="Agda"><a id="extract′"></a><a id="26896" href="#26896" class="Function">extract′</a> <a id="26905" class="Symbol">:</a> <a id="26907" class="Symbol">⦃</a> <a id="26909" href="#26909" class="Bound">_</a> <a id="26911" class="Symbol">:</a> <a id="26913" href="../code/depth-comonads/DepthComonads.Algebra.html#1492" class="Record">Monoid</a> <a id="26920" href="#23501" class="Generalizable">𝑆</a> <a id="26922" class="Symbol">⦄</a> <a id="26924" class="Symbol">⦃</a> <a id="26926" href="#26926" class="Bound">_</a> <a id="26928" class="Symbol">:</a> <a id="26930" href="#25186" class="Record">GradedComonad</a> <a id="26944" href="#23501" class="Generalizable">𝑆</a> <a id="26946" href="#26864" class="Generalizable">𝐶</a> <a id="26948" class="Symbol">⦄</a> <a id="26950" class="Symbol">→</a> <a id="26952" href="#26420" class="Function">G-Cofree</a> <a id="26961" href="#1226" class="Generalizable">𝐹</a> <a id="26963" href="#26864" class="Generalizable">𝐶</a> <a id="26965" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="26967" class="Symbol">→</a> <a id="26969" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a>
 <a id="26971" href="#26896" class="Function">extract′</a> <a id="26980" class="Symbol">=</a> <a id="26982" href="#26348" class="Field">here</a> <a id="26987" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="26989" href="#25276" class="Field">extract</a>
 </pre>
-<p><code>extend</code> is more complex. First, we need a version of <code>extend</code> which takes a proof that the grade is of the right form:</p>
+<p><code>extend</code> is more complex. First, we need a version of
+<code>extend</code> which takes a proof that the grade is of the right
+form:</p>
 <pre class="Agda"><a id="27127" class="Keyword">module</a> <a id="27134" href="#27134" class="Module">_</a> <a id="27136" class="Symbol">{</a> <a id="27138" href="#27138" class="Bound">𝐶</a> <a id="27140" class="Symbol">:</a> <a id="27142" href="#23501" class="Generalizable">𝑆</a> <a id="27144" class="Symbol">→</a> <a id="27146" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="27151" class="Symbol">→</a> <a id="27153" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="27158" class="Symbol">}</a> <a id="27160" class="Keyword">where</a>
   <a id="27168" href="#27168" class="Function Operator">extend[_]</a> <a id="27178" class="Symbol">:</a> <a id="27180" class="Symbol">⦃</a> <a id="27182" href="#27182" class="Symbol">_</a> <a id="27184" class="Symbol">:</a> <a id="27186" href="../code/depth-comonads/DepthComonads.Algebra.html#1492" class="Record">Monoid</a> <a id="27193" href="#27142" class="Bound">𝑆</a> <a id="27195" class="Symbol">⦄</a> <a id="27197" class="Symbol">⦃</a> <a id="27199" href="#27199" class="Symbol">_</a> <a id="27201" class="Symbol">:</a> <a id="27203" href="#25186" class="Record">GradedComonad</a> <a id="27217" href="#27142" class="Bound">𝑆</a> <a id="27219" href="#27138" class="Bound">𝐶</a> <a id="27221" class="Symbol">⦄</a> <a id="27223" class="Symbol">→</a>
               <a id="27239" href="#25128" class="Generalizable">x</a> <a id="27241" href="../code/depth-comonads/DepthComonads.Algebra.html#1530" class="Field Operator">∙</a> <a id="27243" href="#25130" class="Generalizable">y</a> <a id="27245" href="../code/depth-comonads/Agda.Builtin.Cubical.Path.html#381" class="Function Operator">≡</a> <a id="27247" href="#25132" class="Generalizable">z</a> <a id="27249" class="Symbol">→</a> <a id="27251" class="Symbol">(</a><a id="27252" href="#27138" class="Bound">𝐶</a> <a id="27254" href="#25130" class="Generalizable">y</a> <a id="27256" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="27258" class="Symbol">→</a> <a id="27260" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a><a id="27261" class="Symbol">)</a> <a id="27263" class="Symbol">→</a> <a id="27265" href="#27138" class="Bound">𝐶</a> <a id="27267" href="#25132" class="Generalizable">z</a> <a id="27269" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="27271" class="Symbol">→</a> <a id="27273" href="#27138" class="Bound">𝐶</a> <a id="27275" href="#25128" class="Generalizable">x</a> <a id="27277" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a>
   <a id="27281" href="#27168" class="Function Operator">extend[</a> <a id="27289" href="#27289" class="Bound">p</a> <a id="27291" href="#27168" class="Function Operator">]</a> <a id="27293" href="#27293" class="Bound">k</a> <a id="27295" class="Symbol">=</a> <a id="27297" href="Cubical.Foundations.Prelude.html#7588" class="Function">subst</a> <a id="27303" class="Symbol">(λ</a> <a id="27306" href="#27306" class="Bound">z</a> <a id="27308" class="Symbol">→</a> <a id="27310" href="#27138" class="Bound">𝐶</a> <a id="27312" href="#27306" class="Bound">z</a> <a id="27314" class="Symbol">_</a> <a id="27316" class="Symbol">→</a> <a id="27318" class="Symbol">_)</a> <a id="27321" href="#27289" class="Bound">p</a> <a id="27323" class="Symbol">(</a><a id="27324" href="#25300" class="Field">extend</a> <a id="27331" href="#27293" class="Bound">k</a><a id="27332" class="Symbol">)</a>
 </pre>
-<p>Then we can implement the characteristic function on the free comonad: <code>traceT</code>. On graded comonads it has the following form:</p>
+<p>Then we can implement the characteristic function on the free
+comonad: <code>traceT</code>. On graded comonads it has the following
+form:</p>
 <pre class="Agda"><a id="27471" class="Keyword">module</a> <a id="Trace"></a><a id="27478" href="#27478" class="Module">Trace</a> <a id="27484" class="Symbol">⦃</a> <a id="27486" href="#27486" class="Bound">_</a> <a id="27488" class="Symbol">:</a> <a id="27490" href="../code/depth-comonads/DepthComonads.Algebra.html#1492" class="Record">Monoid</a> <a id="27497" href="#23501" class="Generalizable">𝑆</a> <a id="27499" class="Symbol">⦄</a> <a id="27501" class="Symbol">⦃</a> <a id="27503" href="#27503" class="Bound">_</a> <a id="27505" class="Symbol">:</a> <a id="27507" href="#25186" class="Record">GradedComonad</a> <a id="27521" href="#23501" class="Generalizable">𝑆</a> <a id="27523" href="#26864" class="Generalizable">𝐶</a> <a id="27525" class="Symbol">⦄</a> <a id="27527" class="Symbol">⦃</a> <a id="27529" href="#27529" class="Bound">_</a> <a id="27531" class="Symbol">:</a> <a id="27533" href="../code/depth-comonads/DepthComonads.Algebra.html#4107" class="Record">Functor</a> <a id="27541" href="#1226" class="Generalizable">𝐹</a> <a id="27543" class="Symbol">⦄</a> <a id="27545" class="Keyword">where</a>
   <a id="27553" class="Keyword">module</a> <a id="27560" href="#27560" class="Module">_</a> <a id="27562" class="Symbol">{</a><a id="27563" href="#27563" class="Bound">A</a> <a id="27565" href="#27565" class="Bound">B</a><a id="27566" class="Symbol">}</a> <a id="27568" class="Keyword">where</a>
     <a id="27578" class="Symbol">{-#</a> <a id="27582" class="Keyword">NON_TERMINATING</a> <a id="27598" class="Symbol">#-}</a>
@@ -560,13 +786,19 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
       <a id="27717" href="#27717" class="Function">ψ</a> <a id="27719" class="Symbol">:</a> <a id="27721" href="#27523" class="Bound">𝐶</a> <a id="27723" href="#25128" class="Generalizable">x</a> <a id="27725" href="#27563" class="Bound">A</a> <a id="27727" class="Symbol">→</a> <a id="27729" href="#27523" class="Bound">𝐶</a> <a id="27731" href="#25128" class="Generalizable">x</a> <a id="27733" class="Symbol">(</a><a id="27734" href="#26235" class="Record">G-CofreeF</a> <a id="27744" href="#27541" class="Bound">𝐹</a> <a id="27746" href="#27523" class="Bound">𝐶</a> <a id="27748" href="#27565" class="Bound">B</a><a id="27749" class="Symbol">)</a>
       <a id="27757" href="#27717" class="Function">ψ</a> <a id="27759" class="Symbol">=</a> <a id="27761" href="#27168" class="Function Operator">extend[</a> <a id="27769" href="../code/depth-comonads/DepthComonads.Algebra.html#1650" class="Field">∙ε</a> <a id="27772" class="Symbol">_</a> <a id="27774" href="#27168" class="Function Operator">]</a> <a id="27776" class="Symbol">λ</a> <a id="27778" href="#27778" class="Bound">x</a> <a id="27780" class="Symbol">→</a> <a id="27782" href="#27691" class="Bound">ϕ</a> <a id="27784" href="#27778" class="Bound">x</a> <a id="27786" href="#26336" class="CoinductiveConstructor Operator">◃</a> <a id="27788" href="../code/depth-comonads/DepthComonads.Algebra.html#4153" class="Field">map</a> <a id="27792" class="Symbol">(</a><a id="27793" href="../code/depth-comonads/DepthComonads.Sigma.html#1401" class="Function">map₂</a> <a id="27798" href="#27717" class="Function">ψ</a><a id="27799" class="Symbol">)</a> <a id="27801" class="Symbol">(</a><a id="27802" href="#27693" class="Bound">ρ</a> <a id="27804" href="#27778" class="Bound">x</a><a id="27805" class="Symbol">)</a>
 </pre>
-<p>This function is basically the unfold for the free degrading comonad. If <code>G-Cofree</code> is a internally-labelled tree, then <code>ϕ</code> above is the labelling function, and <code>ρ</code> is the “next” function, returning the children for some root.</p>
+<p>This function is basically the unfold for the free degrading comonad.
+If <code>G-Cofree</code> is a internally-labelled tree, then
+<code>ϕ</code> above is the labelling function, and <code>ρ</code> is
+the “next” function, returning the children for some root.</p>
 <p>Using this, we can implement <code>extend</code>:</p>
 <pre class="Agda">  <a id="Trace.extend′"></a><a id="28086" href="#28086" class="Function">extend′</a> <a id="28094" class="Symbol">:</a> <a id="28096" class="Symbol">(</a><a id="28097" href="#26420" class="Function">G-Cofree</a> <a id="28106" href="#27541" class="Bound">𝐹</a> <a id="28108" href="#27523" class="Bound">𝐶</a> <a id="28110" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="28112" class="Symbol">→</a> <a id="28114" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a><a id="28115" class="Symbol">)</a> <a id="28117" class="Symbol">→</a> <a id="28119" href="#26420" class="Function">G-Cofree</a> <a id="28128" href="#27541" class="Bound">𝐹</a> <a id="28130" href="#27523" class="Bound">𝐶</a> <a id="28132" href="../code/depth-comonads/DepthComonads.Level.html#269" class="Generalizable">A</a> <a id="28134" class="Symbol">→</a> <a id="28136" href="#26420" class="Function">G-Cofree</a> <a id="28145" href="#27541" class="Bound">𝐹</a> <a id="28147" href="#27523" class="Bound">𝐶</a> <a id="28149" href="../code/depth-comonads/DepthComonads.Level.html#283" class="Generalizable">B</a>
   <a id="28153" href="#28086" class="Function">extend′</a> <a id="28161" href="#28161" class="Bound">f</a> <a id="28163" class="Symbol">=</a> <a id="28165" href="#27606" class="Function">traceT</a> <a id="28172" href="#28161" class="Bound">f</a> <a id="28174" class="Symbol">(</a><a id="28175" href="#26365" class="Field">step</a> <a id="28180" href="../code/depth-comonads/DepthComonads.Function.html#125" class="Function Operator">∘</a> <a id="28182" href="#25276" class="Field">extract</a><a id="28189" class="Symbol">)</a>
 </pre>
-<p>The relation between this and the stream is that the stream can be defined in terms of this: <code>Stream W = G-Cofree id (GC-Id W)</code>.</p>
-<p>Finally, the last construction I want to introduce is the following:</p>
+<p>The relation between this and the stream is that the stream can be
+defined in terms of this:
+<code>Stream W = G-Cofree id (GC-Id W)</code>.</p>
+<p>Finally, the last construction I want to introduce is the
+following:</p>
 <pre class="Agda"><a id="28400" class="Keyword">module</a> <a id="28407" href="#28407" class="Module">_</a> <a id="28409" class="Symbol">⦃</a> <a id="28411" href="#28411" class="Bound">_</a> <a id="28413" class="Symbol">:</a> <a id="28415" href="#12529" class="Record">Monus</a> <a id="28421" href="#23501" class="Generalizable">𝑆</a> <a id="28423" class="Symbol">⦄</a> <a id="28425" class="Keyword">where</a>
   <a id="28433" class="Keyword">data</a> <a id="28438" href="#28438" class="Datatype">Prefix-F⊙</a> <a id="28448" class="Symbol">(</a><a id="28449" href="#28449" class="Bound">𝐹</a> <a id="28451" class="Symbol">:</a> <a id="28453" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="28458" class="Symbol">→</a> <a id="28460" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28464" class="Symbol">)</a> <a id="28466" class="Symbol">(</a><a id="28467" href="#28467" class="Bound">𝐶</a> <a id="28469" class="Symbol">:</a> <a id="28471" href="#28421" class="Bound">𝑆</a> <a id="28473" class="Symbol">→</a> <a id="28475" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="28480" class="Symbol">→</a> <a id="28482" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28486" class="Symbol">)</a> <a id="28488" class="Symbol">(</a><a id="28489" href="#28489" class="Bound">i</a> <a id="28491" href="#28491" class="Bound">j</a> <a id="28493" class="Symbol">:</a> <a id="28495" href="#28421" class="Bound">𝑆</a><a id="28496" class="Symbol">)</a> <a id="28498" class="Symbol">(</a><a id="28499" href="#28499" class="Bound">A</a> <a id="28501" class="Symbol">:</a> <a id="28503" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28507" class="Symbol">)</a> <a id="28509" class="Symbol">:</a> <a id="28511" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="28516" class="Keyword">where</a> 
     <a id="28527" href="#28527" class="InductiveConstructor">prefix</a> <a id="28534" class="Symbol">:</a> <a id="28536" class="Symbol">((</a><a id="28538" href="#28538" class="Bound">i≤j</a> <a id="28542" class="Symbol">:</a> <a id="28544" href="#28489" class="Bound">i</a> <a id="28546" href="../code/depth-comonads/DepthComonads.Relation.Binary.html#1444" class="Function Operator">≤</a> <a id="28548" href="#28491" class="Bound">j</a><a id="28549" class="Symbol">)</a> <a id="28551" class="Symbol">→</a> <a id="28553" href="#28499" class="Bound">A</a> <a id="28555" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="28557" href="#28449" class="Bound">𝐹</a> <a id="28559" class="Symbol">(</a><a id="28560" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">∃</a> <a id="28562" href="#28562" class="Bound">k</a> <a id="28564" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">×</a> <a id="28566" href="#28467" class="Bound">𝐶</a> <a id="28568" href="#28562" class="Bound">k</a> <a id="28570" class="Symbol">(</a><a id="28571" href="#28438" class="Datatype">Prefix-F⊙</a> <a id="28581" href="#28449" class="Bound">𝐹</a> <a id="28583" href="#28467" class="Bound">𝐶</a> <a id="28585" href="#28562" class="Bound">k</a> <a id="28587" class="Symbol">(</a><a id="28588" href="../code/depth-comonads/Agda.Builtin.Sigma.html#252" class="Field">fst</a> <a id="28592" href="#28538" class="Bound">i≤j</a><a id="28595" class="Symbol">)</a> <a id="28597" href="#28499" class="Bound">A</a><a id="28598" class="Symbol">)))</a> <a id="28602" class="Symbol">→</a> <a id="28604" href="#28438" class="Datatype">Prefix-F⊙</a> <a id="28614" href="#28449" class="Bound">𝐹</a> <a id="28616" href="#28467" class="Bound">𝐶</a> <a id="28618" href="#28489" class="Bound">i</a> <a id="28620" href="#28491" class="Bound">j</a> <a id="28622" href="#28499" class="Bound">A</a>
@@ -577,8 +809,13 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
   <a id="28752" href="#28752" class="Function">Prefix</a> <a id="28759" class="Symbol">:</a> <a id="28761" class="Symbol">(</a><a id="28762" href="#28762" class="Bound">𝐹</a> <a id="28764" class="Symbol">:</a> <a id="28766" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="28771" class="Symbol">→</a> <a id="28773" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28777" class="Symbol">)</a> <a id="28779" class="Symbol">(</a><a id="28780" href="#28780" class="Bound">𝐶</a> <a id="28782" class="Symbol">:</a> <a id="28784" href="#28421" class="Bound">𝑆</a> <a id="28786" class="Symbol">→</a> <a id="28788" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a> <a id="28793" class="Symbol">→</a> <a id="28795" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28799" class="Symbol">)</a> <a id="28801" class="Symbol">(</a><a id="28802" href="#28802" class="Bound">A</a> <a id="28804" class="Symbol">:</a> <a id="28806" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="28810" class="Symbol">)</a> <a id="28812" class="Symbol">→</a> <a id="28814" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a>
   <a id="28821" href="#28752" class="Function">Prefix</a> <a id="28828" href="#28828" class="Bound">𝐹</a> <a id="28830" href="#28830" class="Bound">𝐶</a> <a id="28832" href="#28832" class="Bound">A</a> <a id="28834" class="Symbol">=</a> <a id="28836" class="Symbol">∀</a> <a id="28838" class="Symbol">{</a><a id="28839" href="#28839" class="Bound">i</a><a id="28840" class="Symbol">}</a> <a id="28842" class="Symbol">→</a> <a id="28844" href="#28627" class="Function">Prefix⊙</a> <a id="28852" href="#28828" class="Bound">𝐹</a> <a id="28854" href="#28830" class="Bound">𝐶</a> <a id="28856" href="#28839" class="Bound">i</a> <a id="28858" href="#28832" class="Bound">A</a>
 </pre>
-<p>This type is designed to mimic sized type definitions. It has an implicit parameter which can be set, by the user of the type, to some arbitrary depth. Basically the parameter means “explore to this depth”; by using the <code>∀</code> we say that it is defined up to any arbitrary depth.</p>
-<p>When the <code>≺</code> relation on the monus is well founded it is possible to implement <code>traceT</code>:</p>
+<p>This type is designed to mimic sized type definitions. It has an
+implicit parameter which can be set, by the user of the type, to some
+arbitrary depth. Basically the parameter means “explore to this depth”;
+by using the <code>∀</code> we say that it is defined up to any
+arbitrary depth.</p>
+<p>When the <code>≺</code> relation on the monus is well founded it is
+possible to implement <code>traceT</code>:</p>
 <pre class="Agda">  <a id="29239" class="Keyword">module</a> <a id="29246" href="#29246" class="Module">_</a> <a id="29248" class="Symbol">⦃</a> <a id="29250" href="#29250" class="Bound">_</a> <a id="29252" class="Symbol">:</a> <a id="29254" href="#25186" class="Record">GradedComonad</a> <a id="29268" href="#28421" class="Bound">𝑆</a> <a id="29270" href="#26864" class="Generalizable">𝐶</a> <a id="29272" class="Symbol">⦄</a> <a id="29274" class="Symbol">⦃</a> <a id="29276" href="#29276" class="Bound">_</a> <a id="29278" class="Symbol">:</a> <a id="29280" href="../code/depth-comonads/DepthComonads.Algebra.html#4107" class="Record">Functor</a> <a id="29288" href="#1226" class="Generalizable">𝐹</a> <a id="29290" class="Symbol">⦄</a> <a id="29292" class="Symbol">(</a><a id="29293" href="#29293" class="Bound">wf</a> <a id="29296" class="Symbol">:</a> <a id="29298" href="../code/depth-comonads/DepthComonads.WellFounded.html#230" class="Function">WellFounded</a> <a id="29310" href="../code/depth-comonads/DepthComonads.Algebra.Monus.html#2522" class="Function Operator">_≺_</a><a id="29313" class="Symbol">)</a> <a id="29315" class="Symbol">{</a><a id="29316" href="#29316" class="Bound">A</a> <a id="29318" href="#29318" class="Bound">B</a> <a id="29320" class="Symbol">:</a> <a id="29322" href="../code/depth-comonads/Agda.Primitive.html#326" class="Primitive">Type</a><a id="29326" class="Symbol">}</a> <a id="29328" class="Keyword">where</a>
     <a id="29338" href="#29338" class="Function">traceT</a> <a id="29345" class="Symbol">:</a> <a id="29347" class="Symbol">(</a><a id="29348" href="#29270" class="Bound">𝐶</a> <a id="29350" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a> <a id="29352" href="#29316" class="Bound">A</a> <a id="29354" class="Symbol">→</a> <a id="29356" href="#29318" class="Bound">B</a><a id="29357" class="Symbol">)</a> <a id="29359" class="Symbol">→</a> <a id="29361" class="Symbol">(</a><a id="29362" href="#29270" class="Bound">𝐶</a> <a id="29364" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a> <a id="29366" href="#29316" class="Bound">A</a> <a id="29368" class="Symbol">→</a> <a id="29370" href="#29288" class="Bound">𝐹</a> <a id="29372" class="Symbol">(</a><a id="29373" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">∃</a> <a id="29375" href="#29375" class="Bound">w</a> <a id="29377" href="../code/depth-comonads/DepthComonads.Sigma.html#260" class="Function">×</a> <a id="29379" class="Symbol">(</a><a id="29380" href="#29375" class="Bound">w</a> <a id="29382" href="../code/depth-comonads/DepthComonads.Path.html#561" class="Function Operator">≢</a> <a id="29384" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a><a id="29385" class="Symbol">)</a> <a id="29387" href="../code/depth-comonads/DepthComonads.Sigma.html#542" class="Function Operator">×</a> <a id="29389" href="#29270" class="Bound">𝐶</a> <a id="29391" href="#29375" class="Bound">w</a> <a id="29393" href="#29316" class="Bound">A</a><a id="29394" class="Symbol">))</a> <a id="29397" class="Symbol">→</a> <a id="29399" href="#29270" class="Bound">𝐶</a> <a id="29401" href="../code/depth-comonads/DepthComonads.Algebra.html#1555" class="Field">ε</a> <a id="29403" href="#29316" class="Bound">A</a> <a id="29405" class="Symbol">→</a> <a id="29407" href="#28752" class="Function">Prefix</a> <a id="29414" href="#29288" class="Bound">𝐹</a> <a id="29416" href="#29270" class="Bound">𝐶</a> <a id="29418" href="#29318" class="Bound">B</a>
     <a id="29424" href="#29338" class="Function">traceT</a> <a id="29431" href="#29431" class="Bound">ϕ</a> <a id="29433" href="#29433" class="Bound">ρ</a> <a id="29435" href="#29435" class="Bound">xs</a> <a id="29438" class="Symbol">=</a> <a id="29440" href="#27168" class="Function Operator">extend[</a> <a id="29448" href="../code/depth-comonads/DepthComonads.Algebra.html#1650" class="Field">∙ε</a> <a id="29451" class="Symbol">_</a> <a id="29453" href="#27168" class="Function Operator">]</a> <a id="29455" class="Symbol">(λ</a> <a id="29458" href="#29458" class="Bound">xs′</a> <a id="29462" class="Symbol">→</a> <a id="29464" href="#28527" class="InductiveConstructor">prefix</a> <a id="29471" class="Symbol">λ</a> <a id="29473" href="#29473" class="Bound">_</a> <a id="29475" class="Symbol">→</a> <a id="29477" href="#29431" class="Bound">ϕ</a> <a id="29479" href="#29458" class="Bound">xs′</a> <a id="29483" href="../code/depth-comonads/Agda.Builtin.Sigma.html#236" class="InductiveConstructor Operator">,</a>  <a id="29486" href="../code/depth-comonads/DepthComonads.Algebra.html#4153" class="Field">map</a> <a id="29490" class="Symbol">(</a><a id="29491" href="../code/depth-comonads/DepthComonads.Sigma.html#1401" class="Function">map₂</a> <a id="29496" class="Symbol">(</a><a id="29497" href="#29537" class="Function">ψ</a> <a id="29499" class="Symbol">(</a><a id="29500" href="#29293" class="Bound">wf</a> <a id="29503" class="Symbol">_)))</a> <a id="29508" class="Symbol">(</a><a id="29509" href="#29433" class="Bound">ρ</a> <a id="29511" href="#29435" class="Bound">xs</a><a id="29513" class="Symbol">))</a> <a id="29516" href="#29435" class="Bound">xs</a>
@@ -594,76 +831,143 @@ This also has a few laws, which are expressed cleaner using cokleisli compositio
           <a id="29857" href="#29621" class="Bound">xs</a>
 </pre>
 <h1 id="conclusion">Conclusion</h1>
-<p>Comonads are much less widely used than monads in Haskell and similar languages. Part of the reason, I think, is that they’re too powerful in a non-linear language. Monads are often used to model sublanguages where it’s possible to introduce “special” variables which interact with the monadic context.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>pyth <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>  guard (x<span class="op">*</span>x <span class="op">+</span> y<span class="op">*</span>y <span class="op">==</span> z<span class="op">*</span>z)</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>  <span class="fu">return</span> (x,y,z)</span></code></pre></div>
-<p>The <code>x</code> variable here semantically spans over the range <code>[1..10]</code>. In the following two examples we see the semantics of state and maybe:</p>
+<p>Comonads are much less widely used than monads in Haskell and similar
+languages. Part of the reason, I think, is that they’re too powerful in
+a non-linear language. Monads are often used to model sublanguages where
+it’s possible to introduce “special” variables which interact with the
+monadic context.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pyth <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  guard (x<span class="op">*</span>x <span class="op">+</span> y<span class="op">*</span>y <span class="op">==</span> z<span class="op">*</span>z)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span> (x,y,z)</span></code></pre></div>
+<p>The <code>x</code> variable here semantically spans over the range
+<code>[1..10]</code>. In the following two examples we see the semantics
+of state and maybe:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">sum</span><span class="ot"> ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="fu">sum</span> xs <span class="ot">=</span> <span class="fu">flip</span> evalState <span class="dv">0</span> <span class="op">$</span> <span class="kw">do</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  put <span class="dv">0</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  for_ xs <span class="op">$</span> \x <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    n <span class="ot">&lt;-</span> get</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    put (n <span class="op">+</span> x)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>  m <span class="ot">&lt;-</span> get</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>  <span class="fu">return</span> m</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span><span class="ot"> ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> <span class="dt">Int</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span> xs <span class="ot">=</span> <span class="fu">flip</span> evalState <span class="dv">0</span> <span class="op">$</span> <span class="kw">do</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  put <span class="dv">0</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  for_ xs <span class="op">$</span> \x <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    n <span class="ot">&lt;-</span> get</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    put (n <span class="op">+</span> x)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> get</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span> m</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">E</span> <span class="ot">=</span> <span class="dt">Lit</span> <span class="dt">Int</span> <span class="op">|</span> <span class="dt">E</span> <span class="op">:+:</span> <span class="dt">E</span> <span class="op">|</span> <span class="dt">E</span> <span class="op">:/:</span> <span class="dt">E</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="ot">eval ::</span> <span class="dt">E</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>eval (<span class="dt">Lit</span> n) <span class="ot">=</span> n</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>eval (xs <span class="op">:+:</span> ys) <span class="ot">=</span> <span class="kw">do</span> x <span class="ot">&lt;-</span> eval xs</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>                      y <span class="ot">&lt;-</span> eval ys</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>                      <span class="fu">return</span> (x <span class="op">+</span> y)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>eval (xs <span class="op">:/:</span> ys) <span class="ot">=</span> <span class="kw">do</span> x <span class="ot">&lt;-</span> eval xs</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>                      y <span class="ot">&lt;-</span> eval ys</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>                      guard (y <span class="op">/=</span> <span class="dv">0</span>)</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>                      <span class="fu">return</span> (x <span class="op">/</span> y)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">E</span> <span class="ot">=</span> <span class="dt">Lit</span> <span class="dt">Int</span> <span class="op">|</span> <span class="dt">E</span> <span class="op">:+:</span> <span class="dt">E</span> <span class="op">|</span> <span class="dt">E</span> <span class="op">:/:</span> <span class="dt">E</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="ot">eval ::</span> <span class="dt">E</span> <span class="ot">-&gt;</span> <span class="dt">Maybe</span> <span class="dt">Int</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>eval (<span class="dt">Lit</span> n) <span class="ot">=</span> n</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>eval (xs <span class="op">:+:</span> ys) <span class="ot">=</span> <span class="kw">do</span> x <span class="ot">&lt;-</span> eval xs</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                      y <span class="ot">&lt;-</span> eval ys</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">return</span> (x <span class="op">+</span> y)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>eval (xs <span class="op">:/:</span> ys) <span class="ot">=</span> <span class="kw">do</span> x <span class="ot">&lt;-</span> eval xs</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                      y <span class="ot">&lt;-</span> eval ys</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                      guard (y <span class="op">/=</span> <span class="dv">0</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                      <span class="fu">return</span> (x <span class="op">/</span> y)</span></code></pre></div>
 </div>
 </div>
-<p>The variables <code>n</code> and <code>m</code> introduced in the state example are “special” because their values depend on the computations that came before. In the maybe example the variables introduced could be <code>Nothing</code>.</p>
-<p>You can’t do the same thing with comonads because you’re always able to extract the “special” variable with <code>extract :: m a -&gt; a</code>. Instead of having special variable <em>introduction</em>, comonads let you have special variable <em>elimination</em>. But, since Haskell isn’t linear, you can always just discard a variable so this isn’t much use.</p>
-<p>Looking at the maybe example, we have a function <code>eval :: E -&gt; Maybe Int</code> that introduces an <code>Int</code> variable with a “catch”: it is wrapped in a <code>Maybe</code>. We want to use the <code>eval</code> function as if it were a normal function <code>E -&gt; Int</code>, with all of the bookkeeping managed for us: that’s what monads and do notation (kind of) allow us to do.</p>
-<p>An analagous example with comonads might be having a function <code>consume :: m V -&gt; String</code>. This “handles” a <code>V</code> value, but the “catch” is that it needs an <code>m</code> context to do so. If we want to treat the <code>consume</code> function as if it were a normal function <code>V -&gt; String</code> then comonads <span class="citation" data-cites="orchard_notation_2013">(and codo notation Orchard and Mycroft <a href="#ref-orchard_notation_2013" role="doc-biblioref">2013</a>)</span> would be a perfect fit.</p>
-<p>The reason that this analagous case doesn’t arise very often is that we don’t have many handlers that look like <code>m V -&gt; String</code> in Haskell. Why? Because if we want to “handle” a <code>V</code> we can just discard it: as a non-linear language, you do not need to perform any ceremony to discard a variable in Haskell.</p>
-<p>Graded comonads, though, seem to be much more useful than normal comonads. I think it is becuase they basically get rid of the <code>m a -&gt; a</code> function, changing it into a much more restricted form. In this way, they give a kind of small linear language, but just for the monoidal type parameter.</p>
-<p>And there are a lot of uses for the graded comonads. Above we’ve used them for termination checking. A recursive function might have the form <code>a -&gt; b</code>, where <code>a</code> is the thing being recursed on. If we’re using well-founded recursion to show that it’s terminating, though, we add an extra parameter, an <code>Acc _&lt;_</code> proof, turning this function into <code>Acc _&lt;_ w × a -&gt; b</code>. The <code>Acc _&lt;_</code> here is the graded comonad, and this recursive function is precisely the “handler”.</p>
-<p>Other examples might be privacy or permissions: a function might be able to work on some value, but only if it has particular <em>permission</em> regarding that value. The permission here is the monoid.</p>
-<p>There are other examples I’m sure, those are just the couple that I have been thinking about.</p>
+<p>The variables <code>n</code> and <code>m</code> introduced in the
+state example are “special” because their values depend on the
+computations that came before. In the maybe example the variables
+introduced could be <code>Nothing</code>.</p>
+<p>You can’t do the same thing with comonads because you’re always able
+to extract the “special” variable with
+<code>extract :: m a -&gt; a</code>. Instead of having special variable
+<em>introduction</em>, comonads let you have special variable
+<em>elimination</em>. But, since Haskell isn’t linear, you can always
+just discard a variable so this isn’t much use.</p>
+<p>Looking at the maybe example, we have a function
+<code>eval :: E -&gt; Maybe Int</code> that introduces an
+<code>Int</code> variable with a “catch”: it is wrapped in a
+<code>Maybe</code>. We want to use the <code>eval</code> function as if
+it were a normal function <code>E -&gt; Int</code>, with all of the
+bookkeeping managed for us: that’s what monads and do notation (kind of)
+allow us to do.</p>
+<p>An analagous example with comonads might be having a function
+<code>consume :: m V -&gt; String</code>. This “handles” a
+<code>V</code> value, but the “catch” is that it needs an <code>m</code>
+context to do so. If we want to treat the <code>consume</code> function
+as if it were a normal function <code>V -&gt; String</code> then
+comonads <span class="citation" data-cites="orchard_notation_2013">(and
+codo notation Orchard and Mycroft 2013)</span> would be a perfect
+fit.</p>
+<p>The reason that this analagous case doesn’t arise very often is that
+we don’t have many handlers that look like <code>m V -&gt; String</code>
+in Haskell. Why? Because if we want to “handle” a <code>V</code> we can
+just discard it: as a non-linear language, you do not need to perform
+any ceremony to discard a variable in Haskell.</p>
+<p>Graded comonads, though, seem to be much more useful than normal
+comonads. I think it is becuase they basically get rid of the
+<code>m a -&gt; a</code> function, changing it into a much more
+restricted form. In this way, they give a kind of small linear language,
+but just for the monoidal type parameter.</p>
+<p>And there are a lot of uses for the graded comonads. Above we’ve used
+them for termination checking. A recursive function might have the form
+<code>a -&gt; b</code>, where <code>a</code> is the thing being recursed
+on. If we’re using well-founded recursion to show that it’s terminating,
+though, we add an extra parameter, an <code>Acc _&lt;_</code> proof,
+turning this function into <code>Acc _&lt;_ w × a -&gt; b</code>. The
+<code>Acc _&lt;_</code> here is the graded comonad, and this recursive
+function is precisely the “handler”.</p>
+<p>Other examples might be privacy or permissions: a function might be
+able to work on some value, but only if it has particular
+<em>permission</em> regarding that value. The permission here is the
+monoid.</p>
+<p>There are other examples I’m sure, those are just the couple that I
+have been thinking about.</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-abel_wellfounded_2013">
-<p>Abel, Andreas, and Brigitte Pientka. 2013. “Wellfounded Recursion with Copatterns” (0) (June): 25. <a href="http://www2.tcs.ifi.lmu.de/%7Eabel/icfp13-long.pdf">http://www2.tcs.ifi.lmu.de/%7Eabel/icfp13-long.pdf</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-abel_wellfounded_2013" class="csl-entry" role="listitem">
+Abel, Andreas, and Brigitte Pientka. 2013. <span>“Wellfounded
+<span>Recursion</span> with <span>Copatterns</span>”</span> (0) (June):
+25. <a href="http://www2.tcs.ifi.lmu.de/%7Eabel/icfp13-long.pdf">http://www2.tcs.ifi.lmu.de/%7Eabel/icfp13-long.pdf</a>.
 </div>
-<div id="ref-ahman_when_2012">
-<p>Ahman, Danel, James Chapman, and Tarmo Uustalu. 2012. “When Is a Container a Comonad?” In <em>Foundations of Software Science and Computational Structures</em>, 74–88. Lecture Notes in Computer Science. Springer, Berlin, Heidelberg. doi:<a href="https://doi.org/10.1007/978-3-642-28729-9_5">10.1007/978-3-642-28729-9_5</a>.</p>
+<div id="ref-ahman_when_2012" class="csl-entry" role="listitem">
+Ahman, Danel, James Chapman, and Tarmo Uustalu. 2012. <span>“When
+<span>Is</span> a <span>Container</span> a <span>Comonad</span>?”</span>
+In <em>Foundations of <span>Software Science</span> and
+<span>Computational Structures</span></em>, 74–88. Lecture
+<span>Notes</span> in <span>Computer Science</span>. <span>Springer,
+Berlin, Heidelberg</span>. doi:<a href="https://doi.org/10.1007/978-3-642-28729-9_5">10.1007/978-3-642-28729-9_5</a>.
 </div>
-<div id="ref-ahman_update_2014">
-<p>Ahman, Danel, and Tarmo Uustalu. 2014. “Update Monads: Cointerpreting Directed Containers”: 23 pages. doi:<a href="https://doi.org/10.4230/LIPICS.TYPES.2013.1">10.4230/LIPICS.TYPES.2013.1</a>.</p>
+<div id="ref-ahman_distributive_2013" class="csl-entry" role="listitem">
+Ahman, Danel, and Tarmo Uustalu. 2013. <span>“Distributive laws of
+directed containers.”</span> <em>Progress in Informatics</em> (10)
+(March): 3. doi:<a href="https://doi.org/10.2201/NiiPi.2013.10.2">10.2201/NiiPi.2013.10.2</a>.
 </div>
-<div id="ref-ahman_distributive_2013">
-<p>———. 2013. “Distributive laws of directed containers.” <em>Progress in Informatics</em> (10) (March): 3. doi:<a href="https://doi.org/10.2201/NiiPi.2013.10.2">10.2201/NiiPi.2013.10.2</a>.</p>
+<div id="ref-ahman_update_2014" class="csl-entry" role="listitem">
+———. 2014. <span>“Update <span>Monads</span>: <span>Cointerpreting
+Directed Containers</span>”</span>: 23 pages. doi:<a href="https://doi.org/10.4230/LIPICS.TYPES.2013.1">10.4230/LIPICS.TYPES.2013.1</a>.
 </div>
-<div id="ref-ahman_directed_2016">
-<p>———. 2016. “Directed Containers as Categories” (April). doi:<a href="https://doi.org/10.4204/EPTCS.207.5">10.4204/EPTCS.207.5</a>.</p>
+<div id="ref-ahman_directed_2016" class="csl-entry" role="listitem">
+———. 2016. <span>“Directed <span>Containers</span> as
+<span>Categories</span>”</span> (April). doi:<a href="https://doi.org/10.4204/EPTCS.207.5">10.4204/EPTCS.207.5</a>.
 </div>
-<div id="ref-kidney_algebras_2021">
-<p>Kidney, Donnacha Oisín, and Nicolas Wu. 2021. “Algebras for Weighted Search.” <em>Proceedings of the ACM on Programming Languages</em> 5 (ICFP) (August): 72:1–72:30. doi:<a href="https://doi.org/10.1145/3473577">10.1145/3473577</a>.</p>
+<div id="ref-kidney_algebras_2021" class="csl-entry" role="listitem">
+Kidney, Donnacha Oisín, and Nicolas Wu. 2021. <span>“Algebras for
+weighted search.”</span> <em>Proceedings of the ACM on Programming
+Languages</em> 5 (ICFP) (August): 72:1–72:30. doi:<a href="https://doi.org/10.1145/3473577">10.1145/3473577</a>.
 </div>
-<div id="ref-kmett_state_2018">
-<p>Kmett, Edward. 2018. “The State Comonad.” Blog. <em>The Comonad.Reader</em>. <a href="http://comonad.com/reader/2018/the-state-comonad/">http://comonad.com/reader/2018/the-state-comonad/</a>.</p>
+<div id="ref-kmett_state_2018" class="csl-entry" role="listitem">
+Kmett, Edward. 2018. <span>“The <span>State Comonad</span>.”</span>
+Blog. <em>The Comonad.Reader</em>. <a href="http://comonad.com/reader/2018/the-state-comonad/">http://comonad.com/reader/2018/the-state-comonad/</a>.
 </div>
-<div id="ref-orchard_notation_2013">
-<p>Orchard, Dominic, and Alan Mycroft. 2013. “A Notation for Comonads.” In <em>Implementation and Application of Functional Languages</em>, ed by. Ralf Hinze, 1–17. Lecture Notes in Computer Science. Berlin, Heidelberg: Springer. doi:<a href="https://doi.org/10.1007/978-3-642-41582-1_1">10.1007/978-3-642-41582-1_1</a>.</p>
+<div id="ref-orchard_notation_2013" class="csl-entry" role="listitem">
+Orchard, Dominic, and Alan Mycroft. 2013. <span>“A <span>Notation</span>
+for <span>Comonads</span>.”</span> In <em>Implementation and
+<span>Application</span> of <span>Functional Languages</span></em>, ed
+by. Ralf Hinze, 1–17. Lecture <span>Notes</span> in <span>Computer
+Science</span>. <span>Berlin, Heidelberg</span>: <span>Springer</span>.
+doi:<a href="https://doi.org/10.1007/978-3-642-41582-1_1">10.1007/978-3-642-41582-1_1</a>.
 </div>
-<div id="ref-waern_made_2018">
-<p>Waern, Love. 2018. “I made a monad that I haven’t seen before, and I have a few questions about it.” Reddit Post. <em>reddit.com/r/haskell</em>. <a href="https://www.reddit.com/r/haskell/comments/7oav51/i_made_a_monad_that_i_havent_seen_before_and_i/">https://www.reddit.com/r/haskell/comments/7oav51/i_made_a_monad_that_i_havent_seen_before_and_i/</a>.</p>
+<div id="ref-waern_made_2018" class="csl-entry" role="listitem">
+Waern, Love. 2018. <span>“I made a monad that <span>I</span> haven’t
+seen before, and <span>I</span> have a few questions about it.”</span>
+Reddit {{Post}}. <em>reddit.com/r/haskell</em>. <a href="https://www.reddit.com/r/haskell/comments/7oav51/i_made_a_monad_that_i_havent_seen_before_and_i/">https://www.reddit.com/r/haskell/comments/7oav51/i_made_a_monad_that_i_havent_seen_before_and_i/</a>.
 </div>
 </div>
 

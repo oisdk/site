@@ -22,126 +22,131 @@
         <div id="content">
             <h2>Church-Encode a Datatype, Generically</h2>
 
-            <p>Church-encoding of datatypes is a common pattern you’ll see in Haskell. It’s possible to do it generically, by using a sum-of-products encoding.</p>
+            <p>Church-encoding of datatypes is a common pattern you’ll see in
+Haskell. It’s possible to do it generically, by using a sum-of-products
+encoding.</p>
 <p>Some preamble:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE TypeOperators        #-}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ot">{-# LANGUAGE TypeFamilies         #-}</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ot">{-# LANGUAGE EmptyCase            #-}</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DefaultSignatures    #-}</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleContexts     #-}</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="ot">{-# LANGUAGE UndecidableInstances #-}</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">{-# LANGUAGE ScopedTypeVariables  #-}</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">ChurchGen</span> <span class="kw">where</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">GHC.Generics</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Proxy</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (take)</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Void</span></span></code></pre></div>
-<p>The Church-encoding of something like <code class="sourceCode haskell"><span class="dt">Bool</span></code> looks like this:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">-- | &gt;&gt;&gt; bool False 1 0</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">-- 1</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>bool <span class="dt">False</span> f t <span class="ot">=</span> f</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>bool <span class="dt">True</span>  f t <span class="ot">=</span> t</span></code></pre></div>
-<p>Kind of like a flipped if statement. To replicate it in generics takes some work:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">Summable</span> c <span class="kw">where</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> c a<span class="ot"> r ::</span> <span class="op">*</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="ot">  take ::</span> c p <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> <span class="dt">Sum</span> c a r</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="ot">  ignore ::</span> <span class="dt">Proxy</span> c <span class="ot">-&gt;</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> r <span class="ot">-&gt;</span> <span class="dt">Sum</span> c a r</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">Prodable</span> c <span class="kw">where</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> c<span class="ot"> r ::</span> <span class="op">*</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a><span class="ot">  strip ::</span> c p <span class="ot">-&gt;</span> <span class="dt">Prod</span> c r <span class="ot">-&gt;</span> r</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">ChurchGen</span> c <span class="kw">where</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> c<span class="ot"> a ::</span> <span class="op">*</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true"></a><span class="ot">  foldGen::</span> c a <span class="ot">-&gt;</span> <span class="dt">FoldGen</span> c a</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true"></a></span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Summable</span> c <span class="ot">=&gt;</span> <span class="dt">Summable</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (<span class="dt">M1</span> i t c) a r <span class="ot">=</span> <span class="dt">Sum</span> c a r</span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true"></a>  <span class="fu">take</span> (<span class="dt">M1</span> x) <span class="ot">=</span> <span class="fu">take</span> x</span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true"></a>  ignore (<span class="ot">_ ::</span> <span class="dt">Proxy</span> (<span class="dt">M1</span> i t c)) <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> c)</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true"></a></span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Prodable</span> c <span class="ot">=&gt;</span> <span class="dt">Prodable</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (<span class="dt">M1</span> i t c) r <span class="ot">=</span> <span class="dt">Prod</span> c r</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true"></a>  strip (<span class="dt">M1</span> x) <span class="ot">=</span> strip x</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> c <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (<span class="dt">M1</span> i t c) a <span class="ot">=</span> <span class="dt">FoldGen</span> c a</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true"></a>  foldGen (<span class="dt">M1</span> x) <span class="ot">=</span> foldGen x</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true"></a></span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Summable</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (<span class="dt">K1</span> i c) a r <span class="ot">=</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> r</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true"></a>  <span class="fu">take</span> (<span class="dt">K1</span> x) k f <span class="ot">=</span> k (f x)</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Summable</span> <span class="dt">U1</span> <span class="kw">where</span></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> <span class="dt">U1</span> a r <span class="ot">=</span> a <span class="ot">-&gt;</span> r</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true"></a>  <span class="fu">take</span> <span class="dt">U1</span> k f <span class="ot">=</span> k f</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Prodable</span> <span class="dt">U1</span> <span class="kw">where</span></span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> <span class="dt">U1</span> r <span class="ot">=</span> r</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true"></a>  strip <span class="dt">U1</span> x <span class="ot">=</span> x</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true"></a></span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> <span class="dt">U1</span> <span class="kw">where</span></span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> <span class="dt">U1</span> a <span class="ot">=</span> a <span class="ot">-&gt;</span> a</span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true"></a>  foldGen <span class="dt">U1</span> x <span class="ot">=</span> x</span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true"></a></span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Summable</span> <span class="dt">V1</span> <span class="kw">where</span></span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> <span class="dt">V1</span> a r <span class="ot">=</span> r</span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true"></a>  <span class="fu">take</span> x <span class="ot">=</span> <span class="kw">case</span> x <span class="kw">of</span></span>
-<span id="cb3-48"><a href="#cb3-48" aria-hidden="true"></a>  ignore _ _ <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb3-49"><a href="#cb3-49" aria-hidden="true"></a></span>
-<span id="cb3-50"><a href="#cb3-50" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Prodable</span> <span class="dt">V1</span> <span class="kw">where</span></span>
-<span id="cb3-51"><a href="#cb3-51" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> <span class="dt">V1</span> r <span class="ot">=</span> <span class="dt">Void</span> <span class="ot">-&gt;</span> r</span>
-<span id="cb3-52"><a href="#cb3-52" aria-hidden="true"></a>  strip x <span class="ot">=</span> <span class="kw">case</span> x <span class="kw">of</span></span>
-<span id="cb3-53"><a href="#cb3-53" aria-hidden="true"></a></span>
-<span id="cb3-54"><a href="#cb3-54" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Prodable</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
-<span id="cb3-55"><a href="#cb3-55" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (<span class="dt">K1</span> i c) r <span class="ot">=</span> c <span class="ot">-&gt;</span> r</span>
-<span id="cb3-56"><a href="#cb3-56" aria-hidden="true"></a>  strip (<span class="dt">K1</span> x) f <span class="ot">=</span> f x</span>
-<span id="cb3-57"><a href="#cb3-57" aria-hidden="true"></a></span>
-<span id="cb3-58"><a href="#cb3-58" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
-<span id="cb3-59"><a href="#cb3-59" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (<span class="dt">K1</span> i c) a <span class="ot">=</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</span>
-<span id="cb3-60"><a href="#cb3-60" aria-hidden="true"></a>  foldGen(<span class="dt">K1</span> x) f <span class="ot">=</span> f x</span>
-<span id="cb3-61"><a href="#cb3-61" aria-hidden="true"></a></span>
-<span id="cb3-62"><a href="#cb3-62" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Summable</span> li, <span class="dt">Summable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Summable</span> (li <span class="op">:+:</span> ri) <span class="kw">where</span></span>
-<span id="cb3-63"><a href="#cb3-63" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (li <span class="op">:+:</span> ri) a r <span class="ot">=</span> <span class="dt">Sum</span> li a (<span class="dt">Sum</span> ri a r)</span>
-<span id="cb3-64"><a href="#cb3-64" aria-hidden="true"></a>  <span class="fu">take</span> (<span class="dt">L1</span> x) (<span class="ot">k ::</span> a <span class="ot">-&gt;</span> r) <span class="ot">=</span> <span class="fu">take</span> x (ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> ri) (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> a) <span class="op">.</span> k)</span>
-<span id="cb3-65"><a href="#cb3-65" aria-hidden="true"></a>  <span class="fu">take</span> (<span class="dt">R1</span> x) (<span class="ot">k ::</span> a <span class="ot">-&gt;</span> r) <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> li) (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> a) (<span class="fu">take</span> x k)</span>
-<span id="cb3-66"><a href="#cb3-66" aria-hidden="true"></a>  ignore p a x <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> li) a (ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> ri) a x)</span>
-<span id="cb3-67"><a href="#cb3-67" aria-hidden="true"></a></span>
-<span id="cb3-68"><a href="#cb3-68" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Summable</span> li, <span class="dt">Summable</span> ri) <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (li <span class="op">:+:</span> ri) <span class="kw">where</span></span>
-<span id="cb3-69"><a href="#cb3-69" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (li <span class="op">:+:</span> ri) a <span class="ot">=</span> <span class="dt">Sum</span> li a (<span class="dt">Sum</span> ri a a)</span>
-<span id="cb3-70"><a href="#cb3-70" aria-hidden="true"></a>  foldGen(<span class="ot">x ::</span> (li <span class="op">:+:</span> ri) a) <span class="ot">=</span> <span class="fu">take</span> x (<span class="fu">id</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> a)</span>
-<span id="cb3-71"><a href="#cb3-71" aria-hidden="true"></a></span>
-<span id="cb3-72"><a href="#cb3-72" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Prodable</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
-<span id="cb3-73"><a href="#cb3-73" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (li <span class="op">:*:</span> ri) a <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a)</span>
-<span id="cb3-74"><a href="#cb3-74" aria-hidden="true"></a>  strip (li <span class="op">:*:</span> ri) f <span class="ot">=</span> strip ri (strip li f)</span>
-<span id="cb3-75"><a href="#cb3-75" aria-hidden="true"></a></span>
-<span id="cb3-76"><a href="#cb3-76" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
-<span id="cb3-77"><a href="#cb3-77" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (li <span class="op">:*:</span> ri) a <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a) <span class="ot">-&gt;</span> a</span>
-<span id="cb3-78"><a href="#cb3-78" aria-hidden="true"></a>  foldGen(li <span class="op">:*:</span> ri) f <span class="ot">=</span> strip ri (strip li f)</span>
-<span id="cb3-79"><a href="#cb3-79" aria-hidden="true"></a></span>
-<span id="cb3-80"><a href="#cb3-80" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Summable</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
-<span id="cb3-81"><a href="#cb3-81" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (li <span class="op">:*:</span> ri) a r <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a) <span class="ot">-&gt;</span> r</span>
-<span id="cb3-82"><a href="#cb3-82" aria-hidden="true"></a>  <span class="fu">take</span> x k <span class="ot">=</span> k <span class="op">.</span> strip x</span>
-<span id="cb3-83"><a href="#cb3-83" aria-hidden="true"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
-<span id="cb3-84"><a href="#cb3-84" aria-hidden="true"></a></span>
-<span id="cb3-85"><a href="#cb3-85" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">Church</span> c <span class="kw">where</span></span>
-<span id="cb3-86"><a href="#cb3-86" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Fold</span> c<span class="ot"> a ::</span> <span class="op">*</span></span>
-<span id="cb3-87"><a href="#cb3-87" aria-hidden="true"></a>  <span class="kw">type</span> <span class="dt">Fold</span> c a <span class="ot">=</span> <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a</span>
-<span id="cb3-88"><a href="#cb3-88" aria-hidden="true"></a><span class="ot">  fold ::</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">Fold</span> c a</span>
-<span id="cb3-89"><a href="#cb3-89" aria-hidden="true"></a>  default<span class="ot"> fold ::</span> (<span class="dt">Generic</span> c, <span class="dt">ChurchGen</span> (<span class="dt">Rep</span> c), <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a <span class="op">~</span> <span class="dt">Fold</span> c a) <span class="ot">=&gt;</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">Fold</span> c a</span>
-<span id="cb3-90"><a href="#cb3-90" aria-hidden="true"></a>  fold <span class="ot">=</span> defaultFold</span>
-<span id="cb3-91"><a href="#cb3-91" aria-hidden="true"></a></span>
-<span id="cb3-92"><a href="#cb3-92" aria-hidden="true"></a><span class="ot">defaultFold ::</span> (<span class="dt">Generic</span> c, <span class="dt">ChurchGen</span> (<span class="dt">Rep</span> c)) <span class="ot">=&gt;</span> proxy a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a</span>
-<span id="cb3-93"><a href="#cb3-93" aria-hidden="true"></a>defaultFold (<span class="ot">p ::</span> proxy a) (<span class="ot">x ::</span> c) <span class="ot">=</span> foldGen (from<span class="ot"> x ::</span> <span class="dt">Rep</span> c a)</span></code></pre></div>
-<p>After all of that, we can write the church-encoded bool function like so:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Church</span> <span class="dt">Bool</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="co">-- | &gt;&gt;&gt; fold (Proxy :: Proxy Int) False 0 1</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="co">-- 0</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE TypeOperators        #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE TypeFamilies         #-}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE EmptyCase            #-}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE DefaultSignatures    #-}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE FlexibleContexts     #-}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE UndecidableInstances #-}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE ScopedTypeVariables  #-}</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">ChurchGen</span> <span class="kw">where</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">GHC.Generics</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Proxy</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (take)</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Void</span></span></code></pre></div>
+<p>The Church-encoding of something like <code class="sourceCode haskell"><span class="dt">Bool</span></code> looks
+like this:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- | &gt;&gt;&gt; bool False 1 0</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- 1</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>bool <span class="dt">False</span> f t <span class="ot">=</span> f</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>bool <span class="dt">True</span>  f t <span class="ot">=</span> t</span></code></pre></div>
+<p>Kind of like a flipped if statement. To replicate it in generics
+takes some work:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Summable</span> c <span class="kw">where</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> c a<span class="ot"> r ::</span> <span class="op">*</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="ot">  take ::</span> c p <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> r) <span class="ot">-&gt;</span> <span class="dt">Sum</span> c a r</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ot">  ignore ::</span> <span class="dt">Proxy</span> c <span class="ot">-&gt;</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> r <span class="ot">-&gt;</span> <span class="dt">Sum</span> c a r</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Prodable</span> c <span class="kw">where</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> c<span class="ot"> r ::</span> <span class="op">*</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="ot">  strip ::</span> c p <span class="ot">-&gt;</span> <span class="dt">Prod</span> c r <span class="ot">-&gt;</span> r</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">ChurchGen</span> c <span class="kw">where</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> c<span class="ot"> a ::</span> <span class="op">*</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="ot">  foldGen::</span> c a <span class="ot">-&gt;</span> <span class="dt">FoldGen</span> c a</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Summable</span> c <span class="ot">=&gt;</span> <span class="dt">Summable</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (<span class="dt">M1</span> i t c) a r <span class="ot">=</span> <span class="dt">Sum</span> c a r</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> (<span class="dt">M1</span> x) <span class="ot">=</span> <span class="fu">take</span> x</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  ignore (<span class="ot">_ ::</span> <span class="dt">Proxy</span> (<span class="dt">M1</span> i t c)) <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> c)</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Prodable</span> c <span class="ot">=&gt;</span> <span class="dt">Prodable</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (<span class="dt">M1</span> i t c) r <span class="ot">=</span> <span class="dt">Prod</span> c r</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  strip (<span class="dt">M1</span> x) <span class="ot">=</span> strip x</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> c <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (<span class="dt">M1</span> i t c) <span class="kw">where</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (<span class="dt">M1</span> i t c) a <span class="ot">=</span> <span class="dt">FoldGen</span> c a</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  foldGen (<span class="dt">M1</span> x) <span class="ot">=</span> foldGen x</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Summable</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (<span class="dt">K1</span> i c) a r <span class="ot">=</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> r</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> (<span class="dt">K1</span> x) k f <span class="ot">=</span> k (f x)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Summable</span> <span class="dt">U1</span> <span class="kw">where</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> <span class="dt">U1</span> a r <span class="ot">=</span> a <span class="ot">-&gt;</span> r</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> <span class="dt">U1</span> k f <span class="ot">=</span> k f</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Prodable</span> <span class="dt">U1</span> <span class="kw">where</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> <span class="dt">U1</span> r <span class="ot">=</span> r</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  strip <span class="dt">U1</span> x <span class="ot">=</span> x</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> <span class="dt">U1</span> <span class="kw">where</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> <span class="dt">U1</span> a <span class="ot">=</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  foldGen <span class="dt">U1</span> x <span class="ot">=</span> x</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Summable</span> <span class="dt">V1</span> <span class="kw">where</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> <span class="dt">V1</span> a r <span class="ot">=</span> r</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> x <span class="ot">=</span> <span class="kw">case</span> x <span class="kw">of</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>  ignore _ _ <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Prodable</span> <span class="dt">V1</span> <span class="kw">where</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> <span class="dt">V1</span> r <span class="ot">=</span> <span class="dt">Void</span> <span class="ot">-&gt;</span> r</span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>  strip x <span class="ot">=</span> <span class="kw">case</span> x <span class="kw">of</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Prodable</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (<span class="dt">K1</span> i c) r <span class="ot">=</span> c <span class="ot">-&gt;</span> r</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  strip (<span class="dt">K1</span> x) f <span class="ot">=</span> f x</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">ChurchGen</span> (<span class="dt">K1</span> i c) <span class="kw">where</span></span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (<span class="dt">K1</span> i c) a <span class="ot">=</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> a</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>  foldGen(<span class="dt">K1</span> x) f <span class="ot">=</span> f x</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Summable</span> li, <span class="dt">Summable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Summable</span> (li <span class="op">:+:</span> ri) <span class="kw">where</span></span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (li <span class="op">:+:</span> ri) a r <span class="ot">=</span> <span class="dt">Sum</span> li a (<span class="dt">Sum</span> ri a r)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> (<span class="dt">L1</span> x) (<span class="ot">k ::</span> a <span class="ot">-&gt;</span> r) <span class="ot">=</span> <span class="fu">take</span> x (ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> ri) (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> a) <span class="op">.</span> k)</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> (<span class="dt">R1</span> x) (<span class="ot">k ::</span> a <span class="ot">-&gt;</span> r) <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> li) (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> a) (<span class="fu">take</span> x k)</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>  ignore p a x <span class="ot">=</span> ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> li) a (ignore (<span class="dt">Proxy</span><span class="ot"> ::</span> <span class="dt">Proxy</span> ri) a x)</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Summable</span> li, <span class="dt">Summable</span> ri) <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (li <span class="op">:+:</span> ri) <span class="kw">where</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (li <span class="op">:+:</span> ri) a <span class="ot">=</span> <span class="dt">Sum</span> li a (<span class="dt">Sum</span> ri a a)</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>  foldGen(<span class="ot">x ::</span> (li <span class="op">:+:</span> ri) a) <span class="ot">=</span> <span class="fu">take</span> x (<span class="fu">id</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> a)</span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Prodable</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Prod</span> (li <span class="op">:*:</span> ri) a <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a)</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>  strip (li <span class="op">:*:</span> ri) f <span class="ot">=</span> strip ri (strip li f)</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">ChurchGen</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">FoldGen</span> (li <span class="op">:*:</span> ri) a <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a) <span class="ot">-&gt;</span> a</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>  foldGen(li <span class="op">:*:</span> ri) f <span class="ot">=</span> strip ri (strip li f)</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Prodable</span> li, <span class="dt">Prodable</span> ri) <span class="ot">=&gt;</span> <span class="dt">Summable</span> (li <span class="op">:*:</span> ri) <span class="kw">where</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Sum</span> (li <span class="op">:*:</span> ri) a r <span class="ot">=</span> <span class="dt">Prod</span> li (<span class="dt">Prod</span> ri a) <span class="ot">-&gt;</span> r</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>  <span class="fu">take</span> x k <span class="ot">=</span> k <span class="op">.</span> strip x</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>  ignore _ _ r _ <span class="ot">=</span> r</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Church</span> c <span class="kw">where</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Fold</span> c<span class="ot"> a ::</span> <span class="op">*</span></span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="dt">Fold</span> c a <span class="ot">=</span> <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a><span class="ot">  fold ::</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">Fold</span> c a</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>  default<span class="ot"> fold ::</span> (<span class="dt">Generic</span> c, <span class="dt">ChurchGen</span> (<span class="dt">Rep</span> c), <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a <span class="op">~</span> <span class="dt">Fold</span> c a) <span class="ot">=&gt;</span> <span class="dt">Proxy</span> a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">Fold</span> c a</span>
+<span id="cb3-90"><a href="#cb3-90" aria-hidden="true" tabindex="-1"></a>  fold <span class="ot">=</span> defaultFold</span>
+<span id="cb3-91"><a href="#cb3-91" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-92"><a href="#cb3-92" aria-hidden="true" tabindex="-1"></a><span class="ot">defaultFold ::</span> (<span class="dt">Generic</span> c, <span class="dt">ChurchGen</span> (<span class="dt">Rep</span> c)) <span class="ot">=&gt;</span> proxy a <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> <span class="dt">FoldGen</span> (<span class="dt">Rep</span> c) a</span>
+<span id="cb3-93"><a href="#cb3-93" aria-hidden="true" tabindex="-1"></a>defaultFold (<span class="ot">p ::</span> proxy a) (<span class="ot">x ::</span> c) <span class="ot">=</span> foldGen (from<span class="ot"> x ::</span> <span class="dt">Rep</span> c a)</span></code></pre></div>
+<p>After all of that, we can write the church-encoded bool function like
+so:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Church</span> <span class="dt">Bool</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- | &gt;&gt;&gt; fold (Proxy :: Proxy Int) False 0 1</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- 0</span></span></code></pre></div>
 
         </div>
     </body>

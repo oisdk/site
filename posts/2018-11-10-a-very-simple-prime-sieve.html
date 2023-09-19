@@ -32,125 +32,178 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>A few days ago, the <a href="https://www.youtube.com/user/Computerphile">Computerphile YouTube channel</a> put up a video about infinite lists in Haskell <span class="citation" data-cites="haran_infinity_2018">(Haran <a href="#ref-haran_infinity_2018" role="doc-biblioref">2018</a>)</span>. It’s pretty basic, but finishes up with a definition of an infinite list of prime numbers. The definition was something like this:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>primes <span class="ot">=</span> sieve [<span class="dv">2</span><span class="op">..</span>]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>sieve (p<span class="op">:</span>ps) <span class="ot">=</span> p <span class="op">:</span> sieve [ x <span class="op">|</span> x <span class="ot">&lt;-</span> ps, <span class="fu">mod</span> x p <span class="op">/=</span> <span class="dv">0</span> ]</span></code></pre></div>
-<p>This really demonstrates the elegance of list comprehensions coupled with lazy evaluation. If we’re being totally pedantic, however, this <em>isn’t</em> a genuine <a href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">sieve of Eratosthenes</a>. And this makes sense: the “true” sieve of Eratosthenes <span class="citation" data-cites="oneill_genuine_2009">(O’Neill <a href="#ref-oneill_genuine_2009" role="doc-biblioref">2009</a>)</span> is probably too complex to demonstrate in a video meant to be an introduction to Haskell. This isn’t because Haskell is bad at this particular problem, mind you: it’s because a lazy, infinite sieve is something very hard to implement indeed.</p>
-<p>Anyway, I’m going to try today to show a very simple prime sieve that (hopefully) rivals the simplicity of the definition above.</p>
+<p>A few days ago, the <a href="https://www.youtube.com/user/Computerphile">Computerphile YouTube
+channel</a> put up a video about infinite lists in Haskell <span class="citation" data-cites="haran_infinity_2018">(Haran 2018)</span>.
+It’s pretty basic, but finishes up with a definition of an infinite list
+of prime numbers. The definition was something like this:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>primes <span class="ot">=</span> sieve [<span class="dv">2</span><span class="op">..</span>]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>sieve (p<span class="op">:</span>ps) <span class="ot">=</span> p <span class="op">:</span> sieve [ x <span class="op">|</span> x <span class="ot">&lt;-</span> ps, <span class="fu">mod</span> x p <span class="op">/=</span> <span class="dv">0</span> ]</span></code></pre></div>
+<p>This really demonstrates the elegance of list comprehensions coupled
+with lazy evaluation. If we’re being totally pedantic, however, this
+<em>isn’t</em> a genuine <a href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">sieve of
+Eratosthenes</a>. And this makes sense: the “true” sieve of Eratosthenes
+<span class="citation" data-cites="oneill_genuine_2009">(O’Neill
+2009)</span> is probably too complex to demonstrate in a video meant to
+be an introduction to Haskell. This isn’t because Haskell is bad at this
+particular problem, mind you: it’s because a lazy, infinite sieve is
+something very hard to implement indeed.</p>
+<p>Anyway, I’m going to try today to show a very simple prime sieve that
+(hopefully) rivals the simplicity of the definition above.</p>
 <h1 id="a-first-attempt">A First Attempt</h1>
-<p>Visualizations of the sieve of Eratosthenes often rely on metaphors of “crossing out” on some large table. Once you hit a prime, you cross off all of its multiples in the rest of the table, and then you move to the next crossed-off number.</p>
+<p>Visualizations of the sieve of Eratosthenes often rely on metaphors
+of “crossing out” on some large table. Once you hit a prime, you cross
+off all of its multiples in the rest of the table, and then you move to
+the next crossed-off number.</p>
 <figure>
-<img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Sieve_of_Eratosthenes_animation.svg" alt /><figcaption>Sieve of Eratosthenes Animation. By Ricordisamoa, CC BY-SA 3.0, from Wikimedia Commons</figcaption>
+<img src="https://upload.wikimedia.org/wikipedia/commons/0/0b/Sieve_of_Eratosthenes_animation.svg" alt="Sieve of Eratosthenes Animation. By Ricordisamoa, CC BY-SA 3.0, from Wikimedia Commons" />
+<figcaption aria-hidden="true">Sieve of Eratosthenes Animation. By
+Ricordisamoa, CC BY-SA 3.0, from Wikimedia Commons</figcaption>
 </figure>
-<p>Working with a finite array, it should be easy to see that this is extremely efficient. You’re crossing off every non-prime exactly once, only using addition and squaring.</p>
-<p>To extend it to infinite lists, we will use the following function:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>[] \\ ys <span class="ot">=</span> []</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>xs \\ [] <span class="ot">=</span> xs</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>(x<span class="op">:</span>xs) \\ (y<span class="op">:</span>ys) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> x y <span class="kw">of</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    <span class="dt">LT</span> <span class="ot">-&gt;</span> x <span class="op">:</span> xs \\ (y<span class="op">:</span>ys)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    <span class="dt">EQ</span> <span class="ot">-&gt;</span> xs \\ ys</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> (x<span class="op">:</span>xs) \\ ys</span></code></pre></div>
-<p>We’re “subtracting” the right list from the left. Crucially, it works with infinite lists:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">take</span> <span class="dv">10</span> ([<span class="dv">1</span><span class="op">..</span>] \\ [<span class="dv">2</span>,<span class="dv">4</span><span class="op">..</span>])</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">13</span>,<span class="dv">15</span>,<span class="dv">17</span>,<span class="dv">19</span>]</span></code></pre></div>
-<p>Finally, it only works if both lists are ordered and don’t contain duplicates, but our sieve does indeed satisfy that requirement. Using this, we’ve already got a sieve:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>sieve (p<span class="op">:</span>ps) <span class="ot">=</span> p <span class="op">:</span> sieve (ps \\ [p<span class="op">*</span>p, p<span class="op">*</span>p<span class="op">+</span>p<span class="op">..</span>])</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve [<span class="dv">3</span>,<span class="dv">5</span><span class="op">..</span>]</span></code></pre></div>
-<p>No division, just addition and squaring, as promised. Unfortunately, though, this doesn’t have the time complexity we want. See, in the <code>(\\)</code> operation, we have to test every entry in the sieve against the prime factor: when we’re crossing off from an array, we just jump to the next composite number.</p>
+<p>Working with a finite array, it should be easy to see that this is
+extremely efficient. You’re crossing off every non-prime exactly once,
+only using addition and squaring.</p>
+<p>To extend it to infinite lists, we will use the following
+function:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>[] \\ ys <span class="ot">=</span> []</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>xs \\ [] <span class="ot">=</span> xs</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>(x<span class="op">:</span>xs) \\ (y<span class="op">:</span>ys) <span class="ot">=</span> <span class="kw">case</span> <span class="fu">compare</span> x y <span class="kw">of</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">LT</span> <span class="ot">-&gt;</span> x <span class="op">:</span> xs \\ (y<span class="op">:</span>ys)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">EQ</span> <span class="ot">-&gt;</span> xs \\ ys</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span> (x<span class="op">:</span>xs) \\ ys</span></code></pre></div>
+<p>We’re “subtracting” the right list from the left. Crucially, it works
+with infinite lists:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">take</span> <span class="dv">10</span> ([<span class="dv">1</span><span class="op">..</span>] \\ [<span class="dv">2</span>,<span class="dv">4</span><span class="op">..</span>])</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>[<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="dv">7</span>,<span class="dv">9</span>,<span class="dv">11</span>,<span class="dv">13</span>,<span class="dv">15</span>,<span class="dv">17</span>,<span class="dv">19</span>]</span></code></pre></div>
+<p>Finally, it only works if both lists are ordered and don’t contain
+duplicates, but our sieve does indeed satisfy that requirement. Using
+this, we’ve already got a sieve:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>sieve (p<span class="op">:</span>ps) <span class="ot">=</span> p <span class="op">:</span> sieve (ps \\ [p<span class="op">*</span>p, p<span class="op">*</span>p<span class="op">+</span>p<span class="op">..</span>])</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve [<span class="dv">3</span>,<span class="dv">5</span><span class="op">..</span>]</span></code></pre></div>
+<p>No division, just addition and squaring, as promised. Unfortunately,
+though, this doesn’t have the time complexity we want. See, in the
+<code>(\\)</code> operation, we have to test every entry in the sieve
+against the prime factor: when we’re crossing off from an array, we just
+jump to the next composite number.</p>
 <h1 id="using-a-queue">Using a Queue</h1>
-<p>The way we speed up the “crossing-off” section of the algorithms is by using a priority queue: this was the optimization provided in <span class="citation" data-cites="oneill_genuine_2009">O’Neill (<a href="#ref-oneill_genuine_2009" role="doc-biblioref">2009</a>)</span>. Before we go any further, then, let’s put one together:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Queue</span> a b <span class="ot">=</span> <span class="dt">Queue</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    {<span class="ot"> minKey ::</span> <span class="op">!</span>a</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    ,<span class="ot"> minVal ::</span> b</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    ,<span class="ot"> rest   ::</span> <span class="dt">List</span> a b</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    }</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">List</span> a b</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Nil</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    <span class="op">|</span> (<span class="op">:-</span>) <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span>(<span class="dt">Queue</span> a b)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>           (<span class="dt">List</span> a b)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a><span class="ot">(&lt;+&gt;) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>(<span class="op">&lt;+&gt;</span>) q1<span class="op">@</span>(<span class="dt">Queue</span> x1 y1 ts1) q2<span class="op">@</span>(<span class="dt">Queue</span> x2 y2 ts2)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a>  <span class="op">|</span> x1 <span class="op">&lt;=</span> x2 <span class="ot">=</span> <span class="dt">Queue</span> x1 y1 (q2 <span class="op">:-</span> ts1)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Queue</span> x2 y2 (q1 <span class="op">:-</span> ts2)</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a><span class="ot">mergeQs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a>mergeQs (t <span class="op">:-</span> ts) <span class="ot">=</span> mergeQs1 t ts</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true"></a>mergeQs <span class="dt">Nil</span>       <span class="ot">=</span> errorWithoutStackTrace <span class="st">&quot;tried to merge empty list&quot;</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true"></a></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true"></a><span class="ot">mergeQs1 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true"></a>mergeQs1 t1 <span class="dt">Nil</span>              <span class="ot">=</span> t1</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true"></a>mergeQs1 t1 (t2 <span class="op">:-</span> <span class="dt">Nil</span>)      <span class="ot">=</span> t1 <span class="op">&lt;+&gt;</span> t2</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true"></a>mergeQs1 t1 (t2 <span class="op">:-</span> t3 <span class="op">:-</span> ts) <span class="ot">=</span> (t1 <span class="op">&lt;+&gt;</span> t2) <span class="op">&lt;+&gt;</span> mergeQs1 t3 ts</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true"></a></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true"></a>insert <span class="op">!</span>k <span class="op">!</span>v <span class="ot">=</span> (<span class="op">&lt;+&gt;</span>) (singleton k v)</span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true"></a></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true"></a><span class="ot">singleton ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true"></a>singleton <span class="op">!</span>k <span class="op">!</span>v <span class="ot">=</span> <span class="dt">Queue</span> k v <span class="dt">Nil</span></span></code></pre></div>
-<p>These are pairing heaps: I’m using them here because they’re relatively simple and very fast. A lot of their speed comes from the fact that the top-level constructor (<code>Queue</code>) is <em>non-empty</em>. Since, in this algorithm, we’re only actually going to be working with non-empty queues, this saves us a pattern match on pretty much every function. They’re also what’s used in <a href="https://github.com/haskell/containers/blob/30ccbaa201043109bf1ee905c66ccd0dbe24422f/containers/src/Data/Sequence/Internal/sorting.md">Data.Sequence for sorting</a>.</p>
+<p>The way we speed up the “crossing-off” section of the algorithms is
+by using a priority queue: this was the optimization provided in <span class="citation" data-cites="oneill_genuine_2009">O’Neill (2009)</span>.
+Before we go any further, then, let’s put one together:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Queue</span> a b <span class="ot">=</span> <span class="dt">Queue</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    {<span class="ot"> minKey ::</span> <span class="op">!</span>a</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    ,<span class="ot"> minVal ::</span> b</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    ,<span class="ot"> rest   ::</span> <span class="dt">List</span> a b</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">List</span> a b</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Nil</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> (<span class="op">:-</span>) <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span>(<span class="dt">Queue</span> a b)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>           (<span class="dt">List</span> a b)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="ot">(&lt;+&gt;) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>(<span class="op">&lt;+&gt;</span>) q1<span class="op">@</span>(<span class="dt">Queue</span> x1 y1 ts1) q2<span class="op">@</span>(<span class="dt">Queue</span> x2 y2 ts2)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> x1 <span class="op">&lt;=</span> x2 <span class="ot">=</span> <span class="dt">Queue</span> x1 y1 (q2 <span class="op">:-</span> ts1)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Queue</span> x2 y2 (q1 <span class="op">:-</span> ts2)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="ot">mergeQs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>mergeQs (t <span class="op">:-</span> ts) <span class="ot">=</span> mergeQs1 t ts</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>mergeQs <span class="dt">Nil</span>       <span class="ot">=</span> errorWithoutStackTrace <span class="st">&quot;tried to merge empty list&quot;</span></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="ot">mergeQs1 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">List</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>mergeQs1 t1 <span class="dt">Nil</span>              <span class="ot">=</span> t1</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>mergeQs1 t1 (t2 <span class="op">:-</span> <span class="dt">Nil</span>)      <span class="ot">=</span> t1 <span class="op">&lt;+&gt;</span> t2</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>mergeQs1 t1 (t2 <span class="op">:-</span> t3 <span class="op">:-</span> ts) <span class="ot">=</span> (t1 <span class="op">&lt;+&gt;</span> t2) <span class="op">&lt;+&gt;</span> mergeQs1 t3 ts</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>insert <span class="op">!</span>k <span class="op">!</span>v <span class="ot">=</span> (<span class="op">&lt;+&gt;</span>) (singleton k v)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="ot">singleton ::</span> a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Queue</span> a b</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>singleton <span class="op">!</span>k <span class="op">!</span>v <span class="ot">=</span> <span class="dt">Queue</span> k v <span class="dt">Nil</span></span></code></pre></div>
+<p>These are pairing heaps: I’m using them here because they’re
+relatively simple and very fast. A lot of their speed comes from the
+fact that the top-level constructor (<code>Queue</code>) is
+<em>non-empty</em>. Since, in this algorithm, we’re only actually going
+to be working with non-empty queues, this saves us a pattern match on
+pretty much every function. They’re also what’s used in <a href="https://github.com/haskell/containers/blob/30ccbaa201043109bf1ee905c66ccd0dbe24422f/containers/src/Data/Sequence/Internal/sorting.md">Data.Sequence
+for sorting</a>.</p>
 <p>With that, we can write our proper sieve:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>insertPrime x xs <span class="ot">=</span> insert (x<span class="op">*</span>x) (<span class="fu">map</span> (<span class="op">*</span>x) xs)</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>adjust x q<span class="op">@</span>(<span class="dt">Queue</span> y (z<span class="op">:</span>zs) qs)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="op">|</span> y <span class="op">&lt;=</span> x <span class="ot">=</span> adjust x (insert z zs (mergeQs qs))</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> q</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>sieve (x<span class="op">:</span>xs) <span class="ot">=</span> x <span class="op">:</span> sieve' xs (singleton (x<span class="op">*</span>x) (<span class="fu">map</span> (<span class="op">*</span>x) xs))</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>    sieve' (x<span class="op">:</span>xs) table</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>      <span class="op">|</span> minKey table <span class="op">&lt;=</span> x <span class="ot">=</span> sieve' xs (adjust x table)</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> x <span class="op">:</span> sieve' xs (insertPrime x xs table)</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>      </span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve [<span class="dv">3</span>,<span class="dv">5</span><span class="op">..</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>insertPrime x xs <span class="ot">=</span> insert (x<span class="op">*</span>x) (<span class="fu">map</span> (<span class="op">*</span>x) xs)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>adjust x q<span class="op">@</span>(<span class="dt">Queue</span> y (z<span class="op">:</span>zs) qs)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> y <span class="op">&lt;=</span> x <span class="ot">=</span> adjust x (insert z zs (mergeQs qs))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> q</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>sieve (x<span class="op">:</span>xs) <span class="ot">=</span> x <span class="op">:</span> sieve' xs (singleton (x<span class="op">*</span>x) (<span class="fu">map</span> (<span class="op">*</span>x) xs))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    sieve' (x<span class="op">:</span>xs) table</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> minKey table <span class="op">&lt;=</span> x <span class="ot">=</span> sieve' xs (adjust x table)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> x <span class="op">:</span> sieve' xs (insertPrime x xs table)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>      </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve [<span class="dv">3</span>,<span class="dv">5</span><span class="op">..</span>]</span></code></pre></div>
 <h1 id="simplifying">Simplifying</h1>
-<p>The priority queue stores lists alongside their keys: what you might notice is that those lists are simply sequences of the type <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mi>x</mi><mo>,</mo><mn>2</mn><mi>x</mi><mo>,</mo><mn>3</mn><mi>x</mi><mo>,</mo><mn>4</mn><mi>x</mi><mi>.</mi><mi>.</mi><mi>.</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[x, 2x, 3x, 4x...]</annotation></semantics></math> and so on. Rather than storing the whole list, we can instead store just the head and the step. This also simplifies (and greatly speeds up) the expensive <code>map (*x)</code> operation to just <em>two</em> multiplications. If you wanted, you could just sub in this representation of streams for all the lists above:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Stepper</span> a <span class="ot">=</span> <span class="dt">Stepper</span> {<span class="ot"> start ::</span> a,<span class="ot"> step ::</span> a }</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="ot">nextStep ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Stepper</span> a <span class="ot">-&gt;</span> (a, <span class="dt">Stepper</span> a)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>nextStep (<span class="dt">Stepper</span> x y) <span class="ot">=</span> (x, <span class="dt">Stepper</span> (x<span class="op">+</span>y) y)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (nextStep <span class="ot">-&gt;</span> (x,xs))</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a><span class="ot">(^*) ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Stepper</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Stepper</span> a</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a><span class="dt">Stepper</span> x y <span class="op">^*</span> f <span class="ot">=</span> <span class="dt">Stepper</span> (x <span class="op">*</span> f) (y <span class="op">*</span> f)</span></code></pre></div>
-<p>If you were so inclined, you could even make it conform to <code>Foldable</code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Stepper</span> a <span class="kw">where</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>    <span class="dt">Stepper</span><span class="ot"> ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Stepper</span> a</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>nextStep (<span class="dt">Stepper</span> x y) <span class="ot">=</span> (x, <span class="dt">Stepper</span> (x<span class="op">+</span>y) y)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (nextStep <span class="ot">-&gt;</span> (x,xs))</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">Stepper</span> <span class="kw">where</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    <span class="fu">foldr</span> f b (x <span class="op">:-</span> xs) <span class="ot">=</span> f x (<span class="fu">foldr</span> f b xs)</span></code></pre></div>
+<p>The priority queue stores lists alongside their keys: what you might
+notice is that those lists are simply sequences of the type
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="true" form="prefix">[</mo><mi>x</mi><mo>,</mo><mn>2</mn><mi>x</mi><mo>,</mo><mn>3</mn><mi>x</mi><mo>,</mo><mn>4</mn><mi>x</mi><mi>.</mi><mi>.</mi><mi>.</mi><mo stretchy="true" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[x, 2x, 3x, 4x...]</annotation></semantics></math>
+and so on. Rather than storing the whole list, we can instead store just
+the head and the step. This also simplifies (and greatly speeds up) the
+expensive <code>map (*x)</code> operation to just <em>two</em>
+multiplications. If you wanted, you could just sub in this
+representation of streams for all the lists above:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Stepper</span> a <span class="ot">=</span> <span class="dt">Stepper</span> {<span class="ot"> start ::</span> a,<span class="ot"> step ::</span> a }</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">nextStep ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Stepper</span> a <span class="ot">-&gt;</span> (a, <span class="dt">Stepper</span> a)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>nextStep (<span class="dt">Stepper</span> x y) <span class="ot">=</span> (x, <span class="dt">Stepper</span> (x<span class="op">+</span>y) y)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (nextStep <span class="ot">-&gt;</span> (x,xs))</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="ot">(^*) ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> <span class="dt">Stepper</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Stepper</span> a</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="dt">Stepper</span> x y <span class="op">^*</span> f <span class="ot">=</span> <span class="dt">Stepper</span> (x <span class="op">*</span> f) (y <span class="op">*</span> f)</span></code></pre></div>
+<p>If you were so inclined, you could even make it conform to
+<code>Foldable</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Stepper</span> a <span class="kw">where</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Stepper</span><span class="ot"> ::</span> <span class="dt">Num</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Stepper</span> a</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>nextStep (<span class="dt">Stepper</span> x y) <span class="ot">=</span> (x, <span class="dt">Stepper</span> (x<span class="op">+</span>y) y)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (nextStep <span class="ot">-&gt;</span> (x,xs))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Foldable</span> <span class="dt">Stepper</span> <span class="kw">where</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">foldr</span> f b (x <span class="op">:-</span> xs) <span class="ot">=</span> f x (<span class="fu">foldr</span> f b xs)</span></code></pre></div>
 <p>But that’s overkill for what we need here.</p>
-<p>Second observation is that if we remove the wheel (from 2), the “start” is simply the <em>key</em> in the priority queue, again cutting down on space.</p>
+<p>Second observation is that if we remove the wheel (from 2), the
+“start” is simply the <em>key</em> in the priority queue, again cutting
+down on space.</p>
 <p>Finally, we get the implementation:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve <span class="dv">3</span> (singleton <span class="dv">4</span> <span class="dv">2</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    adjust <span class="op">!</span>x q<span class="op">@</span>(<span class="dt">Queue</span> y z qs)</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>        <span class="op">|</span> x <span class="op">&lt;</span> y <span class="ot">=</span> q</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> adjust x (mergeQs1 (singleton (y <span class="op">+</span> z) z) qs)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>    sieve <span class="op">!</span>x q</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>        <span class="op">|</span> x <span class="op">&lt;</span> minKey q <span class="ot">=</span> x <span class="op">:</span> sieve (x <span class="op">+</span> <span class="dv">1</span>) (insert (x <span class="op">*</span> x) x q)</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> sieve (x <span class="op">+</span> <span class="dv">1</span>) (adjust x q)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>primes <span class="ot">=</span> <span class="dv">2</span> <span class="op">:</span> sieve <span class="dv">3</span> (singleton <span class="dv">4</span> <span class="dv">2</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    adjust <span class="op">!</span>x q<span class="op">@</span>(<span class="dt">Queue</span> y z qs)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> x <span class="op">&lt;</span> y <span class="ot">=</span> q</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> adjust x (mergeQs1 (singleton (y <span class="op">+</span> z) z) qs)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    sieve <span class="op">!</span>x q</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> x <span class="op">&lt;</span> minKey q <span class="ot">=</span> x <span class="op">:</span> sieve (x <span class="op">+</span> <span class="dv">1</span>) (insert (x <span class="op">*</span> x) x q)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> sieve (x <span class="op">+</span> <span class="dv">1</span>) (adjust x q)</span></code></pre></div>
 <p>8 lines for a lazy prime sieve isn’t bad!</p>
-<p>I haven’t tried a huge amount to optimize the function, but it might be worth looking in to how to add back the wheels. I noticed that for no wheels, the queue contains only two elements per key; for one (the 2 wheel), we needed 3. I wonder if this pattern continues: possibly we could represent wheels as finite lists at each key in the queue. Maybe in a later post.</p>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-haran_infinity_2018">
-<p>Haran, Brady. 2018. “To Infinity &amp; Beyond - Computerphile.” <a href="https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be">https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be</a>.</p>
+<p>I haven’t tried a huge amount to optimize the function, but it might
+be worth looking in to how to add back the wheels. I noticed that for no
+wheels, the queue contains only two elements per key; for one (the 2
+wheel), we needed 3. I wonder if this pattern continues: possibly we
+could represent wheels as finite lists at each key in the queue. Maybe
+in a later post.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-haran_infinity_2018" class="csl-entry" role="listitem">
+Haran, Brady. 2018. <span>“To <span>Infinity</span> &amp;
+<span>Beyond</span> - <span>Computerphile</span>.”</span> <a href="https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be" class="uri">https://www.youtube.com/watch?v=bnRNiE_OVWA&amp;feature=youtu.be</a>.
 </div>
-<div id="ref-oneill_genuine_2009">
-<p>O’Neill, Melissa E. 2009. “The Genuine Sieve of Eratosthenes.” <em>Journal of Functional Programming</em> 19 (01) (January): 95. doi:<a href="https://doi.org/10.1017/S0956796808007004">10.1017/S0956796808007004</a>.</p>
+<div id="ref-oneill_genuine_2009" class="csl-entry" role="listitem">
+O’Neill, Melissa E. 2009. <span>“The <span>Genuine Sieve</span> of
+<span>Eratosthenes</span>.”</span> <em>Journal of Functional
+Programming</em> 19 (01) (January): 95. doi:<a href="https://doi.org/10.1017/S0956796808007004">10.1017/S0956796808007004</a>.
 </div>
 </div>
 

@@ -30,156 +30,197 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Applicative'." href="../tags/Applicative.html">Applicative</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Applicative'." href="../tags/Applicative.html" rel="tag">Applicative</a>
     
 </div>
 
 <h1 id="safer-arithmetic">Safer Arithmetic</h1>
-<p>There are a couple partial functions in the Haskell Prelude which people seem to agree shouldn’t be there. <code class="sourceCode haskell"><span class="fu">head</span></code>, for example, will throw an error on an empty list. Most seem to agree that it should work something more like this:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">head</span><span class="ot"> ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">head</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="fu">const</span> <span class="op">.</span> <span class="dt">Just</span>) <span class="dt">Nothing</span></span></code></pre></div>
+<p>There are a couple partial functions in the Haskell Prelude which
+people seem to agree shouldn’t be there. <code class="sourceCode haskell"><span class="fu">head</span></code>, for
+example, will throw an error on an empty list. Most seem to agree that
+it should work something more like this:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span><span class="ot"> ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="fu">const</span> <span class="op">.</span> <span class="dt">Just</span>) <span class="dt">Nothing</span></span></code></pre></div>
 <p>There are other examples, like <code class="sourceCode haskell"><span class="fu">last</span></code>, <code class="sourceCode haskell"><span class="op">!!</span></code>, etc.</p>
-<p>One which people <em>don’t</em> agree on, however, is division by zero. In the current Prelude, the following will throw an error:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="dv">1</span> <span class="op">/</span> <span class="dv">0</span></span></code></pre></div>
+<p>One which people <em>don’t</em> agree on, however, is division by
+zero. In the current Prelude, the following will throw an error:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">/</span> <span class="dv">0</span></span></code></pre></div>
 <p>The “safe” version might have a signature like this:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">(/) ::</span> <span class="dt">Fractional</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</span></code></pre></div>
-<p>However, this turns out to be quite a headache for writing code generally. So the default is the (somewhat) unsafe version.</p>
-<p>Is there a way to introduce a safer version without much overhead, so the programmer is given the option? Of course! With some newtype magic, it’s pretty simple to write a wrapper which catches division by zero in some arbitrary monad:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">AppNum</span> f a <span class="ot">=</span> <span class="dt">AppNum</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>    {<span class="ot"> runAppNum ::</span> f a</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>    } <span class="kw">deriving</span> (<span class="dt">Functor</span>,<span class="dt">Applicative</span>,<span class="dt">Monad</span>,<span class="dt">Alternative</span>,<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">MonadFail</span>)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Num</span> a, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>         <span class="dt">Num</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>    <span class="fu">abs</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">abs</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>    <span class="fu">signum</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">signum</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a>    (<span class="op">+</span>) <span class="ot">=</span> liftA2 (<span class="op">+</span>)</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>    (<span class="op">*</span>) <span class="ot">=</span> liftA2 (<span class="op">*</span>)</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>    (<span class="op">-</span>) <span class="ot">=</span> liftA2 (<span class="op">-</span>)</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    <span class="fu">negate</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">negate</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    <span class="fu">fromInteger</span> <span class="ot">=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">fromInteger</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">Fractional</span> a, <span class="dt">MonadFail</span> f, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>         <span class="dt">Fractional</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>    <span class="fu">fromRational</span> <span class="ot">=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">fromRational</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>    xs <span class="op">/</span> ys <span class="ot">=</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true"></a>        ys <span class="op">&gt;&gt;=</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true"></a>        \<span class="kw">case</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true"></a>            <span class="dv">0</span> <span class="ot">-&gt;</span> <span class="fu">fail</span> <span class="st">&quot;divide by zero&quot;</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true"></a>            y <span class="ot">-&gt;</span> <span class="fu">fmap</span> (<span class="op">/</span> y) xs</span></code></pre></div>
-<p>I’m using the <code class="sourceCode haskell"><span class="op">-</span><span class="dt">XLambdaCase</span></code> extension and <code class="sourceCode haskell"><span class="dt">MonadFail</span></code> here.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">(/) ::</span> <span class="dt">Fractional</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a</span></code></pre></div>
+<p>However, this turns out to be quite a headache for writing code
+generally. So the default is the (somewhat) unsafe version.</p>
+<p>Is there a way to introduce a safer version without much overhead, so
+the programmer is given the option? Of course! With some newtype magic,
+it’s pretty simple to write a wrapper which catches division by zero in
+some arbitrary monad:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">AppNum</span> f a <span class="ot">=</span> <span class="dt">AppNum</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    {<span class="ot"> runAppNum ::</span> f a</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    } <span class="kw">deriving</span> (<span class="dt">Functor</span>,<span class="dt">Applicative</span>,<span class="dt">Monad</span>,<span class="dt">Alternative</span>,<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">MonadFail</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Num</span> a, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>         <span class="dt">Num</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">abs</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">abs</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">signum</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">signum</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    (<span class="op">+</span>) <span class="ot">=</span> liftA2 (<span class="op">+</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    (<span class="op">*</span>) <span class="ot">=</span> liftA2 (<span class="op">*</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    (<span class="op">-</span>) <span class="ot">=</span> liftA2 (<span class="op">-</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">negate</span> <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">negate</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fromInteger</span> <span class="ot">=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">fromInteger</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">Fractional</span> a, <span class="dt">MonadFail</span> f, <span class="dt">Eq</span> a) <span class="ot">=&gt;</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>         <span class="dt">Fractional</span> (<span class="dt">AppNum</span> f a) <span class="kw">where</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fromRational</span> <span class="ot">=</span> <span class="fu">pure</span> <span class="op">.</span> <span class="fu">fromRational</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">/</span> ys <span class="ot">=</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        ys <span class="op">&gt;&gt;=</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        \<span class="kw">case</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>            <span class="dv">0</span> <span class="ot">-&gt;</span> <span class="fu">fail</span> <span class="st">&quot;divide by zero&quot;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>            y <span class="ot">-&gt;</span> <span class="fu">fmap</span> (<span class="op">/</span> y) xs</span></code></pre></div>
+<p>I’m using the <code class="sourceCode haskell"><span class="op">-</span><span class="dt">XLambdaCase</span></code>
+extension and <code class="sourceCode haskell"><span class="dt">MonadFail</span></code>
+here.</p>
 <h1 id="free-applicatives">Free Applicatives</h1>
-<p>You’ll notice that you only need <code class="sourceCode haskell"><span class="dt">Applicative</span></code> for most of the arithmetic operations above. In fact, you only need <code class="sourceCode haskell"><span class="dt">Monad</span></code> when you want to examine the contents of <code class="sourceCode haskell">f</code>. Using that fact, we can manipulate expression trees using the free applicative from the <a href="https://hackage.haskell.org/package/free">free</a> package. Say, for instance, we want to have free variables in our expressions. Using <code class="sourceCode haskell"><span class="dt">Either</span></code>, it’s pretty easy:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WithVars</span> <span class="ot">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) <span class="dt">Integer</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>var <span class="ot">=</span> <span class="dt">AppNum</span> <span class="op">.</span> liftAp <span class="op">.</span> <span class="dt">Left</span></span></code></pre></div>
+<p>You’ll notice that you only need <code class="sourceCode haskell"><span class="dt">Applicative</span></code>
+for most of the arithmetic operations above. In fact, you only need
+<code class="sourceCode haskell"><span class="dt">Monad</span></code>
+when you want to examine the contents of <code class="sourceCode haskell">f</code>. Using that fact, we can manipulate
+expression trees using the free applicative from the <a href="https://hackage.haskell.org/package/free">free</a> package. Say,
+for instance, we want to have free variables in our expressions. Using
+<code class="sourceCode haskell"><span class="dt">Either</span></code>,
+it’s pretty easy:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">WithVars</span> <span class="ot">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) <span class="dt">Integer</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>var <span class="ot">=</span> <span class="dt">AppNum</span> <span class="op">.</span> liftAp <span class="op">.</span> <span class="dt">Left</span></span></code></pre></div>
 <p>We can collect the free variables from an expression:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>vars <span class="ot">=</span> runAp_ (<span class="fu">either</span> <span class="fu">pure</span> (<span class="fu">const</span> [])) <span class="op">.</span> runAppNum</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>x <span class="ot">=</span> <span class="dv">1</span><span class="ot"> ::</span> <span class="dt">WithVars</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>y <span class="ot">=</span> var <span class="st">&quot;y&quot;</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>z <span class="ot">=</span> var <span class="st">&quot;z&quot;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>vars (x <span class="op">+</span> y <span class="op">+</span> z) <span class="co">-- [&quot;y&quot;,&quot;z&quot;]</span></span></code></pre></div>
-<p>If we want to sub in, though, we’re going to run into a problem: we can’t just pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span></code> because you’re able to construct values like this:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">bad ::</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>bad <span class="ot">=</span> <span class="dt">AppNum</span> (liftAp (<span class="dt">Left</span> <span class="st">&quot;oh noes&quot;</span>))</span></code></pre></div>
-<p>We’d need to pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</code> as well; in fact you’d need a map for every possible type. Which isn’t feasible.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">=</span> runAp_ (<span class="fu">either</span> <span class="fu">pure</span> (<span class="fu">const</span> [])) <span class="op">.</span> runAppNum</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>x <span class="ot">=</span> <span class="dv">1</span><span class="ot"> ::</span> <span class="dt">WithVars</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> var <span class="st">&quot;y&quot;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>z <span class="ot">=</span> var <span class="st">&quot;z&quot;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>vars (x <span class="op">+</span> y <span class="op">+</span> z) <span class="co">-- [&quot;y&quot;,&quot;z&quot;]</span></span></code></pre></div>
+<p>If we want to sub in, though, we’re going to run into a problem: we
+can’t just pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span></code>
+because you’re able to construct values like this:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bad ::</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> (<span class="dt">Either</span> <span class="dt">String</span>)) (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>bad <span class="ot">=</span> <span class="dt">AppNum</span> (liftAp (<span class="dt">Left</span> <span class="st">&quot;oh noes&quot;</span>))</span></code></pre></div>
+<p>We’d need to pass in a <code class="sourceCode haskell"><span class="dt">Map</span> <span class="dt">String</span> (<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>)</code>
+as well; in fact you’d need a map for every possible type. Which isn’t
+feasible.</p>
 <h1 id="gadts">GADTs</h1>
-<p>Luckily, we <em>can</em> constrain the types of variables in our expression so that they’re always <code class="sourceCode haskell"><span class="dt">Integer</span></code>, using a GADT:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Variable</span> a <span class="kw">where</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>        <span class="dt">Constant</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Variable</span> a</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>        <span class="dt">Variable</span><span class="ot"> ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Variable</span> <span class="dt">Integer</span></span></code></pre></div>
-<p>The type above seems useless on its own: it doesn’t have a <code class="sourceCode haskell"><span class="dt">Functor</span></code> instance, never mind an <code class="sourceCode haskell"><span class="dt">Applicative</span></code>, so how can it fit into <code class="sourceCode haskell"><span class="dt">AppNum</span></code>?</p>
-<p>The magic comes from the free applicative, which converts any type of kind <code class="sourceCode haskell"><span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></code> into an applicative. With that in mind, we can change around the previous code:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">WithVars</span> <span class="ot">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> <span class="dt">Variable</span>) <span class="dt">Integer</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>var <span class="ot">=</span> <span class="dt">AppNum</span> <span class="op">.</span> liftAp <span class="op">.</span> <span class="dt">Variable</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>vars <span class="ot">=</span> runAp_ f <span class="op">.</span> runAppNum</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a><span class="ot">    f ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>    f (<span class="dt">Constant</span> _) <span class="ot">=</span> []</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a>    f (<span class="dt">Variable</span> s) <span class="ot">=</span> [s]</span></code></pre></div>
+<p>Luckily, we <em>can</em> constrain the types of variables in our
+expression so that they’re always <code class="sourceCode haskell"><span class="dt">Integer</span></code>, using
+a GADT:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Variable</span> a <span class="kw">where</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Constant</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Variable</span> a</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Variable</span><span class="ot"> ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Variable</span> <span class="dt">Integer</span></span></code></pre></div>
+<p>The type above seems useless on its own: it doesn’t have a <code class="sourceCode haskell"><span class="dt">Functor</span></code>
+instance, never mind an <code class="sourceCode haskell"><span class="dt">Applicative</span></code>,
+so how can it fit into <code class="sourceCode haskell"><span class="dt">AppNum</span></code>?</p>
+<p>The magic comes from the free applicative, which converts any type of
+kind <code class="sourceCode haskell"><span class="dt">Type</span> <span class="ot">-&gt;</span> <span class="dt">Type</span></code>
+into an applicative. With that in mind, we can change around the
+previous code:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">WithVars</span> <span class="ot">=</span> <span class="dt">AppNum</span> (<span class="dt">Ap</span> <span class="dt">Variable</span>) <span class="dt">Integer</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ot">var ::</span> <span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>var <span class="ot">=</span> <span class="dt">AppNum</span> <span class="op">.</span> liftAp <span class="op">.</span> <span class="dt">Variable</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="ot">vars ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>vars <span class="ot">=</span> runAp_ f <span class="op">.</span> runAppNum</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    f ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> [<span class="dt">String</span>]</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Constant</span> _) <span class="ot">=</span> []</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Variable</span> s) <span class="ot">=</span> [s]</span></code></pre></div>
 <p>And write the function to sub in for us:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>variableA</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Applicative</span> f</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>    <span class="ot">=&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> f a</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>variableA _ (<span class="dt">Constant</span> x) <span class="ot">=</span> <span class="fu">pure</span> x</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>variableA f (<span class="dt">Variable</span> s) <span class="ot">=</span> f s</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a><span class="ot">variable ::</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> a</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>variable _ (<span class="dt">Constant</span> x) <span class="ot">=</span> x</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>variable f (<span class="dt">Variable</span> s) <span class="ot">=</span> f s</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>replace m <span class="ot">=</span> runAp (variable (m <span class="op">Map.!</span>)) <span class="op">.</span> runAppNum</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a>replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2</span>), (<span class="st">&quot;y&quot;</span>,<span class="dv">3</span>)]) (x <span class="op">+</span> y <span class="op">+</span> z)</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true"></a><span class="co">-- 6</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>variableA</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Applicative</span> f</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=&gt;</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> f <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> f a</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>variableA _ (<span class="dt">Constant</span> x) <span class="ot">=</span> <span class="fu">pure</span> x</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>variableA f (<span class="dt">Variable</span> s) <span class="ot">=</span> f s</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="ot">variable ::</span> (<span class="dt">String</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>) <span class="ot">-&gt;</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>variable _ (<span class="dt">Constant</span> x) <span class="ot">=</span> x</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>variable f (<span class="dt">Variable</span> s) <span class="ot">=</span> f s</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>replace m <span class="ot">=</span> runAp (variable (m <span class="op">Map.!</span>)) <span class="op">.</span> runAppNum</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>replace (Map.fromList [(<span class="st">&quot;z&quot;</span>,<span class="dv">2</span>), (<span class="st">&quot;y&quot;</span>,<span class="dv">3</span>)]) (x <span class="op">+</span> y <span class="op">+</span> z)</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">-- 6</span></span></code></pre></div>
 <h1 id="accumulation">Accumulation</h1>
-<p>This will fail if a free variable isn’t present in the map, unfortunately. To fix it, we <em>could</em> use <code class="sourceCode haskell"><span class="dt">Either</span></code> instead of <code class="sourceCode haskell"><span class="dt">Identity</span></code>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">String</span> <span class="dt">Integer</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>replace m <span class="ot">=</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>    runAp</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>        (variableA <span class="op">$</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>         \s <span class="ot">-&gt;</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>              <span class="fu">maybe</span> (<span class="dt">Left</span> s) <span class="dt">Right</span> (Map.lookup s m)) <span class="op">.</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>    runAppNum</span></code></pre></div>
-<p>But this only gives us the first missing variable encountered. We’d like to get back <em>all</em> of the missing variables, ideally: accumulating the <code class="sourceCode haskell"><span class="dt">Left</span></code>s. <code class="sourceCode haskell"><span class="dt">Either</span></code> doesn’t accumulate values, as if it did it would <a href="https://stackoverflow.com/a/23611068/4892417">break the monad laws</a>.</p>
-<p>There’s no issue with the <em>applicative</em> laws, though, which is why the <a href="https://hackage.haskell.org/package/validation-0.5.4">validation</a> package provides a <em>non-monadic</em> either-like type, which we can use here.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">AccValidation</span> [<span class="dt">String</span>] <span class="dt">Integer</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>replace m <span class="ot">=</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>    runAp</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>        (variableA <span class="op">$</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>         \s <span class="ot">-&gt;</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>              <span class="fu">maybe</span> (<span class="dt">AccFailure</span> [s]) <span class="fu">pure</span> (Map.lookup s m)) <span class="op">.</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>    runAppNum</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>replace (Map.fromList []) (x <span class="op">+</span> y <span class="op">+</span> z)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a><span class="co">-- AccFailure [&quot;y&quot;,&quot;z&quot;]</span></span></code></pre></div>
+<p>This will fail if a free variable isn’t present in the map,
+unfortunately. To fix it, we <em>could</em> use <code class="sourceCode haskell"><span class="dt">Either</span></code> instead
+of <code class="sourceCode haskell"><span class="dt">Identity</span></code>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">Either</span> <span class="dt">String</span> <span class="dt">Integer</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>replace m <span class="ot">=</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    runAp</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        (variableA <span class="op">$</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>         \s <span class="ot">-&gt;</span></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">maybe</span> (<span class="dt">Left</span> s) <span class="dt">Right</span> (Map.lookup s m)) <span class="op">.</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    runAppNum</span></code></pre></div>
+<p>But this only gives us the first missing variable encountered. We’d
+like to get back <em>all</em> of the missing variables, ideally:
+accumulating the <code class="sourceCode haskell"><span class="dt">Left</span></code>s. <code class="sourceCode haskell"><span class="dt">Either</span></code> doesn’t
+accumulate values, as if it did it would <a href="https://stackoverflow.com/a/23611068/4892417">break the monad
+laws</a>.</p>
+<p>There’s no issue with the <em>applicative</em> laws, though, which is
+why the <a href="https://hackage.haskell.org/package/validation-0.5.4">validation</a>
+package provides a <em>non-monadic</em> either-like type, which we can
+use here.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">replace ::</span> <span class="dt">Map</span> <span class="dt">String</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">AccValidation</span> [<span class="dt">String</span>] <span class="dt">Integer</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>replace m <span class="ot">=</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    runAp</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        (variableA <span class="op">$</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>         \s <span class="ot">-&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">maybe</span> (<span class="dt">AccFailure</span> [s]) <span class="fu">pure</span> (Map.lookup s m)) <span class="op">.</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    runAppNum</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>replace (Map.fromList []) (x <span class="op">+</span> y <span class="op">+</span> z)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- AccFailure [&quot;y&quot;,&quot;z&quot;]</span></span></code></pre></div>
 <h1 id="other-uses">Other uses</h1>
-<p>There are a bunch more applicatives you could use instead of <code class="sourceCode haskell"><span class="dt">Either</span></code>. Using lists, for instance, you could calculate the possible outcomes from a range of inputs:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="fu">range</span><span class="ot"> ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="fu">range</span> <span class="ot">=</span> runAp (variable (<span class="fu">const</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">3</span>])) <span class="op">.</span> runAppNum</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a><span class="fu">range</span> (x <span class="op">+</span> y <span class="op">+</span> z)</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a><span class="co">-- [3,4,5,4,5,6,5,6,7]</span></span></code></pre></div>
+<p>There are a bunch more applicatives you could use instead of <code class="sourceCode haskell"><span class="dt">Either</span></code>. Using
+lists, for instance, you could calculate the possible outcomes from a
+range of inputs:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span><span class="ot"> ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span>]</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span> <span class="ot">=</span> runAp (variable (<span class="fu">const</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">3</span>])) <span class="op">.</span> runAppNum</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span> (x <span class="op">+</span> y <span class="op">+</span> z)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- [3,4,5,4,5,6,5,6,7]</span></span></code></pre></div>
 <p>Or you could ask the user for input:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">query ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Integer</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>query <span class="ot">=</span> runAp (variable f) <span class="op">.</span> runAppNum</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    f s <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>      <span class="fu">putStr</span> <span class="st">&quot;Input a value for &quot;</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>      <span class="fu">putStrLn</span> s</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>      <span class="fu">fmap</span> <span class="fu">read</span> <span class="fu">getLine</span></span></code></pre></div>
-<p>Finally, and this one’s a bit exotic, you could examine every variable in turn, with defaults for the others:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>zygo</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="ot">    ::</span> (<span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> x)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>    <span class="ot">-&gt;</span> (<span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    <span class="ot">-&gt;</span> [b]</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>zygo (<span class="ot">l ::</span> <span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> x) (<span class="ot">c ::</span> <span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="ot">=</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>    <span class="fu">fst</span> <span class="op">.</span> go <span class="fu">id</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a><span class="ot">    go ::</span> <span class="kw">forall</span> c<span class="op">.</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], c)</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>    go _ (<span class="dt">Pure</span> x) <span class="ot">=</span> ([], x)</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>    go k (<span class="dt">Ap</span> x f) <span class="ot">=</span> (c x (k <span class="op">.</span> ls) <span class="op">:</span> xs, ls lx)</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>        (xs,ls) <span class="ot">=</span> go (k <span class="op">.</span> (<span class="op">$</span> lx)) f</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>        lx <span class="ot">=</span> l x</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a></span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a><span class="ot">examineEach ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>]</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>examineEach <span class="ot">=</span> zygo (variable (<span class="fu">const</span> <span class="dv">1</span>)) g <span class="op">.</span> runAppNum</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true"></a><span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true"></a>    g (<span class="dt">Constant</span> x) rhs _ <span class="ot">=</span> rhs x</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true"></a>    g (<span class="dt">Variable</span> _) rhs i <span class="ot">=</span> rhs i</span></code></pre></div>
-<p>This produces a list of functions which are equivalent to subbing in for each variable with the rest set to 1.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ot">query ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> <span class="dt">IO</span> <span class="dt">Integer</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>query <span class="ot">=</span> runAp (variable f) <span class="op">.</span> runAppNum</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    f s <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">putStr</span> <span class="st">&quot;Input a value for &quot;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">putStrLn</span> s</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">fmap</span> <span class="fu">read</span> <span class="fu">getLine</span></span></code></pre></div>
+<p>Finally, and this one’s a bit exotic, you could examine every
+variable in turn, with defaults for the others:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>zygo</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> (<span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> x)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> (<span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b)</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> <span class="dt">Ap</span> f a</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> [b]</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>zygo (<span class="ot">l ::</span> <span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> x) (<span class="ot">c ::</span> <span class="kw">forall</span> x<span class="op">.</span> f x <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> b) <span class="ot">=</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fst</span> <span class="op">.</span> go <span class="fu">id</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="ot">    go ::</span> <span class="kw">forall</span> c<span class="op">.</span> (c <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> <span class="dt">Ap</span> f c <span class="ot">-&gt;</span> ([b], c)</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    go _ (<span class="dt">Pure</span> x) <span class="ot">=</span> ([], x)</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    go k (<span class="dt">Ap</span> x f) <span class="ot">=</span> (c x (k <span class="op">.</span> ls) <span class="op">:</span> xs, ls lx)</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        (xs,ls) <span class="ot">=</span> go (k <span class="op">.</span> (<span class="op">$</span> lx)) f</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        lx <span class="ot">=</span> l x</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="ot">examineEach ::</span> <span class="dt">WithVars</span> <span class="ot">-&gt;</span> [<span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span>]</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>examineEach <span class="ot">=</span> zygo (variable (<span class="fu">const</span> <span class="dv">1</span>)) g <span class="op">.</span> runAppNum</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a><span class="ot">    g ::</span> <span class="dt">Variable</span> a <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> b</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>    g (<span class="dt">Constant</span> x) rhs _ <span class="ot">=</span> rhs x</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>    g (<span class="dt">Variable</span> _) rhs i <span class="ot">=</span> rhs i</span></code></pre></div>
+<p>This produces a list of functions which are equivalent to subbing in
+for each variable with the rest set to 1.</p>
 
         </div>
     </body>

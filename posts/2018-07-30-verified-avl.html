@@ -30,15 +30,32 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
-<p>I’ve been writing a lot of Agda recently, and had the occasion to write a <a href="https://en.wikipedia.org/wiki/Fenwick_tree">Fenwick tree</a> that did some rebalancing. I went with <a href="https://en.wikipedia.org/wiki/AVL_tree">AVL</a>-style rebalancing (rather than <a href="https://en.wikipedia.org/wiki/Red–black_tree">red-black</a> or <a href="https://en.wikipedia.org/wiki/Weight-balanced_tree">trees of bounded balance</a>). I’d written pretty full implementations of the other two before, and the Agda standard library <span class="citation" data-cites="danielsson_agda_2018">(Danielsson <a href="#ref-danielsson_agda_2018" role="doc-biblioref">2018</a>)</span> has an implementation already that I was able to use as a starting point. Also, apparently, AVL trees seem to perform better than red-black trees in practice <span class="citation" data-cites="pfaff_performance_2004">(Pfaff <a href="#ref-pfaff_performance_2004" role="doc-biblioref">2004</a>)</span>.</p>
-<p>This post will be similar in style to Stephanie Weirich’s talk <span class="citation" data-cites="weirich_depending_2014">(<a href="#ref-weirich_depending_2014" role="doc-biblioref">2014</a>)</span>, which compares an Agda implementation of verified red-black trees to a Haskell one. When there’s two columns of code side-by-side, the left-hand side is Haskell, the right Agda.</p>
-<p>The method of constructing the ordering proof is taken from “How to Keep Your Neighbours in Order” <span class="citation" data-cites="mcbride_how_2014">(<a href="#ref-mcbride_how_2014" role="doc-biblioref">2014</a>)</span> by Conor McBride; the structural proofs are somewhat inspired by the implementation in the Agda standard library, but are mainly my own.</p>
+<p>I’ve been writing a lot of Agda recently, and had the occasion to
+write a <a href="https://en.wikipedia.org/wiki/Fenwick_tree">Fenwick
+tree</a> that did some rebalancing. I went with <a href="https://en.wikipedia.org/wiki/AVL_tree">AVL</a>-style rebalancing
+(rather than <a href="https://en.wikipedia.org/wiki/Red–black_tree">red-black</a> or <a href="https://en.wikipedia.org/wiki/Weight-balanced_tree">trees of
+bounded balance</a>). I’d written pretty full implementations of the
+other two before, and the Agda standard library <span class="citation" data-cites="danielsson_agda_2018">(Danielsson 2018)</span> has an
+implementation already that I was able to use as a starting point. Also,
+apparently, AVL trees seem to perform better than red-black trees in
+practice <span class="citation" data-cites="pfaff_performance_2004">(Pfaff 2004)</span>.</p>
+<p>This post will be similar in style to Stephanie Weirich’s talk <span class="citation" data-cites="weirich_depending_2014">(2014)</span>,
+which compares an Agda implementation of verified red-black trees to a
+Haskell one. When there’s two columns of code side-by-side, the
+left-hand side is Haskell, the right Agda.</p>
+<p>The method of constructing the ordering proof is taken from “How to
+Keep Your Neighbours in Order” <span class="citation" data-cites="mcbride_how_2014">(2014)</span> by Conor McBride; the
+structural proofs are somewhat inspired by the implementation in the
+Agda standard library, but are mainly my own.</p>
 <h1 id="height">Height</h1>
-<p>AVL trees are more strictly balanced than red-black trees: the height of neighboring subtrees can differ by at most one. To store the height, we will start as every dependently-typed program does: with Peano numbers.</p>
+<p>AVL trees are more strictly balanced than red-black trees: the height
+of neighboring subtrees can differ by at most one. To store the height,
+we will start as every dependently-typed program does: with Peano
+numbers.</p>
 <style>
 .column {
     float: left;
@@ -53,304 +70,374 @@
 <div class="row">
 <div class="column">
 <p>Haskell</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span></span></code></pre></div>
 </div>
 <div class="column">
 <p>Agda</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> ℕ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  zero <span class="ot">:</span> ℕ</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  suc  <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ℕ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  zero <span class="ot">:</span> ℕ</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  suc  <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ</span></code></pre></div>
 </div>
 </div>
-<p>The trees will be balanced one of three possible ways: left-heavy, right-heavy, or even. We can represent these three cases in a GADT in the case of Haskell, or an indexed datatype in the case of Agda:</p>
+<p>The trees will be balanced one of three possible ways: left-heavy,
+right-heavy, or even. We can represent these three cases in a GADT in
+the case of Haskell, or an indexed datatype in the case of Agda:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Balance</span><span class="ot"> ::</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>      <span class="dt">L</span><span class="ot"> ::</span> <span class="dt">Balance</span> (<span class="dt">S</span> n) n    (<span class="dt">S</span> n)</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>      <span class="dt">O</span><span class="ot"> ::</span> <span class="dt">Balance</span>  n    n     n</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>      <span class="dt">R</span><span class="ot"> ::</span> <span class="dt">Balance</span>  n   (<span class="dt">S</span> n) (<span class="dt">S</span> n)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Balance</span><span class="ot"> ::</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>      <span class="dt">L</span><span class="ot"> ::</span> <span class="dt">Balance</span> (<span class="dt">S</span> n) n    (<span class="dt">S</span> n)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>      <span class="dt">O</span><span class="ot"> ::</span> <span class="dt">Balance</span>  n    n     n</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <span class="dt">R</span><span class="ot"> ::</span> <span class="dt">Balance</span>  n   (<span class="dt">S</span> n) (<span class="dt">S</span> n)</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">data</span> ⟨<span class="ot">_</span>⊔<span class="ot">_</span>⟩≡<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  ◿  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨ suc  n ⊔      n ⟩≡ suc  n</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  ▽  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨      n ⊔      n ⟩≡      n</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  ◺  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨      n ⊔ suc  n ⟩≡ suc  n</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ⟨<span class="ot">_</span>⊔<span class="ot">_</span>⟩≡<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  ◿  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨ suc  n ⊔      n ⟩≡ suc  n</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  ▽  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨      n ⊔      n ⟩≡      n</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  ◺  <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>n<span class="ot">}</span> <span class="ot">→</span> ⟨      n ⊔ suc  n ⟩≡ suc  n</span></code></pre></div>
 </div>
 </div>
-<p>Those unfamiliar with Agda might be a little intimidated by the mixfix operator in the balance definition: we’re using it here because the type can be seen of a proof that:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">max(x,y) = z</annotation></semantics></math></p>
-<p>Or, using the <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>⊔</mo><annotation encoding="application/x-tex">\sqcup</annotation></semantics></math> operator:</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>⊔</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">(x \sqcup y) = z</annotation></semantics></math></p>
-<p>We’ll use this proof in the tree itself, as we’ll need to know the maximum of the height of a node’s two subtrees to find the height of the node. Before we do that, we’ll need a couple helper functions for manipulating the balance:</p>
+<p>Those unfamiliar with Agda might be a little intimidated by the
+mixfix operator in the balance definition: we’re using it here because
+the type can be seen of a proof that:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mi>a</mi><mi>x</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>,</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">max(x,y) = z</annotation></semantics></math></p>
+<p>Or, using the
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>⊔</mo><annotation encoding="application/x-tex">\sqcup</annotation></semantics></math>
+operator:</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>⊔</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><mi>z</mi></mrow><annotation encoding="application/x-tex">(x \sqcup y) = z</annotation></semantics></math></p>
+<p>We’ll use this proof in the tree itself, as we’ll need to know the
+maximum of the height of a node’s two subtrees to find the height of the
+node. Before we do that, we’ll need a couple helper functions for
+manipulating the balance:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">balr ::</span> <span class="dt">Balance</span> x y z <span class="ot">-&gt;</span> <span class="dt">Balance</span> z x z</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>balr <span class="dt">L</span> <span class="ot">=</span> <span class="dt">O</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>balr <span class="dt">O</span> <span class="ot">=</span> <span class="dt">O</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>balr <span class="dt">R</span> <span class="ot">=</span> <span class="dt">L</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="ot">ball ::</span> <span class="dt">Balance</span> x y z <span class="ot">-&gt;</span> <span class="dt">Balance</span> y z z</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>ball <span class="dt">L</span> <span class="ot">=</span> <span class="dt">R</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>ball <span class="dt">O</span> <span class="ot">=</span> <span class="dt">O</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>ball <span class="dt">R</span> <span class="ot">=</span> <span class="dt">O</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">balr ::</span> <span class="dt">Balance</span> x y z <span class="ot">-&gt;</span> <span class="dt">Balance</span> z x z</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>balr <span class="dt">L</span> <span class="ot">=</span> <span class="dt">O</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>balr <span class="dt">O</span> <span class="ot">=</span> <span class="dt">O</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>balr <span class="dt">R</span> <span class="ot">=</span> <span class="dt">L</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="ot">ball ::</span> <span class="dt">Balance</span> x y z <span class="ot">-&gt;</span> <span class="dt">Balance</span> y z z</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>ball <span class="dt">L</span> <span class="ot">=</span> <span class="dt">R</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>ball <span class="dt">O</span> <span class="ot">=</span> <span class="dt">O</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>ball <span class="dt">R</span> <span class="ot">=</span> <span class="dt">O</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>⃕ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x y z<span class="ot">}</span> <span class="ot">→</span> ⟨ x ⊔ y ⟩≡ z <span class="ot">→</span> ⟨ z ⊔ x ⟩≡ z</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>⃕  ◿  <span class="ot">=</span> ▽</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>⃕  ▽  <span class="ot">=</span> ▽</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>⃕  ◺  <span class="ot">=</span> ◿</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>⃔ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x y z<span class="ot">}</span> <span class="ot">→</span> ⟨ x ⊔ y ⟩≡ z <span class="ot">→</span> ⟨ y ⊔ z ⟩≡ z</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>⃔  ◿  <span class="ot">=</span> ◺</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>⃔  ▽  <span class="ot">=</span> ▽</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>⃔  ◺  <span class="ot">=</span> ▽</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>⃕ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x y z<span class="ot">}</span> <span class="ot">→</span> ⟨ x ⊔ y ⟩≡ z <span class="ot">→</span> ⟨ z ⊔ x ⟩≡ z</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>⃕  ◿  <span class="ot">=</span> ▽</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>⃕  ▽  <span class="ot">=</span> ▽</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>⃕  ◺  <span class="ot">=</span> ◿</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>⃔ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x y z<span class="ot">}</span> <span class="ot">→</span> ⟨ x ⊔ y ⟩≡ z <span class="ot">→</span> ⟨ y ⊔ z ⟩≡ z</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>⃔  ◿  <span class="ot">=</span> ◺</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>⃔  ▽  <span class="ot">=</span> ▽</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>⃔  ◺  <span class="ot">=</span> ▽</span></code></pre></div>
 </div>
 </div>
 <h1 id="ordering">Ordering</h1>
-<p>Along with the verification of the structure of the tree, we will also want to verify that its contents are ordered correctly. Unfortunately, this property is a little out of reach for Haskell, but it’s 100% doable in Agda. First, we’ll need a way to describe orders on a data type. In Haskell, we might write:</p>
+<p>Along with the verification of the structure of the tree, we will
+also want to verify that its contents are ordered correctly.
+Unfortunately, this property is a little out of reach for Haskell, but
+it’s 100% doable in Agda. First, we’ll need a way to describe orders on
+a data type. In Haskell, we might write:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">Ord</span> a <span class="kw">where</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="ot">  (==) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="ot">  (&lt;)  ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Ord</span> a <span class="kw">where</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  (==) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">  (&lt;)  ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span></code></pre></div>
 </div>
 <div class="column">
 <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>*</mo><mo>*</mo><mo>*</mo></mrow><annotation encoding="application/x-tex">***</annotation></semantics></math>
 </div>
 </div>
-<p>That <code class="sourceCode haskell"><span class="dt">Bool</span></code> throws away any information gained in the comparison, though: we want to supply a proof with the result of the comparison. First, equality:</p>
+<p>That <code class="sourceCode haskell"><span class="dt">Bool</span></code> throws
+away any information gained in the comparison, though: we want to supply
+a proof with the result of the comparison. First, equality:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>infix <span class="dv">4</span> <span class="op">==</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="kw">data</span><span class="ot"> (==) ::</span> <span class="dt">Type</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>  <span class="dt">Refl</span><span class="ot"> ::</span> x <span class="op">==</span> x</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>infix <span class="dv">4</span> <span class="op">==</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span><span class="ot"> (==) ::</span> <span class="dt">Type</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Refl</span><span class="ot"> ::</span> x <span class="op">==</span> x</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≡<span class="ot">_</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="kw">data</span> <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>         <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> </span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>         <span class="ot">:</span> A <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>  refl <span class="ot">:</span> x ≡ x</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≡<span class="ot">_</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">{</span>a<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>         <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> </span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>         <span class="ot">:</span> A <span class="ot">→</span> <span class="dt">Set</span> a <span class="kw">where</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  refl <span class="ot">:</span> x ≡ x</span></code></pre></div>
 </div>
 </div>
-<p>This is one of the many ways to describe equality in Agda. It’s a type with only one constructor, and it can only be constructed when its two arguments are the same. When we pattern match on the constructor, then, we’re given a proof that whatever things those arguments refer to must be the same.</p>
-<p>Next, we need to describe an order. For this, we’ll need two types: the empty type, and the unit type.</p>
+<p>This is one of the many ways to describe equality in Agda. It’s a
+type with only one constructor, and it can only be constructed when its
+two arguments are the same. When we pattern match on the constructor,
+then, we’re given a proof that whatever things those arguments refer to
+must be the same.</p>
+<p>Next, we need to describe an order. For this, we’ll need two types:
+the empty type, and the unit type.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Void</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Unit</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span> <span class="dt">Unit</span><span class="ot"> ::</span> <span class="dt">Unit</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Void</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Unit</span><span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span> <span class="dt">Unit</span><span class="ot"> ::</span> <span class="dt">Unit</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> ⊥ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="kw">data</span> ⊤ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span> ⟨⟩ <span class="ot">:</span> ⊤</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ⊥ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ⊤ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span> ⟨⟩ <span class="ot">:</span> ⊤</span></code></pre></div>
 </div>
 </div>
-<p>These are kind of like type-level Bools, with one extra, powerful addition: they keep their proof after construction. Because <code class="sourceCode agda">⊥</code> has no constructors, if someone tells you they’re going to give you one, you can be pretty sure they’re lying. How do we use this? Well, first, on the numbers:</p>
+<p>These are kind of like type-level Bools, with one extra, powerful
+addition: they keep their proof after construction. Because <code class="sourceCode agda">⊥</code> has no constructors, if someone tells
+you they’re going to give you one, you can be pretty sure they’re lying.
+How do we use this? Well, first, on the numbers:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="ot">n ::</span> <span class="dt">N</span>) <span class="op">&lt;</span> (<span class="ot">m ::</span> <span class="dt">N</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  x   <span class="op">&lt;</span> <span class="dt">Z</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>  <span class="dt">Z</span>   <span class="op">&lt;</span> <span class="dt">S</span> y <span class="ot">=</span> <span class="dt">Unit</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>  <span class="dt">S</span> x <span class="op">&lt;</span> <span class="dt">S</span> y <span class="ot">=</span> x <span class="op">&lt;</span> y</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="ot">n ::</span> <span class="dt">N</span>) <span class="op">&lt;</span> (<span class="ot">m ::</span> <span class="dt">N</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  x   <span class="op">&lt;</span> <span class="dt">Z</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Z</span>   <span class="op">&lt;</span> <span class="dt">S</span> y <span class="ot">=</span> <span class="dt">Unit</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">S</span> x <span class="op">&lt;</span> <span class="dt">S</span> y <span class="ot">=</span> x <span class="op">&lt;</span> y</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">_</span>ℕ&lt;<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>x     ℕ&lt; zero  <span class="ot">=</span> ⊥</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>zero  ℕ&lt; suc y <span class="ot">=</span> ⊤</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>suc x ℕ&lt; suc y <span class="ot">=</span> x ℕ&lt; y</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>ℕ&lt;<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>x     ℕ&lt; zero  <span class="ot">=</span> ⊥</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>zero  ℕ&lt; suc y <span class="ot">=</span> ⊤</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>suc x ℕ&lt; suc y <span class="ot">=</span> x ℕ&lt; y</span></code></pre></div>
 </div>
 </div>
-<p>Therefore, if we ask for something of type <code class="sourceCode agda">x ℕ&lt; y</code> (for some <code>x</code> and <code>y</code>), we know that it only exists when <code>x</code> really is less than <code>y</code> (according to the definition above).</p>
-<p>For our actual code, we’ll parameterize the whole thing over some abstract key type. We’ll do this using a module (a feature recently added to Haskell, as it happens). That might look something like this:</p>
+<p>Therefore, if we ask for something of type <code class="sourceCode agda">x ℕ&lt; y</code> (for some <code>x</code> and
+<code>y</code>), we know that it only exists when <code>x</code> really
+is less than <code>y</code> (according to the definition above).</p>
+<p>For our actual code, we’ll parameterize the whole thing over some
+abstract key type. We’ll do this using a module (a feature recently
+added to Haskell, as it happens). That might look something like
+this:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>signature <span class="dt">Key</span> <span class="kw">where</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="kw">import</span> <span class="dt">Data.Kind</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">data</span> <span class="dt">Key</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>  <span class="kw">type</span> <span class="kw">family</span> (<span class="ot">n ::</span> <span class="dt">Key</span>) <span class="op">&lt;</span> (<span class="ot">m ::</span> <span class="dt">Key</span>)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Type</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">AVL</span> <span class="kw">where</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>  <span class="kw">import</span> <span class="dt">Key</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>signature <span class="dt">Key</span> <span class="kw">where</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> <span class="dt">Data.Kind</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">data</span> <span class="dt">Key</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> <span class="kw">family</span> (<span class="ot">n ::</span> <span class="dt">Key</span>) <span class="op">&lt;</span> (<span class="ot">m ::</span> <span class="dt">Key</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Type</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">AVL</span> <span class="kw">where</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">import</span> <span class="dt">Key</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">module</span> AVL</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="ot">{</span>k r<span class="ot">}</span> <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span> k<span class="ot">)</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="ot">{_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> Rel Key r<span class="ot">}</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>  <span class="ot">(</span>isStrictTotalOrder</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>   <span class="ot">:</span> IsStrictTotalOrder <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">_</span>&lt;<span class="ot">_)</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>  <span class="kw">open</span> IsStrictTotalOrder isStrictTotalOrder</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> AVL</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{</span>k r<span class="ot">}</span> <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span> k<span class="ot">)</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{_</span>&lt;<span class="ot">_</span> <span class="ot">:</span> Rel Key r<span class="ot">}</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="ot">(</span>isStrictTotalOrder</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>   <span class="ot">:</span> IsStrictTotalOrder <span class="ot">_</span>≡<span class="ot">_</span> <span class="ot">_</span>&lt;<span class="ot">_)</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">open</span> IsStrictTotalOrder isStrictTotalOrder</span></code></pre></div>
 </div>
 </div>
-<p>(the <code class="sourceCode agda">k</code> and <code class="sourceCode agda">r</code> here, as well as the <code class="sourceCode agda">Lift</code>ing noise below, are to do with Agda’s universe system, which I’ll try explain in a bit)</p>
-<p>Now, the trick for the ordering is to keep a proof that two neighboring values are ordered correctly in the tree at each leaf (as there’s a leaf between every pair of nodes, this is exactly the place you <em>should</em> store such a proof). A problem arises with the extremal leaves in the tree (leftmost and rightmost): each leaf is missing one neighboring value, so how can it store a proof of order? The solution is to affix two elements to our key type which we define as the greatest and least elements of the set.</p>
+<p>(the <code class="sourceCode agda">k</code> and <code class="sourceCode agda">r</code> here, as well as the <code class="sourceCode agda">Lift</code>ing noise below, are to do with
+Agda’s universe system, which I’ll try explain in a bit)</p>
+<p>Now, the trick for the ordering is to keep a proof that two
+neighboring values are ordered correctly in the tree at each leaf (as
+there’s a leaf between every pair of nodes, this is exactly the place
+you <em>should</em> store such a proof). A problem arises with the
+extremal leaves in the tree (leftmost and rightmost): each leaf is
+missing one neighboring value, so how can it store a proof of order? The
+solution is to affix two elements to our key type which we define as the
+greatest and least elements of the set.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Bound</span> <span class="ot">=</span> <span class="dt">LB</span> <span class="op">|</span> <span class="dt">IB</span> <span class="dt">Key</span> <span class="op">|</span> <span class="dt">UB</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>infix <span class="dv">4</span> <span class="op">&lt;:</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="ot">x ::</span> <span class="dt">Bound</span>) <span class="op">&lt;:</span> (<span class="ot">y ::</span> <span class="dt">Bound</span>)</span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">LB</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">UB</span>   <span class="ot">=</span> <span class="dt">Unit</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">IB</span> _ <span class="ot">=</span> <span class="dt">Unit</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>  <span class="dt">UB</span>   <span class="op">&lt;:</span> _    <span class="ot">=</span> <span class="dt">Void</span></span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>  <span class="dt">IB</span> _ <span class="op">&lt;:</span> <span class="dt">LB</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a>  <span class="dt">IB</span> _ <span class="op">&lt;:</span> <span class="dt">UB</span>   <span class="ot">=</span> <span class="dt">Unit</span></span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>  <span class="dt">IB</span> x <span class="op">&lt;:</span> <span class="dt">IB</span> y <span class="ot">=</span> x <span class="op">&lt;</span> y</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Bound</span> <span class="ot">=</span> <span class="dt">LB</span> <span class="op">|</span> <span class="dt">IB</span> <span class="dt">Key</span> <span class="op">|</span> <span class="dt">UB</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>infix <span class="dv">4</span> <span class="op">&lt;:</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="ot">x ::</span> <span class="dt">Bound</span>) <span class="op">&lt;:</span> (<span class="ot">y ::</span> <span class="dt">Bound</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">LB</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">UB</span>   <span class="ot">=</span> <span class="dt">Unit</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LB</span>   <span class="op">&lt;:</span> <span class="dt">IB</span> _ <span class="ot">=</span> <span class="dt">Unit</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">UB</span>   <span class="op">&lt;:</span> _    <span class="ot">=</span> <span class="dt">Void</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="dt">IB</span> _ <span class="op">&lt;:</span> <span class="dt">LB</span>   <span class="ot">=</span> <span class="dt">Void</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">IB</span> _ <span class="op">&lt;:</span> <span class="dt">UB</span>   <span class="ot">=</span> <span class="dt">Unit</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">IB</span> x <span class="op">&lt;:</span> <span class="dt">IB</span> y <span class="ot">=</span> x <span class="op">&lt;</span> y</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb17"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="kw">infix</span> <span class="dv">5</span> [<span class="ot">_</span>]</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a></span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a><span class="kw">data</span> [∙] <span class="ot">:</span> <span class="dt">Set</span> k <span class="kw">where</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>  ⌊⌋ ⌈⌉ <span class="ot">:</span> [∙]</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a>  [<span class="ot">_</span>]   <span class="ot">:</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span> <span class="ot">→</span> [∙]</span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a></span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>[&lt;]<span class="ot">_</span></span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a></span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true"></a><span class="ot">_</span>[&lt;]<span class="ot">_</span> <span class="ot">:</span> [∙] <span class="ot">→</span> [∙] <span class="ot">→</span> <span class="dt">Set</span> r</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true"></a>⌊⌋     [&lt;] ⌊⌋    <span class="ot">=</span> Lift r ⊥</span>
-<span id="cb17-11"><a href="#cb17-11" aria-hidden="true"></a>⌊⌋     [&lt;] ⌈⌉    <span class="ot">=</span> Lift r ⊤</span>
-<span id="cb17-12"><a href="#cb17-12" aria-hidden="true"></a>⌊⌋     [&lt;] [ <span class="ot">_</span> ] <span class="ot">=</span> Lift r ⊤</span>
-<span id="cb17-13"><a href="#cb17-13" aria-hidden="true"></a>⌈⌉     [&lt;] <span class="ot">_</span>     <span class="ot">=</span> Lift r ⊥</span>
-<span id="cb17-14"><a href="#cb17-14" aria-hidden="true"></a>[ <span class="ot">_</span> ]  [&lt;] ⌊⌋    <span class="ot">=</span> Lift r ⊥</span>
-<span id="cb17-15"><a href="#cb17-15" aria-hidden="true"></a>[ <span class="ot">_</span> ]  [&lt;] ⌈⌉    <span class="ot">=</span> Lift r ⊤</span>
-<span id="cb17-16"><a href="#cb17-16" aria-hidden="true"></a>[ x ]  [&lt;] [ y ] <span class="ot">=</span> x &lt; y</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infix</span> <span class="dv">5</span> [<span class="ot">_</span>]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> [∙] <span class="ot">:</span> <span class="dt">Set</span> k <span class="kw">where</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  ⌊⌋ ⌈⌉ <span class="ot">:</span> [∙]</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  [<span class="ot">_</span>]   <span class="ot">:</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span> <span class="ot">→</span> [∙]</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>[&lt;]<span class="ot">_</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>[&lt;]<span class="ot">_</span> <span class="ot">:</span> [∙] <span class="ot">→</span> [∙] <span class="ot">→</span> <span class="dt">Set</span> r</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>⌊⌋     [&lt;] ⌊⌋    <span class="ot">=</span> Lift r ⊥</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>⌊⌋     [&lt;] ⌈⌉    <span class="ot">=</span> Lift r ⊤</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>⌊⌋     [&lt;] [ <span class="ot">_</span> ] <span class="ot">=</span> Lift r ⊤</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>⌈⌉     [&lt;] <span class="ot">_</span>     <span class="ot">=</span> Lift r ⊥</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>[ <span class="ot">_</span> ]  [&lt;] ⌊⌋    <span class="ot">=</span> Lift r ⊥</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>[ <span class="ot">_</span> ]  [&lt;] ⌈⌉    <span class="ot">=</span> Lift r ⊤</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>[ x ]  [&lt;] [ y ] <span class="ot">=</span> x &lt; y</span></code></pre></div>
 </div>
 </div>
 <h1 id="the-tree-type">The Tree Type</h1>
-<p>After all that, we can get bring back Haskell into the story, and define or tree types:</p>
+<p>After all that, we can get bring back Haskell into the story, and
+define or tree types:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span><span class="ot"> ::</span> <span class="dt">N</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>  <span class="dt">Leaf</span><span class="ot"> ::</span> <span class="dt">Tree</span> <span class="dt">Z</span> k v</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>  <span class="dt">Node</span><span class="ot"> ::</span> k</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a>       <span class="ot">-&gt;</span> v</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">Balance</span> lh rh h</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> lh k v</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> h) k v</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span><span class="ot"> ::</span> <span class="dt">N</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>          <span class="ot">-&gt;</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Leaf</span><span class="ot"> ::</span> <span class="dt">Tree</span> <span class="dt">Z</span> k v</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Node</span><span class="ot"> ::</span> k</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> v</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">Balance</span> lh rh h</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> lh k v</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> h) k v</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">data</span> Tree <span class="ot">{</span>v<span class="ot">}</span> </span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>          <span class="ot">(</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">)</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>          <span class="ot">(</span>l u <span class="ot">:</span> [∙]<span class="ot">)</span> <span class="ot">:</span> ℕ <span class="ot">→</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>          <span class="dt">Set</span> <span class="ot">(</span>k ⊔ v ⊔ r<span class="ot">)</span> <span class="kw">where</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>  leaf  <span class="ot">:</span> <span class="ot">(</span>l&lt;u <span class="ot">:</span> l [&lt;] u<span class="ot">)</span> <span class="ot">→</span> Tree V l u <span class="dv">0</span></span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>  node  <span class="ot">:</span> <span class="ot">∀</span>  <span class="ot">{</span>h lh rh<span class="ot">}</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>             <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>             <span class="ot">(</span>v <span class="ot">:</span> V k<span class="ot">)</span></span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a>             <span class="ot">(</span>bl <span class="ot">:</span> ⟨ lh ⊔ rh ⟩≡ h<span class="ot">)</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a>             <span class="ot">(</span>lk <span class="ot">:</span> Tree V l [ k ] lh<span class="ot">)</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true"></a>             <span class="ot">(</span>ku <span class="ot">:</span> Tree V [ k ] u rh<span class="ot">)</span> <span class="ot">→</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true"></a>             Tree V l u <span class="ot">(</span>suc h<span class="ot">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> Tree <span class="ot">{</span>v<span class="ot">}</span> </span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>          <span class="ot">(</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">)</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>          <span class="ot">(</span>l u <span class="ot">:</span> [∙]<span class="ot">)</span> <span class="ot">:</span> ℕ <span class="ot">→</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>          <span class="dt">Set</span> <span class="ot">(</span>k ⊔ v ⊔ r<span class="ot">)</span> <span class="kw">where</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  leaf  <span class="ot">:</span> <span class="ot">(</span>l&lt;u <span class="ot">:</span> l [&lt;] u<span class="ot">)</span> <span class="ot">→</span> Tree V l u <span class="dv">0</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  node  <span class="ot">:</span> <span class="ot">∀</span>  <span class="ot">{</span>h lh rh<span class="ot">}</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>             <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>             <span class="ot">(</span>v <span class="ot">:</span> V k<span class="ot">)</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>             <span class="ot">(</span>bl <span class="ot">:</span> ⟨ lh ⊔ rh ⟩≡ h<span class="ot">)</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>             <span class="ot">(</span>lk <span class="ot">:</span> Tree V l [ k ] lh<span class="ot">)</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>             <span class="ot">(</span>ku <span class="ot">:</span> Tree V [ k ] u rh<span class="ot">)</span> <span class="ot">→</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>             Tree V l u <span class="ot">(</span>suc h<span class="ot">)</span></span></code></pre></div>
 </div>
 </div>
-<p>The two definitions are similar, but have a few obvious differences. The Agda version stores the ordering proof at the leaves, as well as the bounds as indices. Its <a href="https://pigworker.wordpress.com/2015/01/09/universe-hierarchies/"><em>universe</em></a> is also different: briefly, universes are one of the ways to avoid Russell’s paradox when you’re dealing with dependent types.</p>
-<p>In normal, standard Haskell, we think of types as things that describe values (how quaint!). When you’ve got a list, everything in the list has the same type, and that is good and right.</p>
+<p>The two definitions are similar, but have a few obvious differences.
+The Agda version stores the ordering proof at the leaves, as well as the
+bounds as indices. Its <a href="https://pigworker.wordpress.com/2015/01/09/universe-hierarchies/"><em>universe</em></a>
+is also different: briefly, universes are one of the ways to avoid
+Russell’s paradox when you’re dealing with dependent types.</p>
+<p>In normal, standard Haskell, we think of types as things that
+describe values (how quaint!). When you’ve got a list, everything in the
+list has the same type, and that is good and right.</p>
 <p>These days, though, we’re not so constrained:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">List</span> xs <span class="kw">where</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">List</span> '[]</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a><span class="ot">  (:-) ::</span> x</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">List</span> xs</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>       <span class="ot">-&gt;</span> <span class="dt">List</span> (x <span class="op">:</span> xs)</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">List</span> xs <span class="kw">where</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">List</span> '[]</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="ot">  (:-) ::</span> x</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">List</span> xs</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>       <span class="ot">-&gt;</span> <span class="dt">List</span> (x <span class="op">:</span> xs)</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb21"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="ot">_</span>፦<span class="ot">_</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a><span class="kw">data</span> List′ <span class="ot">:</span> List <span class="dt">Set</span> <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  nil <span class="ot">:</span> List′ []</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>  <span class="ot">_</span>፦<span class="ot">_</span> <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x xs<span class="ot">}</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>      <span class="ot">→</span> x </span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>      <span class="ot">→</span> List′ xs </span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a>      <span class="ot">→</span> List′ <span class="ot">(</span>x ∷ xs<span class="ot">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="ot">_</span>፦<span class="ot">_</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> List′ <span class="ot">:</span> List <span class="dt">Set</span> <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  nil <span class="ot">:</span> List′ []</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="ot">_</span>፦<span class="ot">_</span> <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>x xs<span class="ot">}</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>      <span class="ot">→</span> x </span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>      <span class="ot">→</span> List′ xs </span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>      <span class="ot">→</span> List′ <span class="ot">(</span>x ∷ xs<span class="ot">)</span></span></code></pre></div>
 </div>
 </div>
 <p>This can quite happily store elements of different types:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="ot">example ::</span> <span class="dt">List</span> [<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>example <span class="ot">=</span> <span class="dt">True</span> <span class="op">:-</span> <span class="st">&quot;true&quot;</span> <span class="op">:-</span> <span class="dv">1</span> <span class="op">:-</span> <span class="dt">Nil</span></span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ot">example ::</span> <span class="dt">List</span> [<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>example <span class="ot">=</span> <span class="dt">True</span> <span class="op">:-</span> <span class="st">&quot;true&quot;</span> <span class="op">:-</span> <span class="dv">1</span> <span class="op">:-</span> <span class="dt">Nil</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb23"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a>example <span class="ot">:</span> List′ <span class="ot">(</span>Bool ∷ String ∷ ℕ ∷ []<span class="ot">)</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>example <span class="ot">=</span> true ፦ <span class="st">&quot;true&quot;</span> ፦ <span class="dv">1</span> ፦ nil</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>example <span class="ot">:</span> List′ <span class="ot">(</span>Bool ∷ String ∷ ℕ ∷ []<span class="ot">)</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>example <span class="ot">=</span> true ፦ <span class="st">&quot;true&quot;</span> ፦ <span class="dv">1</span> ፦ nil</span></code></pre></div>
 </div>
 </div>
-<p>And look at that bizarre-looking list on the wrong side of “<code class="sourceCode haskell"><span class="ot">::</span></code>”! Types aren’t just describing values, they’re acting like values themselves. What type does <code class="sourceCode haskell">[<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</code> even have, anyway? Why, <code class="sourceCode haskell">[<span class="dt">Type</span>]</code> of course!</p>
-<p>So we see that types can be put in lists, and types have types: the natural question then is:</p>
+<p>And look at that bizarre-looking list on the wrong side of “<code class="sourceCode haskell"><span class="ot">::</span></code>”! Types
+aren’t just describing values, they’re acting like values themselves.
+What type does <code class="sourceCode haskell">[<span class="dt">Bool</span>, <span class="dt">String</span>, <span class="dt">Integer</span>]</code>
+even have, anyway? Why, <code class="sourceCode haskell">[<span class="dt">Type</span>]</code> of
+course!</p>
+<p>So we see that types can be put in lists, and types have types: the
+natural question then is:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="dt">Type</span><span class="ot"> ::</span> <span class="op">???</span></span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="dt">Type</span><span class="ot"> ::</span> <span class="op">???</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb25"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="dt">Set</span> <span class="ot">:</span> ???</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="dt">Set</span> <span class="ot">:</span> ???</span></code></pre></div>
 </div>
 </div>
-<p>And this is where Haskell and Agda diverge: in Haskell, we say <code class="sourceCode haskell"><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></code> (as the old extension <code class="sourceCode haskell"><span class="dt">TypeInType</span></code> implied), and that’s that. From a certain point of view, we’ve opened the door to Russell’s paradox (we’ve allowed a set to be a member of itself). This isn’t an issue in Haskell, though, as the type-level language was already inconsistent.</p>
-<p>Agda goes another way, saying that <code class="sourceCode agda"><span class="dt">Set</span></code> (Agda’s equivalent for <code class="sourceCode haskell"><span class="dt">Type</span></code>) has the type <code class="sourceCode agda"><span class="dt">Set₁</span></code>, and <code class="sourceCode agda"><span class="dt">Set₁</span></code> has the type <code class="sourceCode agda"><span class="dt">Set₂</span></code>, and so on<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>. These different sets are called “universes” and their numbers “levels”. When we write <code class="sourceCode agda">k ⊔ v ⊔ r</code>, we’re saying we want to take the greatest universe level from those three possible levels: the level of the key, the value, and the relation, respectively.</p>
+<p>And this is where Haskell and Agda diverge: in Haskell, we say <code class="sourceCode haskell"><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></code>
+(as the old extension <code class="sourceCode haskell"><span class="dt">TypeInType</span></code>
+implied), and that’s that. From a certain point of view, we’ve opened
+the door to Russell’s paradox (we’ve allowed a set to be a member of
+itself). This isn’t an issue in Haskell, though, as the type-level
+language was already inconsistent.</p>
+<p>Agda goes another way, saying that <code class="sourceCode agda"><span class="dt">Set</span></code> (Agda’s
+equivalent for <code class="sourceCode haskell"><span class="dt">Type</span></code>) has the
+type <code class="sourceCode agda">Set₁</code>, and <code class="sourceCode agda">Set₁</code> has the type <code class="sourceCode agda">Set₂</code>, and so on<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>.
+These different sets are called “universes” and their numbers “levels”.
+When we write <code class="sourceCode agda">k ⊔ v ⊔ r</code>, we’re
+saying we want to take the greatest universe level from those three
+possible levels: the level of the key, the value, and the relation,
+respectively.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></span></code></pre></div>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="dt">Type</span><span class="ot"> ::</span> <span class="dt">Type</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb27"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="dt">Set</span> <span class="ot">:</span> <span class="dt">Set₁</span></span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="dt">Set</span> <span class="ot">:</span> Set₁</span></code></pre></div>
 </div>
 </div>
 <h1 id="rotations">Rotations</h1>
-<p>AVL trees maintain their invariants through relatively simple rotations. We’ll start with the right rotation, which fixes an imbalance of two on the left. Because the size of the tree returned might change, we’ll need to wrap it in a datatype:</p>
+<p>AVL trees maintain their invariants through relatively simple
+rotations. We’ll start with the right rotation, which fixes an imbalance
+of two on the left. Because the size of the tree returned might change,
+we’ll need to wrap it in a datatype:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="kw">data</span><span class="ot"> (++?) ::</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a>           <span class="ot">-&gt;</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a>           <span class="kw">where</span></span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true"></a>  <span class="dt">Stay</span><span class="ot"> ::</span> t n     <span class="ot">-&gt;</span> t <span class="op">++?</span> n</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true"></a>  <span class="dt">Incr</span><span class="ot"> ::</span> t (<span class="dt">S</span> n) <span class="ot">-&gt;</span> t <span class="op">++?</span> n</span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span><span class="ot"> (++?) ::</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>           <span class="ot">-&gt;</span> (<span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">Type</span>)</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>           <span class="kw">where</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Stay</span><span class="ot"> ::</span> t n     <span class="ot">-&gt;</span> t <span class="op">++?</span> n</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Incr</span><span class="ot"> ::</span> t (<span class="dt">S</span> n) <span class="ot">-&gt;</span> t <span class="op">++?</span> n</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a><span class="ot">_</span>1?+⟨<span class="ot">_</span>⟩ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>𝓁<span class="ot">}</span> <span class="ot">(</span>T <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁<span class="ot">)</span> <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>T 1?+⟨ n ⟩ <span class="ot">=</span> ∃[ inc? ] T <span class="ot">(</span>if inc?</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>                            then suc n</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a>                            else n<span class="ot">)</span></span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true"></a></span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true"></a><span class="kw">pattern</span> 0+<span class="ot">_</span> tr <span class="ot">=</span> false , tr</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true"></a><span class="kw">pattern</span> 1+<span class="ot">_</span> tr <span class="ot">=</span> true  , tr</span></code></pre></div>
+<div class="sourceCode" id="cb29"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>1?+⟨<span class="ot">_</span>⟩ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>𝓁<span class="ot">}</span> <span class="ot">(</span>T <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁<span class="ot">)</span> <span class="ot">→</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> 𝓁</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>T 1?+⟨ n ⟩ <span class="ot">=</span> ∃[ inc? ] T <span class="ot">(</span>if inc?</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>                            then suc n</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                            else n<span class="ot">)</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> 0+<span class="ot">_</span> tr <span class="ot">=</span> false , tr</span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> 1+<span class="ot">_</span> tr <span class="ot">=</span> true  , tr</span></code></pre></div>
 </div>
 </div>
-<p>We could actually have the Agda definition be the same as Haskell’s, it doesn’t make much difference. I’m mainly using it here to demonstrate dependent pairs in Agda. The first member of the pair is just a boolean (increased in height/not increased in height). The second member is a tree whose height <em>depends</em> on the actual value of the boolean. The <code class="sourceCode agda">∃</code> business is just a fancy syntax; it also waggles its eyebrows at the way a (dependent) pair of type <code>(x , y)</code> means “There exists an x such that y”.</p>
+<p>We could actually have the Agda definition be the same as Haskell’s,
+it doesn’t make much difference. I’m mainly using it here to demonstrate
+dependent pairs in Agda. The first member of the pair is just a boolean
+(increased in height/not increased in height). The second member is a
+tree whose height <em>depends</em> on the actual value of the boolean.
+The <code class="sourceCode agda">∃</code> business is just a fancy
+syntax; it also waggles its eyebrows at the way a (dependent) pair of
+type <code>(x , y)</code> means “There exists an x such that y”.</p>
 <p>Using this, we can write the type for right-rotation:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a><span class="ot">rotr ::</span> k</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true"></a>     <span class="ot">-&gt;</span> v</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> (<span class="dt">S</span> rh)) k v</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="op">++?</span> <span class="dt">S</span> (<span class="dt">S</span> rh)</span></code></pre></div>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="ot">rotr ::</span> k</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> v</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> (<span class="dt">S</span> (<span class="dt">S</span> rh)) k v</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> rh k v</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>     <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="op">++?</span> <span class="dt">S</span> (<span class="dt">S</span> rh)</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a>rotʳ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>lb ub rh v<span class="ot">}</span> <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true"></a>     <span class="ot">→</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true"></a>     <span class="ot">→</span> V k</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true"></a>     <span class="ot">→</span> Tree V lb [ k ] <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true"></a>     <span class="ot">→</span> Tree V [ k ] ub rh</span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true"></a>     <span class="ot">→</span> Tree V lb ub 1?+⟨ suc <span class="ot">(</span>suc rh<span class="ot">)</span> ⟩</span></code></pre></div>
+<div class="sourceCode" id="cb31"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>rotʳ <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>lb ub rh v<span class="ot">}</span> <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>     <span class="ot">→</span> <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>     <span class="ot">→</span> V k</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>     <span class="ot">→</span> Tree V lb [ k ] <span class="ot">(</span>suc <span class="ot">(</span>suc rh<span class="ot">))</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>     <span class="ot">→</span> Tree V [ k ] ub rh</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>     <span class="ot">→</span> Tree V lb ub 1?+⟨ suc <span class="ot">(</span>suc rh<span class="ot">)</span> ⟩</span></code></pre></div>
 </div>
 </div>
 <p>There are two possible cases, single rotation:</p>
@@ -361,156 +448,222 @@
 }
 </style>
 <div class="tree">
-<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a>   ┌a       ┌a</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a> ┌y┤       y┤</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true"></a> │ └b <span class="op">---&gt;</span>  │ ┌b</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true"></a>x┤          └x┤</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true"></a> └c           └c</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>   ┌a       ┌a</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a> ┌y┤       y┤</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a> │ └b <span class="op">---&gt;</span>  │ ┌b</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>x┤          └x┤</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a> └c           └c</span></code></pre></div>
 </div>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">L</span> a b) c <span class="ot">=</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true"></a>  <span class="dt">Stay</span> (<span class="dt">Node</span> y yv <span class="dt">O</span> a (<span class="dt">Node</span> x xv <span class="dt">O</span> b c))</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">O</span> a b) c <span class="ot">=</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true"></a>  <span class="dt">Incr</span> (<span class="dt">Node</span> y yv <span class="dt">R</span> a (<span class="dt">Node</span> x xv <span class="dt">L</span> b c))</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">L</span> a b) c <span class="ot">=</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Stay</span> (<span class="dt">Node</span> y yv <span class="dt">O</span> a (<span class="dt">Node</span> x xv <span class="dt">O</span> b c))</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">O</span> a b) c <span class="ot">=</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Incr</span> (<span class="dt">Node</span> y yv <span class="dt">R</span> a (<span class="dt">Node</span> x xv <span class="dt">L</span> b c))</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb34"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a>rotʳ x xv <span class="ot">(</span>node y yv ◿ a b<span class="ot">)</span> c <span class="ot">=</span></span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true"></a>  0+ <span class="ot">(</span>node y yv ▽ a <span class="ot">(</span>node x xv ▽  b c<span class="ot">))</span></span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true"></a>rotʳ x xv <span class="ot">(</span>node y yv ▽ a b<span class="ot">)</span> c <span class="ot">=</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true"></a>  1+ <span class="ot">(</span>node y yv ◺ a <span class="ot">(</span>node x xv ◿  b c<span class="ot">))</span></span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>rotʳ x xv <span class="ot">(</span>node y yv ◿ a b<span class="ot">)</span> c <span class="ot">=</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  0+ <span class="ot">(</span>node y yv ▽ a <span class="ot">(</span>node x xv ▽  b c<span class="ot">))</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>rotʳ x xv <span class="ot">(</span>node y yv ▽ a b<span class="ot">)</span> c <span class="ot">=</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>  1+ <span class="ot">(</span>node y yv ◺ a <span class="ot">(</span>node x xv ◿  b c<span class="ot">))</span></span></code></pre></div>
 </div>
 </div>
 <p>And double:</p>
 <div class="tree">
-<div class="sourceCode" id="cb35"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true"></a>   ┌a           ┌a</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true"></a> ┌y┤          ┌y┤</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true"></a> │ │ ┌b       │ └b</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true"></a> │ └z┤  <span class="op">---&gt;</span> z┤</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true"></a> │   └c       │ ┌c</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true"></a>x┤            └x┤</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true"></a> └d             └d</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>   ┌a           ┌a</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a> ┌y┤          ┌y┤</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a> │ │ ┌b       │ └b</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a> │ └z┤  <span class="op">---&gt;</span> z┤</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a> │   └c       │ ┌c</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>x┤            └x┤</span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a> └d             └d</span></code></pre></div>
 </div>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb36"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">R</span> a </span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true"></a>            (<span class="dt">Node</span> z zv bl b c)) d <span class="ot">=</span></span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true"></a>  <span class="dt">Stay</span> (<span class="dt">Node</span> z zv <span class="dt">O</span> </span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true"></a>         (<span class="dt">Node</span> y yv (balr bl) a b)</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true"></a>         (<span class="dt">Node</span> x xv (ball bl) c d))</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>rotr x xv (<span class="dt">Node</span> y yv <span class="dt">R</span> a </span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>            (<span class="dt">Node</span> z zv bl b c)) d <span class="ot">=</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Stay</span> (<span class="dt">Node</span> z zv <span class="dt">O</span> </span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>         (<span class="dt">Node</span> y yv (balr bl) a b)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>         (<span class="dt">Node</span> x xv (ball bl) c d))</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb37"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true"></a>rotʳ x xv <span class="ot">(</span>node y yv ◺  a</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true"></a>            <span class="ot">(</span>node z zv bl b c<span class="ot">))</span> d <span class="ot">=</span></span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true"></a>  0+ <span class="ot">(</span>node z zv ▽</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true"></a>       <span class="ot">(</span>node y yv <span class="ot">(</span>⃕ bl<span class="ot">)</span> a b<span class="ot">)</span></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true"></a>       <span class="ot">(</span>node x xv <span class="ot">(</span>⃔ bl<span class="ot">)</span> c d<span class="ot">))</span></span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>rotʳ x xv <span class="ot">(</span>node y yv ◺  a</span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>            <span class="ot">(</span>node z zv bl b c<span class="ot">))</span> d <span class="ot">=</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>  0+ <span class="ot">(</span>node z zv ▽</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>       <span class="ot">(</span>node y yv <span class="ot">(</span>⃕ bl<span class="ot">)</span> a b<span class="ot">)</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>       <span class="ot">(</span>node x xv <span class="ot">(</span>⃔ bl<span class="ot">)</span> c d<span class="ot">))</span></span></code></pre></div>
 </div>
 </div>
-<p>I won’t bore you with left-rotation: suffice to say, it’s the opposite of right-rotation.</p>
+<p>I won’t bore you with left-rotation: suffice to say, it’s the
+opposite of right-rotation.</p>
 <h1 id="insertion">Insertion</h1>
-<p>Finally, the main event: insertion. Once the above functions have all been defined, it’s not very difficult, as it happens: by and large, the types guide you to the right answer. Of course, this is only after we decided to use the pivotal pragmatism and balance approach.</p>
+<p>Finally, the main event: insertion. Once the above functions have all
+been defined, it’s not very difficult, as it happens: by and large, the
+types guide you to the right answer. Of course, this is only after we
+decided to use the pivotal pragmatism and balance approach.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb38"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true"></a>insertWith</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Ord</span> k</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true"></a>    <span class="ot">=&gt;</span> (v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> v)</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true"></a>    <span class="ot">-&gt;</span> k</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true"></a>    <span class="ot">-&gt;</span> v</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true"></a>    <span class="ot">-&gt;</span> <span class="dt">Tree</span> h k v</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true"></a>    <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="op">++?</span> h</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true"></a>insertWith _ v vc <span class="dt">Leaf</span> <span class="ot">=</span></span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true"></a>  <span class="dt">Incr</span> (<span class="dt">Node</span> v vc <span class="dt">O</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true"></a>insertWith f v vc (<span class="dt">Node</span> k kc bl tl tr) <span class="ot">=</span></span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true"></a>  <span class="kw">case</span> <span class="fu">compare</span> v k <span class="kw">of</span></span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true"></a>    <span class="dt">LT</span> <span class="ot">-&gt;</span></span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true"></a>      <span class="kw">case</span> insertWith f v vc tl <span class="kw">of</span></span>
-<span id="cb38-14"><a href="#cb38-14" aria-hidden="true"></a>        <span class="dt">Stay</span> tl' <span class="ot">-&gt;</span></span>
-<span id="cb38-15"><a href="#cb38-15" aria-hidden="true"></a>          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl' tr)</span>
-<span id="cb38-16"><a href="#cb38-16" aria-hidden="true"></a>        <span class="dt">Incr</span> tl' <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></span>
-<span id="cb38-17"><a href="#cb38-17" aria-hidden="true"></a>          <span class="dt">L</span> <span class="ot">-&gt;</span> rotr k kc tl' tr</span>
-<span id="cb38-18"><a href="#cb38-18" aria-hidden="true"></a>          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">L</span> tl' tr)</span>
-<span id="cb38-19"><a href="#cb38-19" aria-hidden="true"></a>          <span class="dt">R</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl' tr)</span>
-<span id="cb38-20"><a href="#cb38-20" aria-hidden="true"></a>    <span class="dt">EQ</span> <span class="ot">-&gt;</span></span>
-<span id="cb38-21"><a href="#cb38-21" aria-hidden="true"></a>      <span class="dt">Stay</span> (<span class="dt">Node</span> v (f vc kc) bl tl tr)</span>
-<span id="cb38-22"><a href="#cb38-22" aria-hidden="true"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span></span>
-<span id="cb38-23"><a href="#cb38-23" aria-hidden="true"></a>      <span class="kw">case</span> insertWith f v vc tr <span class="kw">of</span></span>
-<span id="cb38-24"><a href="#cb38-24" aria-hidden="true"></a>        <span class="dt">Stay</span> tr' <span class="ot">-&gt;</span></span>
-<span id="cb38-25"><a href="#cb38-25" aria-hidden="true"></a>          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl tr')</span>
-<span id="cb38-26"><a href="#cb38-26" aria-hidden="true"></a>        <span class="dt">Incr</span> tr' <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></span>
-<span id="cb38-27"><a href="#cb38-27" aria-hidden="true"></a>          <span class="dt">L</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl tr')</span>
-<span id="cb38-28"><a href="#cb38-28" aria-hidden="true"></a>          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">R</span> tl tr')</span>
-<span id="cb38-29"><a href="#cb38-29" aria-hidden="true"></a>          <span class="dt">R</span> <span class="ot">-&gt;</span> rotl k kc tl tr'</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>insertWith</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Ord</span> k</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=&gt;</span> (v <span class="ot">-&gt;</span> v <span class="ot">-&gt;</span> v)</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> k</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> v</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> <span class="dt">Tree</span> h k v</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> <span class="dt">Tree</span> k v <span class="op">++?</span> h</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>insertWith _ v vc <span class="dt">Leaf</span> <span class="ot">=</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Incr</span> (<span class="dt">Node</span> v vc <span class="dt">O</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>insertWith f v vc (<span class="dt">Node</span> k kc bl tl tr) <span class="ot">=</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> <span class="fu">compare</span> v k <span class="kw">of</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    <span class="dt">LT</span> <span class="ot">-&gt;</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>      <span class="kw">case</span> insertWith f v vc tl <span class="kw">of</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Stay</span> tl' <span class="ot">-&gt;</span></span>
+<span id="cb38-15"><a href="#cb38-15" aria-hidden="true" tabindex="-1"></a>          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl' tr)</span>
+<span id="cb38-16"><a href="#cb38-16" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Incr</span> tl' <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></span>
+<span id="cb38-17"><a href="#cb38-17" aria-hidden="true" tabindex="-1"></a>          <span class="dt">L</span> <span class="ot">-&gt;</span> rotr k kc tl' tr</span>
+<span id="cb38-18"><a href="#cb38-18" aria-hidden="true" tabindex="-1"></a>          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">L</span> tl' tr)</span>
+<span id="cb38-19"><a href="#cb38-19" aria-hidden="true" tabindex="-1"></a>          <span class="dt">R</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl' tr)</span>
+<span id="cb38-20"><a href="#cb38-20" aria-hidden="true" tabindex="-1"></a>    <span class="dt">EQ</span> <span class="ot">-&gt;</span></span>
+<span id="cb38-21"><a href="#cb38-21" aria-hidden="true" tabindex="-1"></a>      <span class="dt">Stay</span> (<span class="dt">Node</span> v (f vc kc) bl tl tr)</span>
+<span id="cb38-22"><a href="#cb38-22" aria-hidden="true" tabindex="-1"></a>    <span class="dt">GT</span> <span class="ot">-&gt;</span></span>
+<span id="cb38-23"><a href="#cb38-23" aria-hidden="true" tabindex="-1"></a>      <span class="kw">case</span> insertWith f v vc tr <span class="kw">of</span></span>
+<span id="cb38-24"><a href="#cb38-24" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Stay</span> tr' <span class="ot">-&gt;</span></span>
+<span id="cb38-25"><a href="#cb38-25" aria-hidden="true" tabindex="-1"></a>          <span class="dt">Stay</span> (<span class="dt">Node</span> k kc bl tl tr')</span>
+<span id="cb38-26"><a href="#cb38-26" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Incr</span> tr' <span class="ot">-&gt;</span> <span class="kw">case</span> bl <span class="kw">of</span></span>
+<span id="cb38-27"><a href="#cb38-27" aria-hidden="true" tabindex="-1"></a>          <span class="dt">L</span> <span class="ot">-&gt;</span> <span class="dt">Stay</span> (<span class="dt">Node</span> k kc <span class="dt">O</span> tl tr')</span>
+<span id="cb38-28"><a href="#cb38-28" aria-hidden="true" tabindex="-1"></a>          <span class="dt">O</span> <span class="ot">-&gt;</span> <span class="dt">Incr</span> (<span class="dt">Node</span> k kc <span class="dt">R</span> tl tr')</span>
+<span id="cb38-29"><a href="#cb38-29" aria-hidden="true" tabindex="-1"></a>          <span class="dt">R</span> <span class="ot">-&gt;</span> rotl k kc tl tr'</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb39"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true"></a>insert <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>l u h v<span class="ot">}</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true"></a>           <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true"></a>           <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true"></a>       <span class="ot">→</span> V k</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true"></a>       <span class="ot">→</span> <span class="ot">(</span>V k <span class="ot">→</span> V k <span class="ot">→</span> V k<span class="ot">)</span></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true"></a>       <span class="ot">→</span> Tree V l u h</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true"></a>       <span class="ot">→</span> l &lt; k &lt; u</span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true"></a>       <span class="ot">→</span> Tree V l u 1?+⟨ h ⟩</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true"></a>insert v vc f <span class="ot">(</span>leaf l&lt;u<span class="ot">)</span> <span class="ot">(</span>l , u<span class="ot">)</span> <span class="ot">=</span></span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true"></a>  1+ <span class="ot">(</span>node v vc ▽ <span class="ot">(</span>leaf l<span class="ot">)</span> <span class="ot">(</span>leaf u<span class="ot">))</span></span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> prf</span>
-<span id="cb39-12"><a href="#cb39-12" aria-hidden="true"></a>  <span class="kw">with</span> compare v k</span>
-<span id="cb39-13"><a href="#cb39-13" aria-hidden="true"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(</span>l , <span class="ot">_)</span></span>
-<span id="cb39-14"><a href="#cb39-14" aria-hidden="true"></a>    <span class="ot">|</span> tri&lt; a <span class="ot">_</span> <span class="ot">_</span> <span class="kw">with</span> insert v vc f tl <span class="ot">(</span>l , a<span class="ot">)</span></span>
-<span id="cb39-15"><a href="#cb39-15" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> 0+ tl′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl′ tr<span class="ot">)</span></span>
-<span id="cb39-16"><a href="#cb39-16" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> 1+ tl′ <span class="kw">with</span> bl</span>
-<span id="cb39-17"><a href="#cb39-17" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> rotʳ k kc tl′ tr</span>
-<span id="cb39-18"><a href="#cb39-18" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc  ◿  tl′ tr<span class="ot">)</span></span>
-<span id="cb39-19"><a href="#cb39-19" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc  ▽  tl′ tr<span class="ot">)</span></span>
-<span id="cb39-20"><a href="#cb39-20" aria-hidden="true"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">_</span></span>
-<span id="cb39-21"><a href="#cb39-21" aria-hidden="true"></a>    <span class="ot">|</span> tri≈ <span class="ot">_</span> refl <span class="ot">_</span> <span class="ot">=</span></span>
-<span id="cb39-22"><a href="#cb39-22" aria-hidden="true"></a>        0+ <span class="ot">(</span>node k <span class="ot">(</span>f vc kc<span class="ot">)</span> bl tl tr<span class="ot">)</span></span>
-<span id="cb39-23"><a href="#cb39-23" aria-hidden="true"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(_</span> , u<span class="ot">)</span></span>
-<span id="cb39-24"><a href="#cb39-24" aria-hidden="true"></a>    <span class="ot">|</span> tri&gt; <span class="ot">_</span> <span class="ot">_</span> c <span class="kw">with</span> insert v vc f tr <span class="ot">(</span>c , u<span class="ot">)</span></span>
-<span id="cb39-25"><a href="#cb39-25" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> 0+ tr′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl tr′<span class="ot">)</span></span>
-<span id="cb39-26"><a href="#cb39-26" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> 1+ tr′ <span class="kw">with</span> bl</span>
-<span id="cb39-27"><a href="#cb39-27" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc ▽ tl tr′<span class="ot">)</span></span>
-<span id="cb39-28"><a href="#cb39-28" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc ◺ tl tr′<span class="ot">)</span></span>
-<span id="cb39-29"><a href="#cb39-29" aria-hidden="true"></a><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> rotˡ k kc tl tr′</span></code></pre></div>
+<div class="sourceCode" id="cb39"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>insert <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>l u h v<span class="ot">}</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a>           <span class="ot">{</span>V <span class="ot">:</span> Key <span class="ot">→</span> <span class="dt">Set</span> v<span class="ot">}</span></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>           <span class="ot">(</span>k <span class="ot">:</span> Key<span class="ot">)</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> V k</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> <span class="ot">(</span>V k <span class="ot">→</span> V k <span class="ot">→</span> V k<span class="ot">)</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> Tree V l u h</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> l &lt; k &lt; u</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> Tree V l u 1?+⟨ h ⟩</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>insert v vc f <span class="ot">(</span>leaf l&lt;u<span class="ot">)</span> <span class="ot">(</span>l , u<span class="ot">)</span> <span class="ot">=</span></span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a>  1+ <span class="ot">(</span>node v vc ▽ <span class="ot">(</span>leaf l<span class="ot">)</span> <span class="ot">(</span>leaf u<span class="ot">))</span></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> prf</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">with</span> compare v k</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(</span>l , <span class="ot">_)</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>    <span class="ot">|</span> tri&lt; a <span class="ot">_</span> <span class="ot">_</span> <span class="kw">with</span> insert v vc f tl <span class="ot">(</span>l , a<span class="ot">)</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> 0+ tl′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl′ tr<span class="ot">)</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> 1+ tl′ <span class="kw">with</span> bl</span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> rotʳ k kc tl′ tr</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc  ◿  tl′ tr<span class="ot">)</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc  ▽  tl′ tr<span class="ot">)</span></span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">_</span></span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>    <span class="ot">|</span> tri≈ <span class="ot">_</span> refl <span class="ot">_</span> <span class="ot">=</span></span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>        0+ <span class="ot">(</span>node k <span class="ot">(</span>f vc kc<span class="ot">)</span> bl tl tr<span class="ot">)</span></span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>insert v vc f <span class="ot">(</span>node k kc bl tl tr<span class="ot">)</span> <span class="ot">(_</span> , u<span class="ot">)</span></span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>    <span class="ot">|</span> tri&gt; <span class="ot">_</span> <span class="ot">_</span> c <span class="kw">with</span> insert v vc f tr <span class="ot">(</span>c , u<span class="ot">)</span></span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> 0+ tr′ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc bl tl tr′<span class="ot">)</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> 1+ tr′ <span class="kw">with</span> bl</span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ◿ <span class="ot">=</span> 0+ <span class="ot">(</span>node k kc ▽ tl tr′<span class="ot">)</span></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ▽ <span class="ot">=</span> 1+ <span class="ot">(</span>node k kc ◺ tl tr′<span class="ot">)</span></span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a><span class="ot">...</span> <span class="ot">|</span> ◺ <span class="ot">=</span> rotˡ k kc tl tr′</span></code></pre></div>
 </div>
 </div>
 <h1 id="conclusion">Conclusion</h1>
-<p>Overall, I’ve been enjoying programming in Agda. The things I liked and didn’t like surprised me:</p>
+<p>Overall, I’ve been enjoying programming in Agda. The things I liked
+and didn’t like surprised me:</p>
 <dl>
 <dt>Editor Support</dt>
-<dd><p>Is excellent. I use <a href="http://spacemacs.org">spacemacs</a>, and the whole thing worked pretty seamlessly. Proof search and auto was maybe not as powerful as Idris’, although that might be down to lack of experience (note—as I write this, I see you can enable case-splitting in proof search, so it looks like I was right about my lack of experience). In many ways, it was much better than Haskell’s editor support: personally, I have never managed to get case-splitting to work in my Haskell setup, never mind some of the fancier features that you get in Agda.</p>
-<p>It’s worth noting that my experience with Idris is similar: maybe it’s something about dependent types?</p>
-<p>Of course, I missed lots of extra tools, like linters, code formatters, etc., but the tight integration with the compiler was so useful it more than made up for it.</p>
-<p>Also, I’d implore anyone who’s had trouble with emacs before to give <a href="http://spacemacs.org">spacemacs</a> a go. It works well out-of-the-box, and has a system for keybinding discovery that <em>actually works</em>.</p>
+<dd>
+<p>Is excellent. I use <a href="http://spacemacs.org">spacemacs</a>, and
+the whole thing worked pretty seamlessly. Proof search and auto was
+maybe not as powerful as Idris’, although that might be down to lack of
+experience (note—as I write this, I see you can enable case-splitting in
+proof search, so it looks like I was right about my lack of experience).
+In many ways, it was much better than Haskell’s editor support:
+personally, I have never managed to get case-splitting to work in my
+Haskell setup, never mind some of the fancier features that you get in
+Agda.</p>
+<p>It’s worth noting that my experience with Idris is similar: maybe
+it’s something about dependent types?</p>
+<p>Of course, I missed lots of extra tools, like linters, code
+formatters, etc., but the tight integration with the compiler was so
+useful it more than made up for it.</p>
+<p>Also, I’d implore anyone who’s had trouble with emacs before to give
+<a href="http://spacemacs.org">spacemacs</a> a go. It works well
+out-of-the-box, and has a system for keybinding discovery that
+<em>actually works</em>.</p>
 </dd>
 <dt>Documentation</dt>
-<dd><p>Pretty good, considering. There are some missing parts (<a href="https://agda.readthedocs.io/en/v2.5.4.1/language/rewriting.html">rewriting</a> and <a href="https://agda.readthedocs.io/en/v2.5.4.1/language/telescopes.html">telescopes</a> are both stubs on the documentation site), but there seemed to be more fully worked-out examples available online for different concepts when I needed to figure them out.</p>
+<dd>
+<p>Pretty good, considering. There are some missing parts (<a href="https://agda.readthedocs.io/en/v2.5.4.1/language/rewriting.html">rewriting</a>
+and <a href="https://agda.readthedocs.io/en/v2.5.4.1/language/telescopes.html">telescopes</a>
+are both stubs on the documentation site), but there seemed to be more
+fully worked-out examples available online for different concepts when I
+needed to figure them out.</p>
 </dd>
 </dl>
-<p>Now, the thing about a lot of these complaints/commendations (<em>especially</em> with regards to tooling and personal setups) is that people tend to be pretty bad about evaluating how difficult finicky tasks like editor setups are. Once you’ve gotten the hang of some of this stuff, you forget that you ever didn’t. Agda is the second dependently-typed language I’ve really gone for a deepish dive on, and I’ve been using spacemacs for a while, so YMMV.</p>
-<p>One area of the language itself that I would have liked to see more on was irrelevance. Looking back at the definition of the tree type, in the Haskell version there’s no singleton storing the height (the balance type stores all the information we need), which means that it definitely doesn’t exist at runtime. As I understand it, that implies that the type should be irrelevant in the equivalent Agda. However, when I actually mark it as irrelevant, everything works fine, except that missing cases warnings start showing up. I couldn’t figure out why: Haskell was able to infer full case coverage without the index, after all. Equality proof erasure, also: is it safe? Consistent?</p>
-<p>All in all, I’d encourage more Haskellers to give Agda a try. It’s fun, interesting, and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="script"><mi>𝒰</mi><mi>𝓃</mi><mi>𝒾</mi><mi>𝒸</mi><mi>ℴ</mi><mi>𝒹</mi><mi>ℯ</mi></mstyle><annotation encoding="application/x-tex">\mathcal{Unicode}</annotation></semantics></math>!</p>
+<p>Now, the thing about a lot of these complaints/commendations
+(<em>especially</em> with regards to tooling and personal setups) is
+that people tend to be pretty bad about evaluating how difficult finicky
+tasks like editor setups are. Once you’ve gotten the hang of some of
+this stuff, you forget that you ever didn’t. Agda is the second
+dependently-typed language I’ve really gone for a deepish dive on, and
+I’ve been using spacemacs for a while, so YMMV.</p>
+<p>One area of the language itself that I would have liked to see more
+on was irrelevance. Looking back at the definition of the tree type, in
+the Haskell version there’s no singleton storing the height (the balance
+type stores all the information we need), which means that it definitely
+doesn’t exist at runtime. As I understand it, that implies that the type
+should be irrelevant in the equivalent Agda. However, when I actually
+mark it as irrelevant, everything works fine, except that missing cases
+warnings start showing up. I couldn’t figure out why: Haskell was able
+to infer full case coverage without the index, after all. Equality proof
+erasure, also: is it safe? Consistent?</p>
+<p>All in all, I’d encourage more Haskellers to give Agda a try. It’s
+fun, interesting, and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒰</mi><mi>𝓃</mi><mi>𝒾</mi><mi>𝒸</mi><mi>ℴ</mi><mi>𝒹</mi><mi>ℯ</mi></mrow><annotation encoding="application/x-tex">\mathcal{Unicode}</annotation></semantics></math>!</p>
 <h1 id="further-reading">Further Reading</h1>
-<p>No “deletion is left as an exercise to the reader” here, no sir! Fuller implementations of both the Haskell and Agda versions of the code here are available: first, a pdf of the Agda code with lovely colours is <a href="../pdfs/AVL.pdf">here</a>. The accompanying repository is <a href="https://github.com/oisdk/agda-avl">here</a>, and the equivalent for the Haskell code is <a href="https://github.com/oisdk/verified-avl">here</a>. Of course, if you would rather read something by someone who knows what they’re talking about, please see the</p>
+<p>No “deletion is left as an exercise to the reader” here, no sir!
+Fuller implementations of both the Haskell and Agda versions of the code
+here are available: first, a pdf of the Agda code with lovely colours is
+<a href="../pdfs/AVL.pdf">here</a>. The accompanying repository is <a href="https://github.com/oisdk/agda-avl">here</a>, and the equivalent
+for the Haskell code is <a href="https://github.com/oisdk/verified-avl">here</a>. Of course, if you
+would rather read something by someone who knows what they’re talking
+about, please see the</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-danielsson_agda_2018">
-<p>Danielsson, Nils Anders. 2018. “The Agda Standard Library.”</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-danielsson_agda_2018" class="csl-entry" role="listitem">
+Danielsson, Nils Anders. 2018. <span>“The <span>Agda</span> standard
+library.”</span>
 </div>
-<div id="ref-mcbride_how_2014">
-<p>McBride, Conor Thomas. 2014. “How to Keep Your Neighbours in Order.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 297–309. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>.</p>
+<div id="ref-mcbride_how_2014" class="csl-entry" role="listitem">
+McBride, Conor Thomas. 2014. <span>“How to <span>Keep Your
+Neighbours</span> in <span>Order</span>.”</span> In <em>Proceedings of
+the 19th <span>ACM SIGPLAN International Conference</span> on
+<span>Functional Programming</span></em>, 297–309. <span>ICFP</span>
+’14. New York, NY, USA: <span>ACM</span>. doi:<a href="https://doi.org/10.1145/2628136.2628163">10.1145/2628136.2628163</a>.
 </div>
-<div id="ref-pfaff_performance_2004">
-<p>Pfaff, Ben. 2004. “Performance Analysis of BSTs in System Software.” In <em>Proceedings of the Joint International Conference on Measurement and Modeling of Computer Systems</em>, 410–411. SIGMETRICS ’04/Performance ’04. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/1005686.1005742">10.1145/1005686.1005742</a>.</p>
+<div id="ref-pfaff_performance_2004" class="csl-entry" role="listitem">
+Pfaff, Ben. 2004. <span>“Performance <span>Analysis</span> of
+<span>BSTs</span> in <span>System Software</span>.”</span> In
+<em>Proceedings of the <span>Joint International Conference</span> on
+<span>Measurement</span> and <span>Modeling</span> of <span>Computer
+Systems</span></em>, 410–411. <span>SIGMETRICS</span>
+’04/<span>Performance</span> ’04. New York, NY, USA: <span>ACM</span>.
+doi:<a href="https://doi.org/10.1145/1005686.1005742">10.1145/1005686.1005742</a>.
 </div>
-<div id="ref-weirich_depending_2014">
-<p>Weirich, Stephanie. 2014. “Depending on Types.” In <em>Proceedings of the 19th ACM SIGPLAN International Conference on Functional Programming</em>, 241–241. ICFP ’14. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>.</p>
+<div id="ref-weirich_depending_2014" class="csl-entry" role="listitem">
+Weirich, Stephanie. 2014. <span>“Depending on
+<span>Types</span>.”</span> In <em>Proceedings of the 19th <span>ACM
+SIGPLAN International Conference</span> on <span>Functional
+Programming</span></em>, 241–241. <span>ICFP</span> ’14. New York, NY,
+USA: <span>ACM</span>. doi:<a href="https://doi.org/10.1145/2628136.2631168">10.1145/2628136.2631168</a>.
 </div>
 </div>
-<section class="footnotes" role="doc-endnotes">
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>My phrasing is maybe a little confusing here. When <code class="sourceCode haskell"><span class="dt">Set</span></code> “has the type” <code class="sourceCode agda"><span class="dt">Set₁</span></code> it means that <code class="sourceCode haskell"><span class="dt">Set</span></code> is <em>in</em> <code class="sourceCode agda"><span class="dt">Set₁</span></code>, not the other way around.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>My phrasing is maybe a little confusing here. When <code class="sourceCode haskell"><span class="dt">Set</span></code> “has the
+type” <code class="sourceCode agda">Set₁</code> it means that <code class="sourceCode haskell"><span class="dt">Set</span></code> is
+<em>in</em> <code class="sourceCode agda">Set₁</code>, not the other way
+around.<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 

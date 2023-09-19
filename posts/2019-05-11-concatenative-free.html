@@ -30,212 +30,275 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Concatenative'." href="../tags/Concatenative.html">Concatenative</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Concatenative'." href="../tags/Concatenative.html" rel="tag">Concatenative</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>This post demonstrates a simple encoding of a (typed) concatenative language in Haskell.</p>
-<p>Point-free style is one of the distinctive markers of functional programming languages. Want to sum a list? That’s as easy as:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">sum</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span></span></code></pre></div>
+<p>This post demonstrates a simple encoding of a (typed) concatenative
+language in Haskell.</p>
+<p>Point-free style is one of the distinctive markers of functional
+programming languages. Want to sum a list? That’s as easy as:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span></span></code></pre></div>
 <p>Now I want to sum every number after adding one to it.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>sumSuccs <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">map</span> ((<span class="op">+</span>) <span class="dv">1</span>)</span></code></pre></div>
-<p>One more step to make this function truly abstract™ and general™: we’ll allow the user to supply their own number to add</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>sumAdded <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)</span></code></pre></div>
-<p>And here the trouble begins. The above expression won’t actually type check. In fact, it’ll give a pretty terrible error message:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>sumSuccs <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">map</span> ((<span class="op">+</span>) <span class="dv">1</span>)</span></code></pre></div>
+<p>One more step to make this function truly abstract™ and general™:
+we’ll allow the user to supply their own number to add</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>sumAdded <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)</span></code></pre></div>
+<p>And here the trouble begins. The above expression won’t actually type
+check. In fact, it’ll give a pretty terrible error message:</p>
 <pre><code>• Non type-variable argument in the constraint: Num [a]
   (Use FlexibleContexts to permit this)
 • When checking the inferred type
     sumThoseThat :: forall a.
                     (Num [a], Foldable ((-&gt;) [a])) =&gt;
                     a -&gt; [a]</code></pre>
-<p>I remember as a beginner being confused by similar messages. What’s <code>FlexibleContexts</code>? I had thought that the “point-free style” just meant removing the last variable from an expression if it’s also the last argument:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">sum</span> xs <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> xs</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="fu">sum</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span></span></code></pre></div>
+<p>I remember as a beginner being confused by similar messages. What’s
+<code>FlexibleContexts</code>? I had thought that the “point-free style”
+just meant removing the last variable from an expression if it’s also
+the last argument:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span> xs <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> xs</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span> <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span></span></code></pre></div>
 <p>Why doesn’t it work here?</p>
-<p>Well, it doesn’t work because the types don’t line up, but I’m going to try and explain a slightly different perspective on the problem, which is <em>associativity</em>.</p>
-<p>To make it a little clearer, let’s see what happens when we point-fill the expression:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>sumAdded n xs <span class="ot">=</span> (<span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> (<span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>))) n xs</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> ((<span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)) n) xs</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> (<span class="fu">map</span> ((<span class="op">+</span>) n)) xs</span></code></pre></div>
-<p>Indeed, the problem is the placement of the parentheses. What we want at the end is:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> (<span class="fu">map</span> ((<span class="op">+</span>) n) xs)</span></code></pre></div>
-<p>But, no matter. We have to jiggle the arguments around, or we could use something terrible like this:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">9</span> <span class="op">.:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>(<span class="op">.:</span>) <span class="ot">=</span> (<span class="op">.</span>)<span class="op">.</span>(<span class="op">.</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>sumAdded <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.:</span> <span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)</span></code></pre></div>
+<p>Well, it doesn’t work because the types don’t line up, but I’m going
+to try and explain a slightly different perspective on the problem,
+which is <em>associativity</em>.</p>
+<p>To make it a little clearer, let’s see what happens when we
+point-fill the expression:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>sumAdded n xs <span class="ot">=</span> (<span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> <span class="op">.</span> (<span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>))) n xs</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> ((<span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)) n) xs</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> (<span class="fu">map</span> ((<span class="op">+</span>) n)) xs</span></code></pre></div>
+<p>Indeed, the problem is the placement of the parentheses. What we want
+at the end is:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>             <span class="ot">=&gt;</span> <span class="fu">foldr</span>(<span class="op">+</span>) <span class="dv">0</span> (<span class="fu">map</span> ((<span class="op">+</span>) n) xs)</span></code></pre></div>
+<p>But, no matter. We have to jiggle the arguments around, or we could
+use something terrible like this:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">9</span> <span class="op">.:</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>(<span class="op">.:</span>) <span class="ot">=</span> (<span class="op">.</span>)<span class="op">.</span>(<span class="op">.</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>sumAdded <span class="ot">=</span> <span class="fu">foldr</span> (<span class="op">+</span>) <span class="dv">0</span> <span class="op">.:</span> <span class="fu">map</span> <span class="op">.</span> (<span class="op">+</span>)</span></code></pre></div>
 <p>Is there something, though, that could do this automatically?</p>
 <h1 id="associativity">Associativity</h1>
-<p>We run into a similar problem in Agda. We’re forever having to prove statements like:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">(</span>x + y<span class="ot">)</span> + z ≡ x + <span class="ot">(</span>y + z<span class="ot">)</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>x ≡ x + <span class="dv">0</span></span></code></pre></div>
-<p>There are a couple of ways to get around the issue, and for monoids there’s a rich theory of techniques. I’ll just show one for now, which relies on the <em>endomorphism</em> monoid. This monoid is created by partially applying the monoid’s binary operator:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>Endo <span class="ot">:</span> <span class="dt">Set</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>Endo <span class="ot">=</span> ℕ <span class="ot">→</span> ℕ</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>⟦<span class="ot">_</span>⇑⟧ <span class="ot">:</span> ℕ <span class="ot">→</span> Endo</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>⟦ n ⇑⟧ m <span class="ot">=</span> n + m</span></code></pre></div>
-<p>And you can get back to the underlying monoid by applying it to the neutral element:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">:</span> Endo <span class="ot">→</span> ℕ</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>⟦ n ⇓⟧ <span class="ot">=</span> n <span class="dv">0</span></span></code></pre></div>
-<p>Here’s the important parts: first, we can lift the underlying operation into the endomorphism:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">_</span>⊕<span class="ot">_</span> <span class="ot">:</span> Endo <span class="ot">→</span> Endo <span class="ot">→</span> Endo</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>xs ⊕ ys <span class="ot">=</span> <span class="ot">λ</span> x <span class="ot">→</span> xs <span class="ot">(</span>ys x<span class="ot">)</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>⊕-homo <span class="ot">:</span> <span class="ot">∀</span> n m <span class="ot">→</span> ⟦ ⟦ n ⇑⟧ ⊕ ⟦ m ⇑⟧ ⇓⟧ ≡ n + m</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>⊕-homo n m <span class="ot">=</span> cong <span class="ot">(</span>n +<span class="ot">_)</span> <span class="ot">(</span>+-identityʳ m<span class="ot">)</span></span></code></pre></div>
+<p>We run into a similar problem in Agda. We’re forever having to prove
+statements like:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">(</span>x + y<span class="ot">)</span> + z ≡ x + <span class="ot">(</span>y + z<span class="ot">)</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>x ≡ x + <span class="dv">0</span></span></code></pre></div>
+<p>There are a couple of ways to get around the issue, and for monoids
+there’s a rich theory of techniques. I’ll just show one for now, which
+relies on the <em>endomorphism</em> monoid. This monoid is created by
+partially applying the monoid’s binary operator:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Endo <span class="ot">:</span> <span class="dt">Set</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>Endo <span class="ot">=</span> ℕ <span class="ot">→</span> ℕ</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>⟦<span class="ot">_</span>⇑⟧ <span class="ot">:</span> ℕ <span class="ot">→</span> Endo</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>⟦ n ⇑⟧ m <span class="ot">=</span> n + m</span></code></pre></div>
+<p>And you can get back to the underlying monoid by applying it to the
+neutral element:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">:</span> Endo <span class="ot">→</span> ℕ</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>⟦ n ⇓⟧ <span class="ot">=</span> n <span class="dv">0</span></span></code></pre></div>
+<p>Here’s the important parts: first, we can lift the underlying
+operation into the endomorphism:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>⊕<span class="ot">_</span> <span class="ot">:</span> Endo <span class="ot">→</span> Endo <span class="ot">→</span> Endo</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>xs ⊕ ys <span class="ot">=</span> <span class="ot">λ</span> x <span class="ot">→</span> xs <span class="ot">(</span>ys x<span class="ot">)</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>⊕-homo <span class="ot">:</span> <span class="ot">∀</span> n m <span class="ot">→</span> ⟦ ⟦ n ⇑⟧ ⊕ ⟦ m ⇑⟧ ⇓⟧ ≡ n + m</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>⊕-homo n m <span class="ot">=</span> cong <span class="ot">(</span>n +<span class="ot">_)</span> <span class="ot">(</span>+-identityʳ m<span class="ot">)</span></span></code></pre></div>
 <p>And second, it’s <em>definitionally</em> associative.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>⊕-assoc <span class="ot">:</span> <span class="ot">∀</span> x y z <span class="ot">→</span> <span class="ot">(</span>x ⊕ y<span class="ot">)</span> ⊕ z ≡ x ⊕ <span class="ot">(</span>y ⊕ z<span class="ot">)</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>⊕-assoc <span class="ot">_</span> <span class="ot">_</span> <span class="ot">_</span> <span class="ot">=</span> refl</span></code></pre></div>
-<p>These are all clues as to how to solve the composition problem in the Haskell code above. We need definitional associativity, somehow. Maybe we can get it from the endomorphism monoid?</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>⊕-assoc <span class="ot">:</span> <span class="ot">∀</span> x y z <span class="ot">→</span> <span class="ot">(</span>x ⊕ y<span class="ot">)</span> ⊕ z ≡ x ⊕ <span class="ot">(</span>y ⊕ z<span class="ot">)</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>⊕-assoc <span class="ot">_</span> <span class="ot">_</span> <span class="ot">_</span> <span class="ot">=</span> refl</span></code></pre></div>
+<p>These are all clues as to how to solve the composition problem in the
+Haskell code above. We need definitional associativity, somehow. Maybe
+we can get it from the endomorphism monoid?</p>
 <h1 id="state">State</h1>
 <p>You’re probably familiar with Haskell’s state monad:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">State</span> s a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> s <span class="ot">-&gt;</span> (a, s) }</span></code></pre></div>
-<p>It can help a lot when you’re threading around fiddly accumulators and so on.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">nub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>nub <span class="ot">=</span> go Set.empty</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    go seen [] <span class="ot">=</span> []</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    go seen (x<span class="op">:</span>xs)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>      <span class="op">|</span> x <span class="ot">`Set.member`</span> seen <span class="ot">=</span> go seen xs</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> x <span class="op">:</span> go (Set.insert x seen) xs</span></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">nub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>nub <span class="ot">=</span> <span class="fu">flip</span> evalState Set.empty <span class="op">.</span> go</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> <span class="fu">pure</span> []</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>    go (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>        seen <span class="ot">&lt;-</span> gets (Set.member x)</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>        <span class="kw">if</span> seen</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>          <span class="kw">then</span> go xs</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a>          <span class="kw">else</span> <span class="kw">do</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a>              modify (Set.insert x)</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>              (x<span class="op">:</span>) <span class="op">&lt;$&gt;</span> go xs</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">State</span> s a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> s <span class="ot">-&gt;</span> (a, s) }</span></code></pre></div>
+<p>It can help a lot when you’re threading around fiddly accumulators
+and so on.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ot">nub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>nub <span class="ot">=</span> go Set.empty</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    go seen [] <span class="ot">=</span> []</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    go seen (x<span class="op">:</span>xs)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> x <span class="ot">`Set.member`</span> seen <span class="ot">=</span> go seen xs</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> x <span class="op">:</span> go (Set.insert x seen) xs</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">nub ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>nub <span class="ot">=</span> <span class="fu">flip</span> evalState Set.empty <span class="op">.</span> go</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    go [] <span class="ot">=</span> <span class="fu">pure</span> []</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    go (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        seen <span class="ot">&lt;-</span> gets (Set.member x)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> seen</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>          <span class="kw">then</span> go xs</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>          <span class="kw">else</span> <span class="kw">do</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>              modify (Set.insert x)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>              (x<span class="op">:</span>) <span class="op">&lt;$&gt;</span> go xs</span></code></pre></div>
 <p>Of course, these days state is a transformer:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span></code></pre></div>
-<p>This lets us stack multiple effects on top of each other: error handling, IO, randomness, even another state monad. In fact, if you <em>do</em> stack another state monad on top, you might be surprised by the efficiency of the code it generates:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">DoubleState</span> s1 s2 a <span class="ot">=</span> <span class="dt">StateT</span> s1 (<span class="dt">State</span> s2) a</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>                        <span class="ot">=&gt;</span> s1 <span class="ot">-&gt;</span> <span class="dt">State</span> s2 (a, s1)</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>                        <span class="ot">=&gt;</span> s1 <span class="ot">-&gt;</span> s2 <span class="ot">-&gt;</span> ((a, s1), s2)</span></code></pre></div>
-<p>It’s nothing earth shattering, but it inlines and optimises well. That output is effectively a left-nested list, also.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span></code></pre></div>
+<p>This lets us stack multiple effects on top of each other: error
+handling, IO, randomness, even another state monad. In fact, if you
+<em>do</em> stack another state monad on top, you might be surprised by
+the efficiency of the code it generates:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">DoubleState</span> s1 s2 a <span class="ot">=</span> <span class="dt">StateT</span> s1 (<span class="dt">State</span> s2) a</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>                        <span class="ot">=&gt;</span> s1 <span class="ot">-&gt;</span> <span class="dt">State</span> s2 (a, s1)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>                        <span class="ot">=&gt;</span> s1 <span class="ot">-&gt;</span> s2 <span class="ot">-&gt;</span> ((a, s1), s2)</span></code></pre></div>
+<p>It’s nothing earth shattering, but it inlines and optimises well.
+That output is effectively a left-nested list, also.</p>
 <h1 id="multi-state">Multi-State</h1>
-<p>If we can do one, and we can do two, why not more? Can we generalise the state pattern to an arbitrary number of variables? First we’ll need a generic tuple:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Stack</span> (<span class="ot">xs ::</span> [<span class="dt">Type</span>])<span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>    <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">Stack</span> '[]</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a><span class="ot">    (:-) ::</span> x <span class="ot">-&gt;</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> (x <span class="op">:</span> xs)</span></code></pre></div>
+<p>If we can do one, and we can do two, why not more? Can we generalise
+the state pattern to an arbitrary number of variables? First we’ll need
+a generic tuple:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Stack</span> (<span class="ot">xs ::</span> [<span class="dt">Type</span>])<span class="ot"> ::</span> <span class="dt">Type</span> <span class="kw">where</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Nil</span><span class="ot">  ::</span> <span class="dt">Stack</span> '[]</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="ot">    (:-) ::</span> x <span class="ot">-&gt;</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> (x <span class="op">:</span> xs)</span></code></pre></div>
 <p>Then, the state type.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> (a, <span class="dt">Stack</span> xs) }</span></code></pre></div>
-<p>We can actually clean the definition up a little: instead of a tuple at the other end, why not push it onto the stack.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> (a <span class="op">:</span> xs) }</span></code></pre></div>
-<p>In fact, let’s make this as polymorphic as possible. We should be able to change the state is we so desire.</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> ys</span></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> (a, <span class="dt">Stack</span> xs) }</span></code></pre></div>
+<p>We can actually clean the definition up a little: instead of a tuple
+at the other end, why not push it onto the stack.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> (a <span class="op">:</span> xs) }</span></code></pre></div>
+<p>In fact, let’s make this as polymorphic as possible. We should be
+able to change the state is we so desire.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> ys</span></code></pre></div>
 <p>And suddenly, our endomorphism type from above shows up again.</p>
 <p>We can, of course, get back our original types.</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> xs <span class="op">:-&gt;</span> a <span class="op">:</span> xs }</span></code></pre></div>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">State</span> xs a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> xs <span class="op">:-&gt;</span> a <span class="op">:</span> xs }</span></code></pre></div>
 <p>And it comes with all of the instances you might expect:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>    <span class="fu">fmap</span> f xs <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s <span class="kw">of</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>        (x <span class="op">:-</span> ys) <span class="ot">-&gt;</span> f x <span class="op">:-</span> ys)</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a>        </span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true"></a>    <span class="fu">pure</span> x <span class="ot">=</span> <span class="dt">State</span> (x <span class="op">:-</span>)</span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true"></a>    fs <span class="op">&lt;*&gt;</span> xs <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState fs s <span class="kw">of</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true"></a>        (f <span class="op">:-</span> s') <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s' <span class="kw">of</span></span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true"></a>            (x <span class="op">:-</span> s'') <span class="ot">-&gt;</span> f x <span class="op">:-</span> s'')</span>
-<span id="cb24-10"><a href="#cb24-10" aria-hidden="true"></a>            </span>
-<span id="cb24-11"><a href="#cb24-11" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Monad</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
-<span id="cb24-12"><a href="#cb24-12" aria-hidden="true"></a>    xs <span class="op">&gt;&gt;=</span> f <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s <span class="kw">of</span></span>
-<span id="cb24-13"><a href="#cb24-13" aria-hidden="true"></a>        y <span class="op">:-</span> ys <span class="ot">-&gt;</span> runState (f y) ys)</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Functor</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fmap</span> f xs <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s <span class="kw">of</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>        (x <span class="op">:-</span> ys) <span class="ot">-&gt;</span> f x <span class="op">:-</span> ys)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pure</span> x <span class="ot">=</span> <span class="dt">State</span> (x <span class="op">:-</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    fs <span class="op">&lt;*&gt;</span> xs <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState fs s <span class="kw">of</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>        (f <span class="op">:-</span> s') <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s' <span class="kw">of</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>            (x <span class="op">:-</span> s'') <span class="ot">-&gt;</span> f x <span class="op">:-</span> s'')</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Monad</span> (<span class="dt">State</span> xs) <span class="kw">where</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>    xs <span class="op">&gt;&gt;=</span> f <span class="ot">=</span> <span class="dt">State</span> (\s <span class="ot">-&gt;</span> <span class="kw">case</span> runState xs s <span class="kw">of</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>        y <span class="op">:-</span> ys <span class="ot">-&gt;</span> runState (f y) ys)</span></code></pre></div>
 <h1 id="polymorphism">Polymorphism</h1>
-<p>But what’s the point? So far we’ve basically just encoded an unnecessarily complicated state transformer. Think back to the stacking of states. Written in the <a href="https://hackage.haskell.org/package/mtl">mtl</a> style, the main advantage of stacking monads like that is you can write code like the following:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="ot">pop ::</span> (<span class="dt">MonadState</span> [a] m, <span class="dt">MonadError</span> <span class="dt">String</span> m) <span class="ot">=&gt;</span> m a</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a>pop <span class="ot">=</span> get <span class="op">&gt;&gt;=</span> \<span class="kw">case</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a>    [] <span class="ot">-&gt;</span> throwError <span class="st">&quot;pop: empty list&quot;</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> <span class="kw">do</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a>        put xs </span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a>        <span class="fu">pure</span> x</span></code></pre></div>
-<p>In other words, we don’t care about the rest of <code>m</code>, we just care that it has, somewhere, state for an <code>[a]</code>.</p>
-<p>This logic should apply to our stack transformer, as well. If it only cares about the top two variables, it shouldn’t care what the rest of the list is. In types:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="kw">forall</span> zs<span class="op">.</span> <span class="dt">Stack</span> (xs <span class="op">++</span> zs) <span class="ot">-&gt;</span> <span class="dt">Stack</span> (ys <span class="op">++</span> zs)</span></code></pre></div>
+<p>But what’s the point? So far we’ve basically just encoded an
+unnecessarily complicated state transformer. Think back to the stacking
+of states. Written in the <a href="https://hackage.haskell.org/package/mtl">mtl</a> style, the main
+advantage of stacking monads like that is you can write code like the
+following:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ot">pop ::</span> (<span class="dt">MonadState</span> [a] m, <span class="dt">MonadError</span> <span class="dt">String</span> m) <span class="ot">=&gt;</span> m a</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>pop <span class="ot">=</span> get <span class="op">&gt;&gt;=</span> \<span class="kw">case</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    [] <span class="ot">-&gt;</span> throwError <span class="st">&quot;pop: empty list&quot;</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> <span class="kw">do</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>        put xs </span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pure</span> x</span></code></pre></div>
+<p>In other words, we don’t care about the rest of <code>m</code>, we
+just care that it has, somewhere, state for an <code>[a]</code>.</p>
+<p>This logic should apply to our stack transformer, as well. If it only
+cares about the top two variables, it shouldn’t care what the rest of
+the list is. In types:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="kw">forall</span> zs<span class="op">.</span> <span class="dt">Stack</span> (xs <span class="op">++</span> zs) <span class="ot">-&gt;</span> <span class="dt">Stack</span> (ys <span class="op">++</span> zs)</span></code></pre></div>
 <p>And straight away we can write some of the standard combinators:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">dup ::</span> '[a] <span class="op">:-&gt;</span> '[a,a]</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>dup (x <span class="op">:-</span> xs) <span class="ot">=</span> (x <span class="op">:-</span> x <span class="op">:-</span> xs)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a><span class="ot">swap ::</span> '[x,y] <span class="op">:-&gt;</span> '[y,x]</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true"></a>swap (x <span class="op">:-</span> y <span class="op">:-</span> xs) <span class="ot">=</span> y <span class="op">:-</span> x <span class="op">:-</span> xs</span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true"></a></span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true"></a><span class="fu">drop</span><span class="ot"> ::</span> '[x,y] <span class="op">:-&gt;</span> '[y]</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true"></a><span class="fu">drop</span> (_ <span class="op">:-</span> xs) <span class="ot">=</span> xs</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true"></a></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true"></a><span class="kw">infixl</span> <span class="dv">9</span> <span class="op">!</span></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true"></a>(f <span class="op">!</span> g) x <span class="ot">=</span> g (f x)</span></code></pre></div>
-<p>You’ll immediately run into trouble if you try to work with some of the more involved combinators, though. Quote should have the following type, for instance:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="ot">quote ::</span> (xs <span class="op">:-&gt;</span> ys) <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[ xs <span class="op">:-&gt;</span> ys ]</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dup ::</span> '[a] <span class="op">:-&gt;</span> '[a,a]</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>dup (x <span class="op">:-</span> xs) <span class="ot">=</span> (x <span class="op">:-</span> x <span class="op">:-</span> xs)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="ot">swap ::</span> '[x,y] <span class="op">:-&gt;</span> '[y,x]</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>swap (x <span class="op">:-</span> y <span class="op">:-</span> xs) <span class="ot">=</span> y <span class="op">:-</span> x <span class="op">:-</span> xs</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">drop</span><span class="ot"> ::</span> '[x,y] <span class="op">:-&gt;</span> '[y]</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="fu">drop</span> (_ <span class="op">:-</span> xs) <span class="ot">=</span> xs</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="kw">infixl</span> <span class="dv">9</span> <span class="op">!</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>(f <span class="op">!</span> g) x <span class="ot">=</span> g (f x)</span></code></pre></div>
+<p>You’ll immediately run into trouble if you try to work with some of
+the more involved combinators, though. Quote should have the following
+type, for instance:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ot">quote ::</span> (xs <span class="op">:-&gt;</span> ys) <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[ xs <span class="op">:-&gt;</span> ys ]</span></code></pre></div>
 <p>But GHC complains again:</p>
 <pre><code>• Illegal polymorphic type: xs :-&gt; ys
   GHC doesn't yet support impredicative polymorphism
 • In the type signature:
     quote :: (xs :-&gt; ys) -&gt; '[] :-&gt; '[xs :-&gt; ys]</code></pre>
-<p>I won’t go into the detail of this particular error: if you’ve been around the block with Haskell you know that it means “wrap it in a newtype”. If we do <em>that</em>, though, we get yet more errors:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a><span class="kw">newtype</span> (<span class="op">:~&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> d ::</span> xs <span class="op">:-&gt;</span> ys }</span></code></pre></div>
+<p>I won’t go into the detail of this particular error: if you’ve been
+around the block with Haskell you know that it means “wrap it in a
+newtype”. If we do <em>that</em>, though, we get yet more errors:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> (<span class="op">:~&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> d ::</span> xs <span class="op">:-&gt;</span> ys }</span></code></pre></div>
 <pre><code>• Couldn't match type ‘ys ++ zs0’ with ‘ys ++ zs’
   Expected type: Stack (xs ++ zs) -&gt; Stack (ys ++ zs)
     Actual type: Stack (xs ++ zs0) -&gt; Stack (ys ++ zs0)
   NB: ‘++’ is a type function, and may not be injective</code></pre>
-<p>This injectivity error comes up often. It means that GHC needs to prove that the input to two functions is equal, but it only knows that their outputs are. This is a doubly serious problem for us, as we can’t do type family injectivity on two type variables (in current Haskell). To solve the problem, we need to rely on a weird mishmash of type families and functional dependencies:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">++</span>) xs ys <span class="kw">where</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a>    '[] <span class="op">++</span> ys <span class="ot">=</span> ys</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true"></a>    (x <span class="op">:</span> xs) <span class="op">++</span> ys <span class="ot">=</span> x <span class="op">:</span> (xs <span class="op">++</span> ys)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true"></a>    </span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true"></a><span class="kw">class</span> (xs <span class="op">++</span> ys <span class="op">~</span> zs) <span class="ot">=&gt;</span> <span class="dt">Conc</span> xs ys zs <span class="op">|</span> xs zs <span class="ot">-&gt;</span> ys <span class="kw">where</span></span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true"></a><span class="ot">    conc ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> ys <span class="ot">-&gt;</span> <span class="dt">Stack</span> zs</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true"></a>    </span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Conc</span> '[] ys ys <span class="kw">where</span></span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true"></a>    conc _ ys <span class="ot">=</span> ys</span>
-<span id="cb32-10"><a href="#cb32-10" aria-hidden="true"></a>    </span>
-<span id="cb32-11"><a href="#cb32-11" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Conc</span> xs ys zs <span class="ot">=&gt;</span> <span class="dt">Conc</span> (x <span class="op">:</span> xs) ys (x <span class="op">:</span> zs) <span class="kw">where</span></span>
-<span id="cb32-12"><a href="#cb32-12" aria-hidden="true"></a>    conc (x <span class="op">:-</span> xs) ys <span class="ot">=</span> x <span class="op">:-</span> conc xs ys</span>
-<span id="cb32-13"><a href="#cb32-13" aria-hidden="true"></a></span>
-<span id="cb32-14"><a href="#cb32-14" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
-<span id="cb32-15"><a href="#cb32-15" aria-hidden="true"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="kw">forall</span> zs yszs<span class="op">.</span> <span class="dt">Conc</span> ys zs yszs <span class="ot">=&gt;</span> <span class="dt">Stack</span> (xs <span class="op">++</span> zs) <span class="ot">-&gt;</span> <span class="dt">Stack</span> yszs</span></code></pre></div>
+<p>This injectivity error comes up often. It means that GHC needs to
+prove that the input to two functions is equal, but it only knows that
+their outputs are. This is a doubly serious problem for us, as we can’t
+do type family injectivity on two type variables (in current Haskell).
+To solve the problem, we need to rely on a weird mishmash of type
+families and functional dependencies:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">++</span>) xs ys <span class="kw">where</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>    '[] <span class="op">++</span> ys <span class="ot">=</span> ys</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    (x <span class="op">:</span> xs) <span class="op">++</span> ys <span class="ot">=</span> x <span class="op">:</span> (xs <span class="op">++</span> ys)</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> (xs <span class="op">++</span> ys <span class="op">~</span> zs) <span class="ot">=&gt;</span> <span class="dt">Conc</span> xs ys zs <span class="op">|</span> xs zs <span class="ot">-&gt;</span> ys <span class="kw">where</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="ot">    conc ::</span> <span class="dt">Stack</span> xs <span class="ot">-&gt;</span> <span class="dt">Stack</span> ys <span class="ot">-&gt;</span> <span class="dt">Stack</span> zs</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Conc</span> '[] ys ys <span class="kw">where</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    conc _ ys <span class="ot">=</span> ys</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Conc</span> xs ys zs <span class="ot">=&gt;</span> <span class="dt">Conc</span> (x <span class="op">:</span> xs) ys (x <span class="op">:</span> zs) <span class="kw">where</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>    conc (x <span class="op">:-</span> xs) ys <span class="ot">=</span> x <span class="op">:-</span> conc xs ys</span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">0</span> <span class="op">:-&gt;</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> (<span class="op">:-&gt;</span>) xs ys <span class="ot">=</span> <span class="kw">forall</span> zs yszs<span class="op">.</span> <span class="dt">Conc</span> ys zs yszs <span class="ot">=&gt;</span> <span class="dt">Stack</span> (xs <span class="op">++</span> zs) <span class="ot">-&gt;</span> <span class="dt">Stack</span> yszs</span></code></pre></div>
 <p>And it does indeed work:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a><span class="fu">pure</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[a]</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true"></a><span class="fu">pure</span> <span class="ot">=</span> (<span class="op">:-</span>)</span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true"></a></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true"></a><span class="kw">newtype</span> (<span class="op">:~&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> d ::</span> xs <span class="op">:-&gt;</span> ys }</span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true"></a></span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true"></a><span class="ot">quote ::</span> (xs <span class="op">:-&gt;</span> ys) <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[ xs <span class="op">:~&gt;</span> ys ]</span>
-<span id="cb33-7"><a href="#cb33-7" aria-hidden="true"></a>quote x <span class="ot">=</span> <span class="fu">pure</span> (<span class="dt">Q</span> x)</span>
-<span id="cb33-8"><a href="#cb33-8" aria-hidden="true"></a></span>
-<span id="cb33-9"><a href="#cb33-9" aria-hidden="true"></a><span class="ot">dot ::</span> <span class="kw">forall</span> xs ys<span class="op">.</span> ((xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs) <span class="op">:-&gt;</span> ys</span>
-<span id="cb33-10"><a href="#cb33-10" aria-hidden="true"></a>dot (x <span class="op">:-</span> xs) <span class="ot">=</span> d x xs</span>
-<span id="cb33-11"><a href="#cb33-11" aria-hidden="true"></a></span>
-<span id="cb33-12"><a href="#cb33-12" aria-hidden="true"></a><span class="ot">true ::</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs <span class="op">:-&gt;</span> ys</span>
-<span id="cb33-13"><a href="#cb33-13" aria-hidden="true"></a>true <span class="ot">=</span> swap <span class="op">!</span> <span class="fu">drop</span> <span class="op">!</span> dot</span>
-<span id="cb33-14"><a href="#cb33-14" aria-hidden="true"></a></span>
-<span id="cb33-15"><a href="#cb33-15" aria-hidden="true"></a><span class="ot">false ::</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs <span class="op">:-&gt;</span> ys</span>
-<span id="cb33-16"><a href="#cb33-16" aria-hidden="true"></a>false <span class="ot">=</span> <span class="fu">drop</span> <span class="op">!</span> dot</span>
-<span id="cb33-17"><a href="#cb33-17" aria-hidden="true"></a></span>
-<span id="cb33-18"><a href="#cb33-18" aria-hidden="true"></a><span class="ot">test ::</span> '[] <span class="op">:-&gt;</span> '[ '[a] <span class="op">:~&gt;</span> '[a,a] ]</span>
-<span id="cb33-19"><a href="#cb33-19" aria-hidden="true"></a>test <span class="ot">=</span> quote dup</span></code></pre></div>
-<p>Interestingly, these combinators represent the monadic operations on state (<code>dot</code> = <code>join</code>, <code>pure</code> = <code>pure</code>, etc.)</p>
-<p>And can we get the nicer composition of the function from the intro? Kind of:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a>sumAdded <span class="ot">=</span> quote add <span class="op">!</span> <span class="fu">curry</span> <span class="op">!</span> dot <span class="op">!</span> <span class="fu">map</span> <span class="op">!</span> <span class="fu">sum</span></span></code></pre></div>
-<p>Here are some references for concatenative languages: <span class="citation" data-cites="okasaki_techniques_2002">Okasaki (<a href="#ref-okasaki_techniques_2002" role="doc-biblioref">2002</a>)</span>, <span class="citation" data-cites="purdy_big_2012">Purdy (<a href="#ref-purdy_big_2012" role="doc-biblioref">2012</a>)</span>, <span class="citation" data-cites="kerby_theory_2007">Kerby (<a href="#ref-kerby_theory_2007" role="doc-biblioref">2007</a>)</span>, <span class="citation" data-cites="okasaki_theoretical_2003">Okasaki (<a href="#ref-okasaki_theoretical_2003" role="doc-biblioref">2003</a>)</span>.</p>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-kerby_theory_2007">
-<p>Kerby, Brent. 2007. “The Theory of Concatenative Combinators.” <a href="http://tunes.org/\%7Eiepos/joy.html">http://tunes.org/\%7Eiepos/joy.html</a>.</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pure</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[a]</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pure</span> <span class="ot">=</span> (<span class="op">:-</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> (<span class="op">:~&gt;</span>) xs ys <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> d ::</span> xs <span class="op">:-&gt;</span> ys }</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="ot">quote ::</span> (xs <span class="op">:-&gt;</span> ys) <span class="ot">-&gt;</span> '[] <span class="op">:-&gt;</span> '[ xs <span class="op">:~&gt;</span> ys ]</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>quote x <span class="ot">=</span> <span class="fu">pure</span> (<span class="dt">Q</span> x)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a><span class="ot">dot ::</span> <span class="kw">forall</span> xs ys<span class="op">.</span> ((xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs) <span class="op">:-&gt;</span> ys</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>dot (x <span class="op">:-</span> xs) <span class="ot">=</span> d x xs</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a><span class="ot">true ::</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs <span class="op">:-&gt;</span> ys</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>true <span class="ot">=</span> swap <span class="op">!</span> <span class="fu">drop</span> <span class="op">!</span> dot</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="ot">false ::</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> (xs <span class="op">:~&gt;</span> ys) <span class="op">:</span> xs <span class="op">:-&gt;</span> ys</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>false <span class="ot">=</span> <span class="fu">drop</span> <span class="op">!</span> dot</span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a><span class="ot">test ::</span> '[] <span class="op">:-&gt;</span> '[ '[a] <span class="op">:~&gt;</span> '[a,a] ]</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>test <span class="ot">=</span> quote dup</span></code></pre></div>
+<p>Interestingly, these combinators represent the monadic operations on
+state (<code>dot</code> = <code>join</code>, <code>pure</code> =
+<code>pure</code>, etc.)</p>
+<p>And can we get the nicer composition of the function from the intro?
+Kind of:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>sumAdded <span class="ot">=</span> quote add <span class="op">!</span> <span class="fu">curry</span> <span class="op">!</span> dot <span class="op">!</span> <span class="fu">map</span> <span class="op">!</span> <span class="fu">sum</span></span></code></pre></div>
+<p>Here are some references for concatenative languages: <span class="citation" data-cites="okasaki_techniques_2002">Okasaki
+(2002)</span>, <span class="citation" data-cites="purdy_big_2012">Purdy
+(2012)</span>, <span class="citation" data-cites="kerby_theory_2007">Kerby (2007)</span>, <span class="citation" data-cites="okasaki_theoretical_2003">Okasaki
+(2003)</span>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-kerby_theory_2007" class="csl-entry" role="listitem">
+Kerby, Brent. 2007. <span>“The <span>Theory</span> of
+<span>Concatenative Combinators</span>.”</span> <a href="http://tunes.org/\%7Eiepos/joy.html">http://tunes.org/\%7Eiepos/joy.html</a>.
 </div>
-<div id="ref-okasaki_techniques_2002">
-<p>Okasaki, Chris. 2002. “Techniques for Embedding Postfix Languages in Haskell.” In <em>Proceedings of the ACM SIGPLAN Workshop on Haskell - Haskell ’02</em>, 105–113. Pittsburgh, Pennsylvania: ACM Press. doi:<a href="https://doi.org/10.1145/581690.581699">10.1145/581690.581699</a>. <a href="http://portal.acm.org/citation.cfm?doid=581690.581699">http://portal.acm.org/citation.cfm?doid=581690.581699</a>.</p>
+<div id="ref-okasaki_techniques_2002" class="csl-entry" role="listitem">
+Okasaki, Chris. 2002. <span>“Techniques for embedding postfix languages
+in <span>Haskell</span>.”</span> In <em>Proceedings of the <span>ACM
+SIGPLAN</span> workshop on <span>Haskell</span> - <span>Haskell</span>
+’02</em>, 105–113. Pittsburgh, Pennsylvania: <span>ACM Press</span>.
+doi:<a href="https://doi.org/10.1145/581690.581699">10.1145/581690.581699</a>.
+<a href="http://portal.acm.org/citation.cfm?doid=581690.581699">http://portal.acm.org/citation.cfm?doid=581690.581699</a>.
 </div>
-<div id="ref-okasaki_theoretical_2003">
-<p>———. 2003. “THEORETICAL PEARLS: Flattening Combinators: Surviving without Parentheses.” <em>Journal of Functional Programming</em> 13 (4) (July): 815–822. doi:<a href="https://doi.org/10.1017/S0956796802004483">10.1017/S0956796802004483</a>. <a href="https://www.cambridge.org/core/journals/journal-of-functional-programming/article/theoretical-pearls/3E99993FE5464986AD94D292FF5EA275">https://www.cambridge.org/core/journals/journal-of-functional-programming/article/theoretical-pearls/3E99993FE5464986AD94D292FF5EA275</a>.</p>
+<div id="ref-okasaki_theoretical_2003" class="csl-entry" role="listitem">
+———. 2003. <span>“<span>THEORETICAL PEARLS</span>:
+<span>Flattening</span> combinators: Surviving without
+parentheses.”</span> <em>Journal of Functional Programming</em> 13 (4)
+(July): 815–822. doi:<a href="https://doi.org/10.1017/S0956796802004483">10.1017/S0956796802004483</a>.
+<a href="https://www.cambridge.org/core/journals/journal-of-functional-programming/article/theoretical-pearls/3E99993FE5464986AD94D292FF5EA275">https://www.cambridge.org/core/journals/journal-of-functional-programming/article/theoretical-pearls/3E99993FE5464986AD94D292FF5EA275</a>.
 </div>
-<div id="ref-purdy_big_2012">
-<p>Purdy, Jon. 2012. “The Big Mud Puddle: Why Concatenative Programming Matters.” <em>The Big Mud Puddle</em>. <a href="https://evincarofautumn.blogspot.com/2012/02/why-concatenative-programming-matters.html">https://evincarofautumn.blogspot.com/2012/02/why-concatenative-programming-matters.html</a>.</p>
+<div id="ref-purdy_big_2012" class="csl-entry" role="listitem">
+Purdy, Jon. 2012. <span>“The <span>Big Mud Puddle</span>: <span>Why
+Concatenative Programming Matters</span>.”</span> <em>The Big Mud
+Puddle</em>. <a href="https://evincarofautumn.blogspot.com/2012/02/why-concatenative-programming-matters.html">https://evincarofautumn.blogspot.com/2012/02/why-concatenative-programming-matters.html</a>.
 </div>
 </div>
 

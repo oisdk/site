@@ -30,47 +30,53 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>This function is now available <a href="http://hackage.haskell.org/package/arity-generic-liftA">on hackage</a>.</p>
-<p>There’s a family of functions in <a href="https://hackage.haskell.org/package/base-4.11.0.0/docs/Control-Applicative.html">Control.Applicative</a> which follow the pattern <code class="sourceCode haskell">liftA2</code>, <code class="sourceCode haskell">liftA3</code>, etc. Using some tricks from Richard Eisenberg’s thesis we can write them all at once.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DataKinds             #-}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="ot">{-# LANGUAGE TypeFamilies          #-}</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ot">{-# LANGUAGE MultiParamTypeClasses #-}</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleInstances     #-}</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="ot">{-# LANGUAGE FlexibleContexts      #-}</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Apply</span> <span class="kw">where</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> <span class="dt">AppFunc</span> f n a <span class="kw">where</span></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>  <span class="dt">AppFunc</span> f <span class="dt">Z</span> a <span class="ot">=</span> f a</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>  <span class="dt">AppFunc</span> f (<span class="dt">S</span> n) (a <span class="ot">-&gt;</span> b) <span class="ot">=</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f n b</span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a></span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> <span class="dt">CountArgs</span> f <span class="kw">where</span></span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a>  <span class="dt">CountArgs</span> (_ <span class="ot">-&gt;</span> b) <span class="ot">=</span> <span class="dt">S</span> (<span class="dt">CountArgs</span> b)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a>  <span class="dt">CountArgs</span> _ <span class="ot">=</span> <span class="dt">Z</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a></span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="kw">class</span> (<span class="dt">CountArgs</span> a <span class="op">~</span> n) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a n <span class="kw">where</span></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a><span class="ot">  apply ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f (<span class="dt">CountArgs</span> a) a</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a></span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a><span class="kw">instance</span> (<span class="dt">CountArgs</span> a <span class="op">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a <span class="dt">Z</span> <span class="kw">where</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a>  apply <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a>  <span class="ot">{-# INLINE apply #-}</span></span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a></span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applyable</span> b n <span class="ot">=&gt;</span> <span class="dt">Applyable</span> (a <span class="ot">-&gt;</span> b) (<span class="dt">S</span> n) <span class="kw">where</span></span>
-<span id="cb1-27"><a href="#cb1-27" aria-hidden="true"></a>  apply f x <span class="ot">=</span> apply (f <span class="op">&lt;*&gt;</span> x)</span>
-<span id="cb1-28"><a href="#cb1-28" aria-hidden="true"></a>  <span class="ot">{-# INLINE apply #-}</span></span>
-<span id="cb1-29"><a href="#cb1-29" aria-hidden="true"></a></span>
-<span id="cb1-30"><a href="#cb1-30" aria-hidden="true"></a><span class="co">-- | &gt;&gt;&gt; lift (\x y z -&gt; x ++ y ++ z) (Just &quot;a&quot;) (Just &quot;b&quot;) (Just &quot;c&quot;)</span></span>
-<span id="cb1-31"><a href="#cb1-31" aria-hidden="true"></a><span class="co">-- Just &quot;abc&quot;</span></span>
-<span id="cb1-32"><a href="#cb1-32" aria-hidden="true"></a><span class="ot">lift ::</span> (<span class="dt">Applyable</span> a n, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f b <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f n a)</span>
-<span id="cb1-33"><a href="#cb1-33" aria-hidden="true"></a>lift f x <span class="ot">=</span> apply (<span class="fu">fmap</span> f x)</span>
-<span id="cb1-34"><a href="#cb1-34" aria-hidden="true"></a><span class="ot">{-# INLINE lift #-}</span></span></code></pre></div>
-<p><a href="https://github.com/goldfirere/thesis/raw/master/built/thesis.pdf">Eisenberg, Richard A. “Dependent Types in Haskell: Theory and Practice.” University of Pennsylvania, 2016.</a></p>
+<p>This function is now available <a href="http://hackage.haskell.org/package/arity-generic-liftA">on
+hackage</a>.</p>
+<p>There’s a family of functions in <a href="https://hackage.haskell.org/package/base-4.11.0.0/docs/Control-Applicative.html">Control.Applicative</a>
+which follow the pattern <code class="sourceCode haskell">liftA2</code>,
+<code class="sourceCode haskell">liftA3</code>, etc. Using some tricks
+from Richard Eisenberg’s thesis we can write them all at once.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE DataKinds             #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE TypeFamilies          #-}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE MultiParamTypeClasses #-}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE FlexibleInstances     #-}</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE FlexibleContexts      #-}</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Apply</span> <span class="kw">where</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> <span class="dt">AppFunc</span> f n a <span class="kw">where</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="dt">AppFunc</span> f <span class="dt">Z</span> a <span class="ot">=</span> f a</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">AppFunc</span> f (<span class="dt">S</span> n) (a <span class="ot">-&gt;</span> b) <span class="ot">=</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f n b</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> <span class="dt">CountArgs</span> f <span class="kw">where</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="dt">CountArgs</span> (_ <span class="ot">-&gt;</span> b) <span class="ot">=</span> <span class="dt">S</span> (<span class="dt">CountArgs</span> b)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="dt">CountArgs</span> _ <span class="ot">=</span> <span class="dt">Z</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> (<span class="dt">CountArgs</span> a <span class="op">~</span> n) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a n <span class="kw">where</span></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="ot">  apply ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f (<span class="dt">CountArgs</span> a) a</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> (<span class="dt">CountArgs</span> a <span class="op">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">Applyable</span> a <span class="dt">Z</span> <span class="kw">where</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  apply <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE apply #-}</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applyable</span> b n <span class="ot">=&gt;</span> <span class="dt">Applyable</span> (a <span class="ot">-&gt;</span> b) (<span class="dt">S</span> n) <span class="kw">where</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  apply f x <span class="ot">=</span> apply (f <span class="op">&lt;*&gt;</span> x)</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="ot">{-# INLINE apply #-}</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a><span class="co">-- | &gt;&gt;&gt; lift (\x y z -&gt; x ++ y ++ z) (Just &quot;a&quot;) (Just &quot;b&quot;) (Just &quot;c&quot;)</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a><span class="co">-- Just &quot;abc&quot;</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a><span class="ot">lift ::</span> (<span class="dt">Applyable</span> a n, <span class="dt">Applicative</span> f) <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f b <span class="ot">-&gt;</span> <span class="dt">AppFunc</span> f n a)</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>lift f x <span class="ot">=</span> apply (<span class="fu">fmap</span> f x)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE lift #-}</span></span></code></pre></div>
+<p><a href="https://github.com/goldfirere/thesis/raw/master/built/thesis.pdf">Eisenberg,
+Richard A. “Dependent Types in Haskell: Theory and Practice.” University
+of Pennsylvania, 2016.</a></p>
 
         </div>
     </body>

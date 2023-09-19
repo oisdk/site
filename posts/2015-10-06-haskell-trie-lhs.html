@@ -32,167 +32,269 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Data Structures'." href="../tags/Data%20Structures.html">Data Structures</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Data Structures'." href="../tags/Data%20Structures.html" rel="tag">Data Structures</a>
     
 </div>
 
 <h2 id="basic-ops">Basic Ops</h2>
-<p>A Trie is one of those data structures that I find myself writing very early on in almost every language I try to learn. It’s elegant and interesting, and easy enough to implement.</p>
-<p>I usually write a version that is a set-like data structure, rather than a mapping type, for simplicity’s sake. It stores sequences, in a prefix-tree structure. It has a map (dictionary) where the keys are the first element of every sequence it stores, and the values are the Tries which store the rest of the sequence. It also has a boolean tag, representing whether or not the current Trie is a Trie on which a sequence ends. Here’s what the type looks like in Haskell:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Trie</span> <span class="kw">where</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (null)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Maybe</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Control.Monad</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">import</span> <span class="dt">Data.Foldable</span> (fold)</span></code></pre></div>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Trie</span> a <span class="ot">=</span> <span class="dt">Trie</span> {<span class="ot"> endHere ::</span> <span class="dt">Bool</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>                   ,<span class="ot"> getTrie ::</span> <span class="dt">Map</span> a (<span class="dt">Trie</span> a)</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>                   } <span class="kw">deriving</span> (<span class="dt">Eq</span>)</span></code></pre></div>
-<p>Now, inserting into the Trie is easy. You just <code class="sourceCode haskell">uncons</code> on a list, and insert the head into the map, with the value being the tail inserted into whatever existed at that key before:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">empty ::</span> <span class="dt">Trie</span> a</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>empty <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">False</span> Map.empty</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="ot">insertRec ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>insertRec [] (<span class="dt">Trie</span> _ m)     <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">True</span> m</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>insertRec (x<span class="op">:</span>xs) (<span class="dt">Trie</span> e m) <span class="ot">=</span> </span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  <span class="dt">Trie</span> e (Map.alter (<span class="dt">Just</span> <span class="op">.</span> insertRec xs <span class="op">.</span> fromMaybe empty) x m)</span></code></pre></div>
-<p>Searching is simple, also. For the empty list, you just check if the Trie has its <code class="sourceCode haskell">endHere</code> tag set to <code class="sourceCode haskell"><span class="dt">True</span></code>, otherwise, you uncons, search the map, and query the Trie with the tail if it eas found, or just return <code class="sourceCode haskell"><span class="dt">False</span></code> if it was not:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">memberRec ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>memberRec [] (<span class="dt">Trie</span> e _)     <span class="ot">=</span> e</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>memberRec (x<span class="op">:</span>xs) (<span class="dt">Trie</span> _ m) <span class="ot">=</span> </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  fromMaybe <span class="dt">False</span> (memberRec xs <span class="op">&lt;$&gt;</span> Map.lookup x m)</span></code></pre></div>
-<p>Here’s my problem. <em>Both</em> of those functions have the same pattern:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>f []     <span class="ot">=</span> <span class="op">...</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>f (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="op">...</span></span></code></pre></div>
-<p>Any good Haskeller should be <em>begging</em> for a fold at this stage. But it proved a little trickier than I’d imagined. Take <code class="sourceCode haskell">member</code>, for instance. You want to fold over a list, with the base case being the tag on the Trie:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base <span class="kw">where</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  base <span class="ot">=</span> <span class="op">???</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  f e a <span class="ot">=</span> Map.lookup e <span class="op">???</span></span></code></pre></div>
-<p>Where do you get the base case from, though? You have to specify it from the beginning, but the variable you’re looking for is nested deeply into the Trie. How can you look into the Trie, without traversing the list, to find the tag, <em>at the beginning of the function?</em></p>
-<p>That had been my issue for a while. Every time I cam back to writing a Trie, I would see the pattern, try and write <code class="sourceCode haskell">insert</code> and <code class="sourceCode haskell">member</code> with a fold, and remember again the trouble I had had with it in the past. Recently, though, I saw a different problem, that gave me an idea for a solution.</p>
+<p>A Trie is one of those data structures that I find myself writing
+very early on in almost every language I try to learn. It’s elegant and
+interesting, and easy enough to implement.</p>
+<p>I usually write a version that is a set-like data structure, rather
+than a mapping type, for simplicity’s sake. It stores sequences, in a
+prefix-tree structure. It has a map (dictionary) where the keys are the
+first element of every sequence it stores, and the values are the Tries
+which store the rest of the sequence. It also has a boolean tag,
+representing whether or not the current Trie is a Trie on which a
+sequence ends. Here’s what the type looks like in Haskell:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Trie</span> <span class="kw">where</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Map.Strict</span> (<span class="dt">Map</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Prelude</span> <span class="kw">hiding</span> (null)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Maybe</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Control.Monad</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.Foldable</span> (fold)</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Trie</span> a <span class="ot">=</span> <span class="dt">Trie</span> {<span class="ot"> endHere ::</span> <span class="dt">Bool</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                   ,<span class="ot"> getTrie ::</span> <span class="dt">Map</span> a (<span class="dt">Trie</span> a)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                   } <span class="kw">deriving</span> (<span class="dt">Eq</span>)</span></code></pre></div>
+<p>Now, inserting into the Trie is easy. You just <code class="sourceCode haskell">uncons</code> on a list, and insert the head
+into the map, with the value being the tail inserted into whatever
+existed at that key before:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">empty ::</span> <span class="dt">Trie</span> a</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>empty <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">False</span> Map.empty</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ot">insertRec ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>insertRec [] (<span class="dt">Trie</span> _ m)     <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">True</span> m</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>insertRec (x<span class="op">:</span>xs) (<span class="dt">Trie</span> e m) <span class="ot">=</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Trie</span> e (Map.alter (<span class="dt">Just</span> <span class="op">.</span> insertRec xs <span class="op">.</span> fromMaybe empty) x m)</span></code></pre></div>
+<p>Searching is simple, also. For the empty list, you just check if the
+Trie has its <code class="sourceCode haskell">endHere</code> tag set to
+<code class="sourceCode haskell"><span class="dt">True</span></code>,
+otherwise, you uncons, search the map, and query the Trie with the tail
+if it eas found, or just return <code class="sourceCode haskell"><span class="dt">False</span></code> if it
+was not:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">memberRec ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>memberRec [] (<span class="dt">Trie</span> e _)     <span class="ot">=</span> e</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>memberRec (x<span class="op">:</span>xs) (<span class="dt">Trie</span> _ m) <span class="ot">=</span> </span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  fromMaybe <span class="dt">False</span> (memberRec xs <span class="op">&lt;$&gt;</span> Map.lookup x m)</span></code></pre></div>
+<p>Here’s my problem. <em>Both</em> of those functions have the same
+pattern:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>f []     <span class="ot">=</span> <span class="op">...</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>f (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="op">...</span></span></code></pre></div>
+<p>Any good Haskeller should be <em>begging</em> for a fold at this
+stage. But it proved a little trickier than I’d imagined. Take <code class="sourceCode haskell">member</code>, for instance. You want to fold
+over a list, with the base case being the tag on the Trie:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base <span class="kw">where</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">=</span> <span class="op">???</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> Map.lookup e <span class="op">???</span></span></code></pre></div>
+<p>Where do you get the base case from, though? You have to specify it
+from the beginning, but the variable you’re looking for is nested deeply
+into the Trie. How can you look into the Trie, without traversing the
+list, to find the tag, <em>at the beginning of the function?</em></p>
+<p>That had been my issue for a while. Every time I cam back to writing
+a Trie, I would see the pattern, try and write <code class="sourceCode haskell">insert</code> and <code class="sourceCode haskell">member</code> with a fold, and remember again
+the trouble I had had with it in the past. Recently, though, I saw a
+different problem, that gave me an idea for a solution.</p>
 <h2 id="the-highest-order">The Highest Order</h2>
 <blockquote>
-<p>Rewrite <code class="sourceCode haskell"><span class="fu">dropWhile</span></code> using <code class="sourceCode haskell"><span class="fu">foldr</span></code></p>
+<p>Rewrite <code class="sourceCode haskell"><span class="fu">dropWhile</span></code>
+using <code class="sourceCode haskell"><span class="fu">foldr</span></code></p>
 </blockquote>
-<p>It’s a (semi) well-known puzzle, that’s maybe a little more difficult than it seems at first. Here, for instance, was my first attempt at it:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">dropWhileWrong ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>dropWhileWrong p <span class="ot">=</span> <span class="fu">foldr</span> f [] <span class="kw">where</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> a</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> e<span class="op">:</span>a</span></code></pre></div>
-<p>Yeah. That’s <code class="sourceCode haskell"><span class="fu">filter</span></code>, not <code class="sourceCode haskell"><span class="fu">dropWhile</span></code>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>dropWhileWrong (<span class="op">&lt;</span><span class="dv">5</span>) [<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">3</span>, <span class="dv">1</span>]</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>[<span class="dv">6</span>]</span></code></pre></div>
+<p>It’s a (semi) well-known puzzle, that’s maybe a little more difficult
+than it seems at first. Here, for instance, was my first attempt at
+it:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dropWhileWrong ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>dropWhileWrong p <span class="ot">=</span> <span class="fu">foldr</span> f [] <span class="kw">where</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> a</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> e<span class="op">:</span>a</span></code></pre></div>
+<p>Yeah. That’s <code class="sourceCode haskell"><span class="fu">filter</span></code>, not
+<code class="sourceCode haskell"><span class="fu">dropWhile</span></code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell literate example"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>dropWhileWrong (<span class="op">&lt;</span><span class="dv">5</span>) [<span class="dv">1</span>, <span class="dv">3</span>, <span class="dv">6</span>, <span class="dv">3</span>, <span class="dv">1</span>]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>[<span class="dv">6</span>]</span></code></pre></div>
 <p>Here was my final solution:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">dropWhileCount ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>dropWhileCount p l <span class="ot">=</span> <span class="fu">drop</span> (<span class="fu">foldr</span> f <span class="dv">0</span> l) l <span class="kw">where</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> a <span class="op">+</span> <span class="dv">1</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dv">0</span></span></code></pre></div>
-<p>After the problem I found <a href="https://wiki.haskell.org/wikiupload/1/14/TMR-Issue6.pdf">this</a> issue of The Monad Reader, which talks about the same problem. In my <code class="sourceCode haskell"><span class="fu">drop</span></code> version, I had been counting the number of items to drop as I went, adding one for every element that passed the test. The corresponding version in the article had been building up <code class="sourceCode haskell"><span class="fu">tail</span></code> functions, using <code class="sourceCode haskell"><span class="op">.</span></code> to add them together:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">dropWhileTail ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>dropWhileTail p l <span class="ot">=</span> (<span class="fu">foldr</span> f <span class="fu">id</span> l) l <span class="kw">where</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> <span class="op">.</span> a</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
-<p>A quick visit to <a href="http://pointfree.io">pointfree.io</a> can generate some monadic pointsfree magic:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="ot">dropWhilePf ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>dropWhilePf p <span class="ot">=</span> join (<span class="fu">foldr</span> f <span class="fu">id</span>) <span class="kw">where</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> <span class="op">.</span> a</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
-<p>Now, the final version in the article did <em>not</em> use this technique, as it was very inefficient. It used some cleverness beyond the scope of this post. The second-from-last version I quite liked, though:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="ot">dropWhileFp ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>dropWhileFp p l <span class="ot">=</span> <span class="fu">foldr</span> f l l <span class="kw">where</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> a</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> l</span></code></pre></div>
-<p>However, the idea of building up a function in a fold gave me an idea for adapting it to some of the Trie functions.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dropWhileCount ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>dropWhileCount p l <span class="ot">=</span> <span class="fu">drop</span> (<span class="fu">foldr</span> f <span class="dv">0</span> l) l <span class="kw">where</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> a <span class="op">+</span> <span class="dv">1</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dv">0</span></span></code></pre></div>
+<p>After the problem I found <a href="https://wiki.haskell.org/wikiupload/1/14/TMR-Issue6.pdf">this</a>
+issue of The Monad Reader, which talks about the same problem. In my
+<code class="sourceCode haskell"><span class="fu">drop</span></code>
+version, I had been counting the number of items to drop as I went,
+adding one for every element that passed the test. The corresponding
+version in the article had been building up <code class="sourceCode haskell"><span class="fu">tail</span></code>
+functions, using <code class="sourceCode haskell"><span class="op">.</span></code> to add them
+together:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dropWhileTail ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>dropWhileTail p l <span class="ot">=</span> (<span class="fu">foldr</span> f <span class="fu">id</span> l) l <span class="kw">where</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> <span class="op">.</span> a</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
+<p>A quick visit to <a href="http://pointfree.io">pointfree.io</a> can
+generate some monadic pointsfree magic:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dropWhilePf ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>dropWhilePf p <span class="ot">=</span> join (<span class="fu">foldr</span> f <span class="fu">id</span>) <span class="kw">where</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> <span class="op">.</span> a</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
+<p>Now, the final version in the article did <em>not</em> use this
+technique, as it was very inefficient. It used some cleverness beyond
+the scope of this post. The second-from-last version I quite liked,
+though:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="ot">dropWhileFp ::</span> (a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>dropWhileFp p l <span class="ot">=</span> <span class="fu">foldr</span> f l l <span class="kw">where</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="op">|</span> p e       <span class="ot">=</span> <span class="fu">tail</span> a</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> l</span></code></pre></div>
+<p>However, the idea of building up a function in a fold gave me an idea
+for adapting it to some of the Trie functions.</p>
 <h2 id="folding-inwards">Folding Inwards</h2>
-<p>Let’s start with <code class="sourceCode haskell">member</code>. It needs to fold over a list, and generate a function which acts on a Trie:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base</span></code></pre></div>
-<p>The <code class="sourceCode haskell">base</code> is the function being built up: the final part of the function chain. Each part of the function is generated based on each element of the list, and then chained with the base using <code class="sourceCode haskell"><span class="op">.</span></code>:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base <span class="kw">where</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  f e a <span class="ot">=</span> <span class="op">???</span> <span class="op">.</span> a </span></code></pre></div>
-<p>The base here is what’s called when the list is empty. Here’s what it looked like in the explicit recursion version:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>member [] (<span class="dt">Trie</span> e _) <span class="ot">=</span> e</span></code></pre></div>
+<p>Let’s start with <code class="sourceCode haskell">member</code>. It
+needs to fold over a list, and generate a function which acts on a
+Trie:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base</span></code></pre></div>
+<p>The <code class="sourceCode haskell">base</code> is the function
+being built up: the final part of the function chain. Each part of the
+function is generated based on each element of the list, and then
+chained with the base using <code class="sourceCode haskell"><span class="op">.</span></code>:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f base <span class="kw">where</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> <span class="op">???</span> <span class="op">.</span> a </span></code></pre></div>
+<p>The base here is what’s called when the list is empty. Here’s what it
+looked like in the explicit recursion version:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>member [] (<span class="dt">Trie</span> e _) <span class="ot">=</span> e</span></code></pre></div>
 <p>We could simplify this by using record syntax, and <code class="sourceCode haskell">getTrie</code>:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a>member [] t <span class="ot">=</span> getTrie t</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>member [] t <span class="ot">=</span> getTrie t</span></code></pre></div>
 <p>And this has an obvious pointsfree version:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>member [] <span class="ot">=</span> getTrie</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>member [] <span class="ot">=</span> getTrie</span></code></pre></div>
 <p>That fits for the base case. It’s just a function:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f endHere <span class="kw">where</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>  f e a <span class="ot">=</span> <span class="op">???</span> <span class="op">.</span> a </span></code></pre></div>
-<p>Then, how to combine it. That’s easy enough, actually. It accesses the map, searches it for the key, and calls the accumulating function on it. If it’s not found in the map, just return <code class="sourceCode haskell"><span class="dt">False</span></code>. Here it is:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f endHere <span class="kw">where</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>  f e a <span class="ot">=</span> fromMaybe <span class="dt">False</span> <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie</span></code></pre></div>
-<p>One of the other standard functions for a Trie is returning the “completions” for a given sequence. It’s a very similar function to <code class="sourceCode haskell">member</code>, actually: instead of calling <code class="sourceCode haskell">endHere</code> on the final Trie found, though, just return the Trie itself. And the thing to return if any given element of the sequence isn’t found is just an empty Trie:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="ot">complete ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>complete <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> <span class="kw">where</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  f e a <span class="ot">=</span> fromMaybe empty <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie </span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f endHere <span class="kw">where</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> <span class="op">???</span> <span class="op">.</span> a </span></code></pre></div>
+<p>Then, how to combine it. That’s easy enough, actually. It accesses
+the map, searches it for the key, and calls the accumulating function on
+it. If it’s not found in the map, just return <code class="sourceCode haskell"><span class="dt">False</span></code>. Here it
+is:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ot">member ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>member <span class="ot">=</span> <span class="fu">foldr</span> f endHere <span class="kw">where</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> fromMaybe <span class="dt">False</span> <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie</span></code></pre></div>
+<p>One of the other standard functions for a Trie is returning the
+“completions” for a given sequence. It’s a very similar function to
+<code class="sourceCode haskell">member</code>, actually: instead of
+calling <code class="sourceCode haskell">endHere</code> on the final
+Trie found, though, just return the Trie itself. And the thing to return
+if any given element of the sequence isn’t found is just an empty
+Trie:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ot">complete ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>complete <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> <span class="kw">where</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> fromMaybe empty <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie </span></code></pre></div>
 <p>In fact, you could abstract out the commonality here:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">follow ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> c <span class="ot">-&gt;</span> (<span class="dt">Trie</span> a <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> c</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>follow ifMiss onEnd <span class="ot">=</span> <span class="fu">foldr</span> f onEnd <span class="kw">where</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  f e a <span class="ot">=</span> fromMaybe ifMiss <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie </span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>  </span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a><span class="ot">memberAbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>memberAbs <span class="ot">=</span> follow <span class="dt">False</span> endHere</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true"></a><span class="ot">completeAbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true"></a>completeAbs <span class="ot">=</span> follow empty <span class="fu">id</span></span></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ot">follow ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> c <span class="ot">-&gt;</span> (<span class="dt">Trie</span> a <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> c</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>follow ifMiss onEnd <span class="ot">=</span> <span class="fu">foldr</span> f onEnd <span class="kw">where</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> fromMaybe ifMiss <span class="op">.</span> <span class="fu">fmap</span> a <span class="op">.</span> Map.lookup e <span class="op">.</span> getTrie </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="ot">memberAbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>memberAbs <span class="ot">=</span> follow <span class="dt">False</span> endHere</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a><span class="ot">completeAbs ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>completeAbs <span class="ot">=</span> follow empty <span class="fu">id</span></span></code></pre></div>
 <h2 id="folding-in-and-out">Folding in and out</h2>
-<p><code class="sourceCode haskell">insert</code> is another deal entirely. In <code class="sourceCode haskell">member</code>, the fold was tunneling into a Trie, applying the accumulator function to successively deeper Tries, and returning a result based on the final Trie. <code class="sourceCode haskell">insert</code> needs to do the same tunneling - but the Trie returned needs to be the <em>outer</em> Trie.</p>
-<p>It turns out it’s not that difficult. Instead of “building up a function” that is then applied to a Trie, here a function is “sent” into the inner Tries. The cool thing here is that the function being sent hasn’t been generated yet.</p>
-<p>Here’s some more illustration of what I mean. Start off with the normal <code class="sourceCode haskell"><span class="fu">foldr</span></code>:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>insert <span class="ot">=</span> <span class="fu">foldr</span> f (\(<span class="dt">Trie</span> _ m) <span class="ot">-&gt;</span> <span class="dt">Trie</span> <span class="dt">True</span> m)</span></code></pre></div>
-<p>With the final function to be applied being one that just flips the <code class="sourceCode haskell">endHere</code> tag to <code class="sourceCode haskell"><span class="dt">True</span></code>. Then <code class="sourceCode haskell">f</code>: this is going to act <em>over</em> the map of the Trie that it’s called on. It’s useful to define a function just for that:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="ot">overMap ::</span> <span class="dt">Ord</span> b </span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>        <span class="ot">=&gt;</span> (<span class="dt">Map.Map</span> a (<span class="dt">Trie</span> a)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a>        <span class="ot">-&gt;</span> <span class="dt">Map.Map</span> b (<span class="dt">Trie</span> b))</span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a>        <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a>        <span class="ot">-&gt;</span> <span class="dt">Trie</span> b</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true"></a>overMap f (<span class="dt">Trie</span> e m) <span class="ot">=</span> <span class="dt">Trie</span> e (f m)</span></code></pre></div>
-<p>Then, it will look up the next element of the sequence in the Trie, and apply the accumulating function to it. (if it’s not found it will provide an empty Trie instead) Simple!</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Trie</span> a) <span class="kw">where</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>  <span class="fu">mempty</span> <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">False</span> Map.empty</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>  <span class="dt">Trie</span> v k <span class="ot">`mappend`</span> <span class="dt">Trie</span> t l <span class="ot">=</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a>    <span class="dt">Trie</span> (v <span class="op">||</span> t) (Map.unionWith <span class="fu">mappend</span> k l)</span></code></pre></div>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a>insert <span class="ot">=</span> <span class="fu">foldr</span> f (\(<span class="dt">Trie</span> _ m) <span class="ot">-&gt;</span> <span class="dt">Trie</span> <span class="dt">True</span> m) <span class="kw">where</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a>  f e a <span class="ot">=</span> </span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a>    overMap (Map.alter (<span class="dt">Just</span> <span class="op">.</span> a <span class="op">.</span> fold) e)</span></code></pre></div>
-<p>I think this is really cool: with just a <code class="sourceCode haskell"><span class="fu">foldr</span></code>, you’re burrowing into a Trie, changing it, and burrowing back out again.</p>
+<p><code class="sourceCode haskell">insert</code> is another deal
+entirely. In <code class="sourceCode haskell">member</code>, the fold
+was tunneling into a Trie, applying the accumulator function to
+successively deeper Tries, and returning a result based on the final
+Trie. <code class="sourceCode haskell">insert</code> needs to do the
+same tunneling - but the Trie returned needs to be the <em>outer</em>
+Trie.</p>
+<p>It turns out it’s not that difficult. Instead of “building up a
+function” that is then applied to a Trie, here a function is “sent” into
+the inner Tries. The cool thing here is that the function being sent
+hasn’t been generated yet.</p>
+<p>Here’s some more illustration of what I mean. Start off with the
+normal <code class="sourceCode haskell"><span class="fu">foldr</span></code>:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>insert <span class="ot">=</span> <span class="fu">foldr</span> f (\(<span class="dt">Trie</span> _ m) <span class="ot">-&gt;</span> <span class="dt">Trie</span> <span class="dt">True</span> m)</span></code></pre></div>
+<p>With the final function to be applied being one that just flips the
+<code class="sourceCode haskell">endHere</code> tag to <code class="sourceCode haskell"><span class="dt">True</span></code>. Then
+<code class="sourceCode haskell">f</code>: this is going to act
+<em>over</em> the map of the Trie that it’s called on. It’s useful to
+define a function just for that:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ot">overMap ::</span> <span class="dt">Ord</span> b </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>        <span class="ot">=&gt;</span> (<span class="dt">Map.Map</span> a (<span class="dt">Trie</span> a)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>        <span class="ot">-&gt;</span> <span class="dt">Map.Map</span> b (<span class="dt">Trie</span> b))</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>        <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        <span class="ot">-&gt;</span> <span class="dt">Trie</span> b</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>overMap f (<span class="dt">Trie</span> e m) <span class="ot">=</span> <span class="dt">Trie</span> e (f m)</span></code></pre></div>
+<p>Then, it will look up the next element of the sequence in the Trie,
+and apply the accumulating function to it. (if it’s not found it will
+provide an empty Trie instead) Simple!</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell literate hidden_source"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Monoid</span> (<span class="dt">Trie</span> a) <span class="kw">where</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mempty</span> <span class="ot">=</span> <span class="dt">Trie</span> <span class="dt">False</span> Map.empty</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Trie</span> v k <span class="ot">`mappend`</span> <span class="dt">Trie</span> t l <span class="ot">=</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Trie</span> (v <span class="op">||</span> t) (Map.unionWith <span class="fu">mappend</span> k l)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ot">insert ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>insert <span class="ot">=</span> <span class="fu">foldr</span> f (\(<span class="dt">Trie</span> _ m) <span class="ot">-&gt;</span> <span class="dt">Trie</span> <span class="dt">True</span> m) <span class="kw">where</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> </span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    overMap (Map.alter (<span class="dt">Just</span> <span class="op">.</span> a <span class="op">.</span> fold) e)</span></code></pre></div>
+<p>I think this is really cool: with just a <code class="sourceCode haskell"><span class="fu">foldr</span></code>, you’re
+burrowing into a Trie, changing it, and burrowing back out again.</p>
 <h2 id="removal">Removal</h2>
-<p>This is always the tricky one with a Trie. You <em>can</em> just follow a given sequence down to its tag, and flip it from on to off. But that doesn’t remove the sequence itself from the Trie. So maybe you just delete the sequence - but that doesn’t work either. How do you know that there are no other sequences stored below the one you were examining?</p>
-<p>What you need to do is to send a function into the Trie, and have it report back as to whether or not it stores other sequences below it. So this version of <code class="sourceCode haskell"><span class="fu">foldr</span></code> is going to burrow into the Trie, like <code class="sourceCode haskell">member</code>; maintain the outer Trie, like <code class="sourceCode haskell">insert</code>; but <em>also</em> send messages back up to the outer functions. Cool!</p>
-<p>The way to do the “message sending” is with <code class="sourceCode haskell"><span class="dt">Maybe</span></code>. If the function you send into the Trie to delete the end of the sequence returns <code class="sourceCode haskell"><span class="dt">Nothing</span></code>, then it signifies that you can delete that member. Luckily, the <code class="sourceCode haskell">alter</code> function on <code class="sourceCode haskell"><span class="dt">Data.Map</span></code> works well with this:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="ot">alter ::</span> <span class="dt">Ord</span> k </span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>      <span class="ot">=&gt;</span> (<span class="dt">Maybe</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a)</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>      <span class="ot">-&gt;</span> k</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>      <span class="ot">-&gt;</span> <span class="dt">Map</span> k a</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>      <span class="ot">-&gt;</span> <span class="dt">Map</span> k a</span></code></pre></div>
-<p>Its first argument is a function which is given the result of looking up its <em>second</em> argument. If the function returns <code class="sourceCode haskell"><span class="dt">Nothing</span></code>, that key-value pair in the map is deleted (if it was there). If it returns <code class="sourceCode haskell"><span class="dt">Just</span></code> something, though, that key-value pair is added. In the delete function, we can chain the accumulating function with <code class="sourceCode haskell"><span class="op">=&lt;&lt;</span></code>. This will skip the rest of the accumulation if any part of the sequence isn’t found. The actual function we’re chaining on is <code class="sourceCode haskell">nilIfEmpty</code>, which checks if a given Trie is empty, and returns <code class="sourceCode haskell"><span class="dt">Just</span></code> the Trie if it’s not, or <code class="sourceCode haskell"><span class="dt">Nothing</span></code> otherwise.</p>
+<p>This is always the tricky one with a Trie. You <em>can</em> just
+follow a given sequence down to its tag, and flip it from on to off. But
+that doesn’t remove the sequence itself from the Trie. So maybe you just
+delete the sequence - but that doesn’t work either. How do you know that
+there are no other sequences stored below the one you were
+examining?</p>
+<p>What you need to do is to send a function into the Trie, and have it
+report back as to whether or not it stores other sequences below it. So
+this version of <code class="sourceCode haskell"><span class="fu">foldr</span></code> is going
+to burrow into the Trie, like <code class="sourceCode haskell">member</code>; maintain the outer Trie, like
+<code class="sourceCode haskell">insert</code>; but <em>also</em> send
+messages back up to the outer functions. Cool!</p>
+<p>The way to do the “message sending” is with <code class="sourceCode haskell"><span class="dt">Maybe</span></code>. If the
+function you send into the Trie to delete the end of the sequence
+returns <code class="sourceCode haskell"><span class="dt">Nothing</span></code>, then
+it signifies that you can delete that member. Luckily, the <code class="sourceCode haskell">alter</code> function on <code class="sourceCode haskell"><span class="dt">Data.Map</span></code> works
+well with this:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ot">alter ::</span> <span class="dt">Ord</span> k </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>      <span class="ot">=&gt;</span> (<span class="dt">Maybe</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> a)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>      <span class="ot">-&gt;</span> k</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>      <span class="ot">-&gt;</span> <span class="dt">Map</span> k a</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>      <span class="ot">-&gt;</span> <span class="dt">Map</span> k a</span></code></pre></div>
+<p>Its first argument is a function which is given the result of looking
+up its <em>second</em> argument. If the function returns <code class="sourceCode haskell"><span class="dt">Nothing</span></code>, that
+key-value pair in the map is deleted (if it was there). If it returns
+<code class="sourceCode haskell"><span class="dt">Just</span></code>
+something, though, that key-value pair is added. In the delete function,
+we can chain the accumulating function with <code class="sourceCode haskell"><span class="op">=&lt;&lt;</span></code>.
+This will skip the rest of the accumulation if any part of the sequence
+isn’t found. The actual function we’re chaining on is <code class="sourceCode haskell">nilIfEmpty</code>, which checks if a given
+Trie is empty, and returns <code class="sourceCode haskell"><span class="dt">Just</span></code> the Trie
+if it’s not, or <code class="sourceCode haskell"><span class="dt">Nothing</span></code>
+otherwise.</p>
 <p>Here’s the finished version:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">delete ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>delete <span class="ot">=</span> (fromMaybe empty <span class="op">.</span>) <span class="op">.</span> <span class="fu">foldr</span> f i <span class="kw">where</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>  i (<span class="dt">Trie</span> _ m) <span class="op">|</span> Map.null m  <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a>               <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> (<span class="dt">Trie</span> <span class="dt">False</span> m)</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true"></a>  f e a <span class="ot">=</span> nilIfEmpty <span class="op">.</span> overMap (Map.alter (a <span class="op">=&lt;&lt;</span>) e) </span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true"></a>  </span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true"></a><span class="fu">null</span><span class="ot"> ::</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true"></a><span class="fu">null</span> (<span class="dt">Trie</span> e m) <span class="ot">=</span> (<span class="fu">not</span> e) <span class="op">&amp;&amp;</span> (Map.null m)</span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true"></a></span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true"></a><span class="ot">nilIfEmpty ::</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Trie</span> a)</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true"></a>nilIfEmpty t <span class="op">|</span> <span class="fu">null</span> t    <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true"></a>             <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> t</span></code></pre></div>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ot">delete ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Trie</span> a</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>delete <span class="ot">=</span> (fromMaybe empty <span class="op">.</span>) <span class="op">.</span> <span class="fu">foldr</span> f i <span class="kw">where</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  i (<span class="dt">Trie</span> _ m) <span class="op">|</span> Map.null m  <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>               <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> (<span class="dt">Trie</span> <span class="dt">False</span> m)</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  f e a <span class="ot">=</span> nilIfEmpty <span class="op">.</span> overMap (Map.alter (a <span class="op">=&lt;&lt;</span>) e) </span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a><span class="fu">null</span><span class="ot"> ::</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="fu">null</span> (<span class="dt">Trie</span> e m) <span class="ot">=</span> (<span class="fu">not</span> e) <span class="op">&amp;&amp;</span> (Map.null m)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a><span class="ot">nilIfEmpty ::</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (<span class="dt">Trie</span> a)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>nilIfEmpty t <span class="op">|</span> <span class="fu">null</span> t    <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>             <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Just</span> t</span></code></pre></div>
 <h2 id="folding-the-foldable">Folding the Foldable</h2>
-<p>So how about folding the Trie itself? Same trick: build up a function with a fold. This time, a fold over the map, not a list. And the function being built up is a cons operation. When you hit a <code class="sourceCode haskell"><span class="dt">True</span></code> tag, fire off an empty list to the built-up function, allowing it to evaluate:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a><span class="ot">foldrTrie ::</span> ([a] <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> b</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a>foldrTrie f i (<span class="dt">Trie</span> a m) <span class="ot">=</span> Map.foldrWithKey ff s m <span class="kw">where</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a>  s    <span class="ot">=</span> <span class="kw">if</span> a <span class="kw">then</span> f [] i <span class="kw">else</span> i</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true"></a>  ff k <span class="ot">=</span> <span class="fu">flip</span> (foldrTrie <span class="op">$</span> f <span class="op">.</span> (k <span class="op">:</span>))</span></code></pre></div>
-<p>Unfortunately, <a href="http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set">it’s not easy</a> to make the Trie <em>conform</em> to <code class="sourceCode haskell"><span class="dt">Foldable</span></code>. It is possible, and it’s what I’m currently trying to figure out, but it’s non-trivial.</p>
+<p>So how about folding the Trie itself? Same trick: build up a function
+with a fold. This time, a fold over the map, not a list. And the
+function being built up is a cons operation. When you hit a <code class="sourceCode haskell"><span class="dt">True</span></code> tag, fire
+off an empty list to the built-up function, allowing it to evaluate:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell literate"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="ot">foldrTrie ::</span> ([a] <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> <span class="dt">Trie</span> a <span class="ot">-&gt;</span> b</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>foldrTrie f i (<span class="dt">Trie</span> a m) <span class="ot">=</span> Map.foldrWithKey ff s m <span class="kw">where</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  s    <span class="ot">=</span> <span class="kw">if</span> a <span class="kw">then</span> f [] i <span class="kw">else</span> i</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  ff k <span class="ot">=</span> <span class="fu">flip</span> (foldrTrie <span class="op">$</span> f <span class="op">.</span> (k <span class="op">:</span>))</span></code></pre></div>
+<p>Unfortunately, <a href="http://stackoverflow.com/questions/33469157/foldable-instance-for-a-trie-set">it’s
+not easy</a> to make the Trie <em>conform</em> to <code class="sourceCode haskell"><span class="dt">Foldable</span></code>. It
+is possible, and it’s what I’m currently trying to figure out, but it’s
+non-trivial.</p>
 
         </div>
     </body>

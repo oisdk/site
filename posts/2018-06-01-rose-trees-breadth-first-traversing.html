@@ -32,77 +32,89 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>I was looking again at the issue of writing breadth-first traversals for rose trees, and in particular the problem explored in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons (<a href="#ref-gibbons_breadth-first_2015" role="doc-biblioref">2015</a>)</span>. The breadth-first traversal here is a traversal in the lensy sense.</p>
-<p>First, let’s look back at getting the levels out of the tree. Here’s the old function I arrived at last time:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">levels ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>levels ts <span class="ot">=</span> <span class="fu">foldl</span> f b ts [] []</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    f k (<span class="dt">Node</span> x xs) ls qs <span class="ot">=</span> k (x <span class="op">:</span> ls) (xs <span class="op">:</span> qs)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    b _ [] <span class="ot">=</span> []</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    b k qs <span class="ot">=</span> k <span class="op">:</span> <span class="fu">foldl</span> (<span class="fu">foldl</span> f) b qs [] []</span></code></pre></div>
-<p>After wrangling the definition a little, I got to the following (much cleaner) definition:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>levels tr <span class="ot">=</span> f tr [] <span class="kw">where</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  f (<span class="dt">Node</span> x xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x<span class="op">:</span>y) <span class="op">:</span> <span class="fu">foldr</span> f ys xs</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>  f (<span class="dt">Node</span> x xs) []     <span class="ot">=</span> [x]   <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span></code></pre></div>
+<p>I was looking again at the issue of writing breadth-first traversals
+for rose trees, and in particular the problem explored in <span class="citation" data-cites="gibbons_breadth-first_2015">Gibbons
+(2015)</span>. The breadth-first traversal here is a traversal in the
+lensy sense.</p>
+<p>First, let’s look back at getting the levels out of the tree. Here’s
+the old function I arrived at last time:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">levels ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>levels ts <span class="ot">=</span> <span class="fu">foldl</span> f b ts [] []</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    f k (<span class="dt">Node</span> x xs) ls qs <span class="ot">=</span> k (x <span class="op">:</span> ls) (xs <span class="op">:</span> qs)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    b _ [] <span class="ot">=</span> []</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    b k qs <span class="ot">=</span> k <span class="op">:</span> <span class="fu">foldl</span> (<span class="fu">foldl</span> f) b qs [] []</span></code></pre></div>
+<p>After wrangling the definition a little, I got to the following (much
+cleaner) definition:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">levels ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>levels tr <span class="ot">=</span> f tr [] <span class="kw">where</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  f (<span class="dt">Node</span> x xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x<span class="op">:</span>y) <span class="op">:</span> <span class="fu">foldr</span> f ys xs</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  f (<span class="dt">Node</span> x xs) []     <span class="ot">=</span> [x]   <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span></code></pre></div>
 <h1 id="cofree">Cofree</h1>
-<p>Before going any further, all of the functions so far can be redefined to work on the <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Comonad-Cofree.html">cofree comonad</a>:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Cofree</span> f a <span class="ot">=</span> a <span class="op">:&lt;</span> f (<span class="dt">Cofree</span> f a)</span></code></pre></div>
-<p>When <code class="sourceCode haskell">f</code> is specialized to <code class="sourceCode haskell">[]</code>, we get the original rose tree. But what we actually require is much less specific: <code class="sourceCode haskell">levels</code>, for instance, only needs <code class="sourceCode haskell"><span class="dt">Foldable</span></code>.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">levelsCofree ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> <span class="dt">Cofree</span> f a <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>levelsCofree tr <span class="ot">=</span> f tr []</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x<span class="op">:</span>y) <span class="op">:</span> <span class="fu">foldr</span> f ys xs</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) []     <span class="ot">=</span> [x]   <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span></code></pre></div>
+<p>Before going any further, all of the functions so far can be
+redefined to work on the <a href="http://hackage.haskell.org/package/free-5.0.2/docs/Control-Comonad-Cofree.html">cofree
+comonad</a>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Cofree</span> f a <span class="ot">=</span> a <span class="op">:&lt;</span> f (<span class="dt">Cofree</span> f a)</span></code></pre></div>
+<p>When <code class="sourceCode haskell">f</code> is specialized to
+<code class="sourceCode haskell">[]</code>, we get the original rose
+tree. But what we actually require is much less specific: <code class="sourceCode haskell">levels</code>, for instance, only needs <code class="sourceCode haskell"><span class="dt">Foldable</span></code>.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">levelsCofree ::</span> <span class="dt">Foldable</span> f <span class="ot">=&gt;</span> <span class="dt">Cofree</span> f a <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>levelsCofree tr <span class="ot">=</span> f tr []</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x<span class="op">:</span>y) <span class="op">:</span> <span class="fu">foldr</span> f ys xs</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) []     <span class="ot">=</span> [x]   <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span></code></pre></div>
 <p>Using this, we can write the efficient breadth-first traversal:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>breadthFirst</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>breadthFirst c (t<span class="op">:&lt;</span>ts) <span class="ot">=</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    liftA2 evalState (map2 (<span class="op">:&lt;</span>) (c t) (fill ts)) chld</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    chld <span class="ot">=</span> <span class="fu">foldr</span> (liftA2 evalState) (<span class="fu">pure</span> []) (<span class="fu">foldr</span> f [] ts)</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>    fill <span class="ot">=</span> <span class="fu">traverse</span> (<span class="fu">const</span> (state (\(x<span class="op">:</span>xs) <span class="ot">-&gt;</span> (x,xs))))</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) (q<span class="op">:</span>qs)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>        <span class="ot">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="op">:&lt;</span>ys) <span class="op">:</span> zs) (c x) (fill xs) q</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a>        <span class="op">:</span> <span class="fu">foldr</span> f qs xs</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) []</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a>        <span class="ot">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="op">:&lt;</span>ys]) (c x) (fill xs)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a>        <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a>    map2 k x xs <span class="ot">=</span> <span class="fu">fmap</span>   (\y <span class="ot">-&gt;</span> <span class="fu">fmap</span>   (k y) xs) x</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a>    app2 k x xs <span class="ot">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</span></code></pre></div>
-<p>At every level, the subforest’s shape it taken (<code class="sourceCode haskell">fill</code>), and it’s traversed recursively. We can fuse these two steps into one:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>breadthFirst</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="ot">    ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f)</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a  <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>breadthFirst c (t<span class="op">:&lt;</span>ts) <span class="ot">=</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    liftA2</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>        evalState</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>        (map2 (<span class="op">:&lt;</span>) (c t) fill)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>        (<span class="fu">foldr</span> (liftA2 evalState) (<span class="fu">pure</span> []) (chld []))</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>    <span class="dt">Compose</span> (<span class="dt">Endo</span> chld,fill) <span class="ot">=</span> go ts</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>    go <span class="ot">=</span> <span class="fu">traverse</span> (\x <span class="ot">-&gt;</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> (f x), state (\(y<span class="op">:</span>ys) <span class="ot">-&gt;</span> (y,ys))))</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) (q<span class="op">:</span>qs) <span class="ot">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="op">:&lt;</span>ys) <span class="op">:</span> zs) (c x) r q <span class="op">:</span> rs qs</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true"></a>      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="ot">=</span> go xs</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true"></a>    f (x<span class="op">:&lt;</span>xs) [] <span class="ot">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="op">:&lt;</span>ys]) (c x) r <span class="op">:</span> rs []</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true"></a>      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="ot">=</span> go xs</span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true"></a></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true"></a>    map2 k x xs <span class="ot">=</span> <span class="fu">fmap</span>   (\y <span class="ot">-&gt;</span> <span class="fu">fmap</span>   (k y) xs) x</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true"></a>    app2 k x xs <span class="ot">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>breadthFirst</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> (<span class="dt">Applicative</span> f, <span class="dt">Traversable</span> t)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>breadthFirst c (t<span class="op">:&lt;</span>ts) <span class="ot">=</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    liftA2 evalState (map2 (<span class="op">:&lt;</span>) (c t) (fill ts)) chld</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    chld <span class="ot">=</span> <span class="fu">foldr</span> (liftA2 evalState) (<span class="fu">pure</span> []) (<span class="fu">foldr</span> f [] ts)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    fill <span class="ot">=</span> <span class="fu">traverse</span> (<span class="fu">const</span> (state (\(x<span class="op">:</span>xs) <span class="ot">-&gt;</span> (x,xs))))</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) (q<span class="op">:</span>qs)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>        <span class="ot">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="op">:&lt;</span>ys) <span class="op">:</span> zs) (c x) (fill xs) q</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> <span class="fu">foldr</span> f qs xs</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) []</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>        <span class="ot">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="op">:&lt;</span>ys]) (c x) (fill xs)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>        <span class="op">:</span> <span class="fu">foldr</span> f [] xs</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    map2 k x xs <span class="ot">=</span> <span class="fu">fmap</span>   (\y <span class="ot">-&gt;</span> <span class="fu">fmap</span>   (k y) xs) x</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    app2 k x xs <span class="ot">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</span></code></pre></div>
+<p>At every level, the subforest’s shape it taken (<code class="sourceCode haskell">fill</code>), and it’s traversed recursively.
+We can fuse these two steps into one:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>breadthFirst</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> (<span class="dt">Traversable</span> t, <span class="dt">Applicative</span> f)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Cofree</span> t a  <span class="ot">-&gt;</span> f (<span class="dt">Cofree</span> t b)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>breadthFirst c (t<span class="op">:&lt;</span>ts) <span class="ot">=</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    liftA2</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        evalState</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        (map2 (<span class="op">:&lt;</span>) (c t) fill)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        (<span class="fu">foldr</span> (liftA2 evalState) (<span class="fu">pure</span> []) (chld []))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Compose</span> (<span class="dt">Endo</span> chld,fill) <span class="ot">=</span> go ts</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    go <span class="ot">=</span> <span class="fu">traverse</span> (\x <span class="ot">-&gt;</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> (f x), state (\(y<span class="op">:</span>ys) <span class="ot">-&gt;</span> (y,ys))))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) (q<span class="op">:</span>qs) <span class="ot">=</span> app2 (\y ys zs <span class="ot">-&gt;</span> (y<span class="op">:&lt;</span>ys) <span class="op">:</span> zs) (c x) r q <span class="op">:</span> rs qs</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="ot">=</span> go xs</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    f (x<span class="op">:&lt;</span>xs) [] <span class="ot">=</span> map2 (\y ys <span class="ot">-&gt;</span> [y<span class="op">:&lt;</span>ys]) (c x) r <span class="op">:</span> rs []</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span> <span class="dt">Compose</span> (<span class="dt">Endo</span> rs,r) <span class="ot">=</span> go xs</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    map2 k x xs <span class="ot">=</span> <span class="fu">fmap</span>   (\y <span class="ot">-&gt;</span> <span class="fu">fmap</span>   (k y) xs) x</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>    app2 k x xs <span class="ot">=</span> liftA2 (\y <span class="ot">-&gt;</span> liftA2 (k y) xs) x</span></code></pre></div>
 <p>The overhead from this approach scraps any benefit, though.</p>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-gibbons_breadth-first_2015">
-<p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-gibbons_breadth-first_2015" class="csl-entry" role="listitem">
+Gibbons, Jeremy. 2015. <span>“Breadth-<span>First
+Traversal</span>.”</span> <em>Patterns in Functional Programming</em>.
+<a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.
 </div>
 </div>
 

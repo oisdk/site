@@ -30,73 +30,100 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Folds'." href="../tags/Folds.html">Folds</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Folds'." href="../tags/Folds.html" rel="tag">Folds</a>
     
 </div>
 
 <p>Here’s a useful function from <a href="https://hackage.haskell.org/package/base-4.10.1.0/docs/Data-List.html#v:groupBy">Data.List</a>:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>groupBy (<span class="op">==</span>) <span class="st">&quot;aabcdda&quot;</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="co">-- [&quot;aa&quot;,&quot;b&quot;,&quot;c&quot;,&quot;dd&quot;,&quot;a&quot;]</span></span></code></pre></div>
-<p>However, as has been pointed out before<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>, <code class="sourceCode haskell">groupBy</code> expects an equivalence relation, and can exhibit surprising behavior when it doesn’t get one. Let’s say, for instance, that we wanted to group numbers that were close together:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">groupClose ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> [[<span class="dt">Integer</span>]]</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>groupClose <span class="ot">=</span> groupBy (\x y <span class="ot">-&gt;</span> <span class="fu">abs</span> (x <span class="op">-</span> y) <span class="op">&lt;</span> <span class="dv">3</span>)</span></code></pre></div>
-<p>What would you expect on the list <code>[1, 2, 3, 4, 5]</code>? All in the same group? Well, what you actually get is:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">4</span>,<span class="dv">5</span>]]</span></code></pre></div>
-<p>This is because the implementation of <code class="sourceCode haskell">groupBy</code> only compares to the first element in each group:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>groupBy _  []           <span class="ot">=</span>  []</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>groupBy eq (x<span class="op">:</span>xs)       <span class="ot">=</span>  (x<span class="op">:</span>ys) <span class="op">:</span> groupBy eq zs</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>                           <span class="kw">where</span> (ys,zs) <span class="ot">=</span> <span class="fu">span</span> (eq x) xs</span></code></pre></div>
-<p>Brandon Simmons gave a <a href="http://brandon.si/code/an-alternative-definition-for-datalistgroupby/">definition</a> of <code class="sourceCode haskell">groupBy</code> that is perhaps more useful, but it used explicit recursion, rather than a fold.</p>
-<p>A definition with <code class="sourceCode haskell"><span class="fu">foldr</span></code> turned out to be trickier than I expected. I found some of the laziness properties especially difficult:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">head</span> (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="dv">2</span><span class="op">:</span><span class="fu">undefined</span>))</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>[<span class="dv">1</span>]</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">head</span> <span class="op">.</span> <span class="fu">head</span>) (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="fu">undefined</span>))</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a><span class="dv">1</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">head</span> <span class="op">.</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">tail</span>) (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="dv">2</span><span class="op">:</span><span class="fu">undefined</span>))</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a><span class="dv">2</span></span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>groupBy (<span class="op">==</span>) <span class="st">&quot;aabcdda&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- [&quot;aa&quot;,&quot;b&quot;,&quot;c&quot;,&quot;dd&quot;,&quot;a&quot;]</span></span></code></pre></div>
+<p>However, as has been pointed out before<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>,
+<code class="sourceCode haskell">groupBy</code> expects an equivalence
+relation, and can exhibit surprising behavior when it doesn’t get one.
+Let’s say, for instance, that we wanted to group numbers that were close
+together:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">groupClose ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> [[<span class="dt">Integer</span>]]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>groupClose <span class="ot">=</span> groupBy (\x y <span class="ot">-&gt;</span> <span class="fu">abs</span> (x <span class="op">-</span> y) <span class="op">&lt;</span> <span class="dv">3</span>)</span></code></pre></div>
+<p>What would you expect on the list <code>[1, 2, 3, 4, 5]</code>? All
+in the same group? Well, what you actually get is:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">4</span>,<span class="dv">5</span>]]</span></code></pre></div>
+<p>This is because the implementation of <code class="sourceCode haskell">groupBy</code> only compares to the first
+element in each group:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>groupBy _  []           <span class="ot">=</span>  []</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>groupBy eq (x<span class="op">:</span>xs)       <span class="ot">=</span>  (x<span class="op">:</span>ys) <span class="op">:</span> groupBy eq zs</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                           <span class="kw">where</span> (ys,zs) <span class="ot">=</span> <span class="fu">span</span> (eq x) xs</span></code></pre></div>
+<p>Brandon Simmons gave a <a href="http://brandon.si/code/an-alternative-definition-for-datalistgroupby/">definition</a>
+of <code class="sourceCode haskell">groupBy</code> that is perhaps more
+useful, but it used explicit recursion, rather than a fold.</p>
+<p>A definition with <code class="sourceCode haskell"><span class="fu">foldr</span></code> turned
+out to be trickier than I expected. I found some of the laziness
+properties especially difficult:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">head</span> (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="dv">2</span><span class="op">:</span><span class="fu">undefined</span>))</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>[<span class="dv">1</span>]</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">head</span> <span class="op">.</span> <span class="fu">head</span>) (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="fu">undefined</span>))</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">head</span> <span class="op">.</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">tail</span>) (groupBy (<span class="op">==</span>) (<span class="dv">1</span><span class="op">:</span><span class="dv">2</span><span class="op">:</span><span class="fu">undefined</span>))</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span></span></code></pre></div>
 <p>Here’s the definition I came up with, after some deliberation:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>groupBy p xs <span class="ot">=</span> build (\c n <span class="ot">-&gt;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  <span class="kw">let</span> f x a q</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>        <span class="op">|</span> q x <span class="ot">=</span> (x <span class="op">:</span> ys, zs)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> ([], c (x <span class="op">:</span> ys) zs)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>        <span class="kw">where</span> (ys,zs) <span class="ot">=</span> a (p x)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>  <span class="kw">in</span> <span class="fu">snd</span> (<span class="fu">foldr</span> f (<span class="fu">const</span> ([], n)) xs (<span class="fu">const</span> <span class="dt">False</span>)))</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a><span class="ot">{-# INLINE groupBy #-}</span></span></code></pre></div>
-<p>Seemingly benign changes to the function will break one or more of the above tests. In particular, the laziness of a “where” binding needs to be taken into account. Here’s an early attempt which failed:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>groupBy p xs <span class="ot">=</span> build (\c n <span class="ot">-&gt;</span> </span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>  <span class="kw">let</span> f x a q d</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>        <span class="op">|</span> q x <span class="ot">=</span> a (p x) (d <span class="op">.</span> (<span class="op">:</span>) x)</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> d [] (a (p x) (c <span class="op">.</span> (<span class="op">:</span>) x))</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>  <span class="kw">in</span> <span class="fu">foldr</span> f (\_ d <span class="ot">-&gt;</span> d [] n) xs (<span class="fu">const</span> <span class="dt">False</span>) (\ _ y <span class="ot">-&gt;</span> y))</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>groupBy p xs <span class="ot">=</span> build (\c n <span class="ot">-&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> f x a q</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> q x <span class="ot">=</span> (x <span class="op">:</span> ys, zs)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> ([], c (x <span class="op">:</span> ys) zs)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">where</span> (ys,zs) <span class="ot">=</span> a (p x)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in</span> <span class="fu">snd</span> (<span class="fu">foldr</span> f (<span class="fu">const</span> ([], n)) xs (<span class="fu">const</span> <span class="dt">False</span>)))</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE groupBy #-}</span></span></code></pre></div>
+<p>Seemingly benign changes to the function will break one or more of
+the above tests. In particular, the laziness of a “where” binding needs
+to be taken into account. Here’s an early attempt which failed:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">groupBy ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Bool</span>) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [[a]]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>groupBy p xs <span class="ot">=</span> build (\c n <span class="ot">-&gt;</span> </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">let</span> f x a q d</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> q x <span class="ot">=</span> a (p x) (d <span class="op">.</span> (<span class="op">:</span>) x)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> d [] (a (p x) (c <span class="op">.</span> (<span class="op">:</span>) x))</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">in</span> <span class="fu">foldr</span> f (\_ d <span class="ot">-&gt;</span> d [] n) xs (<span class="fu">const</span> <span class="dt">False</span>) (\ _ y <span class="ot">-&gt;</span> y))</span></code></pre></div>
 <p>Once done, though, it works as expected:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">==</span>) <span class="st">&quot;aaabcccdda&quot;</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>[<span class="st">&quot;aaa&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ccc&quot;</span>,<span class="st">&quot;dd&quot;</span>,<span class="st">&quot;a&quot;</span>]</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">==</span>) []</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>[]</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">&lt;=</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>]</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>],[<span class="dv">2</span>]]</span></code></pre></div>
-<p>It’s the fastest version I could find that obeyed the above laziness properties.</p>
-<p>The <a href="https://ghc.haskell.org/trac/ghc/ticket/13593">GHC page on the issue</a> unfortunately seems to indicate the implementation won’t be changed. Ah, well. Regardless, I have a <a href="https://github.com/oisdk/groupBy">repository</a> with the implementation above (with extra fusion machinery added) and comparisons to other implementations.</p>
-<section class="footnotes" role="doc-endnotes">
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">==</span>) <span class="st">&quot;aaabcccdda&quot;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>[<span class="st">&quot;aaa&quot;</span>,<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ccc&quot;</span>,<span class="st">&quot;dd&quot;</span>,<span class="st">&quot;a&quot;</span>]</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">==</span>) []</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>[]</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> groupBy (<span class="op">&lt;=</span>) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">2</span>]</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>[[<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">2</span>,<span class="dv">3</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">5</span>],[<span class="dv">2</span>]]</span></code></pre></div>
+<p>It’s the fastest version I could find that obeyed the above laziness
+properties.</p>
+<p>The <a href="https://ghc.haskell.org/trac/ghc/ticket/13593">GHC page
+on the issue</a> unfortunately seems to indicate the implementation
+won’t be changed. Ah, well. Regardless, I have a <a href="https://github.com/oisdk/groupBy">repository</a> with the
+implementation above (with extra fusion machinery added) and comparisons
+to other implementations.</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>There are several threads on the libraries mailing list on this topic:</p>
+<li id="fn1"><p>There are several threads on the libraries mailing list
+on this topic:</p>
 <dl>
 <dt>2006</dt>
-<dd><a href="http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html">mapAccumL - find max in-sequence subsequence</a>
+<dd>
+<a href="http://www.haskell.org/pipermail/haskell-cafe/2006-October/019148.html">mapAccumL
+- find max in-sequence subsequence</a>
 </dd>
 <dt>2007</dt>
-<dd><a href="https://mail.haskell.org/pipermail/libraries/2007-August/008028.html">Data.List.groupBy with non-transitive equality predicate</a> (this is the longest discussion on the topic)
+<dd>
+<a href="https://mail.haskell.org/pipermail/libraries/2007-August/008028.html">Data.List.groupBy
+with non-transitive equality predicate</a> (this is the longest
+discussion on the topic)
 </dd>
 <dt>2008</dt>
-<dd><a href="https://mail.haskell.org/pipermail/libraries/2008-September/010629.html">Generalize groupBy in a useful way?</a>
+<dd>
+<a href="https://mail.haskell.org/pipermail/libraries/2008-September/010629.html">Generalize
+groupBy in a useful way?</a>
 </dd>
 <dt>2009</dt>
-<dd><a href="https://mail.haskell.org/pipermail/libraries/2009-June/011866.html">nubBy seems broken in recent GHCs</a>
+<dd>
+<a href="https://mail.haskell.org/pipermail/libraries/2009-June/011866.html">nubBy
+seems broken in recent GHCs</a>
 </dd>
 </dl>
 <a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></li>

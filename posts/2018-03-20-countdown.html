@@ -30,452 +30,622 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Algorithms'." href="../tags/Algorithms.html">Algorithms</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Algorithms'." href="../tags/Algorithms.html" rel="tag">Algorithms</a>
     
 </div>
 
-<p>There’s a popular UK TV show called <a href="https://en.wikipedia.org/wiki/Countdown_(game_show)">Countdown</a> with a round where contestants have to get as close to some target number as possible by constructing an arithmetic expression from six random numbers.</p>
-<p>You don’t have to use all of the numbers, and you’re allowed use four operations: addition, subtraction, multiplication, and division. Additionally, each stage of the calculation must result in a positive integer.</p>
+<p>There’s a popular UK TV show called <a href="https://en.wikipedia.org/wiki/Countdown_(game_show)">Countdown</a>
+with a round where contestants have to get as close to some target
+number as possible by constructing an arithmetic expression from six
+random numbers.</p>
+<p>You don’t have to use all of the numbers, and you’re allowed use four
+operations: addition, subtraction, multiplication, and division.
+Additionally, each stage of the calculation must result in a positive
+integer.</p>
 <p>Here’s an example. Try get to the target 586:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mo>,</mo><mn>25</mn><mo>,</mo><mn>1</mn><mo>,</mo><mn>5</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">100,25,1,5,3,10</annotation></semantics></math></p>
 <p>On the show, contestants get 30 seconds to think of an answer.</p>
 <details>
-<summary> Solution </summary> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn><mo>+</mo><mn>100</mn><mo>*</mo><mn>5</mn><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10 + 100 * 5 + 1</annotation></semantics></math>
+<summary>
+Solution
+</summary>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn><mo>+</mo><mn>100</mn><mo>*</mo><mn>5</mn><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10 + 100 * 5 + 1</annotation></semantics></math>
 </details>
-<p>Solving it in Haskell was first explored in depth in <span class="citation" data-cites="hutton_countdown_2002">Hutton (<a href="#ref-hutton_countdown_2002" role="doc-biblioref">2002</a>)</span>. There, a basic “generate-and-test” implementation was provided and proven correct.</p>
-<p>As an optimization problem, there are several factors which will influence the choice of algorithm:</p>
+<p>Solving it in Haskell was first explored in depth in <span class="citation" data-cites="hutton_countdown_2002">Hutton
+(2002)</span>. There, a basic “generate-and-test” implementation was
+provided and proven correct.</p>
+<p>As an optimization problem, there are several factors which will
+influence the choice of algorithm:</p>
 <ol type="1">
-<li>There’s no obvious heuristic for constructing subexpressions in order to get to a final result. In other words, if we have <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>*</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 * 10</annotation></semantics></math>, there’s no easy way to tell which is “closer” to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>586</mn><annotation encoding="application/x-tex">586</annotation></semantics></math>. The latter is closer numerically, but the former is what we ended up using in the solution.</li>
-<li>Because certain subexpressions aren’t allowed, we’ll be able to prune the search space as we go.</li>
-<li>Ideally, we’d only want to calculate each possible subexpression once, making it a pretty standard dynamic programming problem.</li>
+<li>There’s no obvious heuristic for constructing subexpressions in
+order to get to a final result. In other words, if we have
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>+</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 + 10</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>25</mn><mo>*</mo><mn>3</mn><mo>*</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">25 * 3 * 10</annotation></semantics></math>,
+there’s no easy way to tell which is “closer” to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>586</mn><annotation encoding="application/x-tex">586</annotation></semantics></math>.
+The latter is closer numerically, but the former is what we ended up
+using in the solution.</li>
+<li>Because certain subexpressions aren’t allowed, we’ll be able to
+prune the search space as we go.</li>
+<li>Ideally, we’d only want to calculate each possible subexpression
+once, making it a pretty standard dynamic programming problem.</li>
 </ol>
-<p>I’ll be focusing on the third point in this post, but we can add the second point in at the end. First, however, let’s write a naive implementation.</p>
+<p>I’ll be focusing on the third point in this post, but we can add the
+second point in at the end. First, however, let’s write a naive
+implementation.</p>
 <h2 id="generating-all-expressions">Generating all Expressions</h2>
-<p>I can’t think of a simpler way to solve the problem than generate-and-test, so we’ll work from there. Testing is easy (<code class="sourceCode haskell">(target <span class="op">==</span>) <span class="op">.</span> eval</code>), so we’ll focus on generation. The core function we’ll use for this is usually called “unmerges”:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>unmerges [x,y] <span class="ot">=</span> [([x],[y])]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>unmerges (x<span class="op">:</span>xs) <span class="ot">=</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    ([x],xs) <span class="op">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    <span class="fu">concat</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>        [ [(x<span class="op">:</span>ys,zs),(ys,x<span class="op">:</span>zs)]</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>        <span class="op">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs ]</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>unmerges _ <span class="ot">=</span> []</span></code></pre></div>
+<p>I can’t think of a simpler way to solve the problem than
+generate-and-test, so we’ll work from there. Testing is easy (<code class="sourceCode haskell">(target <span class="op">==</span>) <span class="op">.</span> eval</code>),
+so we’ll focus on generation. The core function we’ll use for this is
+usually called “unmerges”:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>unmerges [x,y] <span class="ot">=</span> [([x],[y])]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>unmerges (x<span class="op">:</span>xs) <span class="ot">=</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    ([x],xs) <span class="op">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">concat</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>        [ [(x<span class="op">:</span>ys,zs),(ys,x<span class="op">:</span>zs)]</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs ]</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>unmerges _ <span class="ot">=</span> []</span></code></pre></div>
 <p>It generates all possible 2-partitions of a list, ignoring order:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> unmerges <span class="st">&quot;abc&quot;</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>[(<span class="st">&quot;a&quot;</span>,<span class="st">&quot;bc&quot;</span>),(<span class="st">&quot;ab&quot;</span>,<span class="st">&quot;c&quot;</span>),(<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ac&quot;</span>)]</span></code></pre></div>
-<p>I haven’t looked much into how to optimize this function or make it nicer, as we’ll be swapping it out later.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> unmerges <span class="st">&quot;abc&quot;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>[(<span class="st">&quot;a&quot;</span>,<span class="st">&quot;bc&quot;</span>),(<span class="st">&quot;ab&quot;</span>,<span class="st">&quot;c&quot;</span>),(<span class="st">&quot;b&quot;</span>,<span class="st">&quot;ac&quot;</span>)]</span></code></pre></div>
+<p>I haven’t looked much into how to optimize this function or make it
+nicer, as we’ll be swapping it out later.</p>
 <p>Next, we need to make the recursive calls:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">allExprs ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>allExprs _ [x] <span class="ot">=</span> [x]</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>allExprs c xs <span class="ot">=</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    [ e</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    <span class="op">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    , y <span class="ot">&lt;-</span> allExprs c ys</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    , z <span class="ot">&lt;-</span> allExprs c zs</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    , e <span class="ot">&lt;-</span> c y z ]</span></code></pre></div>
-<p>Finally, using the <a href="https://hackage.haskell.org/package/simple-reflect">simple-reflect</a> library, we can take a look at the output:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="op">+</span>y,x<span class="op">*</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>[<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span>,<span class="dv">1</span> <span class="op">*</span> <span class="dv">2</span>]</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="op">+</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>[<span class="dv">1</span> <span class="op">+</span> (<span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>),<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>,<span class="dv">2</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">3</span>)]</span></code></pre></div>
-<p>Even at this early stage, we can actually already write a rudimentary solution:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">countdown ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>countdown xs targ <span class="ot">=</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    <span class="fu">filter</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>        ((<span class="op">==</span>) targ <span class="op">.</span> <span class="fu">toInteger</span>)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>        (allExprs</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>             (\x y <span class="ot">-&gt;</span> [x,y,x<span class="op">+</span>y,x<span class="op">*</span>y])</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>             (<span class="fu">map</span> <span class="fu">fromInteger</span> xs))</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">mapM_</span> <span class="fu">print</span> (countdown [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>] <span class="dv">586</span>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>))</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>))</span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>))</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>))</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span>) <span class="op">+</span> <span class="dv">10</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span>) <span class="op">+</span> <span class="dv">10</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>))</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>))</span></code></pre></div>
-<p>As you can see from the output, there’s a lot of repetition. We’ll need to do some memoization to speed it up.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">allExprs ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>allExprs _ [x] <span class="ot">=</span> [x]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>allExprs c xs <span class="ot">=</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    [ e</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> (ys,zs) <span class="ot">&lt;-</span> unmerges xs</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    , y <span class="ot">&lt;-</span> allExprs c ys</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    , z <span class="ot">&lt;-</span> allExprs c zs</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    , e <span class="ot">&lt;-</span> c y z ]</span></code></pre></div>
+<p>Finally, using the <a href="https://hackage.haskell.org/package/simple-reflect">simple-reflect</a>
+library, we can take a look at the output:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="op">+</span>y,x<span class="op">*</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>[<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span>,<span class="dv">1</span> <span class="op">*</span> <span class="dv">2</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> allExprs (\x y <span class="ot">-&gt;</span> [x<span class="op">+</span>y]) [<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>]<span class="ot"> ::</span> [<span class="dt">Expr</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>[<span class="dv">1</span> <span class="op">+</span> (<span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>),<span class="dv">1</span> <span class="op">+</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>,<span class="dv">2</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">3</span>)]</span></code></pre></div>
+<p>Even at this early stage, we can actually already write a rudimentary
+solution:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">countdown ::</span> [<span class="dt">Integer</span>] <span class="ot">-&gt;</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>countdown xs targ <span class="ot">=</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>        ((<span class="op">==</span>) targ <span class="op">.</span> <span class="fu">toInteger</span>)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>        (allExprs</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>             (\x y <span class="ot">-&gt;</span> [x,y,x<span class="op">+</span>y,x<span class="op">*</span>y])</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>             (<span class="fu">map</span> <span class="fu">fromInteger</span> xs))</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">mapM_</span> <span class="fu">print</span> (countdown [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>] <span class="dv">586</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>))</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>))</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>))</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>))</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span>) <span class="op">+</span> <span class="dv">10</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">10</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span>) <span class="op">+</span> <span class="dv">10</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a><span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">+</span> <span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>))</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> (<span class="dv">1</span> <span class="op">+</span> <span class="dv">10</span>))</span></code></pre></div>
+<p>As you can see from the output, there’s a lot of repetition. We’ll
+need to do some memoization to speed it up.</p>
 <h2 id="pure-memoization">Pure Memoization</h2>
-<p>The normal way most programmers think about “memoization” is something like this:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>memo_dict <span class="op">=</span> {<span class="dv">0</span>:<span class="dv">0</span>,<span class="dv">1</span>:<span class="dv">1</span>}</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="kw">def</span> fib(n):</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    <span class="cf">if</span> n <span class="kw">in</span> memo_dict:</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>        <span class="cf">return</span> memo_dict[n]</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>    <span class="cf">else</span>:</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>        res <span class="op">=</span> fib(n<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> fib(n<span class="op">-</span><span class="dv">2</span>)</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>        memo_dict[n] <span class="op">=</span> res</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>        <span class="cf">return</span> res</span></code></pre></div>
-<p>In other words, it’s a fundamentally stateful process. We need to mutate some mapping when we haven’t seen the argument before.</p>
-<p>Using laziness, though, we can emulate the same behavior purely. Instead of mutating the mapping on function calls, we fill the whole thing at the beginning, and then index into it. As long as the mapping is lazy, it’ll only evaluate the function calls when they’re needed. We could use lists as our mapping to the natural numbers:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>fibs <span class="ot">=</span> <span class="dv">0</span> <span class="op">:</span> <span class="dv">1</span> <span class="op">:</span> <span class="fu">map</span> fib [<span class="dv">2</span><span class="op">..</span>]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>fib n <span class="ot">=</span> fibs <span class="op">!!</span> (n<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> fibs <span class="op">!!</span> (n<span class="op">-</span><span class="dv">2</span>)</span></code></pre></div>
-<p>The benefit here is that we avoid the extra work of redundant calls. However, we pay for the speedup in three ways:</p>
+<p>The normal way most programmers think about “memoization” is
+something like this:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>memo_dict <span class="op">=</span> {<span class="dv">0</span>:<span class="dv">0</span>,<span class="dv">1</span>:<span class="dv">1</span>}</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fib(n):</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> n <span class="kw">in</span> memo_dict:</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> memo_dict[n]</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">else</span>:</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>        res <span class="op">=</span> fib(n<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> fib(n<span class="op">-</span><span class="dv">2</span>)</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>        memo_dict[n] <span class="op">=</span> res</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> res</span></code></pre></div>
+<p>In other words, it’s a fundamentally stateful process. We need to
+mutate some mapping when we haven’t seen the argument before.</p>
+<p>Using laziness, though, we can emulate the same behavior purely.
+Instead of mutating the mapping on function calls, we fill the whole
+thing at the beginning, and then index into it. As long as the mapping
+is lazy, it’ll only evaluate the function calls when they’re needed. We
+could use lists as our mapping to the natural numbers:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>fibs <span class="ot">=</span> <span class="dv">0</span> <span class="op">:</span> <span class="dv">1</span> <span class="op">:</span> <span class="fu">map</span> fib [<span class="dv">2</span><span class="op">..</span>]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>fib n <span class="ot">=</span> fibs <span class="op">!!</span> (n<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> fibs <span class="op">!!</span> (n<span class="op">-</span><span class="dv">2</span>)</span></code></pre></div>
+<p>The benefit here is that we avoid the extra work of redundant calls.
+However, we pay for the speedup in three ways:</p>
 <ol class="example" type="1">
-<li>Space: we need to take up memory space storing the cached solutions.</li>
-<li>Indexing: while we no longer have to pay for the expensive recursive calls, we <em>do</em> now have to pay for indexing into the data structure. In this example, we’re paying linear time to index into the list.</li>
-<li>Generality: the memoization is tied directly to the argument type to the function. We need to be able to use the argument to our memoized function as an index into some data structure. While a lot of argument types admit some type of indexing (whether they’re <code class="sourceCode haskell"><span class="dt">Hashable</span></code>, <code class="sourceCode haskell"><span class="dt">Ord</span></code>, etc.), some don’t, and we can’t memoize those using this technique.</li>
+<li>Space: we need to take up memory space storing the cached
+solutions.</li>
+<li>Indexing: while we no longer have to pay for the expensive recursive
+calls, we <em>do</em> now have to pay for indexing into the data
+structure. In this example, we’re paying linear time to index into the
+list.</li>
+<li>Generality: the memoization is tied directly to the argument type to
+the function. We need to be able to use the argument to our memoized
+function as an index into some data structure. While a lot of argument
+types admit some type of indexing (whether they’re <code class="sourceCode haskell"><span class="dt">Hashable</span></code>,
+<code class="sourceCode haskell"><span class="dt">Ord</span></code>,
+etc.), some don’t, and we can’t memoize those using this technique.</li>
 </ol>
-<p>We’re going to look at a technique that allow us to somewhat mitigate 2 and 3 above, using something called a <em>nexus</em>.</p>
+<p>We’re going to look at a technique that allow us to somewhat mitigate
+2 and 3 above, using something called a <em>nexus</em>.</p>
 <h2 id="nexuses">Nexuses</h2>
-<p>The standard technique of memoization is focused on the arguments to the function, creating a concrete representation of them in memory to map to the results. Using nexuses, as described in <span class="citation" data-cites="bird_functional_2003">Bird and Hinze (<a href="#ref-bird_functional_2003" role="doc-biblioref">2003</a>)</span>, we’ll instead focus on the function itself, creating a concrete representation of its call graph in memory. Here’s the call graph of Fibonacci:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>                                            ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>                                   ┌fib(<span class="dv">2</span>)<span class="ot">=</span>1┤</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>                                   │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>                          ┌fib(<span class="dv">3</span>)<span class="ot">=</span>2┤</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>                          │        └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>                 ┌fib(<span class="dv">4</span>)<span class="ot">=</span>3┤</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>                 │        │        ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>                 │        └fib(<span class="dv">2</span>)<span class="ot">=</span>1┤</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>                 │                 └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>        ┌fib(<span class="dv">5</span>)<span class="ot">=</span>5┤</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>        │        │                 ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>        │        │        ┌fib(<span class="dv">2</span>)<span class="ot">=</span>1┤</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>        │        │        │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>        │        └fib(<span class="dv">3</span>)<span class="ot">=</span>2┤</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>        │                 └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a>fib(<span class="dv">6</span>)<span class="ot">=</span>8┤</span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a>        │                          ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>        │                 ┌fib(<span class="dv">2</span>)<span class="ot">=</span>1┤</span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>        │                 │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a>        │        ┌fib(<span class="dv">3</span>)<span class="ot">=</span>2┤</span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a>        │        │        └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>        └fib(<span class="dv">4</span>)<span class="ot">=</span>3┤</span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>                 │        ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>                 └fib(<span class="dv">2</span>)<span class="ot">=</span>1┤</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a>                          └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span></code></pre></div>
-<p>Turning <em>that</em> into a concrete datatype wouldn’t do us much good: it still has the massively redundant computations in it. However, we can recognize that entire subtrees are duplicates of each other: in those cases, instead of creating both subtrees, we could just create one and have each parent point to it<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>        ┌fib(<span class="dv">5</span>)<span class="ot">=</span>5┬────────┬fib(<span class="dv">3</span>)<span class="ot">=</span>2┬────────┬fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>fib(<span class="dv">6</span>)<span class="ot">=</span>8┤        │        │        │        │</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>        └────────┴fib(<span class="dv">4</span>)<span class="ot">=</span>3┴────────┴fib(<span class="dv">2</span>)<span class="ot">=</span>1┴fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span></code></pre></div>
-<p>This is a nexus. In Haskell, it’s not observably different from the other form, except that it takes up significantly less space. It’s also much quicker to construct.</p>
-<p>If we use it to memoize <code class="sourceCode haskell">fib</code>, we’ll no longer be indexing on the argument: we’ll instead follow the relevant branch in the tree to the subcomputation, which is just chasing a pointer. It also means the argument doesn’t have to be constrained to any specific type. Here’s how you’d do it:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Leaf</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Node</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>    {<span class="ot"> val   ::</span> <span class="dt">Integer</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    ,<span class="ot"> left  ::</span> <span class="dt">Tree</span></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>    ,<span class="ot"> right ::</span> <span class="dt">Tree</span>}</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a></span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a><span class="ot">fib ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>fib <span class="ot">=</span> val <span class="op">.</span> go</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>    go <span class="dv">0</span> <span class="ot">=</span> <span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>    go <span class="dv">1</span> <span class="ot">=</span> <span class="dt">Node</span> <span class="dv">1</span> (<span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>) <span class="dt">Leaf</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>    go n <span class="ot">=</span> node t (left t) <span class="kw">where</span> t <span class="ot">=</span> go (n<span class="op">-</span><span class="dv">1</span>)</span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true"></a>    node l r <span class="ot">=</span> <span class="dt">Node</span> (val l <span class="op">+</span> val r) l r</span></code></pre></div>
-<p>So this approach sounds amazing, right? No constraints on the argument type, no need to pay for indexing: why doesn’t everyone use it everywhere? The main reason is that figuring out a nexus for the call-graph is <em>hard</em>. In fact, finding an optimal one is NP-hard in general <span class="citation" data-cites="steffen_table_2006">(Steffen and Giegerich <a href="#ref-steffen_table_2006" role="doc-biblioref">2006</a>)</span>.</p>
-<p>The second problem is that it’s difficult to abstract out. The standard technique of memoization relies on building a mapping from keys to values: about as bread-and-butter as it gets in programming. Even more, we already know how to say “values of this type can be used efficiently as keys in some mapping”: for Data.Map it’s <code class="sourceCode haskell"><span class="dt">Ord</span></code>, for Data.HashMap it’s <code class="sourceCode haskell"><span class="dt">Hashable</span></code>. All of this together means we can build a nice library for memoization which exports the two following functions:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="ot">memoHash ::</span> <span class="dt">Hashable</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="ot">memoOrd ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</span></code></pre></div>
-<p>Building a nexus, however, is not bread-and-butter. On top of that, it’s difficult to say something like “recursive functions of this structure can be constructed using a nexus”. What’s the typeclass for that? In comparison to the signatures above, the constraint will need to be on the <em>arrows</em>, not the <code class="sourceCode haskell">a</code>. Even talking about the structure of recursive functions is regarded as somewhat of an advanced subject: that said, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a> package allows us to do so, and even has facilities for constructing something <em>like</em> nexuses with histomorphisms <span class="citation" data-cites="tobin_time_2016">(Tobin <a href="#ref-tobin_time_2016" role="doc-biblioref">2016</a>)</span>. I’m still looking to see if there’s a library out there that <em>does</em> manage to abstract nexuses in an ergonomic way, so I’d love to hear if there was one (or if there’s some more generalized form which accomplishes the same).</p>
+<p>The standard technique of memoization is focused on the arguments to
+the function, creating a concrete representation of them in memory to
+map to the results. Using nexuses, as described in <span class="citation" data-cites="bird_functional_2003">Bird and Hinze
+(2003)</span>, we’ll instead focus on the function itself, creating a
+concrete representation of its call graph in memory. Here’s the call
+graph of Fibonacci:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>                                            ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>                                   ┌fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┤</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>                                   │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                          ┌fib(<span class="dv">3</span>)<span class="ot">=</span><span class="dv">2</span>┤</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>                          │        └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                 ┌fib(<span class="dv">4</span>)<span class="ot">=</span><span class="dv">3</span>┤</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>                 │        │        ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>                 │        └fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┤</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>                 │                 └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        ┌fib(<span class="dv">5</span>)<span class="ot">=</span><span class="dv">5</span>┤</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        │        │                 ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>        │        │        ┌fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┤</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>        │        │        │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        │        └fib(<span class="dv">3</span>)<span class="ot">=</span><span class="dv">2</span>┤</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>        │                 └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>fib(<span class="dv">6</span>)<span class="ot">=</span><span class="dv">8</span>┤</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>        │                          ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        │                 ┌fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┤</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        │                 │        └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>        │        ┌fib(<span class="dv">3</span>)<span class="ot">=</span><span class="dv">2</span>┤</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        │        │        └fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        └fib(<span class="dv">4</span>)<span class="ot">=</span><span class="dv">3</span>┤</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>                 │        ┌fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>                 └fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┤</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>                          └fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span></code></pre></div>
+<p>Turning <em>that</em> into a concrete datatype wouldn’t do us much
+good: it still has the massively redundant computations in it. However,
+we can recognize that entire subtrees are duplicates of each other: in
+those cases, instead of creating both subtrees, we could just create one
+and have each parent point to it<a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>        ┌fib(<span class="dv">5</span>)<span class="ot">=</span><span class="dv">5</span>┬────────┬fib(<span class="dv">3</span>)<span class="ot">=</span><span class="dv">2</span>┬────────┬fib(<span class="dv">1</span>)<span class="ot">=</span><span class="dv">1</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fib(<span class="dv">6</span>)<span class="ot">=</span><span class="dv">8</span>┤        │        │        │        │</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        └────────┴fib(<span class="dv">4</span>)<span class="ot">=</span><span class="dv">3</span>┴────────┴fib(<span class="dv">2</span>)<span class="ot">=</span><span class="dv">1</span>┴fib(<span class="dv">0</span>)<span class="ot">=</span><span class="dv">0</span></span></code></pre></div>
+<p>This is a nexus. In Haskell, it’s not observably different from the
+other form, except that it takes up significantly less space. It’s also
+much quicker to construct.</p>
+<p>If we use it to memoize <code class="sourceCode haskell">fib</code>,
+we’ll no longer be indexing on the argument: we’ll instead follow the
+relevant branch in the tree to the subcomputation, which is just chasing
+a pointer. It also means the argument doesn’t have to be constrained to
+any specific type. Here’s how you’d do it:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Leaf</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Node</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    {<span class="ot"> val   ::</span> <span class="dt">Integer</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    ,<span class="ot"> left  ::</span> <span class="dt">Tree</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    ,<span class="ot"> right ::</span> <span class="dt">Tree</span>}</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="ot">fib ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>fib <span class="ot">=</span> val <span class="op">.</span> go</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>    go <span class="dv">0</span> <span class="ot">=</span> <span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>    go <span class="dv">1</span> <span class="ot">=</span> <span class="dt">Node</span> <span class="dv">1</span> (<span class="dt">Node</span> <span class="dv">0</span> <span class="dt">Leaf</span> <span class="dt">Leaf</span>) <span class="dt">Leaf</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    go n <span class="ot">=</span> node t (left t) <span class="kw">where</span> t <span class="ot">=</span> go (n<span class="op">-</span><span class="dv">1</span>)</span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    node l r <span class="ot">=</span> <span class="dt">Node</span> (val l <span class="op">+</span> val r) l r</span></code></pre></div>
+<p>So this approach sounds amazing, right? No constraints on the
+argument type, no need to pay for indexing: why doesn’t everyone use it
+everywhere? The main reason is that figuring out a nexus for the
+call-graph is <em>hard</em>. In fact, finding an optimal one is NP-hard
+in general <span class="citation" data-cites="steffen_table_2006">(Steffen and Giegerich 2006)</span>.</p>
+<p>The second problem is that it’s difficult to abstract out. The
+standard technique of memoization relies on building a mapping from keys
+to values: about as bread-and-butter as it gets in programming. Even
+more, we already know how to say “values of this type can be used
+efficiently as keys in some mapping”: for Data.Map it’s <code class="sourceCode haskell"><span class="dt">Ord</span></code>, for
+Data.HashMap it’s <code class="sourceCode haskell"><span class="dt">Hashable</span></code>. All
+of this together means we can build a nice library for memoization which
+exports the two following functions:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="ot">memoHash ::</span> <span class="dt">Hashable</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ot">memoOrd ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b)</span></code></pre></div>
+<p>Building a nexus, however, is not bread-and-butter. On top of that,
+it’s difficult to say something like “recursive functions of this
+structure can be constructed using a nexus”. What’s the typeclass for
+that? In comparison to the signatures above, the constraint will need to
+be on the <em>arrows</em>, not the <code class="sourceCode haskell">a</code>. Even talking about the structure of
+recursive functions is regarded as somewhat of an advanced subject: that
+said, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a>
+package allows us to do so, and even has facilities for constructing
+something <em>like</em> nexuses with histomorphisms <span class="citation" data-cites="tobin_time_2016">(Tobin 2016)</span>. I’m
+still looking to see if there’s a library out there that <em>does</em>
+manage to abstract nexuses in an ergonomic way, so I’d love to hear if
+there was one (or if there’s some more generalized form which
+accomplishes the same).</p>
 <h2 id="memoizing-countdown">Memoizing Countdown</h2>
-<p>That’s enough preamble. The nexus we want to construct for countdown is <em>not</em> going to memoize as much as possible: in particular, we’re only going to memoize the shape of the trees, not the operators used. This will massively reduce the memory overhead, and still give a decent speedup <span class="citation" data-cites="bird_countdown:_2005">(Bird and Mu <a href="#ref-bird_countdown:_2005" role="doc-biblioref">2005</a>, 11 “building a skeleton tree first”)</span>.</p>
+<p>That’s enough preamble. The nexus we want to construct for countdown
+is <em>not</em> going to memoize as much as possible: in particular,
+we’re only going to memoize the shape of the trees, not the operators
+used. This will massively reduce the memory overhead, and still give a
+decent speedup <span class="citation" data-cites="bird_countdown:_2005">(Bird and Mu 2005, 11 “building a
+skeleton tree first”)</span>.</p>
 <p>With that in mind, the ideal nexus looks something like this:</p>
 <p><img src="../images/boolean-lattice.svg" /></p>
 <p>We can represent the tree in Haskell as a rose tree:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Node</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>    {<span class="ot"> root   ::</span> a</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    ,<span class="ot"> forest ::</span> <span class="dt">Forest</span> a</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    }</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Forest</span> a <span class="ot">=</span> [<span class="dt">Tree</span> a]</span></code></pre></div>
-<p>Constructing the nexus itself isn’t actually the most interesting part of this solution: <em>consuming</em> it is. We need to be able to go from the structure above into a list that’s the equivalent of <code class="sourceCode haskell">unmerges</code>. Doing a breadth-first traversal of the diagram above (without the top element) will give us:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Node</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    {<span class="ot"> root   ::</span> a</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    ,<span class="ot"> forest ::</span> <span class="dt">Forest</span> a</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Forest</span> a <span class="ot">=</span> [<span class="dt">Tree</span> a]</span></code></pre></div>
+<p>Constructing the nexus itself isn’t actually the most interesting
+part of this solution: <em>consuming</em> it is. We need to be able to
+go from the structure above into a list that’s the equivalent of <code class="sourceCode haskell">unmerges</code>. Doing a breadth-first
+traversal of the diagram above (without the top element) will give
+us:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>b</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>c</mi><mo>,</mo><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>d</mi><mo>,</mo><mi>c</mi><mi>d</mi><mo>,</mo><mi>a</mi><mo>,</mo><mi>b</mi><mo>,</mo><mi>c</mi><mo>,</mo><mi>d</mi></mrow><annotation encoding="application/x-tex">abc, abd, acd, bcd, ab, ac, bc, ad, bd, cd, a, b, c, d</annotation></semantics></math></p>
-<p>If you split that list in half, and zip it with its reverse, you’ll get the output of <code class="sourceCode haskell">unmerges</code>.</p>
-<p>However, the breadth-first traversal of the diagram isn’t the same thing as the breadth-first traversal of the rose tree. The latter will traverse <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>b</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>c</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abc, abd, acd, bcd</annotation></semantics></math>, and then the children of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>c</mi><mo>,</mo><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">ab,ac,bc</annotation></semantics></math>), and then the children of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math> (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">ab,ad,bd</annotation></semantics></math>): and here’s our problem. We traverse <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi></mrow><annotation encoding="application/x-tex">ab</annotation></semantics></math> twice, because we can’t know that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math> are pointing to the same value. What we have to do is first prune the tree, removing duplicates, and then perform a breadth-first traversal on that.</p>
+<p>If you split that list in half, and zip it with its reverse, you’ll
+get the output of <code class="sourceCode haskell">unmerges</code>.</p>
+<p>However, the breadth-first traversal of the diagram isn’t the same
+thing as the breadth-first traversal of the rose tree. The latter will
+traverse
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi><mo>,</mo><mi>a</mi><mi>b</mi><mi>d</mi><mo>,</mo><mi>a</mi><mi>c</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>c</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abc, abd, acd, bcd</annotation></semantics></math>,
+and then the children of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>c</mi><mo>,</mo><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">ab,ac,bc</annotation></semantics></math>),
+and then the children of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math>
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mo>,</mo><mi>a</mi><mi>d</mi><mo>,</mo><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">ab,ad,bd</annotation></semantics></math>):
+and here’s our problem. We traverse
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi></mrow><annotation encoding="application/x-tex">ab</annotation></semantics></math>
+twice, because we can’t know that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>c</mi></mrow><annotation encoding="application/x-tex">abc</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mi>b</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">abd</annotation></semantics></math>
+are pointing to the same value. What we have to do is first prune the
+tree, removing duplicates, and then perform a breadth-first traversal on
+that.</p>
 <h3 id="pruning">Pruning</h3>
-<p>Luckily, the duplicates follow a pattern, allowing us to remove them without having to do any equality checking. In each row, the first node has no duplicates in its children, the second’s first child is a duplicate, the third’s first and second children are duplicates, and so on. You should be able to see this in the diagram above. Adapting a little from the paper, we get an algorithm like this:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">para ::</span> (a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>para f b <span class="ot">=</span> go</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>    go [] <span class="ot">=</span> b</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    go (x<span class="op">:</span>xs) <span class="ot">=</span> f x xs (go xs)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a><span class="ot">prune ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> <span class="dt">Forest</span> a</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>prune ts <span class="ot">=</span> pruneAt ts <span class="dv">0</span> </span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>    pruneAt <span class="ot">=</span> para f (<span class="fu">const</span> [])</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>    f (<span class="dt">Node</span> x []) t _ _ <span class="ot">=</span> <span class="dt">Node</span> x [] <span class="op">:</span> t</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>    f (<span class="dt">Node</span> x us) _ a k <span class="ot">=</span></span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>        <span class="dt">Node</span> x (pruneAt (<span class="fu">drop</span> k us) k) <span class="op">:</span> a (k <span class="op">+</span> <span class="dv">1</span>)</span></code></pre></div>
+<p>Luckily, the duplicates follow a pattern, allowing us to remove them
+without having to do any equality checking. In each row, the first node
+has no duplicates in its children, the second’s first child is a
+duplicate, the third’s first and second children are duplicates, and so
+on. You should be able to see this in the diagram above. Adapting a
+little from the paper, we get an algorithm like this:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ot">para ::</span> (a <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> b</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>para f b <span class="ot">=</span> go</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    go [] <span class="ot">=</span> b</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    go (x<span class="op">:</span>xs) <span class="ot">=</span> f x xs (go xs)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="ot">prune ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> <span class="dt">Forest</span> a</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>prune ts <span class="ot">=</span> pruneAt ts <span class="dv">0</span> </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    pruneAt <span class="ot">=</span> para f (<span class="fu">const</span> [])</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x []) t _ _ <span class="ot">=</span> <span class="dt">Node</span> x [] <span class="op">:</span> t</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x us) _ a k <span class="ot">=</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Node</span> x (pruneAt (<span class="fu">drop</span> k us) k) <span class="op">:</span> a (k <span class="op">+</span> <span class="dv">1</span>)</span></code></pre></div>
 <h3 id="breadth-first-traversal">Breadth-First Traversal</h3>
-<p>I went through this in a <a href="../posts/2018-03-17-rose-trees-breadth-first.html">previous post</a>, so this is the end solution:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">breadthFirst ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>breadthFirst ts <span class="ot">=</span> <span class="fu">foldr</span> f b ts []</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs<span class="op">:</span>bw)</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>    b [] <span class="ot">=</span> []</span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a>    b q <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">foldr</span> f) b q []</span></code></pre></div>
-<p>With the appropriate incantations, this is actually the fastest implementation I’ve found.</p>
+<p>I went through this in a <a href="../posts/2018-03-17-rose-trees-breadth-first.html">previous
+post</a>, so this is the end solution:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">breadthFirst ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>breadthFirst ts <span class="ot">=</span> <span class="fu">foldr</span> f b ts []</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs<span class="op">:</span>bw)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    b [] <span class="ot">=</span> []</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    b q <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">foldr</span> f) b q []</span></code></pre></div>
+<p>With the appropriate incantations, this is actually the fastest
+implementation I’ve found.</p>
 <h3 id="fusing">Fusing</h3>
-<p>We can actually inline both of the above functions, fusing them together:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="ot">spanNexus ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>spanNexus ts <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> b) ts <span class="dv">0</span> []</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x us) fw k bw <span class="ot">=</span> x <span class="op">:</span> fw (k<span class="op">+</span><span class="dv">1</span>) ((<span class="fu">drop</span> k us, k) <span class="op">:</span> bw)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a>    b [] <span class="ot">=</span> []</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a>    b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">uncurry</span> <span class="op">.</span> <span class="fu">foldr</span> f <span class="op">.</span> <span class="fu">const</span>) b qs []</span></code></pre></div>
-<h3 id="halving-convolving-and-folding">Halving, Convolving, and Folding</h3>
-<p>So, now we can go from the tree to our list of splits. Next step is to convert that list into the output of unmerges, by zipping the reverse of the first half with the second. We can use an algorithm described in <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005" role="doc-biblioref">2005</a>)</span> to do the zipping and reversing:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a>fold xs n <span class="ot">=</span> go xs n (<span class="fu">const</span> [])</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>    go xs <span class="dv">0</span>     k <span class="ot">=</span> k xs</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>    go (x<span class="op">:</span>xs) n k <span class="ot">=</span> go xs (n<span class="op">-</span><span class="dv">2</span>) (\(y<span class="op">:</span>ys) <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> k ys)</span></code></pre></div>
-<p>And we can inline the function which collapses those results into one:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a>fold xs n <span class="ot">=</span> go xs n (<span class="fu">const</span> [])</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>    go <span class="dv">0</span> xss k <span class="ot">=</span> k xss</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>    go n (xs<span class="op">:</span>xss) k <span class="ot">=</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>        go (n<span class="op">-</span><span class="dv">2</span>) xss (\(ys<span class="op">:</span>yss) <span class="ot">-&gt;</span> [ z</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>                                      <span class="op">|</span> x <span class="ot">&lt;-</span> xs</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>                                      , y <span class="ot">&lt;-</span> ys</span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>                                      , z <span class="ot">&lt;-</span> cmb x y</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a>                                      ] <span class="op">++</span> k yss)</span></code></pre></div>
+<p>We can actually inline both of the above functions, fusing them
+together:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="ot">spanNexus ::</span> <span class="dt">Forest</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>spanNexus ts <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> b) ts <span class="dv">0</span> []</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x us) fw k bw <span class="ot">=</span> x <span class="op">:</span> fw (k<span class="op">+</span><span class="dv">1</span>) ((<span class="fu">drop</span> k us, k) <span class="op">:</span> bw)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    b [] <span class="ot">=</span> []</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">uncurry</span> <span class="op">.</span> <span class="fu">foldr</span> f <span class="op">.</span> <span class="fu">const</span>) b qs []</span></code></pre></div>
+<h3 id="halving-convolving-and-folding">Halving, Convolving, and
+Folding</h3>
+<p>So, now we can go from the tree to our list of splits. Next step is
+to convert that list into the output of unmerges, by zipping the reverse
+of the first half with the second. We can use an algorithm described in
+<span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg
+(2005)</span> to do the zipping and reversing:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>fold xs n <span class="ot">=</span> go xs n (<span class="fu">const</span> [])</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>    go xs <span class="dv">0</span>     k <span class="ot">=</span> k xs</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    go (x<span class="op">:</span>xs) n k <span class="ot">=</span> go xs (n<span class="op">-</span><span class="dv">2</span>) (\(y<span class="op">:</span>ys) <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> k ys)</span></code></pre></div>
+<p>And we can inline the function which collapses those results into
+one:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fold xs n <span class="ot">=</span> go xs n (<span class="fu">const</span> [])</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    go <span class="dv">0</span> xss k <span class="ot">=</span> k xss</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    go n (xs<span class="op">:</span>xss) k <span class="ot">=</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        go (n<span class="op">-</span><span class="dv">2</span>) xss (\(ys<span class="op">:</span>yss) <span class="ot">-&gt;</span> [ z</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>                                      <span class="op">|</span> x <span class="ot">&lt;-</span> xs</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>                                      , y <span class="ot">&lt;-</span> ys</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>                                      , z <span class="ot">&lt;-</span> cmb x y</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>                                      ] <span class="op">++</span> k yss)</span></code></pre></div>
 <p>And that’s all we need!</p>
 <details>
-<p><summary> Full Code </summary></p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Tree</span> <span class="kw">as</span> <span class="dt">Rose</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> <span class="dt">Int</span> a</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Node</span> [<span class="dt">Tree</span> a]</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">Functor</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a>    </span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a><span class="ot">enumerateTrees ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true"></a>enumerateTrees _ [] <span class="ot">=</span> []</span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true"></a>enumerateTrees cmb xs <span class="ot">=</span> (extract <span class="op">.</span> steps <span class="op">.</span> initial) xs</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true"></a>    step <span class="ot">=</span> <span class="fu">map</span> nodes <span class="op">.</span> <span class="fu">group</span></span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true"></a></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true"></a>    steps [x] <span class="ot">=</span> x</span>
-<span id="cb20-15"><a href="#cb20-15" aria-hidden="true"></a>    steps xs <span class="ot">=</span> steps (step xs)</span>
-<span id="cb20-16"><a href="#cb20-16" aria-hidden="true"></a></span>
-<span id="cb20-17"><a href="#cb20-17" aria-hidden="true"></a>    initial <span class="ot">=</span> <span class="fu">map</span> (<span class="dt">Leaf</span> <span class="dv">1</span> <span class="op">.</span> <span class="fu">flip</span> <span class="dt">Rose.Node</span> [] <span class="op">.</span> <span class="fu">pure</span>)</span>
-<span id="cb20-18"><a href="#cb20-18" aria-hidden="true"></a></span>
-<span id="cb20-19"><a href="#cb20-19" aria-hidden="true"></a>    extract (<span class="dt">Leaf</span> _ x) <span class="ot">=</span> Rose.rootLabel x</span>
-<span id="cb20-20"><a href="#cb20-20" aria-hidden="true"></a>    extract (<span class="dt">Node</span> [x]) <span class="ot">=</span> extract x</span>
-<span id="cb20-21"><a href="#cb20-21" aria-hidden="true"></a></span>
-<span id="cb20-22"><a href="#cb20-22" aria-hidden="true"></a>    <span class="fu">group</span> [_] <span class="ot">=</span> []</span>
-<span id="cb20-23"><a href="#cb20-23" aria-hidden="true"></a>    <span class="fu">group</span> (<span class="dt">Leaf</span> _ x<span class="op">:</span>vs) <span class="ot">=</span> <span class="dt">Node</span> [<span class="dt">Leaf</span> <span class="dv">2</span> [x, y] <span class="op">|</span> <span class="dt">Leaf</span> _ y <span class="ot">&lt;-</span> vs] <span class="op">:</span> <span class="fu">group</span> vs</span>
-<span id="cb20-24"><a href="#cb20-24" aria-hidden="true"></a>    <span class="fu">group</span> (<span class="dt">Node</span>   u<span class="op">:</span>vs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">zipWith</span> comb (<span class="fu">group</span> u) vs) <span class="op">:</span> <span class="fu">group</span> vs</span>
-<span id="cb20-25"><a href="#cb20-25" aria-hidden="true"></a></span>
-<span id="cb20-26"><a href="#cb20-26" aria-hidden="true"></a>    comb (<span class="dt">Leaf</span> n xs) (<span class="dt">Leaf</span> _ x) <span class="ot">=</span> <span class="dt">Leaf</span> (n <span class="op">+</span> <span class="dv">1</span>) (xs <span class="op">++</span> [x])</span>
-<span id="cb20-27"><a href="#cb20-27" aria-hidden="true"></a>    comb (<span class="dt">Node</span> us) (<span class="dt">Node</span> vs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">zipWith</span> comb us vs)</span>
-<span id="cb20-28"><a href="#cb20-28" aria-hidden="true"></a></span>
-<span id="cb20-29"><a href="#cb20-29" aria-hidden="true"></a>    forest ts <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> b) ts <span class="dv">0</span> []</span>
-<span id="cb20-30"><a href="#cb20-30" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb20-31"><a href="#cb20-31" aria-hidden="true"></a>        f (<span class="dt">Rose.Node</span> x []) fw <span class="op">!</span>k bw <span class="ot">=</span> x <span class="op">:</span> fw (k <span class="op">+</span> <span class="dv">1</span>) bw</span>
-<span id="cb20-32"><a href="#cb20-32" aria-hidden="true"></a>        f (<span class="dt">Rose.Node</span> x us) fw <span class="op">!</span>k bw <span class="ot">=</span> x <span class="op">:</span> fw (k <span class="op">+</span> <span class="dv">1</span>) ((<span class="fu">drop</span> k us, k) <span class="op">:</span> bw)</span>
-<span id="cb20-33"><a href="#cb20-33" aria-hidden="true"></a></span>
-<span id="cb20-34"><a href="#cb20-34" aria-hidden="true"></a>        b [] <span class="ot">=</span> []</span>
-<span id="cb20-35"><a href="#cb20-35" aria-hidden="true"></a>        b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">uncurry</span> <span class="op">.</span> <span class="fu">foldr</span> f <span class="op">.</span> <span class="fu">const</span>) b qs []</span>
-<span id="cb20-36"><a href="#cb20-36" aria-hidden="true"></a></span>
-<span id="cb20-37"><a href="#cb20-37" aria-hidden="true"></a>    nodes (<span class="dt">Leaf</span> n x) <span class="ot">=</span> <span class="dt">Leaf</span> <span class="dv">1</span> (node n x)</span>
-<span id="cb20-38"><a href="#cb20-38" aria-hidden="true"></a>    nodes (<span class="dt">Node</span> xs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">map</span> nodes xs)</span>
-<span id="cb20-39"><a href="#cb20-39" aria-hidden="true"></a></span>
-<span id="cb20-40"><a href="#cb20-40" aria-hidden="true"></a>    node n ts <span class="ot">=</span> <span class="dt">Rose.Node</span> (walk (<span class="dv">2</span> <span class="op">^</span> n <span class="op">-</span> <span class="dv">2</span>) (forest ts) (<span class="fu">const</span> [])) ts</span>
-<span id="cb20-41"><a href="#cb20-41" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb20-42"><a href="#cb20-42" aria-hidden="true"></a>        walk <span class="dv">0</span> xss k <span class="ot">=</span> k xss</span>
-<span id="cb20-43"><a href="#cb20-43" aria-hidden="true"></a>        walk n (xs<span class="op">:</span>xss) k <span class="ot">=</span></span>
-<span id="cb20-44"><a href="#cb20-44" aria-hidden="true"></a>            walk (n<span class="op">-</span><span class="dv">2</span>) xss (\(ys<span class="op">:</span>yss) <span class="ot">-&gt;</span> [ z</span>
-<span id="cb20-45"><a href="#cb20-45" aria-hidden="true"></a>                                         <span class="op">|</span> x <span class="ot">&lt;-</span> xs</span>
-<span id="cb20-46"><a href="#cb20-46" aria-hidden="true"></a>                                         , y <span class="ot">&lt;-</span> ys</span>
-<span id="cb20-47"><a href="#cb20-47" aria-hidden="true"></a>                                         , z <span class="ot">&lt;-</span> cmb x y</span>
-<span id="cb20-48"><a href="#cb20-48" aria-hidden="true"></a>                                         ] <span class="op">++</span> k yss)</span></code></pre></div>
+<summary>
+Full Code
+</summary>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Tree</span> <span class="kw">as</span> <span class="dt">Rose</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> <span class="dt">Int</span> a</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Node</span> [<span class="dt">Tree</span> a]</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">deriving</span> (<span class="dt">Show</span>,<span class="dt">Eq</span>,<span class="dt">Functor</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="ot">enumerateTrees ::</span> (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>enumerateTrees _ [] <span class="ot">=</span> []</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>enumerateTrees cmb xs <span class="ot">=</span> (extract <span class="op">.</span> steps <span class="op">.</span> initial) xs</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>    step <span class="ot">=</span> <span class="fu">map</span> nodes <span class="op">.</span> <span class="fu">group</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    steps [x] <span class="ot">=</span> x</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>    steps xs <span class="ot">=</span> steps (step xs)</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>    initial <span class="ot">=</span> <span class="fu">map</span> (<span class="dt">Leaf</span> <span class="dv">1</span> <span class="op">.</span> <span class="fu">flip</span> <span class="dt">Rose.Node</span> [] <span class="op">.</span> <span class="fu">pure</span>)</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>    extract (<span class="dt">Leaf</span> _ x) <span class="ot">=</span> Rose.rootLabel x</span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>    extract (<span class="dt">Node</span> [x]) <span class="ot">=</span> extract x</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group</span> [_] <span class="ot">=</span> []</span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group</span> (<span class="dt">Leaf</span> _ x<span class="op">:</span>vs) <span class="ot">=</span> <span class="dt">Node</span> [<span class="dt">Leaf</span> <span class="dv">2</span> [x, y] <span class="op">|</span> <span class="dt">Leaf</span> _ y <span class="ot">&lt;-</span> vs] <span class="op">:</span> <span class="fu">group</span> vs</span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group</span> (<span class="dt">Node</span>   u<span class="op">:</span>vs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">zipWith</span> comb (<span class="fu">group</span> u) vs) <span class="op">:</span> <span class="fu">group</span> vs</span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>    comb (<span class="dt">Leaf</span> n xs) (<span class="dt">Leaf</span> _ x) <span class="ot">=</span> <span class="dt">Leaf</span> (n <span class="op">+</span> <span class="dv">1</span>) (xs <span class="op">++</span> [x])</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>    comb (<span class="dt">Node</span> us) (<span class="dt">Node</span> vs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">zipWith</span> comb us vs)</span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>    forest ts <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> b) ts <span class="dv">0</span> []</span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>        f (<span class="dt">Rose.Node</span> x []) fw <span class="op">!</span>k bw <span class="ot">=</span> x <span class="op">:</span> fw (k <span class="op">+</span> <span class="dv">1</span>) bw</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>        f (<span class="dt">Rose.Node</span> x us) fw <span class="op">!</span>k bw <span class="ot">=</span> x <span class="op">:</span> fw (k <span class="op">+</span> <span class="dv">1</span>) ((<span class="fu">drop</span> k us, k) <span class="op">:</span> bw)</span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>        b [] <span class="ot">=</span> []</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a>        b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">uncurry</span> <span class="op">.</span> <span class="fu">foldr</span> f <span class="op">.</span> <span class="fu">const</span>) b qs []</span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>    nodes (<span class="dt">Leaf</span> n x) <span class="ot">=</span> <span class="dt">Leaf</span> <span class="dv">1</span> (node n x)</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>    nodes (<span class="dt">Node</span> xs) <span class="ot">=</span> <span class="dt">Node</span> (<span class="fu">map</span> nodes xs)</span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a>    node n ts <span class="ot">=</span> <span class="dt">Rose.Node</span> (walk (<span class="dv">2</span> <span class="op">^</span> n <span class="op">-</span> <span class="dv">2</span>) (forest ts) (<span class="fu">const</span> [])) ts</span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>        walk <span class="dv">0</span> xss k <span class="ot">=</span> k xss</span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>        walk n (xs<span class="op">:</span>xss) k <span class="ot">=</span></span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>            walk (n<span class="op">-</span><span class="dv">2</span>) xss (\(ys<span class="op">:</span>yss) <span class="ot">-&gt;</span> [ z</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>                                         <span class="op">|</span> x <span class="ot">&lt;-</span> xs</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>                                         , y <span class="ot">&lt;-</span> ys</span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>                                         , z <span class="ot">&lt;-</span> cmb x y</span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>                                         ] <span class="op">++</span> k yss)</span></code></pre></div>
 </details>
 <h2 id="using-it-for-countdown">Using it for Countdown</h2>
-<p>The first thing to do for the Countdown solution is to figure out a representation for expressions. The one from simple-reflect is perfect for displaying the result, but we should memoize its calculation.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Memoed</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">Memoed</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  {<span class="ot"> expr   ::</span> <span class="dt">Expr</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>  ,<span class="ot"> result ::</span> <span class="dt">Int</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>  }</span></code></pre></div>
+<p>The first thing to do for the Countdown solution is to figure out a
+representation for expressions. The one from simple-reflect is perfect
+for displaying the result, but we should memoize its calculation.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Memoed</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">Memoed</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> expr   ::</span> <span class="dt">Expr</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> result ::</span> <span class="dt">Int</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  }</span></code></pre></div>
 <p>Then, some helpers for building:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Op</span> <span class="ot">=</span> <span class="dt">Add</span> <span class="op">|</span> <span class="dt">Dif</span> <span class="op">|</span> <span class="dt">Mul</span> <span class="op">|</span> <span class="dt">Div</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>binOp f g x y <span class="ot">=</span> <span class="dt">Memoed</span> ((f <span class="ot">`on`</span> expr) x y) ((g <span class="ot">`on`</span> result) x y)</span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true"></a></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true"></a><span class="ot">apply ::</span> <span class="dt">Op</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true"></a>apply <span class="dt">Add</span> x y <span class="ot">=</span> binOp (<span class="op">+</span>) (<span class="op">+</span>) x y</span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true"></a>apply <span class="dt">Dif</span> x y</span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true"></a>  <span class="op">|</span> result y <span class="op">&lt;</span> result x <span class="ot">=</span> binOp (<span class="op">-</span>) (<span class="op">-</span>) x y</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> binOp (<span class="op">-</span>) (<span class="op">-</span>) y x</span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true"></a>apply <span class="dt">Mul</span> x y <span class="ot">=</span> binOp (<span class="op">*</span>) (<span class="op">*</span>) x y</span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true"></a>apply <span class="dt">Div</span> x y <span class="ot">=</span> binOp <span class="fu">div</span> <span class="fu">div</span> x y</span></code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Op</span> <span class="ot">=</span> <span class="dt">Add</span> <span class="op">|</span> <span class="dt">Dif</span> <span class="op">|</span> <span class="dt">Mul</span> <span class="op">|</span> <span class="dt">Div</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>binOp f g x y <span class="ot">=</span> <span class="dt">Memoed</span> ((f <span class="ot">`on`</span> expr) x y) ((g <span class="ot">`on`</span> result) x y)</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="ot">apply ::</span> <span class="dt">Op</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span> <span class="ot">-&gt;</span> <span class="dt">Memoed</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>apply <span class="dt">Add</span> x y <span class="ot">=</span> binOp (<span class="op">+</span>) (<span class="op">+</span>) x y</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>apply <span class="dt">Dif</span> x y</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> result y <span class="op">&lt;</span> result x <span class="ot">=</span> binOp (<span class="op">-</span>) (<span class="op">-</span>) x y</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> binOp (<span class="op">-</span>) (<span class="op">-</span>) y x</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>apply <span class="dt">Mul</span> x y <span class="ot">=</span> binOp (<span class="op">*</span>) (<span class="op">*</span>) x y</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>apply <span class="dt">Div</span> x y <span class="ot">=</span> binOp <span class="fu">div</span> <span class="fu">div</span> x y</span></code></pre></div>
 <p>Finally, the full algorithm:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="ot">enumerateExprs ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Memoed</span>]</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>enumerateExprs <span class="ot">=</span> enumerateTrees cmb <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> <span class="dt">Memoed</span> (<span class="fu">fromIntegral</span> x) x)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a>    cmb x y <span class="ot">=</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a>        nubs <span class="op">$</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true"></a>        x <span class="op">:</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true"></a>        y <span class="op">:</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true"></a>        [ apply op x y</span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true"></a>        <span class="op">|</span> op <span class="ot">&lt;-</span> [<span class="dt">Add</span>, <span class="dt">Dif</span>, <span class="dt">Mul</span>, <span class="dt">Div</span>]</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true"></a>        , legal op (result x) (result y) ]</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true"></a>    legal <span class="dt">Add</span> _ _ <span class="ot">=</span> <span class="dt">True</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true"></a>    legal <span class="dt">Dif</span> x y <span class="ot">=</span> x <span class="op">/=</span> y</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true"></a>    legal <span class="dt">Mul</span> _ _ <span class="ot">=</span> <span class="dt">True</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true"></a>    legal <span class="dt">Div</span> x y <span class="ot">=</span> x <span class="ot">`mod`</span> y <span class="op">==</span> <span class="dv">0</span></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true"></a>    nubs xs <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> []) xs IntSet.empty</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true"></a>        f e a s</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true"></a>          <span class="op">|</span> IntSet.member (result e) s <span class="ot">=</span> a s</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true"></a>          <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> e <span class="op">:</span> a (IntSet.insert (result e) s)</span>
-<span id="cb23-20"><a href="#cb23-20" aria-hidden="true"></a></span>
-<span id="cb23-21"><a href="#cb23-21" aria-hidden="true"></a><span class="ot">countdown ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</span>
-<span id="cb23-22"><a href="#cb23-22" aria-hidden="true"></a>countdown targ <span class="ot">=</span> <span class="fu">map</span> expr <span class="op">.</span> <span class="fu">filter</span> ((<span class="op">==</span>) targ <span class="op">.</span> result) <span class="op">.</span> enumerateExprs</span>
-<span id="cb23-23"><a href="#cb23-23" aria-hidden="true"></a></span>
-<span id="cb23-24"><a href="#cb23-24" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">mapM_</span> <span class="fu">print</span> <span class="op">.</span> reduction <span class="op">.</span> <span class="fu">head</span>) (countdown <span class="dv">586</span> [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>])</span>
-<span id="cb23-25"><a href="#cb23-25" aria-hidden="true"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb23-26"><a href="#cb23-26" aria-hidden="true"></a><span class="dv">75</span> <span class="op">+</span> <span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb23-27"><a href="#cb23-27" aria-hidden="true"></a><span class="dv">76</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb23-28"><a href="#cb23-28" aria-hidden="true"></a><span class="dv">76</span> <span class="op">+</span> (<span class="dv">500</span> <span class="op">+</span> <span class="dv">10</span>)</span>
-<span id="cb23-29"><a href="#cb23-29" aria-hidden="true"></a><span class="dv">76</span> <span class="op">+</span> <span class="dv">510</span></span>
-<span id="cb23-30"><a href="#cb23-30" aria-hidden="true"></a><span class="dv">586</span></span></code></pre></div>
-<p>There are some optimizations going on here, taken mainly from <span class="citation" data-cites="bird_countdown:_2005">Bird and Mu (<a href="#ref-bird_countdown:_2005" role="doc-biblioref">2005</a>)</span>:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="ot">enumerateExprs ::</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Memoed</span>]</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>enumerateExprs <span class="ot">=</span> enumerateTrees cmb <span class="op">.</span> <span class="fu">map</span> (\x <span class="ot">-&gt;</span> <span class="dt">Memoed</span> (<span class="fu">fromIntegral</span> x) x)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>    cmb x y <span class="ot">=</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>        nubs <span class="op">$</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>        x <span class="op">:</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>        y <span class="op">:</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>        [ apply op x y</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>        <span class="op">|</span> op <span class="ot">&lt;-</span> [<span class="dt">Add</span>, <span class="dt">Dif</span>, <span class="dt">Mul</span>, <span class="dt">Div</span>]</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>        , legal op (result x) (result y) ]</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>    legal <span class="dt">Add</span> _ _ <span class="ot">=</span> <span class="dt">True</span></span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>    legal <span class="dt">Dif</span> x y <span class="ot">=</span> x <span class="op">/=</span> y</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>    legal <span class="dt">Mul</span> _ _ <span class="ot">=</span> <span class="dt">True</span></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a>    legal <span class="dt">Div</span> x y <span class="ot">=</span> x <span class="ot">`mod`</span> y <span class="op">==</span> <span class="dv">0</span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>    nubs xs <span class="ot">=</span> <span class="fu">foldr</span> f (<span class="fu">const</span> []) xs IntSet.empty</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>        f e a s</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> IntSet.member (result e) s <span class="ot">=</span> a s</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> e <span class="op">:</span> a (IntSet.insert (result e) s)</span>
+<span id="cb23-20"><a href="#cb23-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-21"><a href="#cb23-21" aria-hidden="true" tabindex="-1"></a><span class="ot">countdown ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Expr</span>]</span>
+<span id="cb23-22"><a href="#cb23-22" aria-hidden="true" tabindex="-1"></a>countdown targ <span class="ot">=</span> <span class="fu">map</span> expr <span class="op">.</span> <span class="fu">filter</span> ((<span class="op">==</span>) targ <span class="op">.</span> result) <span class="op">.</span> enumerateExprs</span>
+<span id="cb23-23"><a href="#cb23-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-24"><a href="#cb23-24" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> (<span class="fu">mapM_</span> <span class="fu">print</span> <span class="op">.</span> reduction <span class="op">.</span> <span class="fu">head</span>) (countdown <span class="dv">586</span> [<span class="dv">100</span>,<span class="dv">25</span>,<span class="dv">1</span>,<span class="dv">5</span>,<span class="dv">3</span>,<span class="dv">10</span>])</span>
+<span id="cb23-25"><a href="#cb23-25" aria-hidden="true" tabindex="-1"></a><span class="dv">25</span> <span class="op">*</span> <span class="dv">3</span> <span class="op">+</span> <span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb23-26"><a href="#cb23-26" aria-hidden="true" tabindex="-1"></a><span class="dv">75</span> <span class="op">+</span> <span class="dv">1</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb23-27"><a href="#cb23-27" aria-hidden="true" tabindex="-1"></a><span class="dv">76</span> <span class="op">+</span> (<span class="dv">100</span> <span class="op">*</span> <span class="dv">5</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb23-28"><a href="#cb23-28" aria-hidden="true" tabindex="-1"></a><span class="dv">76</span> <span class="op">+</span> (<span class="dv">500</span> <span class="op">+</span> <span class="dv">10</span>)</span>
+<span id="cb23-29"><a href="#cb23-29" aria-hidden="true" tabindex="-1"></a><span class="dv">76</span> <span class="op">+</span> <span class="dv">510</span></span>
+<span id="cb23-30"><a href="#cb23-30" aria-hidden="true" tabindex="-1"></a><span class="dv">586</span></span></code></pre></div>
+<p>There are some optimizations going on here, taken mainly from <span class="citation" data-cites="bird_countdown:_2005">Bird and Mu
+(2005)</span>:</p>
 <ol type="1">
 <li>We filter out illegal operations, as described originally.</li>
 <li>We filter out any expressions that have the same value.</li>
 </ol>
 <h2 id="testing-the-implementation">Testing the Implementation</h2>
-<p>So we’ve followed the paper, written the code: time to test. The specification of the function is relatively simple: calculate all applications of the commutative operator to some input, <em>without</em> recalculating subtrees.</p>
+<p>So we’ve followed the paper, written the code: time to test. The
+specification of the function is relatively simple: calculate all
+applications of the commutative operator to some input, <em>without</em>
+recalculating subtrees.</p>
 <p>We’ll need a free structure for the “commutative operator”:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> a</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:^:</span> <span class="dt">Tree</span> a</span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Foldable</span>,<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>)</span></code></pre></div>
-<p>Here’s the problem: it’s not commutative! We can remedy it by only exporting a constructor that creates the tree in a commutative way, and we can make it a pattern synonym so it looks normal:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE DeriveFoldable  #-}</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a><span class="ot">{-# LANGUAGE PatternSynonyms #-}</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Commutative</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a>  (<span class="dt">Tree</span>(<span class="dt">Leaf</span>)</span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a>  ,<span class="kw">pattern</span> (<span class="op">:*:</span>))</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true"></a></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> a</span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:^:</span> <span class="dt">Tree</span> a</span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true"></a>    <span class="kw">deriving</span> (<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>,<span class="dt">Foldable</span>)</span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true"></a></span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true"></a><span class="kw">pattern</span><span class="ot"> (:*:) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true"></a><span class="kw">pattern</span> xs <span class="op">:*:</span> ys <span class="ot">&lt;-</span> xs <span class="op">:^:</span> ys <span class="kw">where</span></span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true"></a>  xs <span class="op">:*:</span> ys</span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true"></a>      <span class="op">|</span> xs <span class="op">&lt;=</span> ys <span class="ot">=</span> xs <span class="op">:^:</span> ys</span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> ys <span class="op">:^:</span> xs</span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true"></a></span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true"></a><span class="ot">{-# COMPLETE Leaf, (:*:) #-}</span></span></code></pre></div>
-<p>Now we need to check if all applications are actually tested. First, to generate all trees:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="ot">allTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>allTrees [x] <span class="ot">=</span> Set.singleton (<span class="dt">Leaf</span> x)</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>allTrees xs <span class="ot">=</span> Set.unions (<span class="fu">map</span> (<span class="fu">uncurry</span> f) (unmerges xs))</span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>    f ls rs <span class="ot">=</span> Set.fromList ((liftA2 (<span class="op">:*:</span>) <span class="ot">`on`</span> (Set.toList <span class="op">.</span> allTrees)) ls rs)</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true"></a><span class="ot">allSubTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>allSubTrees [x] <span class="ot">=</span> Set.singleton (<span class="dt">Leaf</span> x)</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a>allSubTrees xs <span class="ot">=</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true"></a>    Set.unions (<span class="fu">map</span> (<span class="fu">uncurry</span> f <span class="op">.</span> (allSubTrees <span class="op">***</span> allSubTrees)) (unmerges xs))</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a>    f ls rs <span class="ot">=</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true"></a>        Set.unions</span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true"></a>            [ls, rs, Set.fromList ((liftA2 (<span class="op">:*:</span>) <span class="ot">`on`</span> Set.toList) ls rs)]</span></code></pre></div>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> a</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:^:</span> <span class="dt">Tree</span> a</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">deriving</span> (<span class="dt">Foldable</span>,<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>)</span></code></pre></div>
+<p>Here’s the problem: it’s not commutative! We can remedy it by only
+exporting a constructor that creates the tree in a commutative way, and
+we can make it a pattern synonym so it looks normal:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE DeriveFoldable  #-}</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE PatternSynonyms #-}</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Commutative</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  (<span class="dt">Tree</span>(<span class="dt">Leaf</span>)</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  ,<span class="kw">pattern</span> (<span class="op">:*:</span>))</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Leaf</span> a</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Tree</span> a <span class="op">:^:</span> <span class="dt">Tree</span> a</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">deriving</span> (<span class="dt">Eq</span>,<span class="dt">Ord</span>,<span class="dt">Show</span>,<span class="dt">Foldable</span>)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span><span class="ot"> (:*:) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> xs <span class="op">:*:</span> ys <span class="ot">&lt;-</span> xs <span class="op">:^:</span> ys <span class="kw">where</span></span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>  xs <span class="op">:*:</span> ys</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> xs <span class="op">&lt;=</span> ys <span class="ot">=</span> xs <span class="op">:^:</span> ys</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> ys <span class="op">:^:</span> xs</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Leaf, (:*:) #-}</span></span></code></pre></div>
+<p>Now we need to check if all applications are actually tested. First,
+to generate all trees:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="ot">allTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>allTrees [x] <span class="ot">=</span> Set.singleton (<span class="dt">Leaf</span> x)</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>allTrees xs <span class="ot">=</span> Set.unions (<span class="fu">map</span> (<span class="fu">uncurry</span> f) (unmerges xs))</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>    f ls rs <span class="ot">=</span> Set.fromList ((liftA2 (<span class="op">:*:</span>) <span class="ot">`on`</span> (Set.toList <span class="op">.</span> allTrees)) ls rs)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="ot">allSubTrees ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Set</span> (<span class="dt">Tree</span> a)</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>allSubTrees [x] <span class="ot">=</span> Set.singleton (<span class="dt">Leaf</span> x)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>allSubTrees xs <span class="ot">=</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>    Set.unions (<span class="fu">map</span> (<span class="fu">uncurry</span> f <span class="op">.</span> (allSubTrees <span class="op">***</span> allSubTrees)) (unmerges xs))</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    f ls rs <span class="ot">=</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>        Set.unions</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>            [ls, rs, Set.fromList ((liftA2 (<span class="op">:*:</span>) <span class="ot">`on`</span> Set.toList) ls rs)]</span></code></pre></div>
 <p>Then, to test:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">prop_exhaustiveSearch ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>prop_exhaustiveSearch n <span class="ot">=</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> <span class="fu">fromIntegral</span> n]</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a>             expect <span class="ot">=</span> allSubTrees src</span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true"></a>             actual <span class="ot">=</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true"></a>                 Set.fromList</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true"></a>                     (enumerateTrees</span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true"></a>                          (\xs ys <span class="ot">-&gt;</span></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true"></a>                                [xs, ys, xs <span class="op">:*:</span> ys])</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true"></a>                          (<span class="fu">map</span> <span class="dt">Leaf</span> src))</span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true"></a>         <span class="kw">in</span> expect <span class="op">==</span> actual</span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true"></a></span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true"></a><span class="ot">prop_exhaustiveSearchFull ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true"></a>prop_exhaustiveSearchFull n <span class="ot">=</span></span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> <span class="fu">fromIntegral</span> n]</span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true"></a>             expect <span class="ot">=</span> Map.fromSet (<span class="fu">const</span> <span class="dv">1</span>) (allTrees src)</span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true"></a>             actual <span class="ot">=</span></span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true"></a>                 freqs</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true"></a>                     (enumerateTrees</span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true"></a>                          (\xs ys <span class="ot">-&gt;</span> [xs <span class="op">:*:</span> ys])</span>
-<span id="cb27-21"><a href="#cb27-21" aria-hidden="true"></a>                          (<span class="fu">map</span> <span class="dt">Leaf</span> src))</span>
-<span id="cb27-22"><a href="#cb27-22" aria-hidden="true"></a>         <span class="kw">in</span> expect <span class="op">==</span> actual</span></code></pre></div>
-<p>Testing for repeated calls is more tricky. Remember, the memoization is supposed to be unobservable: in order to see it, we’re going to have to use some unsafe operations.</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a>traceSubsequences</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a><span class="ot">    ::</span> ((<span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>]) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>])</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a>    <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true"></a>    <span class="ot">-&gt;</span> (<span class="dt">Map</span> (<span class="dt">Tree</span> <span class="dt">Int</span>) <span class="dt">Int</span>, [<span class="dt">Tree</span> <span class="dt">Int</span>])</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true"></a>traceSubsequences enm ints <span class="ot">=</span></span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true"></a>    runST <span class="op">$</span></span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true"></a>    <span class="kw">do</span> ref <span class="ot">&lt;-</span> newSTRef Map.empty</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true"></a>       <span class="kw">let</span> res <span class="ot">=</span> enm (combine ref) (<span class="fu">map</span> (conv ref) ints)</span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true"></a>       traverse_ (<span class="fu">foldr</span> <span class="fu">seq</span> (<span class="fu">pure</span> ())) res</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true"></a>       intm <span class="ot">&lt;-</span> readSTRef ref</span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true"></a>       <span class="fu">pure</span> (intm, res)</span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true"></a>    combine ref xs ys <span class="ot">=</span> unsafeRunST ([xs <span class="op">:*:</span> ys] <span class="op">&lt;$</span> modifySTRef' ref (incr (xs <span class="op">:*:</span> ys)))</span>
-<span id="cb28-14"><a href="#cb28-14" aria-hidden="true"></a>    <span class="ot">{-# NOINLINE combine #-}</span></span>
-<span id="cb28-15"><a href="#cb28-15" aria-hidden="true"></a>    conv ref x <span class="ot">=</span> unsafeRunST (<span class="dt">Leaf</span> x <span class="op">&lt;$</span> modifySTRef' ref (incr (<span class="dt">Leaf</span> x)))</span>
-<span id="cb28-16"><a href="#cb28-16" aria-hidden="true"></a>    <span class="ot">{-# NOINLINE conv #-}</span></span>
-<span id="cb28-17"><a href="#cb28-17" aria-hidden="true"></a>    unsafeRunST cmp <span class="ot">=</span> unsafePerformIO (unsafeSTToIO cmp)</span>
-<span id="cb28-18"><a href="#cb28-18" aria-hidden="true"></a></span>
-<span id="cb28-19"><a href="#cb28-19" aria-hidden="true"></a><span class="ot">prop_noRepeatedCalls ::</span> <span class="dt">Property</span></span>
-<span id="cb28-20"><a href="#cb28-20" aria-hidden="true"></a>prop_noRepeatedCalls <span class="ot">=</span></span>
-<span id="cb28-21"><a href="#cb28-21" aria-hidden="true"></a>    property <span class="op">$</span> sized <span class="op">$</span></span>
-<span id="cb28-22"><a href="#cb28-22" aria-hidden="true"></a>    \n <span class="ot">-&gt;</span></span>
-<span id="cb28-23"><a href="#cb28-23" aria-hidden="true"></a>         <span class="fu">pure</span> <span class="op">$</span></span>
-<span id="cb28-24"><a href="#cb28-24" aria-hidden="true"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> n]</span>
-<span id="cb28-25"><a href="#cb28-25" aria-hidden="true"></a>             (tint,tres) <span class="ot">=</span> <span class="fu">fmap</span> freqs (traceSubsequences enumerateTrees src)</span>
-<span id="cb28-26"><a href="#cb28-26" aria-hidden="true"></a>             (fint,fres) <span class="ot">=</span> <span class="fu">fmap</span> freqs (traceSubsequences dummyEnumerate src)</span>
-<span id="cb28-27"><a href="#cb28-27" aria-hidden="true"></a>         <span class="kw">in</span> counterexample</span>
-<span id="cb28-28"><a href="#cb28-28" aria-hidden="true"></a>                (mapCompare (freqs (allSubTrees src)) tint)</span>
-<span id="cb28-29"><a href="#cb28-29" aria-hidden="true"></a>                (<span class="fu">all</span> (<span class="dv">1</span> <span class="op">==</span>) tint) <span class="op">.&amp;&amp;.</span></span>
-<span id="cb28-30"><a href="#cb28-30" aria-hidden="true"></a>            counterexample (mapCompare tres fres) (tres <span class="op">==</span> fres) <span class="op">.&amp;&amp;.</span></span>
-<span id="cb28-31"><a href="#cb28-31" aria-hidden="true"></a>            (n <span class="op">&gt;</span> <span class="dv">2</span> <span class="op">==&gt;</span> tint <span class="op">/=</span> fint)</span></code></pre></div>
-<p>Here, <code class="sourceCode haskell">dummyEnumerate</code> is some method which performs the same task, but <em>doesn’t</em> construct a nexus, so we can ensure that our tests really do catch faulty implementations.</p>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-bird_functional_2003">
-<p>Bird, Richard, and Ralf Hinze. 2003. “Functional Pearl Trouble Shared is Trouble Halved.” In <em>Proceedings of the 2003 ACM SIGPLAN Workshop on Haskell</em>, 1–6. Haskell ’03. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/871895.871896">10.1145/871895.871896</a>. <a href="http://doi.acm.org/10.1145/871895.871896">http://doi.acm.org/10.1145/871895.871896</a>.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ot">prop_exhaustiveSearch ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>prop_exhaustiveSearch n <span class="ot">=</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> <span class="fu">fromIntegral</span> n]</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>             expect <span class="ot">=</span> allSubTrees src</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>             actual <span class="ot">=</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>                 Set.fromList</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                     (enumerateTrees</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>                          (\xs ys <span class="ot">-&gt;</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>                                [xs, ys, xs <span class="op">:*:</span> ys])</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>                          (<span class="fu">map</span> <span class="dt">Leaf</span> src))</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>         <span class="kw">in</span> expect <span class="op">==</span> actual</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a><span class="ot">prop_exhaustiveSearchFull ::</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>prop_exhaustiveSearchFull n <span class="ot">=</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> <span class="fu">fromIntegral</span> n]</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>             expect <span class="ot">=</span> Map.fromSet (<span class="fu">const</span> <span class="dv">1</span>) (allTrees src)</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>             actual <span class="ot">=</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>                 freqs</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>                     (enumerateTrees</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>                          (\xs ys <span class="ot">-&gt;</span> [xs <span class="op">:*:</span> ys])</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>                          (<span class="fu">map</span> <span class="dt">Leaf</span> src))</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>         <span class="kw">in</span> expect <span class="op">==</span> actual</span></code></pre></div>
+<p>Testing for repeated calls is more tricky. Remember, the memoization
+is supposed to be unobservable: in order to see it, we’re going to have
+to use some unsafe operations.</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>traceSubsequences</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> ((<span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Tree</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>]) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>] <span class="ot">-&gt;</span> [<span class="dt">Tree</span> <span class="dt">Int</span>])</span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> [<span class="dt">Int</span>]</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="ot">-&gt;</span> (<span class="dt">Map</span> (<span class="dt">Tree</span> <span class="dt">Int</span>) <span class="dt">Int</span>, [<span class="dt">Tree</span> <span class="dt">Int</span>])</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>traceSubsequences enm ints <span class="ot">=</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    runST <span class="op">$</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">do</span> ref <span class="ot">&lt;-</span> newSTRef Map.empty</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>       <span class="kw">let</span> res <span class="ot">=</span> enm (combine ref) (<span class="fu">map</span> (conv ref) ints)</span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>       traverse_ (<span class="fu">foldr</span> <span class="fu">seq</span> (<span class="fu">pure</span> ())) res</span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>       intm <span class="ot">&lt;-</span> readSTRef ref</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>       <span class="fu">pure</span> (intm, res)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>    combine ref xs ys <span class="ot">=</span> unsafeRunST ([xs <span class="op">:*:</span> ys] <span class="op">&lt;$</span> modifySTRef' ref (incr (xs <span class="op">:*:</span> ys)))</span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>    <span class="ot">{-# NOINLINE combine #-}</span></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a>    conv ref x <span class="ot">=</span> unsafeRunST (<span class="dt">Leaf</span> x <span class="op">&lt;$</span> modifySTRef' ref (incr (<span class="dt">Leaf</span> x)))</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="ot">{-# NOINLINE conv #-}</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>    unsafeRunST cmp <span class="ot">=</span> unsafePerformIO (unsafeSTToIO cmp)</span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="ot">prop_noRepeatedCalls ::</span> <span class="dt">Property</span></span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>prop_noRepeatedCalls <span class="ot">=</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>    property <span class="op">$</span> sized <span class="op">$</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>    \n <span class="ot">-&gt;</span></span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>         <span class="fu">pure</span> <span class="op">$</span></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>         <span class="kw">let</span> src <span class="ot">=</span> [<span class="dv">0</span> <span class="op">..</span> n]</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>             (tint,tres) <span class="ot">=</span> <span class="fu">fmap</span> freqs (traceSubsequences enumerateTrees src)</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a>             (fint,fres) <span class="ot">=</span> <span class="fu">fmap</span> freqs (traceSubsequences dummyEnumerate src)</span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a>         <span class="kw">in</span> counterexample</span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>                (mapCompare (freqs (allSubTrees src)) tint)</span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>                (<span class="fu">all</span> (<span class="dv">1</span> <span class="op">==</span>) tint) <span class="op">.&amp;&amp;.</span></span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a>            counterexample (mapCompare tres fres) (tres <span class="op">==</span> fres) <span class="op">.&amp;&amp;.</span></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a>            (n <span class="op">&gt;</span> <span class="dv">2</span> <span class="op">==&gt;</span> tint <span class="op">/=</span> fint)</span></code></pre></div>
+<p>Here, <code class="sourceCode haskell">dummyEnumerate</code> is some
+method which performs the same task, but <em>doesn’t</em> construct a
+nexus, so we can ensure that our tests really do catch faulty
+implementations.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bird_functional_2003" class="csl-entry" role="listitem">
+Bird, Richard, and Ralf Hinze. 2003. <span>“Functional
+<span>Pearl</span> <span>Trouble</span> <span>Shared</span> is
+<span>Trouble</span> <span>Halved</span>.”</span> In <em>Proceedings of
+the 2003 <span>ACM</span> <span>SIGPLAN</span> <span>Workshop</span> on
+<span>Haskell</span></em>, 1–6. Haskell ’03. New York, NY, USA: ACM.
+doi:<a href="https://doi.org/10.1145/871895.871896">10.1145/871895.871896</a>.
+<a href="http://doi.acm.org/10.1145/871895.871896">http://doi.acm.org/10.1145/871895.871896</a>.
 </div>
-<div id="ref-bird_countdown:_2005">
-<p>Bird, Richard, and Shin-Cheng Mu. 2005. “Countdown: A case study in origami programming.” <em>Journal of Functional Programming</em> 15 (05) (August): 679. doi:<a href="https://doi.org/10.1017/S0956796805005642">10.1017/S0956796805005642</a>. <a href="http://www.journals.cambridge.org/abstract_S0956796805005642">http://www.journals.cambridge.org/abstract_S0956796805005642</a>.</p>
+<div id="ref-bird_countdown:_2005" class="csl-entry" role="listitem">
+Bird, Richard, and Shin-Cheng Mu. 2005. <span>“Countdown: <span>A</span>
+case study in origami programming.”</span> <em>Journal of Functional
+Programming</em> 15 (05) (August): 679. doi:<a href="https://doi.org/10.1017/S0956796805005642">10.1017/S0956796805005642</a>.
+<a href="http://www.journals.cambridge.org/abstract_S0956796805005642">http://www.journals.cambridge.org/abstract_S0956796805005642</a>.
 </div>
-<div id="ref-danvy_there_2005">
-<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>BRICS Report Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>. <a href="https://tidsskrift.dk/brics/article/view/21869">https://tidsskrift.dk/brics/article/view/21869</a>.</p>
+<div id="ref-danvy_there_2005" class="csl-entry" role="listitem">
+Danvy, Olivier, and Mayer Goldberg. 2005. <span>“There and
+<span>Back</span> <span>Again</span>.”</span> <em>BRICS Report
+Series</em> 12 (3). doi:<a href="https://doi.org/10.7146/brics.v12i3.21869">10.7146/brics.v12i3.21869</a>.
+<a href="https://tidsskrift.dk/brics/article/view/21869">https://tidsskrift.dk/brics/article/view/21869</a>.
 </div>
-<div id="ref-hutton_countdown_2002">
-<p>Hutton, Graham. 2002. “The Countdown Problem.” <em>J. Funct. Program.</em> 12 (6) (November): 609–616. doi:<a href="https://doi.org/10.1017/S0956796801004300">10.1017/S0956796801004300</a>. <a href="http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf">http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf</a>.</p>
+<div id="ref-hutton_countdown_2002" class="csl-entry" role="listitem">
+Hutton, Graham. 2002. <span>“The <span>Countdown</span>
+<span>Problem</span>.”</span> <em>J. Funct. Program.</em> 12 (6)
+(November): 609–616. doi:<a href="https://doi.org/10.1017/S0956796801004300">10.1017/S0956796801004300</a>.
+<a href="http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf">http://www.cs.nott.ac.uk/~pszgmh/countdown.pdf</a>.
 </div>
-<div id="ref-steffen_table_2006">
-<p>Steffen, Peter, and Robert Giegerich. 2006. “Table Design in Dynamic Programming.” <em>Information and Computation</em> 204 (9) (September): 1325–1345. doi:<a href="https://doi.org/10.1016/j.ic.2006.02.006">10.1016/j.ic.2006.02.006</a>. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf</a>.</p>
+<div id="ref-steffen_table_2006" class="csl-entry" role="listitem">
+Steffen, Peter, and Robert Giegerich. 2006. <span>“Table
+<span>Design</span> in <span>Dynamic</span>
+<span>Programming</span>.”</span> <em>Information and Computation</em>
+204 (9) (September): 1325–1345. doi:<a href="https://doi.org/10.1016/j.ic.2006.02.006">10.1016/j.ic.2006.02.006</a>.
+<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.85.601&amp;rep=rep1&amp;type=pdf</a>.
 </div>
-<div id="ref-tobin_time_2016">
-<p>Tobin, Jared. 2016. “Time Traveling Recursion Schemes.” <em>jtobin.io</em>. <a href="https://jtobin.io/time-traveling-recursion">https://jtobin.io/time-traveling-recursion</a>.</p>
+<div id="ref-tobin_time_2016" class="csl-entry" role="listitem">
+Tobin, Jared. 2016. <span>“Time <span>Traveling</span>
+<span>Recursion</span> <span>Schemes</span>.”</span> <em>jtobin.io</em>.
+<a href="https://jtobin.io/time-traveling-recursion">https://jtobin.io/time-traveling-recursion</a>.
 </div>
 </div>
-<section class="footnotes" role="doc-endnotes">
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>If you think that structure looks more like a funny linked list than a tree, that’s because it is. Instead of talking about “left” and “right” branches, we could talk about the first and second elements in a list: in fact, this is exactly what’s happening in the famous <code class="sourceCode haskell"><span class="fu">zipWith</span></code> Fibonacci implementation (in reverse).</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>fibs <span class="ot">=</span> <span class="dv">0</span> <span class="op">:</span> <span class="dv">1</span> <span class="op">:</span> <span class="fu">zipWith</span> (<span class="op">+</span>) fibs (<span class="fu">tail</span> fibs)</span></code></pre></div>
+<li id="fn1"><p>If you think that structure looks more like a funny
+linked list than a tree, that’s because it is. Instead of talking about
+“left” and “right” branches, we could talk about the first and second
+elements in a list: in fact, this is exactly what’s happening in the
+famous <code class="sourceCode haskell"><span class="fu">zipWith</span></code>
+Fibonacci implementation (in reverse).</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>fibs <span class="ot">=</span> <span class="dv">0</span> <span class="op">:</span> <span class="dv">1</span> <span class="op">:</span> <span class="fu">zipWith</span> (<span class="op">+</span>) fibs (<span class="fu">tail</span> fibs)</span></code></pre></div>
 <p>Or, in my favourite version:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>fib n <span class="ot">=</span> fix ((<span class="op">:</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">scanl</span> (<span class="op">+</span>) <span class="dv">1</span>) <span class="op">!!</span> n</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>fib n <span class="ot">=</span> fix ((<span class="op">:</span>) <span class="dv">0</span> <span class="op">.</span> <span class="fu">scanl</span> (<span class="op">+</span>) <span class="dv">1</span>) <span class="op">!!</span> n</span></code></pre></div>
 <a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></li>
 </ol>
 </section>

@@ -30,7 +30,7 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Combinators'." href="../tags/Combinators.html">Combinators</a>
+        Tags: <a title="All pages tagged 'Combinators'." href="../tags/Combinators.html" rel="tag">Combinators</a>
     
 </div>
 
@@ -51,26 +51,60 @@ input[type=text]:invalid {
     box-shadow: none;
 }
 </style>
-<p>There are a bunch of “minimal” computational models out there: Turing machines, lambda calculus, PowerPoint <span class="citation" data-cites="wildenhainTuringCompletenessMS2017">(Wildenhain <a href="#ref-wildenhainTuringCompletenessMS2017" role="doc-biblioref">2017</a>)</span>, etc. These are radically simple languages which are nonetheless Turing complete, so theoretically “as powerful” as each other. Of those, lambda calculus is without question my favourite to actually write programs in: it’s the one which is closest to crawling out of the <a href="https://en.wikipedia.org/wiki/Turing_tarpit">Turing tarpit</a>.</p>
-<p>In terms of implementation, though, it is <em>far</em> from simple. Lambda calculus has <em>variables</em>, which introduce huge complexity into the interpreter: especially if you want to do any kind of formal reasoning about programs, this complexity is a problem. We might want to reach for something even lower-level than lambda calculus: this is where combinator calculi come in.</p>
-<p>You may have heard of SKI combinator calculus: it’s the “simplest” of the calculi, but it’s not actually very easy to understand, and it’s absolute murder to try use. So we’re going to start with <code>BCKW</code>, a more obscure calculus, actually invented by Haskell Curry.</p>
-<p>There are 4 combinators in <code>BCKW</code>: <code>B</code>, <code>C</code>, <code>K</code>, and <code>W</code> (shocking, I know). You can think about these combinators as functions which manipulate the beginning of strings:</p>
+<p>There are a bunch of “minimal” computational models out there: Turing
+machines, lambda calculus, PowerPoint <span class="citation" data-cites="wildenhainTuringCompletenessMS2017">(Wildenhain
+2017)</span>, etc. These are radically simple languages which are
+nonetheless Turing complete, so theoretically “as powerful” as each
+other. Of those, lambda calculus is without question my favourite to
+actually write programs in: it’s the one which is closest to crawling
+out of the <a href="https://en.wikipedia.org/wiki/Turing_tarpit">Turing
+tarpit</a>.</p>
+<p>In terms of implementation, though, it is <em>far</em> from simple.
+Lambda calculus has <em>variables</em>, which introduce huge complexity
+into the interpreter: especially if you want to do any kind of formal
+reasoning about programs, this complexity is a problem. We might want to
+reach for something even lower-level than lambda calculus: this is where
+combinator calculi come in.</p>
+<p>You may have heard of SKI combinator calculus: it’s the “simplest” of
+the calculi, but it’s not actually very easy to understand, and it’s
+absolute murder to try use. So we’re going to start with
+<code>BCKW</code>, a more obscure calculus, actually invented by Haskell
+Curry.</p>
+<p>There are 4 combinators in <code>BCKW</code>: <code>B</code>,
+<code>C</code>, <code>K</code>, and <code>W</code> (shocking, I know).
+You can think about these combinators as functions which manipulate the
+beginning of strings:</p>
 <pre><code>Bxyz ~&gt; x(yz)
 Cxyz ~&gt; xzy
 Kxy  ~&gt; x
 Wxy  ~&gt; xyy</code></pre>
-<p>Upper case letters are combinators, lower-case are variables. Yes, yes, I know I said that combinator calculi didn’t need variables, and it doesn’t! I’m just using them here to explain how each of the combinators work. If you really want to be pedantic you can think of the lower case letters as notational placeholders meaning “any given combinator”. They won’t exist in any actual programs we write.</p>
-<p>Let’s work with some examples to get a sense for how these combinators work.</p>
-<p>The simplest combinator is <code>K</code>: it’s actually equivalent to the <code>const</code> function from Haskell. It discards its second argument, and returns the first. If you give a combinator more arguments than it usually accepts, you just keep the extra arguments in the output:</p>
+<p>Upper case letters are combinators, lower-case are variables. Yes,
+yes, I know I said that combinator calculi didn’t need variables, and it
+doesn’t! I’m just using them here to explain how each of the combinators
+work. If you really want to be pedantic you can think of the lower case
+letters as notational placeholders meaning “any given combinator”. They
+won’t exist in any actual programs we write.</p>
+<p>Let’s work with some examples to get a sense for how these
+combinators work.</p>
+<p>The simplest combinator is <code>K</code>: it’s actually equivalent
+to the <code>const</code> function from Haskell. It discards its second
+argument, and returns the first. If you give a combinator more arguments
+than it usually accepts, you just keep the extra arguments in the
+output:</p>
 <pre><code>Kxyz ~&gt; xz</code></pre>
-<p><code>W</code> is the next combinator: it <em>duplicates</em> its second argument.</p>
+<p><code>W</code> is the next combinator: it <em>duplicates</em> its
+second argument.</p>
 <pre><code>Wxy ~&gt; xyy</code></pre>
-<p>We always start from the <em>left</em>, applying the rule for the left-most combinator first.</p>
+<p>We always start from the <em>left</em>, applying the rule for the
+left-most combinator first.</p>
 <pre><code>WKxyz ~&gt; Kxxyz ~&gt; xyz
 KWxyz ~&gt; Wyz   ~&gt; yzz</code></pre>
-<p>Next we have <code>C</code>: this is equivalent to the Haskell function <code>flip</code>. It swaps the second and third arguments:</p>
+<p>Next we have <code>C</code>: this is equivalent to the Haskell
+function <code>flip</code>. It swaps the second and third arguments:</p>
 <pre><code>Cxyz ~&gt; xzy</code></pre>
-<p>Here’s a small little evaluator for expressions which use <code>C</code>, <code>K</code>, and <code>W</code>. You can edit the expression, and press enter to step through it.</p>
+<p>Here’s a small little evaluator for expressions which use
+<code>C</code>, <code>K</code>, and <code>W</code>. You can edit the
+expression, and press enter to step through it.</p>
 <p id="CKW">
 </p>
 <script>
@@ -85,14 +119,23 @@ repl(
 <noscript>
 Turn on JavaScript to allow interactive evaluation
 </noscript>
-<p>The last combinator introduces parentheses, and it’s equivalent to function composition.</p>
+<p>The last combinator introduces parentheses, and it’s equivalent to
+function composition.</p>
 <pre><code>Bxyz ~&gt; x(yz)</code></pre>
-<p>You can write parentheses yourself: implicitly, all expressions are left-associative. That means that the following are all equal:</p>
+<p>You can write parentheses yourself: implicitly, all expressions are
+left-associative. That means that the following are all equal:</p>
 <pre><code>xyz = (xy)z = (x)yz = ((x)y)z</code></pre>
-<p>But <code>xyz</code> is <em>not</em> equal to, say, <code>x(yz)</code>.</p>
-<p>And here’s a puzzle to start flexing your combinator skills: one of the combinators in SKI combinator calculus is <code>I</code>, which is the identity function.</p>
+<p>But <code>xyz</code> is <em>not</em> equal to, say,
+<code>x(yz)</code>.</p>
+<p>And here’s a puzzle to start flexing your combinator skills: one of
+the combinators in SKI combinator calculus is <code>I</code>, which is
+the identity function.</p>
 <pre><code>Ix ~&gt; x</code></pre>
-<p>Try write an expression which functions the same way as <code>I</code>, using only the <code>BCKW</code> combinators. Use the following evaluator to try and figure out how to do it: write an expression after <code>λ&gt;</code> which functions the same as <code>I</code>.</p>
+<p>Try write an expression which functions the same way as
+<code>I</code>, using only the <code>BCKW</code> combinators. Use the
+following evaluator to try and figure out how to do it: write an
+expression after <code>λ&gt;</code> which functions the same as
+<code>I</code>.</p>
 <p id="BCKWtoI">
 </p>
 <script>
@@ -108,26 +151,47 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary> <code>CK</code> followed by any combinator will do the trick. So <code>CKB</code>, <code>CKK</code>, <code>CKC</code>, etc.</p>
+<summary>
+Answer
+</summary>
+<p><code>CK</code> followed by any combinator will do the trick. So
+<code>CKB</code>, <code>CKK</code>, <code>CKC</code>, etc.</p>
 <pre><code>I = CKC</code></pre>
-Update 19/10/2020: A few people have pointed out (<a href="https://www.joachim-breitner.de/">Joachim Breitner</a> was the first) that there is a shorter solution to this problem: <code>WK</code>. I tend to prefer solutions that don’t include <code>W</code>, since then we’re working in a subset of the language that is both terminating and affine; although in this case the reason I didn’t mention <code>WK</code> is that I just didn’t find it myself.
+Update 19/10/2020: A few people have pointed out (<a href="https://www.joachim-breitner.de/">Joachim Breitner</a> was the
+first) that there is a shorter solution to this problem:
+<code>WK</code>. I tend to prefer solutions that don’t include
+<code>W</code>, since then we’re working in a subset of the language
+that is both terminating and affine; although in this case the reason I
+didn’t mention <code>WK</code> is that I just didn’t find it myself.
 </details>
 <h1 id="why-not-simpler-combinators">Why Not Simpler Combinators?</h1>
-<p>Each of the combinators we’ve defined so far work a little weird: they seem to skip over their first argument, and work on their second. Indeed, there is another, equivalent combinator calculus which doesn’t have this peculiarity:</p>
+<p>Each of the combinators we’ve defined so far work a little weird:
+they seem to skip over their first argument, and work on their second.
+Indeed, there is another, equivalent combinator calculus which doesn’t
+have this peculiarity:</p>
 <pre><code>Bxyz ~&gt; x(yz)
 Axy  ~&gt; y
 Mx   ~&gt; xx
 Txy  ~&gt; yx</code></pre>
-<p><code>B</code> stays the same in this calculus, but the rest of the combinators get switched out for seemingly simpler versions. <code>K</code> goes to <code>A</code><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
+<p><code>B</code> stays the same in this calculus, but the rest of the
+combinators get switched out for seemingly simpler versions.
+<code>K</code> goes to <code>A</code><a href="#fn1" class="footnote-ref" id="fnref1" role="doc-noteref"><sup>1</sup></a>:</p>
 <pre><code>Axy ~&gt; y
 Kxy ~&gt; x</code></pre>
-<p>Which isn’t a huge change. It’s the other two where we see the real difference. <code>W</code> has been swapped out for <code>M</code>:</p>
+<p>Which isn’t a huge change. It’s the other two where we see the real
+difference. <code>W</code> has been swapped out for <code>M</code>:</p>
 <pre><code>Wxy ~&gt; xyy
 Mx  ~&gt; xx</code></pre>
-<p>As you can see <code>W</code> basically does the same thing as <code>M</code>, but while passing through its first argument. The difference between <code>T</code> and <code>C</code> is similar:</p>
+<p>As you can see <code>W</code> basically does the same thing as
+<code>M</code>, but while passing through its first argument. The
+difference between <code>T</code> and <code>C</code> is similar:</p>
 <pre><code>Cxyz ~&gt; xzy
 Txy  ~&gt; yx</code></pre>
-<p>So, first of all, it is pretty simple to show that <code>BCKW</code> contains all of the <code>BAMT</code> combinators. Try find a way to write <code>T</code> using only <code>BCKW</code> combinators (hint: you might want to use your previous answer for writing <code>I</code> using <code>BCKW</code>).</p>
+<p>So, first of all, it is pretty simple to show that <code>BCKW</code>
+contains all of the <code>BAMT</code> combinators. Try find a way to
+write <code>T</code> using only <code>BCKW</code> combinators (hint: you
+might want to use your previous answer for writing <code>I</code> using
+<code>BCKW</code>).</p>
 <p id="BCKWtoT">
 </p>
 <script>
@@ -143,12 +207,21 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary> So in fact all of the changed <code>BAMT</code> combinators can be encoded using <code>BCKW</code> by putting <code>I</code> (or <code>CKC</code> or what have you) after the corresponding <code>BCKW</code> combinator. In other words:</p>
+<summary>
+Answer
+</summary>
+<p>So in fact all of the changed <code>BAMT</code> combinators can be
+encoded using <code>BCKW</code> by putting <code>I</code> (or
+<code>CKC</code> or what have you) after the corresponding
+<code>BCKW</code> combinator. In other words:</p>
 <pre><code>T = CI = C(CKC)
 A = KI = K(CKC)
 M = WI = W(CKC)</code></pre>
 </details>
-<p>It’s pretty easy to go from <code>BCKW</code> to <code>BAMT</code>, then. However, it’s <em>extremely</em> difficult to go the other way. Here, try to write <code>K</code> in terms of <code>BAMT</code> (this is quite difficult, do not expect to get it!):</p>
+<p>It’s pretty easy to go from <code>BCKW</code> to <code>BAMT</code>,
+then. However, it’s <em>extremely</em> difficult to go the other way.
+Here, try to write <code>K</code> in terms of <code>BAMT</code> (this is
+quite difficult, do not expect to get it!):</p>
 <p id="BAMTtoK">
 </p>
 <script>
@@ -165,16 +238,40 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary> Either of the following would work:</p>
+<summary>
+Answer
+</summary>
+<p>Either of the following would work:</p>
 <pre><code>B(TA)(BBT)
 B(B(TA)B)T</code></pre>
 </details>
-<p>So this is why we will stick to <code>BCKW</code> for the time being: <code>BAMT</code> is just too painful to use.</p>
+<p>So this is why we will stick to <code>BCKW</code> for the time being:
+<code>BAMT</code> is just too painful to use.</p>
 <h1 id="linear-types-and-combinators">Linear Types and Combinators</h1>
-<p>One of the things <code>BCKW</code> has over <code>SKI</code> is that each combinator represents a concrete capability. <code>K</code> and <code>W</code> especially: without these combinators, we can neither duplicate nor discard variables. This makes the languages without one or both of these interesting (albeit not Turing-complete).</p>
-<p>If we say that we can’t use <code>W</code>, we know that the will not duplicate any input. In fact, encoded appropriately, we know that the program can only decrease its size through execution. The <code>BCK</code> system is in fact an encoding of <em>affine</em> logic, which is all the rage nowadays. Rust uses affine types to guarantee memory safety: by preventing duplication of references, you can know that whenever you’re looking at a variable you’re free to modify it, or destroy it if necessary (obviously Rust is a bit more complex than what I’ve described here, but <code>BCK</code> is indeed the fundamental basis for the system in the same way that <code>SK</code> can be the basis for any programming language).</p>
-<p>If we remove <code>K</code> as well we have a <em>linear</em> language. This is even more restrictive, but is also quite actively researched at the moment: linear types have been used to construct languages for differential privacy, for instance.</p>
-<p>There’s one small issue with <code>BC</code>: it doesn’t (strictly speaking) have an equivalent to <code>I</code>. You can write an expression which is <em>close</em>, but it will only actually compute when applied to at least 3 arguments. See if you can find it.</p>
+<p>One of the things <code>BCKW</code> has over <code>SKI</code> is that
+each combinator represents a concrete capability. <code>K</code> and
+<code>W</code> especially: without these combinators, we can neither
+duplicate nor discard variables. This makes the languages without one or
+both of these interesting (albeit not Turing-complete).</p>
+<p>If we say that we can’t use <code>W</code>, we know that the will not
+duplicate any input. In fact, encoded appropriately, we know that the
+program can only decrease its size through execution. The
+<code>BCK</code> system is in fact an encoding of <em>affine</em> logic,
+which is all the rage nowadays. Rust uses affine types to guarantee
+memory safety: by preventing duplication of references, you can know
+that whenever you’re looking at a variable you’re free to modify it, or
+destroy it if necessary (obviously Rust is a bit more complex than what
+I’ve described here, but <code>BCK</code> is indeed the fundamental
+basis for the system in the same way that <code>SK</code> can be the
+basis for any programming language).</p>
+<p>If we remove <code>K</code> as well we have a <em>linear</em>
+language. This is even more restrictive, but is also quite actively
+researched at the moment: linear types have been used to construct
+languages for differential privacy, for instance.</p>
+<p>There’s one small issue with <code>BC</code>: it doesn’t (strictly
+speaking) have an equivalent to <code>I</code>. You can write an
+expression which is <em>close</em>, but it will only actually compute
+when applied to at least 3 arguments. See if you can find it.</p>
 <p id="BCtoI">
 </p>
 <script>
@@ -191,14 +288,23 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary></p>
+<summary>
+Answer
+</summary>
 <pre><code>BCC</code></pre>
 </details>
-<p>Usually we add <code>I</code>, though, to give us <code>BCI</code>.</p>
-<h1 id="the-minimal-combinators-s-and-k">The Minimal Combinators: S and K</h1>
-<p><code>S</code> is the only combinator we haven’t seen yet. It’s kind of a combination of <code>B</code>, <code>C</code>, and <code>W</code>:</p>
+<p>Usually we add <code>I</code>, though, to give us
+<code>BCI</code>.</p>
+<h1 id="the-minimal-combinators-s-and-k">The Minimal Combinators: S and
+K</h1>
+<p><code>S</code> is the only combinator we haven’t seen yet. It’s kind
+of a combination of <code>B</code>, <code>C</code>, and
+<code>W</code>:</p>
 <pre><code>Sxyz ~&gt; xz(yz)</code></pre>
-<p>It does parenthesising, reordering, <em>and</em> duplication. This allows it to be powerful enough to be Turing complete only with the addition of <code>K</code>. Try first to construct <code>I</code> given only <code>S</code> and <code>K</code>:</p>
+<p>It does parenthesising, reordering, <em>and</em> duplication. This
+allows it to be powerful enough to be Turing complete only with the
+addition of <code>K</code>. Try first to construct <code>I</code> given
+only <code>S</code> and <code>K</code>:</p>
 <p id="SKtoI">
 </p>
 <script>
@@ -215,7 +321,10 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary> <code>SK</code> followed by any combinator will suffice.</p>
+<summary>
+Answer
+</summary>
+<p><code>SK</code> followed by any combinator will suffice.</p>
 <pre><code>I = SKK = SKS</code></pre>
 </details>
 <p>And now construct <code>S</code> from <code>BCKW</code>:</p>
@@ -235,10 +344,15 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary></p>
+<summary>
+Answer
+</summary>
 <pre><code>S = B(BW)(BBC) = B(B(BW)C)(BB)</code></pre>
 </details>
-<p>Of course, to show that <code>SK</code> is universal we’d need to show that it contains one of the other universal systems. We won’t do that exhaustively here, but first just try to figure out <code>B</code> and <code>W</code>:</p>
+<p>Of course, to show that <code>SK</code> is universal we’d need to
+show that it contains one of the other universal systems. We won’t do
+that exhaustively here, but first just try to figure out <code>B</code>
+and <code>W</code>:</p>
 <p id="SKItoB">
 </p>
 <script>
@@ -256,7 +370,9 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary></p>
+<summary>
+Answer
+</summary>
 <pre><code>B = S(KS)K</code></pre>
 </details>
 <p id="SKItoW">
@@ -276,13 +392,20 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<p><summary>Answer</summary></p>
+<summary>
+Answer
+</summary>
 <pre><code>W = SS(SK) = SS(KI)</code></pre>
 </details>
 <h1 id="recursion">Recursion</h1>
-<p>The next task is to encode the <code>Y</code> combinator. This is a combinator that evaluates to the following:</p>
+<p>The next task is to encode the <code>Y</code> combinator. This is a
+combinator that evaluates to the following:</p>
 <pre><code>Yf ~&gt; f(Yf)</code></pre>
-<p>As you can see, it encodes <em>recursion</em>. Like the <code>fix</code> function in Haskell, this combinator allows us to do recursion without explicit self-reference. And, of course, we can define this combinator using the combinators we’ve seen before, since our language is Turing complete. One encoding is <code>BM(CBM)</code>:</p>
+<p>As you can see, it encodes <em>recursion</em>. Like the
+<code>fix</code> function in Haskell, this combinator allows us to do
+recursion without explicit self-reference. And, of course, we can define
+this combinator using the combinators we’ve seen before, since our
+language is Turing complete. One encoding is <code>BM(CBM)</code>:</p>
 <p id="Y">
 </p>
 <script>
@@ -297,10 +420,22 @@ repl(
 <noscript>
 Turn on JavaScript to allow interactive evaluation
 </noscript>
-<p>As you can see, <code>BM(CBM)</code>, when applied to <code>f</code>, yields <code>f(M(CBMf))</code>, which is equivalent to <code>f(BM(CBM)f)</code> (the <code>B</code> just hasn’t been applied inside the <code>f</code>). So this is indeed a proper recursion combinator.</p>
+<p>As you can see, <code>BM(CBM)</code>, when applied to <code>f</code>,
+yields <code>f(M(CBMf))</code>, which is equivalent to
+<code>f(BM(CBM)f)</code> (the <code>B</code> just hasn’t been applied
+inside the <code>f</code>). So this is indeed a proper recursion
+combinator.</p>
 <h1 id="encoding-numbers">Encoding Numbers</h1>
-<p>Let’s try doing a little bit of programming with these combinators now.</p>
-<p>In the lambada calculus, to encode numbers we often use the <em>church</em> numerals: that’s what we’re going to do here, too. A church numeral representing some number <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> is a function which takes two arguments, and applies the first argument to the second <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math> times. Here are some church numerals in Haskell:</p>
+<p>Let’s try doing a little bit of programming with these combinators
+now.</p>
+<p>In the lambada calculus, to encode numbers we often use the
+<em>church</em> numerals: that’s what we’re going to do here, too. A
+church numeral representing some number
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+is a function which takes two arguments, and applies the first argument
+to the second
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
+times. Here are some church numerals in Haskell:</p>
 <pre><code>zero :: (a -&gt; a) -&gt; a -&gt; a
 zero f x = x
 
@@ -312,7 +447,9 @@ two f x = f (f x)
 
 three :: (a -&gt; a) -&gt; a -&gt; a
 three f x = f (f (f x))</code></pre>
-<p>Encoding these numerals in combinators is a little more difficult. Zero and one are obvious: they are <code>A</code> and <code>I</code>, respectively. Try to figure out two and three:</p>
+<p>Encoding these numerals in combinators is a little more difficult.
+Zero and one are obvious: they are <code>A</code> and <code>I</code>,
+respectively. Try to figure out two and three:</p>
 <p id="two">
 </p>
 <script>
@@ -329,7 +466,10 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<summary>Answer</summary><code>WB</code>
+<summary>
+Answer
+</summary>
+<code>WB</code>
 </details>
 <p id="three">
 </p>
@@ -347,10 +487,21 @@ puzzle(
 Turn on JavaScript to allow interactive evaluation
 </noscript>
 <details>
-<summary>Answer</summary><code>SB(WB)</code>
+<summary>
+Answer
+</summary>
+<code>SB(WB)</code>
 </details>
-<p>It turns out that it’s pretty easy to encode numbers in a relatively small amount of space, using a binary encoding. First, multiplication on Church numerals is simply composition: so that’s <code>B</code> on our combinators. We already have 2 defined, so the next thing we need for a binary encoding is a successor function. And we know what <em>that</em> is, from the answer to 3!</p>
-<p>This means we can encode normal number in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math> space (although it still takes linear time to evaluate). The following repl allows for numbers:</p>
+<p>It turns out that it’s pretty easy to encode numbers in a relatively
+small amount of space, using a binary encoding. First, multiplication on
+Church numerals is simply composition: so that’s <code>B</code> on our
+combinators. We already have 2 defined, so the next thing we need for a
+binary encoding is a successor function. And we know what <em>that</em>
+is, from the answer to 3!</p>
+<p>This means we can encode normal number in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math>
+space (although it still takes linear time to evaluate). The following
+repl allows for numbers:</p>
 <p id="numbers">
 </p>
 <script>
@@ -361,53 +512,144 @@ repl({
   initial_expr: "5fx"
 });
 </script>
-<p>We could take up even less space if we allowed for non-normal forms. 4, for instance, could be encoded like so:</p>
+<p>We could take up even less space if we allowed for non-normal forms.
+4, for instance, could be encoded like so:</p>
 <pre><code>M(WB)</code></pre>
-<p>But we generally prefer to keep our encodings in normal form: otherwise there’s some extra evaluation we have to pay for when we go to use them.</p>
-<h1 id="encoding-lambda-terms-as-combinators">Encoding Lambda Terms as Combinators</h1>
-<p>Once upon a time SKI combinators were used as a target for functional compilers: Miranda, Haskell’s precursor, compiled down to a set of combinators which included <code>SKI</code>. Nowadays, Haskell is compiled to the “spineless tagless G-machine”: its compilation technique took over from combinators in the late 80s, and has been the dominant form since. Apparently the reason is that, on the current architecture of most computers, combinator-based compilation targets just aren’t fast enough. They generate too much garbage: as a result, switching to the STG yielded about a 40% speedup.</p>
+<p>But we generally prefer to keep our encodings in normal form:
+otherwise there’s some extra evaluation we have to pay for when we go to
+use them.</p>
+<h1 id="encoding-lambda-terms-as-combinators">Encoding Lambda Terms as
+Combinators</h1>
+<p>Once upon a time SKI combinators were used as a target for functional
+compilers: Miranda, Haskell’s precursor, compiled down to a set of
+combinators which included <code>SKI</code>. Nowadays, Haskell is
+compiled to the “spineless tagless G-machine”: its compilation technique
+took over from combinators in the late 80s, and has been the dominant
+form since. Apparently the reason is that, on the current architecture
+of most computers, combinator-based compilation targets just aren’t fast
+enough. They generate too much garbage: as a result, switching to the
+STG yielded about a 40% speedup.</p>
 <p>A lot of this information comes from two talks, by the way:</p>
 <ul>
-<li><a href="https://www.youtube.com/watch?v=GawiQQCn3bk">An Introduction to Combinator Compilers and Graph Reduction Machines</a>, by <a href="https://twitter.com/graunked?lang=en">David Graunke</a> <span class="citation" data-cites="graunkeIntroductionCombinatorCompilers2016">(<a href="#ref-graunkeIntroductionCombinatorCompilers2016" role="doc-biblioref">2016</a>)</span>, which goes through a high-level history and explanation of combinator compilers and why we switched away from them. A very interesting tidbit in this talk was that some people started making custom hardware to handle combinator calculi a little better. Even more interesting is the fact that these days we have FPGAs all over the place, so maybe combinator compilers are ripe for reintroduction?</li>
-<li><a href="https://www.youtube.com/watch?v=zhj_tUMwTe0">Combinators Revisited</a>, by <a href="https://twitter.com/kmett">Edward Kmett</a> <span class="citation" data-cites="kmettCombinatorsRevisited2018">(<a href="#ref-kmettCombinatorsRevisited2018" role="doc-biblioref">2018</a>)</span>, which goes through a little more of the details of the problems with combinator compilers, and mentions some of the places in which we’re tantalisingly close to making combinator compilation work.</li>
+<li><a href="https://www.youtube.com/watch?v=GawiQQCn3bk">An
+Introduction to Combinator Compilers and Graph Reduction Machines</a>,
+by <a href="https://twitter.com/graunked?lang=en">David Graunke</a>
+<span class="citation" data-cites="graunkeIntroductionCombinatorCompilers2016">(2016)</span>,
+which goes through a high-level history and explanation of combinator
+compilers and why we switched away from them. A very interesting tidbit
+in this talk was that some people started making custom hardware to
+handle combinator calculi a little better. Even more interesting is the
+fact that these days we have FPGAs all over the place, so maybe
+combinator compilers are ripe for reintroduction?</li>
+<li><a href="https://www.youtube.com/watch?v=zhj_tUMwTe0">Combinators
+Revisited</a>, by <a href="https://twitter.com/kmett">Edward Kmett</a>
+<span class="citation" data-cites="kmettCombinatorsRevisited2018">(2018)</span>, which goes
+through a little more of the details of the problems with combinator
+compilers, and mentions some of the places in which we’re tantalisingly
+close to making combinator compilation work.</li>
 </ul>
-<p>So compilation to combinators was once upon a time an extremely active area of research, but it has since fallen by the wayside a little because our current hardware is unable to evaluate it efficiently. What this means for us, though, is that there’s a large body of work on how to compile lambda terms to combinators!</p>
-<p>We use the following basic combinator set for compilation: <code>SKIBC</code>. <code>S</code> is really the most important one here: of course we only need it and <code>K</code>, but we use <code>I</code> because it dramatically simplifies the expressions we generate, and we use <code>B</code> and <code>C</code> because they are special cases of <code>S</code>, as we’ll see in a second. The translation works like so:</p>
+<p>So compilation to combinators was once upon a time an extremely
+active area of research, but it has since fallen by the wayside a little
+because our current hardware is unable to evaluate it efficiently. What
+this means for us, though, is that there’s a large body of work on how
+to compile lambda terms to combinators!</p>
+<p>We use the following basic combinator set for compilation:
+<code>SKIBC</code>. <code>S</code> is really the most important one
+here: of course we only need it and <code>K</code>, but we use
+<code>I</code> because it dramatically simplifies the expressions we
+generate, and we use <code>B</code> and <code>C</code> because they are
+special cases of <code>S</code>, as we’ll see in a second. The
+translation works like so:</p>
 <pre><code>\x. e1 e2 -&gt; S (\x. e1) (\x. e2)
 \x. x     -&gt; I
 \x. e     -&gt; K e</code></pre>
-<p>The translation works bottom-up. We’re only interested in removing the lambdas: combinator calculus does have application, after all, so there’s nothing we need to do in that case. For that reason, the algorithm is often called “abstraction elimination”, and it’s the one the <a href="pointfree.io">pointfree.io</a> uses to automatically pointfree Haskell expressions.</p>
-<p>There are three forms of abstraction: abstraction into an expression which is an application, abstraction which returns its argument, and abstraction which returns something other than its argument. In the first case, we use <code>S</code> to pass the argument down each branch of the abstraction. In the second, we just use <code>I</code>. And in the third case, we use <code>K</code> to just ignore the argument. We won’t ever get <code>\x. \y. e</code>, since the algorithm works bottom-up, so the <code>\y. e</code> is eliminated before looking at the <code>\x. \y. e</code>.</p>
-<p><code>B</code> and <code>C</code> work like special cases of <code>S</code>: when we pass <code>x</code> down both branches of the application in the first case, sometimes that work is unnecessary. Sometimes one of the branches doesn’t use the passed variable: in this case, we use <code>B</code> or <code>C</code>, depending on which branch ignores the variable.</p>
+<p>The translation works bottom-up. We’re only interested in removing
+the lambdas: combinator calculus does have application, after all, so
+there’s nothing we need to do in that case. For that reason, the
+algorithm is often called “abstraction elimination”, and it’s the one
+the <a href="pointfree.io">pointfree.io</a> uses to automatically
+pointfree Haskell expressions.</p>
+<p>There are three forms of abstraction: abstraction into an expression
+which is an application, abstraction which returns its argument, and
+abstraction which returns something other than its argument. In the
+first case, we use <code>S</code> to pass the argument down each branch
+of the abstraction. In the second, we just use <code>I</code>. And in
+the third case, we use <code>K</code> to just ignore the argument. We
+won’t ever get <code>\x. \y. e</code>, since the algorithm works
+bottom-up, so the <code>\y. e</code> is eliminated before looking at the
+<code>\x. \y. e</code>.</p>
+<p><code>B</code> and <code>C</code> work like special cases of
+<code>S</code>: when we pass <code>x</code> down both branches of the
+application in the first case, sometimes that work is unnecessary.
+Sometimes one of the branches doesn’t use the passed variable: in this
+case, we use <code>B</code> or <code>C</code>, depending on which branch
+ignores the variable.</p>
 <pre><code>\x. e1 e2, x ∉ e1 -&gt; B e1 (\x. e2)
 \x. e1 e2, x ∉ e2 -&gt; C (\x. e1) e2</code></pre>
-<p>There is one issue with this approach: it produces combinator expressions which are of order <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^3)</annotation></semantics></math> larger than the corresponding lambda expression. With some tricks (like our usage of <code>C</code> and <code>B</code>) we can get that down to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>, but that’s still a pretty unpleasant size increase.</p>
-<p>The issue is that we’re basically passing the arguments as a singly-linked list, where naive access is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mstyle mathvariant="script"><mi>𝒪</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>𝓃</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mstyle><annotation encoding="application/x-tex">\mathcal{O(n^2)}</annotation></semantics></math>, and more sophisticated access is <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>.</p>
-<p>Oleg Kiselyov wrote a <a href="http://okmij.org/ftp/tagless-final/ski.pdf">paper</a> <span class="citation" data-cites="kiselyovSKISemantically2018">(<a href="#ref-kiselyovSKISemantically2018" role="doc-biblioref">2018</a>)</span> on getting this down to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>, with some memoisation. There’s also a blog post <span class="citation" data-cites="lynnBenLynnOnline2018">(Lynn <a href="#ref-lynnBenLynnOnline2018" role="doc-biblioref">2018</a>)</span>, describing how to get that conversion without memoisation in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math> time, and an online implementation <a href="https://crypto.stanford.edu/~blynn/lambda/logski.html">here</a>.</p>
+<p>There is one issue with this approach: it produces combinator
+expressions which are of order
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>3</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^3)</annotation></semantics></math>
+larger than the corresponding lambda expression. With some tricks (like
+our usage of <code>C</code> and <code>B</code>) we can get that down to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>,
+but that’s still a pretty unpleasant size increase.</p>
+<p>The issue is that we’re basically passing the arguments as a
+singly-linked list, where naive access is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix" mathvariant="script">(</mo><msup><mi>𝓃</mi><mn mathvariant="script">2</mn></msup><mo stretchy="true" form="postfix" mathvariant="script">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O(n^2)}</annotation></semantics></math>,
+and more sophisticated access is
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>.</p>
+<p>Oleg Kiselyov wrote a <a href="http://okmij.org/ftp/tagless-final/ski.pdf">paper</a> <span class="citation" data-cites="kiselyovSKISemantically2018">(2018)</span>
+on getting this down to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>,
+with some memoisation. There’s also a blog post <span class="citation" data-cites="lynnBenLynnOnline2018">(Lynn 2018)</span>, describing how to
+get that conversion without memoisation in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n \log n)</annotation></semantics></math>
+time, and an online implementation <a href="https://crypto.stanford.edu/~blynn/lambda/logski.html">here</a>.</p>
 <h1 id="conclusion">Conclusion</h1>
-<p>That’s all for this post! I’ll probably write more about combinators in the future: they’re an extremely interesting subject, and a lot of fun as puzzles to mess around with. One thing that I haven’t mentioned is the connection between combinators and concatenative languages: it turns out that these two things are pretty much the same thing! Maybe I’ll look at it in a future post.</p>
+<p>That’s all for this post! I’ll probably write more about combinators
+in the future: they’re an extremely interesting subject, and a lot of
+fun as puzzles to mess around with. One thing that I haven’t mentioned
+is the connection between combinators and concatenative languages: it
+turns out that these two things are pretty much the same thing! Maybe
+I’ll look at it in a future post.</p>
 <hr />
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-graunkeIntroductionCombinatorCompilers2016">
-<p>Graunke, David. 2016. “An Introduction to Combinator Compilers and Graph Reduction Machines.” St. Louis. <a href="https://www.youtube.com/watch?v=GawiQQCn3bk">https://www.youtube.com/watch?v=GawiQQCn3bk</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-graunkeIntroductionCombinatorCompilers2016" class="csl-entry" role="listitem">
+Graunke, David. 2016. <span>“An <span>Introduction</span> to
+<span>Combinator Compilers</span> and <span>Graph Reduction
+Machines</span>.”</span> <span>St. Louis</span>. <a href="https://www.youtube.com/watch?v=GawiQQCn3bk">https://www.youtube.com/watch?v=GawiQQCn3bk</a>.
 </div>
-<div id="ref-kiselyovSKISemantically2018">
-<p>Kiselyov, Oleg. 2018. “<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math> to SKI, Semantically.” In <em>Functional and Logic Programming</em>, ed by. John P. Gallagher and Martin Sulzmann, 33–50. Lecture Notes in Computer Science. Cham: Springer International Publishing. doi:<a href="https://doi.org/10.1007/978-3-319-90686-7_3">10.1007/978-3-319-90686-7_3</a>. <a href="http://okmij.org/ftp/tagless-final/ski.pdf">http://okmij.org/ftp/tagless-final/ski.pdf</a>.</p>
+<div id="ref-kiselyovSKISemantically2018" class="csl-entry" role="listitem">
+Kiselyov, Oleg. 2018.
+<span>“<span><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>λ</mi><annotation encoding="application/x-tex">\lambda</annotation></semantics></math></span>
+to <span>SKI</span>, <span>Semantically</span>.”</span> In
+<em>Functional and <span>Logic Programming</span></em>, ed by. John P.
+Gallagher and Martin Sulzmann, 33–50. Lecture <span>Notes</span> in
+<span>Computer Science</span>. <span>Cham</span>: <span>Springer
+International Publishing</span>. doi:<a href="https://doi.org/10.1007/978-3-319-90686-7_3">10.1007/978-3-319-90686-7_3</a>.
+<a href="http://okmij.org/ftp/tagless-final/ski.pdf">http://okmij.org/ftp/tagless-final/ski.pdf</a>.
 </div>
-<div id="ref-kmettCombinatorsRevisited2018">
-<p>Kmett, Edward. 2018. “Combinators Revisited.” Wesley Conference Centre, Sydney, Australia. <a href="https://yowconference.com/talks/edward-kmett/yow-lambda-jam-2018/combinators-revisited-5919">https://yowconference.com/talks/edward-kmett/yow-lambda-jam-2018/combinators-revisited-5919</a>.</p>
+<div id="ref-kmettCombinatorsRevisited2018" class="csl-entry" role="listitem">
+Kmett, Edward. 2018. <span>“Combinators <span>Revisited</span>.”</span>
+<span>Wesley Conference Centre, Sydney, Australia</span>. <a href="https://yowconference.com/talks/edward-kmett/yow-lambda-jam-2018/combinators-revisited-5919">https://yowconference.com/talks/edward-kmett/yow-lambda-jam-2018/combinators-revisited-5919</a>.
 </div>
-<div id="ref-lynnBenLynnOnline2018">
-<p>Lynn, Ben. 2018. “Ben Lynn’s Online Garbage: Lambda the Penultimate.” <em>Ben Lynn’s Online Garbage</em>. <a href="https://benlynn.blogspot.com/2018/11/lambda-penultimate_16.html">https://benlynn.blogspot.com/2018/11/lambda-penultimate_16.html</a>.</p>
+<div id="ref-lynnBenLynnOnline2018" class="csl-entry" role="listitem">
+Lynn, Ben. 2018. <span>“Ben <span>Lynn</span>’s <span>Online
+Garbage</span>: <span>Lambda</span> the
+<span>Penultimate</span>.”</span> <em>Ben Lynn’s Online Garbage</em>. <a href="https://benlynn.blogspot.com/2018/11/lambda-penultimate_16.html">https://benlynn.blogspot.com/2018/11/lambda-penultimate_16.html</a>.
 </div>
-<div id="ref-wildenhainTuringCompletenessMS2017">
-<p>Wildenhain, Tom. 2017. “On the Turing Completeness of MS PowerPoint.” <a href="http://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf">http://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf</a>.</p>
+<div id="ref-wildenhainTuringCompletenessMS2017" class="csl-entry" role="listitem">
+Wildenhain, Tom. 2017. <span>“On the <span>Turing Completeness</span> of
+<span>MS PowerPoint</span>.”</span> <a href="http://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf">http://www.andrew.cmu.edu/user/twildenh/PowerPointTM/Paper.pdf</a>.
 </div>
 </div>
-<section class="footnotes" role="doc-endnotes">
+<section id="footnotes" class="footnotes footnotes-end-of-document" role="doc-endnotes">
 <hr />
 <ol>
-<li id="fn1" role="doc-endnote"><p>If you want to look up these combinators elsewhere, this is the only one you won’t be able to find: it’s much less common than <code>K</code>, and where I have found it people just call it <code>K</code>, so I had to pick a different letter to distinguish it<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn1"><p>If you want to look up these combinators elsewhere, this
+is the only one you won’t be able to find: it’s much less common than
+<code>K</code>, and where I have found it people just call it
+<code>K</code>, so I had to pick a different letter to distinguish it<a href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
 </ol>
 </section>
 

@@ -30,228 +30,263 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Pattern Synonyms'." href="../tags/Pattern%20Synonyms.html">Pattern Synonyms</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Pattern Synonyms'." href="../tags/Pattern%20Synonyms.html" rel="tag">Pattern Synonyms</a>
     
 </div>
 
-<p><a href="https://ghc.haskell.org/trac/ghc/wiki/PatternSynonyms">Pattern Synonyms</a> is an excellent extension for Haskell. There are some <a href="https://ocharles.org.uk/blog/posts/2014-12-03-pattern-synonyms.html">very</a> <a href="https://www.schoolofhaskell.com/user/icelandj/Pattern%20synonyms">cool</a> examples of their use out there, and I thought I’d add to the list.</p>
+<p><a href="https://ghc.haskell.org/trac/ghc/wiki/PatternSynonyms">Pattern
+Synonyms</a> is an excellent extension for Haskell. There are some <a href="https://ocharles.org.uk/blog/posts/2014-12-03-pattern-synonyms.html">very</a>
+<a href="https://www.schoolofhaskell.com/user/icelandj/Pattern%20synonyms">cool</a>
+examples of their use out there, and I thought I’d add to the list.</p>
 <h1 id="make-things-look-like-lists">Make Things Look Like Lists</h1>
-<p>Lists are <em>the</em> fundamental data structure for functional programmers. Unfortunately, once more specialized structures are required, you often have to switch over to an uncomfortable, annoying API which isn’t as pleasant or fun to use as cons and nil. With pattern synonyms, though, that’s not so! For instance, here’s how you would do it with a run-length-encoded list:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">List</span> a</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Nil</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">ConsN</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>            a</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>            (<span class="dt">List</span> a)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="ot">cons ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>cons x (<span class="dt">ConsN</span> i y ys)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>  <span class="op">|</span> x <span class="op">==</span> y <span class="ot">=</span> <span class="dt">ConsN</span> (i<span class="op">+</span><span class="dv">1</span>) y ys</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>cons x xs <span class="ot">=</span> <span class="dt">ConsN</span> <span class="dv">1</span> x xs</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="ot">uncons ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">List</span> a)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>uncons <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>uncons (<span class="dt">ConsN</span> <span class="dv">1</span> x xs) <span class="ot">=</span> <span class="dt">Just</span> (x, xs)</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>uncons (<span class="dt">ConsN</span> n x xs) <span class="ot">=</span> <span class="dt">Just</span> (x, <span class="dt">ConsN</span> (n<span class="op">-</span><span class="dv">1</span>) x xs)</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a></span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))</span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
-<span id="cb1-22"><a href="#cb1-22" aria-hidden="true"></a><span class="ot">{-# COMPLETE Nil, (:-) #-}</span></span>
-<span id="cb1-23"><a href="#cb1-23" aria-hidden="true"></a></span>
-<span id="cb1-24"><a href="#cb1-24" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> b <span class="ot">-&gt;</span> <span class="dt">List</span> (a,b)</span>
-<span id="cb1-25"><a href="#cb1-25" aria-hidden="true"></a><span class="fu">zip</span> (x <span class="op">:-</span> xs) (y <span class="op">:-</span> ys) <span class="ot">=</span> (x,y) <span class="op">:-</span> <span class="fu">zip</span> xs ys</span>
-<span id="cb1-26"><a href="#cb1-26" aria-hidden="true"></a><span class="fu">zip</span> _ _ <span class="ot">=</span> <span class="dt">Nil</span></span></code></pre></div>
+<p>Lists are <em>the</em> fundamental data structure for functional
+programmers. Unfortunately, once more specialized structures are
+required, you often have to switch over to an uncomfortable, annoying
+API which isn’t as pleasant or fun to use as cons and nil. With pattern
+synonyms, though, that’s not so! For instance, here’s how you would do
+it with a run-length-encoded list:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">List</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Nil</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">ConsN</span> <span class="ot">{-# UNPACK #-}</span> <span class="op">!</span><span class="dt">Int</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>            a</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>            (<span class="dt">List</span> a)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="ot">cons ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>cons x (<span class="dt">ConsN</span> i y ys)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> x <span class="op">==</span> y <span class="ot">=</span> <span class="dt">ConsN</span> (i<span class="op">+</span><span class="dv">1</span>) y ys</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>cons x xs <span class="ot">=</span> <span class="dt">ConsN</span> <span class="dv">1</span> x xs</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="ot">uncons ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">List</span> a)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>uncons <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>uncons (<span class="dt">ConsN</span> <span class="dv">1</span> x xs) <span class="ot">=</span> <span class="dt">Just</span> (x, xs)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>uncons (<span class="dt">ConsN</span> n x xs) <span class="ot">=</span> <span class="dt">Just</span> (x, <span class="dt">ConsN</span> (n<span class="op">-</span><span class="dv">1</span>) x xs)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Nil, (:-) #-}</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> b <span class="ot">-&gt;</span> <span class="dt">List</span> (a,b)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> (x <span class="op">:-</span> xs) (y <span class="op">:-</span> ys) <span class="ot">=</span> (x,y) <span class="op">:-</span> <span class="fu">zip</span> xs ys</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> _ _ <span class="ot">=</span> <span class="dt">Nil</span></span></code></pre></div>
 <p>A little more useful would be to do the same with a heap:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Leaf</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="ot">smerge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>smerge <span class="dt">Leaf</span> ys <span class="ot">=</span> ys</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>smerge xs <span class="dt">Leaf</span> <span class="ot">=</span> xs</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>smerge h1<span class="op">@</span>(<span class="dt">Node</span> x lx rx) h2<span class="op">@</span>(<span class="dt">Node</span> y ly ry)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>  <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> <span class="dt">Node</span> x (smerge h2 rx) lx</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Node</span> y (smerge h1 ry) ly</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a><span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>cons x <span class="ot">=</span> smerge (<span class="dt">Node</span> x <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a></span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a><span class="ot">uncons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">Tree</span> a)</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a>uncons <span class="dt">Leaf</span> <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a>uncons (<span class="dt">Node</span> x l r) <span class="ot">=</span> <span class="dt">Just</span> (x, smerge l r)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))</span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a><span class="ot">{-# COMPLETE Leaf, (:-) #-}</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a><span class="fu">sort</span><span class="ot"> ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a><span class="fu">sort</span> <span class="ot">=</span> go <span class="op">.</span> <span class="fu">foldr</span> (<span class="op">:-</span>) <span class="dt">Leaf</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a>    go <span class="dt">Leaf</span> <span class="ot">=</span> []</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a>    go (x <span class="op">:-</span> xs) <span class="ot">=</span> x <span class="op">:</span> go xs</span></code></pre></div>
-<p>In fact, this pattern can be generalized, so <em>any</em> container-like-thing with a cons-like-thing can be modified as you would with lists. You can see the generalization in <a href="https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Cons.html#v::-60-">lens</a>.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Leaf</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Node</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ot">smerge ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>smerge <span class="dt">Leaf</span> ys <span class="ot">=</span> ys</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>smerge xs <span class="dt">Leaf</span> <span class="ot">=</span> xs</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>smerge h1<span class="op">@</span>(<span class="dt">Node</span> x lx rx) h2<span class="op">@</span>(<span class="dt">Node</span> y ly ry)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> x <span class="op">&lt;=</span> y    <span class="ot">=</span> <span class="dt">Node</span> x (smerge h2 rx) lx</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> <span class="dt">Node</span> y (smerge h1 ry) ly</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>cons x <span class="ot">=</span> smerge (<span class="dt">Node</span> x <span class="dt">Leaf</span> <span class="dt">Leaf</span>)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="ot">uncons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Maybe</span> (a, <span class="dt">Tree</span> a)</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>uncons <span class="dt">Leaf</span> <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>uncons (<span class="dt">Node</span> x l r) <span class="ot">=</span> <span class="dt">Just</span> (x, smerge l r)</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (uncons <span class="ot">-&gt;</span> <span class="dt">Just</span> (x, xs))</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Leaf, (:-) #-}</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span><span class="ot"> ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> [a]</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span> <span class="ot">=</span> go <span class="op">.</span> <span class="fu">foldr</span> (<span class="op">:-</span>) <span class="dt">Leaf</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    go <span class="dt">Leaf</span> <span class="ot">=</span> []</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    go (x <span class="op">:-</span> xs) <span class="ot">=</span> x <span class="op">:</span> go xs</span></code></pre></div>
+<p>In fact, this pattern can be generalized, so <em>any</em>
+container-like-thing with a cons-like-thing can be modified as you would
+with lists. You can see the generalization in <a href="https://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-Cons.html#v::-60-">lens</a>.</p>
 <h1 id="retroactively-make-lyah-examples-work">Retroactively Make <a href="http://learnyouahaskell.com">LYAH</a> Examples Work</h1>
-<p>One of the most confusing things I remember about learning Haskell early-on was that the vast majority of the Monads examples didn’t work, because they were written pre-transformers. In other words, the state monad was defined like so:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">State</span> s a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> s <span class="ot">-&gt;</span> (a, s) }</span></code></pre></div>
-<p>But in transformers nowadays (which is where you get <code class="sourceCode haskell"><span class="dt">State</span></code> from if you import it in the normal way), the definition is:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">State</span> s <span class="ot">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span></span></code></pre></div>
-<p>This results in some <em>very</em> confusing error messages when you try run example code.</p>
-<p>However, we can pretend that the change never happened, with a simple pattern synonym:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">State</span> s <span class="ot">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a><span class="ot">runState ::</span> <span class="dt">State</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> (a, s)</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>runState xs <span class="ot">=</span> runIdentity <span class="op">.</span> runStateT xs</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">State</span><span class="ot"> ::</span> (s <span class="ot">-&gt;</span> (a, s)) <span class="ot">-&gt;</span> <span class="dt">State</span> s a</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">State</span> x <span class="ot">&lt;-</span> (runState <span class="ot">-&gt;</span> x)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true"></a>    <span class="dt">State</span> x <span class="ot">=</span> <span class="dt">StateT</span> (<span class="dt">Identity</span> <span class="op">.</span> x)</span></code></pre></div>
-<h1 id="getting-type-level-numbers-with-an-efficient-runtime-representation">Getting Type-Level Numbers With an Efficient Runtime Representation</h1>
-<p>If you want to write type-level proofs on numbers, you’ll probably end up using Peano numerals and singletons:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="dt">Zy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  <span class="dt">Sy</span><span class="ot"> ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>  <span class="dt">Z</span> <span class="op">+</span> m <span class="ot">=</span> m</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>  <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a><span class="ot">plusZeroIsZero ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> n <span class="op">+</span> <span class="dt">Z</span> <span class="op">:~:</span> n</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a>plusZeroIsZero <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true"></a>plusZeroIsZero (<span class="dt">Sy</span> n) <span class="ot">=</span> <span class="kw">case</span> plusZeroIsZero n <span class="kw">of</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true"></a>  <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Refl</span></span></code></pre></div>
-<p>Pretty cool, right? We can even erase the proof (if we really trust it) using rewrite rules:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">{-# RULES </span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="ot">&quot;plusZeroIsZero&quot; forall n. plusZeroIsZero n = unsafeCoerce Refl</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="ot">#-}</span></span></code></pre></div>
+<p>One of the most confusing things I remember about learning Haskell
+early-on was that the vast majority of the Monads examples didn’t work,
+because they were written pre-transformers. In other words, the state
+monad was defined like so:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">State</span> s a <span class="ot">=</span> <span class="dt">State</span> {<span class="ot"> runState ::</span> s <span class="ot">-&gt;</span> (a, s) }</span></code></pre></div>
+<p>But in transformers nowadays (which is where you get <code class="sourceCode haskell"><span class="dt">State</span></code> from if
+you import it in the normal way), the definition is:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">State</span> s <span class="ot">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span></span></code></pre></div>
+<p>This results in some <em>very</em> confusing error messages when you
+try run example code.</p>
+<p>However, we can pretend that the change never happened, with a simple
+pattern synonym:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">StateT</span> s m a <span class="ot">=</span> <span class="dt">StateT</span> {<span class="ot"> runStateT ::</span> s <span class="ot">-&gt;</span> m (a, s) }</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">State</span> s <span class="ot">=</span> <span class="dt">StateT</span> s <span class="dt">Identity</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ot">runState ::</span> <span class="dt">State</span> s a <span class="ot">-&gt;</span> s <span class="ot">-&gt;</span> (a, s)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>runState xs <span class="ot">=</span> runIdentity <span class="op">.</span> runStateT xs</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">State</span><span class="ot"> ::</span> (s <span class="ot">-&gt;</span> (a, s)) <span class="ot">-&gt;</span> <span class="dt">State</span> s a</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">State</span> x <span class="ot">&lt;-</span> (runState <span class="ot">-&gt;</span> x)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">State</span> x <span class="ot">=</span> <span class="dt">StateT</span> (<span class="dt">Identity</span> <span class="op">.</span> x)</span></code></pre></div>
+<h1 id="getting-type-level-numbers-with-an-efficient-runtime-representation">Getting
+Type-Level Numbers With an Efficient Runtime Representation</h1>
+<p>If you want to write type-level proofs on numbers, you’ll probably
+end up using Peano numerals and singletons:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Zy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Sy</span><span class="ot"> ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Z</span> <span class="op">+</span> m <span class="ot">=</span> m</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="ot">plusZeroIsZero ::</span> <span class="dt">Natty</span> n <span class="ot">-&gt;</span> n <span class="op">+</span> <span class="dt">Z</span> <span class="op">:~:</span> n</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>plusZeroIsZero <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>plusZeroIsZero (<span class="dt">Sy</span> n) <span class="ot">=</span> <span class="kw">case</span> plusZeroIsZero n <span class="kw">of</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Refl</span> <span class="ot">-&gt;</span> <span class="dt">Refl</span></span></code></pre></div>
+<p>Pretty cool, right? We can even erase the proof (if we really trust
+it) using rewrite rules:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# RULES </span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ot">&quot;plusZeroIsZero&quot; forall n. plusZeroIsZero n = unsafeCoerce Refl</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="ot">#-}</span></span></code></pre></div>
 <p>This isn’t <em>ideal</em>, but it’s getting there.</p>
-<p>However, if we ever want to use these things at runtime (perhaps as a type-level indication of some data structure’s size), we’re going to rely on the value-level Peano addition, which is bad news.</p>
+<p>However, if we ever want to use these things at runtime (perhaps as a
+type-level indication of some data structure’s size), we’re going to
+rely on the value-level Peano addition, which is bad news.</p>
 <p>Not so with pattern synonyms!</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> <span class="kw">family</span> <span class="dt">The</span><span class="ot"> k ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">Sing</span> (<span class="ot">a ::</span> k) <span class="kw">where</span><span class="ot"> sing ::</span> <span class="dt">The</span> k (<span class="ot">a ::</span> k)</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a><span class="kw">newtype</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dt">Natural</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Sing</span> <span class="dt">Z</span> <span class="kw">where</span></span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>    sing <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dv">0</span></span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Sing</span> n <span class="ot">=&gt;</span> <span class="dt">Sing</span> (<span class="dt">S</span> n) <span class="kw">where</span></span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>    sing <span class="ot">=</span></span>
-<span id="cb8-14"><a href="#cb8-14" aria-hidden="true"></a>        (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>) <span class="ot">-&gt;</span> (<span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (<span class="dt">S</span> n)))</span>
-<span id="cb8-15"><a href="#cb8-15" aria-hidden="true"></a>            <span class="fu">succ</span> sing</span>
-<span id="cb8-16"><a href="#cb8-16" aria-hidden="true"></a></span>
-<span id="cb8-17"><a href="#cb8-17" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span></span>
-<span id="cb8-18"><a href="#cb8-18" aria-hidden="true"></a>        <span class="dt">ZZy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true"></a>        <span class="dt">SSy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)</span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true"></a></span>
-<span id="cb8-21"><a href="#cb8-21" aria-hidden="true"></a><span class="ot">getNatty ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> n</span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true"></a>getNatty (<span class="dt">NatSing</span><span class="ot"> n ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n) <span class="ot">=</span> <span class="kw">case</span> n <span class="kw">of</span></span>
-<span id="cb8-23"><a href="#cb8-23" aria-hidden="true"></a>  <span class="dv">0</span> <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="op">:~:</span> <span class="dt">Z</span>) <span class="dt">ZZy</span></span>
-<span id="cb8-24"><a href="#cb8-24" aria-hidden="true"></a>  _ <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="op">:~:</span> <span class="dt">S</span> m) (<span class="dt">SSy</span> (<span class="dt">NatSing</span> (<span class="fu">pred</span> n)))</span>
-<span id="cb8-25"><a href="#cb8-25" aria-hidden="true"></a></span>
-<span id="cb8-26"><a href="#cb8-26" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Zy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="op">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n</span>
-<span id="cb8-27"><a href="#cb8-27" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Zy</span> <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">ZZy</span>) <span class="kw">where</span> <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dv">0</span></span>
-<span id="cb8-28"><a href="#cb8-28" aria-hidden="true"></a></span>
-<span id="cb8-29"><a href="#cb8-29" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Sy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="op">~</span> <span class="dt">S</span> m) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n</span>
-<span id="cb8-30"><a href="#cb8-30" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Sy</span> x <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">SSy</span> x) <span class="kw">where</span> <span class="dt">Sy</span> (<span class="dt">NatSing</span> x) <span class="ot">=</span> <span class="dt">NatSing</span> (<span class="fu">succ</span> x)</span>
-<span id="cb8-31"><a href="#cb8-31" aria-hidden="true"></a><span class="ot">{-# COMPLETE Zy, Sy #-}</span></span>
-<span id="cb8-32"><a href="#cb8-32" aria-hidden="true"></a></span>
-<span id="cb8-33"><a href="#cb8-33" aria-hidden="true"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span></span>
-<span id="cb8-34"><a href="#cb8-34" aria-hidden="true"></a>        <span class="dt">Z</span> <span class="op">+</span> m <span class="ot">=</span> m</span>
-<span id="cb8-35"><a href="#cb8-35" aria-hidden="true"></a>        <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
-<span id="cb8-36"><a href="#cb8-36" aria-hidden="true"></a></span>
-<span id="cb8-37"><a href="#cb8-37" aria-hidden="true"></a><span class="co">-- | Efficient addition, with type-level proof.</span></span>
-<span id="cb8-38"><a href="#cb8-38" aria-hidden="true"></a><span class="ot">add ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="op">+</span> m)</span>
-<span id="cb8-39"><a href="#cb8-39" aria-hidden="true"></a>add <span class="ot">=</span> (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>)</span>
-<span id="cb8-40"><a href="#cb8-40" aria-hidden="true"></a>              <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="op">+</span> m)) (<span class="op">+</span>)</span>
-<span id="cb8-41"><a href="#cb8-41" aria-hidden="true"></a></span>
-<span id="cb8-42"><a href="#cb8-42" aria-hidden="true"></a><span class="co">-- | Proof on efficient representation.</span></span>
-<span id="cb8-43"><a href="#cb8-43" aria-hidden="true"></a><span class="ot">addZeroRight ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> n <span class="op">+</span> <span class="dt">Z</span> <span class="op">:~:</span> n</span>
-<span id="cb8-44"><a href="#cb8-44" aria-hidden="true"></a>addZeroRight <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
-<span id="cb8-45"><a href="#cb8-45" aria-hidden="true"></a>addZeroRight (<span class="dt">Sy</span> n) <span class="ot">=</span> gcastWith (addZeroRight n) <span class="dt">Refl</span></span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="kw">family</span> <span class="dt">The</span><span class="ot"> k ::</span> k <span class="ot">-&gt;</span> <span class="dt">Type</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">Sing</span> (<span class="ot">a ::</span> k) <span class="kw">where</span><span class="ot"> sing ::</span> <span class="dt">The</span> k (<span class="ot">a ::</span> k)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Nat</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Nat</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="kw">instance</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dt">Natural</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Sing</span> <span class="dt">Z</span> <span class="kw">where</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    sing <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dv">0</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Sing</span> n <span class="ot">=&gt;</span> <span class="dt">Sing</span> (<span class="dt">S</span> n) <span class="kw">where</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    sing <span class="ot">=</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>        (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>) <span class="ot">-&gt;</span> (<span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (<span class="dt">S</span> n)))</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>            <span class="fu">succ</span> sing</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Natty</span> n <span class="kw">where</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>        <span class="dt">ZZy</span><span class="ot"> ::</span> <span class="dt">Natty</span> <span class="dt">Z</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>        <span class="dt">SSy</span><span class="ot"> ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> (<span class="dt">S</span> n)</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="ot">getNatty ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">Natty</span> n</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>getNatty (<span class="dt">NatSing</span><span class="ot"> n ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n) <span class="ot">=</span> <span class="kw">case</span> n <span class="kw">of</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>  <span class="dv">0</span> <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="op">:~:</span> <span class="dt">Z</span>) <span class="dt">ZZy</span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>  _ <span class="ot">-&gt;</span> gcastWith (unsafeCoerce <span class="dt">Refl</span><span class="ot"> ::</span> n <span class="op">:~:</span> <span class="dt">S</span> m) (<span class="dt">SSy</span> (<span class="dt">NatSing</span> (<span class="fu">pred</span> n)))</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Zy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="op">~</span> <span class="dt">Z</span>) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Zy</span> <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">ZZy</span>) <span class="kw">where</span> <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">NatSing</span> <span class="dv">0</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Sy</span><span class="ot"> ::</span> () <span class="ot">=&gt;</span> (n <span class="op">~</span> <span class="dt">S</span> m) <span class="ot">=&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Sy</span> x <span class="ot">&lt;-</span> (getNatty <span class="ot">-&gt;</span> <span class="dt">SSy</span> x) <span class="kw">where</span> <span class="dt">Sy</span> (<span class="dt">NatSing</span> x) <span class="ot">=</span> <span class="dt">NatSing</span> (<span class="fu">succ</span> x)</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Zy, Sy #-}</span></span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="kw">family</span> (<span class="op">+</span>) (<span class="ot">n ::</span> <span class="dt">Nat</span>) (<span class="ot">m ::</span> <span class="dt">Nat</span>)<span class="ot"> ::</span> <span class="dt">Nat</span> <span class="kw">where</span></span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>        <span class="dt">Z</span> <span class="op">+</span> m <span class="ot">=</span> m</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>        <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="co">-- | Efficient addition, with type-level proof.</span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a><span class="ot">add ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="op">+</span> m)</span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>add <span class="ot">=</span> (<span class="ot">coerce ::</span> (<span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span> <span class="ot">-&gt;</span> <span class="dt">Natural</span>)</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a>              <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> m <span class="ot">-&gt;</span> <span class="dt">The</span> <span class="dt">Nat</span> (n <span class="op">+</span> m)) (<span class="op">+</span>)</span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="co">-- | Proof on efficient representation.</span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a><span class="ot">addZeroRight ::</span> <span class="dt">The</span> <span class="dt">Nat</span> n <span class="ot">-&gt;</span> n <span class="op">+</span> <span class="dt">Z</span> <span class="op">:~:</span> n</span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>addZeroRight <span class="dt">Zy</span> <span class="ot">=</span> <span class="dt">Refl</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>addZeroRight (<span class="dt">Sy</span> n) <span class="ot">=</span> gcastWith (addZeroRight n) <span class="dt">Refl</span></span></code></pre></div>
 <p>(unfortunately, incomplete pattern warnings don’t work here)</p>
 <h1 id="hide-your-implementations">Hide Your Implementations</h1>
 <p>So you’ve got a tree type:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Tip</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Bin</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span></code></pre></div>
-<p>And you’ve spent some time writing a (reasonably difficult) function on the tree:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Tip</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Bin</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span></code></pre></div>
+<p>And you’ve spent some time writing a (reasonably difficult) function
+on the tree:</p>
 <details>
-<p><summary> Complicated function on the tree </summary></p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">showTree ::</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">String</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>showTree <span class="dt">Tip</span> <span class="ot">=</span> <span class="st">&quot;&quot;</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>showTree (<span class="dt">Bin</span> x' ls' rs') <span class="ot">=</span> go <span class="dt">True</span> <span class="fu">id</span> xlen' ls'</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>                          <span class="op">$</span> <span class="fu">showString</span> xshw'</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>                          <span class="op">$</span> endc ls' rs'</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>                          <span class="op">$</span> <span class="fu">showChar</span> <span class="ch">'\n'</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>                          <span class="op">$</span> go <span class="dt">False</span> <span class="fu">id</span> xlen' rs' <span class="st">&quot;&quot;</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>    xshw' <span class="ot">=</span> <span class="fu">show</span> x'</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a>    xlen' <span class="ot">=</span> <span class="fu">length</span> xshw'</span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>    go _ _ _ <span class="dt">Tip</span> <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a>    go up k i (<span class="dt">Bin</span> x ls rs) <span class="ot">=</span> branch <span class="dt">True</span> ls</span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true"></a>                            <span class="op">.</span> k</span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true"></a>                            <span class="op">.</span> pad i</span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true"></a>                            <span class="op">.</span> <span class="fu">showChar</span> (bool <span class="ch">'└'</span> <span class="ch">'┌'</span> up)</span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true"></a>                            <span class="op">.</span> <span class="fu">showString</span> xshw</span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true"></a>                            <span class="op">.</span> endc ls rs</span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true"></a>                            <span class="op">.</span> <span class="fu">showChar</span> <span class="ch">'\n'</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true"></a>                            <span class="op">.</span> branch <span class="dt">False</span> rs</span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb10-22"><a href="#cb10-22" aria-hidden="true"></a>        xshw <span class="ot">=</span> <span class="fu">show</span> x</span>
-<span id="cb10-23"><a href="#cb10-23" aria-hidden="true"></a>        xlen <span class="ot">=</span> <span class="fu">length</span> xshw</span>
-<span id="cb10-24"><a href="#cb10-24" aria-hidden="true"></a>        branch d</span>
-<span id="cb10-25"><a href="#cb10-25" aria-hidden="true"></a>          <span class="op">|</span> d <span class="op">==</span> up <span class="ot">=</span> go d (k <span class="op">.</span> pad i) (xlen <span class="op">+</span> <span class="dv">1</span>) </span>
-<span id="cb10-26"><a href="#cb10-26" aria-hidden="true"></a>          <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> go d (k <span class="op">.</span> pad i <span class="op">.</span> <span class="fu">showChar</span> <span class="ch">'│'</span>) xlen </span>
-<span id="cb10-27"><a href="#cb10-27" aria-hidden="true"></a></span>
-<span id="cb10-28"><a href="#cb10-28" aria-hidden="true"></a>    endc <span class="dt">Tip</span>    <span class="dt">Tip</span>    <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb10-29"><a href="#cb10-29" aria-hidden="true"></a>    endc <span class="dt">Bin</span> {} <span class="dt">Tip</span>    <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┘'</span></span>
-<span id="cb10-30"><a href="#cb10-30" aria-hidden="true"></a>    endc <span class="dt">Tip</span>    <span class="dt">Bin</span> {} <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┐'</span></span>
-<span id="cb10-31"><a href="#cb10-31" aria-hidden="true"></a>    endc <span class="dt">Bin</span> {} <span class="dt">Bin</span> {} <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┤'</span></span>
-<span id="cb10-32"><a href="#cb10-32" aria-hidden="true"></a></span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true"></a>    pad <span class="ot">=</span> (<span class="op">++</span>) <span class="op">.</span> <span class="fu">flip</span> <span class="fu">replicate</span> <span class="ch">' '</span></span></code></pre></div>
+<summary>
+Complicated function on the tree
+</summary>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">showTree ::</span> <span class="dt">Show</span> a <span class="ot">=&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> <span class="dt">String</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>showTree <span class="dt">Tip</span> <span class="ot">=</span> <span class="st">&quot;&quot;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>showTree (<span class="dt">Bin</span> x' ls' rs') <span class="ot">=</span> go <span class="dt">True</span> <span class="fu">id</span> xlen' ls'</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>                          <span class="op">$</span> <span class="fu">showString</span> xshw'</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                          <span class="op">$</span> endc ls' rs'</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>                          <span class="op">$</span> <span class="fu">showChar</span> <span class="ch">'\n'</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>                          <span class="op">$</span> go <span class="dt">False</span> <span class="fu">id</span> xlen' rs' <span class="st">&quot;&quot;</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    xshw' <span class="ot">=</span> <span class="fu">show</span> x'</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    xlen' <span class="ot">=</span> <span class="fu">length</span> xshw'</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    go _ _ _ <span class="dt">Tip</span> <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>    go up k i (<span class="dt">Bin</span> x ls rs) <span class="ot">=</span> branch <span class="dt">True</span> ls</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> k</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> pad i</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> <span class="fu">showChar</span> (bool <span class="ch">'└'</span> <span class="ch">'┌'</span> up)</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> <span class="fu">showString</span> xshw</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> endc ls rs</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> <span class="fu">showChar</span> <span class="ch">'\n'</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>                            <span class="op">.</span> branch <span class="dt">False</span> rs</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>        xshw <span class="ot">=</span> <span class="fu">show</span> x</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>        xlen <span class="ot">=</span> <span class="fu">length</span> xshw</span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>        branch d</span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> d <span class="op">==</span> up <span class="ot">=</span> go d (k <span class="op">.</span> pad i) (xlen <span class="op">+</span> <span class="dv">1</span>) </span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>          <span class="op">|</span> <span class="fu">otherwise</span> <span class="ot">=</span> go d (k <span class="op">.</span> pad i <span class="op">.</span> <span class="fu">showChar</span> <span class="ch">'│'</span>) xlen </span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>    endc <span class="dt">Tip</span>    <span class="dt">Tip</span>    <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>    endc <span class="dt">Bin</span> {} <span class="dt">Tip</span>    <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┘'</span></span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    endc <span class="dt">Tip</span>    <span class="dt">Bin</span> {} <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┐'</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    endc <span class="dt">Bin</span> {} <span class="dt">Bin</span> {} <span class="ot">=</span> <span class="fu">showChar</span> <span class="ch">'┤'</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>    pad <span class="ot">=</span> (<span class="op">++</span>) <span class="op">.</span> <span class="fu">flip</span> <span class="fu">replicate</span> <span class="ch">' '</span></span></code></pre></div>
 </details>
-<p>But, for some reason or another, you need to add a field to your <code class="sourceCode haskell"><span class="dt">Bin</span></code> constructor, to store the size of the subtree (for instance). Does this function have to change? No! Simply change the tree definition as so:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Tip</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>    <span class="op">|</span> <span class="dt">Bin'</span> <span class="dt">Int</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Bin</span> x ls rs <span class="ot">&lt;-</span> <span class="dt">Bin'</span> n x ls rs</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a><span class="ot">{-# COMPLETE Tip, Bin #-}</span></span></code></pre></div>
+<p>But, for some reason or another, you need to add a field to your
+<code class="sourceCode haskell"><span class="dt">Bin</span></code>
+constructor, to store the size of the subtree (for instance). Does this
+function have to change? No! Simply change the tree definition as
+so:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Tip</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">|</span> <span class="dt">Bin'</span> <span class="dt">Int</span> a (<span class="dt">Tree</span> a) (<span class="dt">Tree</span> a)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Bin</span> x ls rs <span class="ot">&lt;-</span> <span class="dt">Bin'</span> n x ls rs</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Tip, Bin #-}</span></span></code></pre></div>
 <p>And all the old code works!</p>
-<p>This gets to the core of pattern synonyms: it’s another tool which we can use to separate implementation from API.</p>
+<p>This gets to the core of pattern synonyms: it’s another tool which we
+can use to separate implementation from API.</p>
 <h1 id="better-smart-constructors">Better Smart Constructors</h1>
-<p>Say you’ve got a data type that has certain constraints on what values it can hold. You’re not writing a paper for ICFP, so expressing those constraints as a beautiful type isn’t required: you just want to only export the constructor and accessors, and write some tests to make sure that those functions always obey the constraints.</p>
-<p>But once you do this you’ve lost something: pattern-matching. Let’s get it back with pattern synonyms!</p>
-<p>As our simple example, our constraint is going to be “A list where the values are always ordered”:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">List</span> a <span class="ot">=</span> <span class="dt">List</span> {<span class="ot"> getList ::</span> [a] }</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a><span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>cons x (<span class="dt">List</span> xs) <span class="ot">=</span> <span class="dt">List</span> (insert x xs)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (<span class="dt">List</span> (x<span class="op">:</span>xs))</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a></span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a><span class="kw">pattern</span> <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">List</span> []</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a><span class="ot">{-# COMPLETE Nil, (:-) #-}</span></span></code></pre></div>
+<p>Say you’ve got a data type that has certain constraints on what
+values it can hold. You’re not writing a paper for ICFP, so expressing
+those constraints as a beautiful type isn’t required: you just want to
+only export the constructor and accessors, and write some tests to make
+sure that those functions always obey the constraints.</p>
+<p>But once you do this you’ve lost something: pattern-matching. Let’s
+get it back with pattern synonyms!</p>
+<p>As our simple example, our constraint is going to be “A list where
+the values are always ordered”:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">List</span> a <span class="ot">=</span> <span class="dt">List</span> {<span class="ot"> getList ::</span> [a] }</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="ot">cons ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>cons x (<span class="dt">List</span> xs) <span class="ot">=</span> <span class="dt">List</span> (insert x xs)</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">5</span> <span class="op">:-</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span><span class="ot"> (:-) ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a <span class="ot">-&gt;</span> <span class="dt">List</span> a</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> x <span class="op">:-</span> xs <span class="ot">&lt;-</span> (<span class="dt">List</span> (x<span class="op">:</span>xs))</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>    x <span class="op">:-</span> xs <span class="ot">=</span> cons x xs</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a><span class="kw">pattern</span> <span class="dt">Nil</span> <span class="ot">=</span> <span class="dt">List</span> []</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# COMPLETE Nil, (:-) #-}</span></span></code></pre></div>
 
         </div>
     </body>

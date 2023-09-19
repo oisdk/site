@@ -30,93 +30,112 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">{-# LANGUAGE RecursiveDo #-}</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">module</span> <span class="dt">Swap</span> <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Data.Map.Strict</span>   (<span class="dt">Map</span>)</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Data.IntMap</span>          (<span class="dt">IntMap</span>)</span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Strict</span> <span class="kw">as</span> <span class="dt">IntMap</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Lazy</span>   <span class="kw">as</span> <span class="dt">LazyIntMap</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Control.Lens</span></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Control.Arrow</span>           ((&amp;&amp;&amp;))</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Control.Monad</span>           ((&gt;=&gt;))</span>
-<span id="cb1-16"><a href="#cb1-16" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Control.Monad.Fix</span>       (mfix)</span>
-<span id="cb1-17"><a href="#cb1-17" aria-hidden="true"></a></span>
-<span id="cb1-18"><a href="#cb1-18" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Control.Monad.State</span>     (<span class="dt">StateT</span>(..),execState,state)</span>
-<span id="cb1-19"><a href="#cb1-19" aria-hidden="true"></a></span>
-<span id="cb1-20"><a href="#cb1-20" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Data.Maybe</span>  (fromMaybe)</span>
-<span id="cb1-21"><a href="#cb1-21" aria-hidden="true"></a><span class="kw">import</span>           <span class="dt">Data.Monoid</span> (<span class="dt">First</span>(..))</span></code></pre></div>
-<p>Say you want to swap two items in a mapping structure—<a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html">Data.Map.Strict</a>, <a href="https://hackage.haskell.org/package/unordered-containers-0.2.9.0/docs/Data-HashMap-Strict.html">Data.HashMap</a>, etc. The normal way uses far too many operations:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="co">-- |</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; swapAt4 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a><span class="ot">swapAt4 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>swapAt4 i j xs <span class="ot">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.lookup j xs <span class="kw">of</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>    <span class="dt">Just</span> y <span class="ot">-&gt;</span> Map.insert i y (Map.insert j x xs)</span></code></pre></div>
-<p>Two lookups, and two insertions. We can cut it down to three operations with <a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html#v:insertLookupWithKey"><code>insertLookupWithKey</code></a>:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="co">-- |</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; swapAt3 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a><span class="ot">swapAt3 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>swapAt3 i j xs <span class="ot">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.insertLookupWithKey (<span class="fu">const</span> <span class="fu">const</span>) j x xs <span class="kw">of</span></span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>    (<span class="dt">Nothing</span>,_) <span class="ot">-&gt;</span> xs</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>    (<span class="dt">Just</span> y,ys) <span class="ot">-&gt;</span> Map.insert i y ys</span></code></pre></div>
-<p>Then, using laziness, we can write the above program <a href="https://doi.org/10.1007/BF00264249">circularly</a>, reducing the number of lookups to 2:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="ot">swapAt2 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>swapAt2 i j xs <span class="ot">=</span> zs</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>     (ival,ys) <span class="ot">=</span> Map.updateLookupWithKey (replace jval) i xs</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a>     (jval,zs) <span class="ot">=</span> Map.updateLookupWithKey (replace ival) j ys</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>     replace x <span class="ot">=</span> <span class="fu">const</span> (<span class="dt">Just</span> <span class="op">.</span> (<span class="ot">`fromMaybe`</span> x))</span></code></pre></div>
-<p>Unfortunately, Data.Map isn’t lazy enough for this: the above won’t terminate. Interestingly, Data.IntMap <em>is</em> lazy enough:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">swapAt2Int ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>swapAt2Int i j xs <span class="ot">=</span> zs</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    (ival,ys) <span class="ot">=</span> LazyIntMap.updateLookupWithKey (replace jval) i xs</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    (jval,zs) <span class="ot">=</span>     IntMap.updateLookupWithKey (replace ival) j ys</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>    replace x <span class="ot">=</span> <span class="fu">const</span> (<span class="dt">Just</span> <span class="op">.</span> (<span class="ot">`fromMaybe`</span> x))</span></code></pre></div>
-<p>Notice how we have to use the lazy version of <code class="sourceCode haskell">updateLookupWithKey</code>. Again, though, this version has a problem: it won’t terminate when one of the keys is missing.</p>
-<p>Thankfully, both of our problems can be solved by abstracting a little and using <a href="http://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-At.html#t:Ixed">Ixed</a> from lens:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="co">-- |</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="co">-- &gt;&gt;&gt; swapIx 1 2 &quot;abc&quot;</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="co">-- &quot;acb&quot;</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="ot">swapIx ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>swapIx i j xs <span class="ot">=</span> zs</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>    (<span class="dt">First</span> ival, ys) <span class="ot">=</span> ix i (replace jval) xs</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>    (<span class="dt">First</span> jval, zs) <span class="ot">=</span> ix j (replace ival) ys</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>    replace x <span class="ot">=</span> <span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)</span></code></pre></div>
-<p>Because <code class="sourceCode haskell">ix</code> is a traversal, it won’t do anything when there’s a missing key, which is what we want. Also, it adds extra laziness, as the caller of a traversal gets certain extra controls over the strictness of the traversal.</p>
-<p>You may notice the stateful pattern above. However, translating it over as-is presents a problem: the circular bindings won’t work in vanilla do notation. For that, we need <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html"><code class="sourceCode haskell"><span class="dt">MonadFix</span></code></a> and <a href="https://ocharles.org.uk/blog/posts/2014-12-09-recursive-do.html">Recursive Do</a>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">swapSt ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>swapSt i j <span class="ot">=</span> execState <span class="op">$</span> mdo</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    ival <span class="ot">&lt;-</span> replace i jval</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    jval <span class="ot">&lt;-</span> replace j ival</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    <span class="fu">pure</span> ()</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>    replace i (<span class="dt">First</span> x) <span class="ot">=</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>        state (ix i (<span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)))</span></code></pre></div>
-<p>Finally, we can use <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html#v:mfix"><code class="sourceCode haskell">mfix</code></a> directly, and we’ll get the following clean-looking solution:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="ot">swap ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>swap i j <span class="ot">=</span> execState (mfix (replace i <span class="op">&gt;=&gt;</span> replace j))</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    replace i (<span class="dt">First</span> x) <span class="ot">=</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>        state (ix i (<span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)))</span></code></pre></div>
-<p>This works for most containers, even strict ones like Data.Map.Strict. It also works for Data.Vector. It does <em>not</em> work for Data.Vector.Unboxed, though.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# LANGUAGE RecursiveDo #-}</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> <span class="dt">Swap</span> <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.Map.Strict</span> <span class="kw">as</span> <span class="dt">Map</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Data.Map.Strict</span>   (<span class="dt">Map</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Data.IntMap</span>          (<span class="dt">IntMap</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Strict</span> <span class="kw">as</span> <span class="dt">IntMap</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="kw">qualified</span> <span class="dt">Data.IntMap.Lazy</span>   <span class="kw">as</span> <span class="dt">LazyIntMap</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Control.Lens</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Control.Arrow</span>           ((&amp;&amp;&amp;))</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Control.Monad</span>           ((&gt;=&gt;))</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Control.Monad.Fix</span>       (mfix)</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Control.Monad.State</span>     (<span class="dt">StateT</span>(..),execState,state)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Data.Maybe</span>  (fromMaybe)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span>           <span class="dt">Data.Monoid</span> (<span class="dt">First</span>(..))</span></code></pre></div>
+<p>Say you want to swap two items in a mapping structure—<a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html">Data.Map.Strict</a>,
+<a href="https://hackage.haskell.org/package/unordered-containers-0.2.9.0/docs/Data-HashMap-Strict.html">Data.HashMap</a>,
+etc. The normal way uses far too many operations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- |</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- &gt;&gt;&gt; swapAt4 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="ot">swapAt4 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>swapAt4 i j xs <span class="ot">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.lookup j xs <span class="kw">of</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Just</span> y <span class="ot">-&gt;</span> Map.insert i y (Map.insert j x xs)</span></code></pre></div>
+<p>Two lookups, and two insertions. We can cut it down to three
+operations with <a href="http://hackage.haskell.org/package/containers-0.5.11.0/docs/Data-Map-Strict.html#v:insertLookupWithKey"><code>insertLookupWithKey</code></a>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- |</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- &gt;&gt;&gt; swapAt3 1 2 (Map.fromList (zip [1..5] ['a'..]))</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- fromList [(1,'b'),(2,'a'),(3,'c'),(4,'d'),(5,'e')]</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="ot">swapAt3 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>swapAt3 i j xs <span class="ot">=</span> <span class="kw">case</span> Map.lookup i xs <span class="kw">of</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Nothing</span> <span class="ot">-&gt;</span> xs</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Just</span> x <span class="ot">-&gt;</span> <span class="kw">case</span> Map.insertLookupWithKey (<span class="fu">const</span> <span class="fu">const</span>) j x xs <span class="kw">of</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dt">Nothing</span>,_) <span class="ot">-&gt;</span> xs</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    (<span class="dt">Just</span> y,ys) <span class="ot">-&gt;</span> Map.insert i y ys</span></code></pre></div>
+<p>Then, using laziness, we can write the above program <a href="https://doi.org/10.1007/BF00264249">circularly</a>, reducing the
+number of lookups to 2:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ot">swapAt2 ::</span> <span class="dt">Ord</span> a <span class="ot">=&gt;</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> <span class="dt">Map</span> a b <span class="ot">-&gt;</span> <span class="dt">Map</span> a b</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>swapAt2 i j xs <span class="ot">=</span> zs</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>     (ival,ys) <span class="ot">=</span> Map.updateLookupWithKey (replace jval) i xs</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>     (jval,zs) <span class="ot">=</span> Map.updateLookupWithKey (replace ival) j ys</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>     replace x <span class="ot">=</span> <span class="fu">const</span> (<span class="dt">Just</span> <span class="op">.</span> (<span class="ot">`fromMaybe`</span> x))</span></code></pre></div>
+<p>Unfortunately, Data.Map isn’t lazy enough for this: the above won’t
+terminate. Interestingly, Data.IntMap <em>is</em> lazy enough:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">swapAt2Int ::</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">Int</span> <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a <span class="ot">-&gt;</span> <span class="dt">IntMap</span> a</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>swapAt2Int i j xs <span class="ot">=</span> zs</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    (ival,ys) <span class="ot">=</span> LazyIntMap.updateLookupWithKey (replace jval) i xs</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    (jval,zs) <span class="ot">=</span>     IntMap.updateLookupWithKey (replace ival) j ys</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    replace x <span class="ot">=</span> <span class="fu">const</span> (<span class="dt">Just</span> <span class="op">.</span> (<span class="ot">`fromMaybe`</span> x))</span></code></pre></div>
+<p>Notice how we have to use the lazy version of <code class="sourceCode haskell">updateLookupWithKey</code>. Again, though,
+this version has a problem: it won’t terminate when one of the keys is
+missing.</p>
+<p>Thankfully, both of our problems can be solved by abstracting a
+little and using <a href="http://hackage.haskell.org/package/lens-4.16.1/docs/Control-Lens-At.html#t:Ixed">Ixed</a>
+from lens:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- |</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- &gt;&gt;&gt; swapIx 1 2 &quot;abc&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- &quot;acb&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ot">swapIx ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>swapIx i j xs <span class="ot">=</span> zs</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    (<span class="dt">First</span> ival, ys) <span class="ot">=</span> ix i (replace jval) xs</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    (<span class="dt">First</span> jval, zs) <span class="ot">=</span> ix j (replace ival) ys</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    replace x <span class="ot">=</span> <span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)</span></code></pre></div>
+<p>Because <code class="sourceCode haskell">ix</code> is a traversal, it
+won’t do anything when there’s a missing key, which is what we want.
+Also, it adds extra laziness, as the caller of a traversal gets certain
+extra controls over the strictness of the traversal.</p>
+<p>You may notice the stateful pattern above. However, translating it
+over as-is presents a problem: the circular bindings won’t work in
+vanilla do notation. For that, we need <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html"><code class="sourceCode haskell"><span class="dt">MonadFix</span></code></a>
+and <a href="https://ocharles.org.uk/blog/posts/2014-12-09-recursive-do.html">Recursive
+Do</a>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">swapSt ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>swapSt i j <span class="ot">=</span> execState <span class="op">$</span> mdo</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    ival <span class="ot">&lt;-</span> replace i jval</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    jval <span class="ot">&lt;-</span> replace j ival</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pure</span> ()</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    replace i (<span class="dt">First</span> x) <span class="ot">=</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        state (ix i (<span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)))</span></code></pre></div>
+<p>Finally, we can use <a href="http://hackage.haskell.org/package/base-4.11.1.0/docs/Control-Monad-Fix.html#v:mfix"><code class="sourceCode haskell">mfix</code></a> directly, and we’ll get the
+following clean-looking solution:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ot">swap ::</span> <span class="dt">Ixed</span> a <span class="ot">=&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> <span class="dt">Index</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> a</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>swap i j <span class="ot">=</span> execState (mfix (replace i <span class="op">&gt;=&gt;</span> replace j))</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    replace i (<span class="dt">First</span> x) <span class="ot">=</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>        state (ix i (<span class="dt">First</span> <span class="op">.</span> <span class="dt">Just</span> <span class="op">&amp;&amp;&amp;</span> (<span class="ot">`fromMaybe`</span> x)))</span></code></pre></div>
+<p>This works for most containers, even strict ones like
+Data.Map.Strict. It also works for Data.Vector. It does <em>not</em>
+work for Data.Vector.Unboxed, though.</p>
 
         </div>
     </body>

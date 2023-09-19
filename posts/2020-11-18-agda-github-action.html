@@ -30,186 +30,238 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
 <h2 id="update-2022-11-12">Update 2022-11-12</h2>
-<p>The best approach to this now is probably to use this action, specifically set up for Agda:</p>
+<p>The best approach to this now is probably to use this action,
+specifically set up for Agda:</p>
 <ul>
 <li><a href="https://github.com/wenkokke/setup-agda">github.com/wenkokke/setup-agda</a></li>
 </ul>
-<p>I’ll leave the rest of this post here, but bear in mind the advice is outdated.</p>
+<p>I’ll leave the rest of this post here, but bear in mind the advice is
+outdated.</p>
 <hr />
-<p>Recently travis-ci.org announced that they were closing down, and moving to travis-ci.com. For people who use the service, this basically means that the free component is going away, and you’ll have to pay in the future.</p>
-<p>As a result, a lot of people are looking to move to another ci service, so I thought I’d put this short guide together on how to use GitHub actions to typecheck an Agda project and host the rendered code through GitHub pages. The system I have is quite fast: for a quite large project it takes about a minute from pushing for the action to complete.</p>
-<p>If you just want to use the same script as me, you can see it <a href="https://github.com/oisdk/agda-playground/blob/master/.github/workflows/compile.yaml">here</a>: the rest of this post will just be going through that script and explaining it.</p>
+<p>Recently travis-ci.org announced that they were closing down, and
+moving to travis-ci.com. For people who use the service, this basically
+means that the free component is going away, and you’ll have to pay in
+the future.</p>
+<p>As a result, a lot of people are looking to move to another ci
+service, so I thought I’d put this short guide together on how to use
+GitHub actions to typecheck an Agda project and host the rendered code
+through GitHub pages. The system I have is quite fast: for a quite large
+project it takes about a minute from pushing for the action to
+complete.</p>
+<p>If you just want to use the same script as me, you can see it <a href="https://github.com/oisdk/agda-playground/blob/master/.github/workflows/compile.yaml">here</a>:
+the rest of this post will just be going through that script and
+explaining it.</p>
 <h1 id="setting-up-a-basic-action">Setting up a Basic Action</h1>
-<p>First things first: in order to make an action, you need to put a YAML file in the <code>.github/workflows</code> directory of your repository. You can have the following lines at the start:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile Agda and Deploy HTML</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a><span class="fu">on</span><span class="kw">:</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a><span class="at">      </span><span class="kw">-</span><span class="at"> master</span></span></code></pre></div>
-<p>This gives a name for the action (which will show up in the actions tab online for the repo), and says that the action should be run whenever there’s a push to the branch named <code>master</code>.</p>
-<p>We then list the “jobs” the actions does: just one for this action, called <code>build</code>:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">jobs</span><span class="kw">:</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span></code></pre></div>
+<p>First things first: in order to make an action, you need to put a
+YAML file in the <code>.github/workflows</code> directory of your
+repository. You can have the following lines at the start:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile Agda and Deploy HTML</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">on</span><span class="kw">:</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">push</span><span class="kw">:</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">branches</span><span class="kw">:</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="kw">-</span><span class="at"> master</span></span></code></pre></div>
+<p>This gives a name for the action (which will show up in the actions
+tab online for the repo), and says that the action should be run
+whenever there’s a push to the branch named <code>master</code>.</p>
+<p>We then list the “jobs” the actions does: just one for this action,
+called <code>build</code>:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">jobs</span><span class="kw">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="at">  </span><span class="fu">build</span><span class="kw">:</span></span></code></pre></div>
 <h1 id="configuring-the-runner">Configuring The Runner</h1>
-<p>GitHub actions run on GitHub’s servers, the specifications of which can be seen <a href="https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners">here</a>. For this action we won’t need anything special, so we’ll just use the following:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-18.04</span></span></code></pre></div>
+<p>GitHub actions run on GitHub’s servers, the specifications of which
+can be seen <a href="https://docs.github.com/en/free-pro-team@latest/actions/reference/specifications-for-github-hosted-runners">here</a>.
+For this action we won’t need anything special, so we’ll just use the
+following:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">runs-on</span><span class="kw">:</span><span class="at"> ubuntu-18.04</span></span></code></pre></div>
 <p>Next we will have the matrix:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="at">    </span><span class="fu">strategy</span><span class="kw">:</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">matrix</span><span class="kw">:</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="at">        </span><span class="fu">cubical-ref</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;v0.2&quot;</span><span class="kw">]</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="at">        </span><span class="fu">agda-ref</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;v2.6.1.1&quot;</span><span class="kw">]</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc-ver</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;8.10.2&quot;</span><span class="kw">]</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a><span class="at">        </span><span class="fu">cabal-ver</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;3.4.0.0&quot;</span><span class="kw">]</span></span></code></pre></div>
-<p>I’m using this matrix as a crude system for environment variables; if this was a CI for some software I wanted to deploy, you could include multiple values for each variable here, to check that the whole thing runs properly with each.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">strategy</span><span class="kw">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">matrix</span><span class="kw">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">cubical-ref</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;v0.2&quot;</span><span class="kw">]</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">agda-ref</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;v2.6.1.1&quot;</span><span class="kw">]</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ghc-ver</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;8.10.2&quot;</span><span class="kw">]</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">cabal-ver</span><span class="kw">:</span><span class="at"> </span><span class="kw">[</span><span class="st">&quot;3.4.0.0&quot;</span><span class="kw">]</span></span></code></pre></div>
+<p>I’m using this matrix as a crude system for environment variables; if
+this was a CI for some software I wanted to deploy, you could include
+multiple values for each variable here, to check that the whole thing
+runs properly with each.</p>
 <h1 id="caching">Caching</h1>
-<p>We’re now onto the “steps” portion of the script, where we write small bash-esque script to be run. As such we have the line:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span></code></pre></div>
-<p>The first step is to cache all the cabal packages we’re going to install. Agda takes about 45 minutes to install so this step is crucial:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache cabal packages</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-cabal</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a><span class="fu">        path</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>          ~/.cabal/packages</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>          ~/.cabal/store</span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>          ~/.cabal/bin</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>          dist-newstyle</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}</span></span></code></pre></div>
-<p>The <code>path</code> field tells the action which folders to cache, the <code>key</code> field tells it what key to store them under.</p>
+<p>We’re now onto the “steps” portion of the script, where we write
+small bash-esque script to be run. As such we have the line:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="fu">steps</span><span class="kw">:</span></span></code></pre></div>
+<p>The first step is to cache all the cabal packages we’re going to
+install. Agda takes about 45 minutes to install so this step is
+crucial:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache cabal packages</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-cabal</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">        path</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>          ~/.cabal/packages</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>          ~/.cabal/store</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>          ~/.cabal/bin</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>          dist-newstyle</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> ${{ runner.os }}-${{ matrix.ghc-ver }}-${{ matrix.cabal-ver }}-${{ matrix.agda-ref }}</span></span></code></pre></div>
+<p>The <code>path</code> field tells the action which folders to cache,
+the <code>key</code> field tells it what key to store them under.</p>
 <h1 id="installing-agda">Installing Agda</h1>
 <p>To install Agda we first need to install cabal:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install cabal</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-haskell@v1.1.3</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a><span class="at">        </span><span class="fu">ghc-version</span><span class="kw">:</span><span class="at"> ${{ matrix.ghc-ver }}</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a><span class="at">        </span><span class="fu">cabal-version</span><span class="kw">:</span><span class="at"> ${{ matrix.cabal-ver }}</span></span></code></pre></div>
-<p>The <code>if</code> field here allows us to skip this step if we had a cache hit previously (i.e. if Agda is already installed).</p>
-<p>Next we need to ensure that all of the programs installed by cabal are in the path:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Put cabal programs in PATH</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">run</span><span class="kw">:</span><span class="at"> echo &quot;~/.cabal/bin&quot; &gt;&gt; $GITHUB_PATH</span></span></code></pre></div>
-<p>And then we download and install Agda (along with some dependencies that aren’t installed automatically):</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Download Agda from github</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a><span class="at">        </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> agda/agda</span></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> agda</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="at">        </span><span class="fu">ref</span><span class="kw">:</span><span class="at"> ${{ matrix.agda-ref }}</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a><span class="at">      </span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install Agda</span></span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>        cabal update</span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>        cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' alex-3.2.5</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>        cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' happy-1.19.12</span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true"></a>        cd agda</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true"></a>        mkdir -p doc</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true"></a>        touch doc/user-manual.pdf</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true"></a>        cabal install --overwrite-policy=always --ghc-options='-O1 +RTS -M6G -RTS'</span></code></pre></div>
-<p>The strange flags to <code>cabal install</code> here are <em>probably</em> necessary: I was running out of memory when I tried to install Agda without them. This might be fixed in future versions of Agda.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install cabal</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/setup-haskell@v1.1.3</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ghc-version</span><span class="kw">:</span><span class="at"> ${{ matrix.ghc-ver }}</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">cabal-version</span><span class="kw">:</span><span class="at"> ${{ matrix.cabal-ver }}</span></span></code></pre></div>
+<p>The <code>if</code> field here allows us to skip this step if we had
+a cache hit previously (i.e. if Agda is already installed).</p>
+<p>Next we need to ensure that all of the programs installed by cabal
+are in the path:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Put cabal programs in PATH</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">run</span><span class="kw">:</span><span class="at"> echo &quot;~/.cabal/bin&quot; &gt;&gt; $GITHUB_PATH</span></span></code></pre></div>
+<p>And then we download and install Agda (along with some dependencies
+that aren’t installed automatically):</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Download Agda from github</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> agda/agda</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> agda</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ref</span><span class="kw">:</span><span class="at"> ${{ matrix.agda-ref }}</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Install Agda</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cabal.outputs.cache-hit != 'true'</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>        cabal update</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' alex-3.2.5</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>        cabal install --overwrite-policy=always --ghc-options='-O2 +RTS -M6G -RTS' happy-1.19.12</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>        cd agda</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>        mkdir -p doc</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>        touch doc/user-manual.pdf</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>        cabal install --overwrite-policy=always --ghc-options='-O1 +RTS -M6G -RTS'</span></code></pre></div>
+<p>The strange flags to <code>cabal install</code> here are
+<em>probably</em> necessary: I was running out of memory when I tried to
+install Agda without them. This might be fixed in future versions of
+Agda.</p>
 <h1 id="installing-agda-dependencies">Installing Agda Dependencies</h1>
-<p>We next need to install any Agda libraries your code depends on. For instance, in my project, I use the cubical library: since Agda doesn’t have a package manager, we basically have to handle all the versioning and so on manually. Also, in order to speed up the build we have to cache the typecheck files for the library.</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout cubical library</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a><span class="at">        </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> agda/cubical</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> cubical</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a><span class="at">        </span><span class="fu">ref</span><span class="kw">:</span><span class="at"> ${{ matrix.cubical-ref }}</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache cubical library</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-cubical</span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> ~/cubical-build</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> ${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}</span></span></code></pre></div>
-<p>So the library is accessible as an import we need to put it in the Agda library list:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Put cubical library in Agda library list</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>        mkdir -p ~/.agda/</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>        touch ~/.agda/libraries</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>        echo &quot;$GITHUB_WORKSPACE/cubical/cubical.agda-lib&quot; &gt; ~/.agda/libraries</span></code></pre></div>
-<p>We then need to typecheck the library: this bit is a little tricky, since not all files in the cubical library actually typecheck.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile cubical library</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cubical.outputs.cache-hit != 'true'</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>        cd $GITHUB_WORKSPACE/cubical</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>        agda Cubical/Core/Everything.agda</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>        agda Cubical/Foundations/Everything.agda</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>        find Cubical/Data -type f -name &quot;*.agda&quot; | while read -r code ; do</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>            agda $code</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>        done</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>        find Cubical/HITs -type f -name &quot;*.agda&quot; | while read -r code ; do</span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>            agda $code</span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true"></a>        done</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true"></a>        cp -f -r _build/ ~/cubical-build</span></code></pre></div>
-<p>Finally, if the cubical library was already typechecked then we don’t need to do any of that, and we instead just retrieve it from the cache:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Retrieve cubical library</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cubical.outputs.cache-hit == 'true'</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>        mkdir -p cubical/_build</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>        cp -f -r ~/cubical-build/* cubical/_build</span></code></pre></div>
+<p>We next need to install any Agda libraries your code depends on. For
+instance, in my project, I use the cubical library: since Agda doesn’t
+have a package manager, we basically have to handle all the versioning
+and so on manually. Also, in order to speed up the build we have to
+cache the typecheck files for the library.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout cubical library</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">repository</span><span class="kw">:</span><span class="at"> agda/cubical</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> cubical</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">ref</span><span class="kw">:</span><span class="at"> ${{ matrix.cubical-ref }}</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache cubical library</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-cubical</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> ~/cubical-build</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> ${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}</span></span></code></pre></div>
+<p>So the library is accessible as an import we need to put it in the
+Agda library list:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Put cubical library in Agda library list</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>        mkdir -p ~/.agda/</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>        touch ~/.agda/libraries</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        echo &quot;$GITHUB_WORKSPACE/cubical/cubical.agda-lib&quot; &gt; ~/.agda/libraries</span></code></pre></div>
+<p>We then need to typecheck the library: this bit is a little tricky,
+since not all files in the cubical library actually typecheck.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile cubical library</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cubical.outputs.cache-hit != 'true'</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>        cd $GITHUB_WORKSPACE/cubical</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        agda Cubical/Core/Everything.agda</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        agda Cubical/Foundations/Everything.agda</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        find Cubical/Data -type f -name &quot;*.agda&quot; | while read -r code ; do</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>            agda $code</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        done</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        find Cubical/HITs -type f -name &quot;*.agda&quot; | while read -r code ; do</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>            agda $code</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        done</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>        cp -f -r _build/ ~/cubical-build</span></code></pre></div>
+<p>Finally, if the cubical library was already typechecked then we don’t
+need to do any of that, and we instead just retrieve it from the
+cache:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Retrieve cubical library</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-cubical.outputs.cache-hit == 'true'</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        mkdir -p cubical/_build</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>        cp -f -r ~/cubical-build/* cubical/_build</span></code></pre></div>
 <h1 id="typechecking-the-library">Typechecking the library</h1>
-<p>Finally we have to typecheck the library itself. We want to cache the output from this step as well, but importantly we want to support incremental recompilation: i.e. if we only make a small change in one file we don’t want to have to typecheck every other. We can do this with <code>restore-keys</code> in the cache:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout main</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> main</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache main library</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-main</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> ~/main-build</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}-${{ hashFiles('main/**') }}</span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a><span class="fu">        restore-keys</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>          html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}-</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true"></a>          html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-</span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true"></a></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Retrieve main library</span></span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-main.outputs.cache-hit == 'true'</span></span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true"></a><span class="at">      </span><span class="fu">run</span><span class="kw">:</span><span class="at"> cp -f -R ~/main-build/* $GITHUB_WORKSPACE/main</span></span></code></pre></div>
-<p>Finally, we need to make an “Everything” file: this is an Agda module which contains an import for every module in the project. Typechecking this file is faster than typechecking each file individually.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile main library</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-main.outputs.cache-hit != 'true'</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>        mkdir -p ~/main-build/_build</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>        cp -f -R ~/main-build/_build $GITHUB_WORKSPACE/main/_build</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>        rm -r ~/main-build</span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>        cd main</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>        find . -type f \( -name &quot;*.agda&quot; -o -name &quot;*.lagda&quot; \) &gt; FileList</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>        sort -o FileList FileList</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>        echo &quot;{-# OPTIONS --cubical #-}&quot; &gt; Everything.agda</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>        echo &quot;module Everything where&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>        echo &quot;-- This file imports every module in the project. Click on&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>        echo &quot;-- a module name to go to its source.&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>        cat FileList | cut -c 3-               \</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>                     | cut -f1 -d'.'           \</span>
-<span id="cb15-19"><a href="#cb15-19" aria-hidden="true"></a>                     | sed 's/\//\./g'         \</span>
-<span id="cb15-20"><a href="#cb15-20" aria-hidden="true"></a>                     | sed 's/^/open import /' \</span>
-<span id="cb15-21"><a href="#cb15-21" aria-hidden="true"></a>                     &gt;&gt; Everything.agda</span>
-<span id="cb15-22"><a href="#cb15-22" aria-hidden="true"></a>        rm FileList</span>
-<span id="cb15-23"><a href="#cb15-23" aria-hidden="true"></a>        agda --html --html-dir=docs Everything.agda</span>
-<span id="cb15-24"><a href="#cb15-24" aria-hidden="true"></a>        rm Everything.agda</span>
-<span id="cb15-25"><a href="#cb15-25" aria-hidden="true"></a>        cd ..</span>
-<span id="cb15-26"><a href="#cb15-26" aria-hidden="true"></a>        cp -f -R main/ ~/main-build/</span></code></pre></div>
-<p>And then we need to deploy the generated <code>html</code> so we can see the rendered library.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Deploy html to github pages</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> peaceiris/actions-gh-pages@v3</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a><span class="at">        </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a><span class="at">        </span><span class="fu">publish_dir</span><span class="kw">:</span><span class="at"> main/docs</span></span></code></pre></div>
-<p>This last step will need you to turn on the github pages setting in your repository, and have it serve from the <code>gh-pages</code> branch.</p>
+<p>Finally we have to typecheck the library itself. We want to cache the
+output from this step as well, but importantly we want to support
+incremental recompilation: i.e. if we only make a small change in one
+file we don’t want to have to typecheck every other. We can do this with
+<code>restore-keys</code> in the cache:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Checkout main</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/checkout@v2</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> main</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> actions/cache@v2</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Cache main library</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">id</span><span class="kw">:</span><span class="at"> cache-main</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">path</span><span class="kw">:</span><span class="at"> ~/main-build</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">key</span><span class="kw">:</span><span class="at"> html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}-${{ hashFiles('main/**') }}</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">        restore-keys</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>          html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-${{ matrix.cubical-ref }}-</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>          html-and-tex-${{ runner.os }}-${{ matrix.agda-ver }}-</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Retrieve main library</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-main.outputs.cache-hit == 'true'</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">run</span><span class="kw">:</span><span class="at"> cp -f -R ~/main-build/* $GITHUB_WORKSPACE/main</span></span></code></pre></div>
+<p>Finally, we need to make an “Everything” file: this is an Agda module
+which contains an import for every module in the project. Typechecking
+this file is faster than typechecking each file individually.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Compile main library</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">if</span><span class="kw">:</span><span class="at"> steps.cache-main.outputs.cache-hit != 'true'</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">      run</span><span class="kw">: </span><span class="ch">|</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        mkdir -p ~/main-build/_build</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>        cp -f -R ~/main-build/_build $GITHUB_WORKSPACE/main/_build</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        rm -r ~/main-build</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>        cd main</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        find . -type f \( -name &quot;*.agda&quot; -o -name &quot;*.lagda&quot; \) &gt; FileList</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>        sort -o FileList FileList</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>        echo &quot;{-# OPTIONS --cubical #-}&quot; &gt; Everything.agda</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>        echo &quot;module Everything where&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>        echo &quot;-- This file imports every module in the project. Click on&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>        echo &quot;-- a module name to go to its source.&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>        echo &quot;&quot; &gt;&gt; Everything.agda</span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>        cat FileList | cut -c 3-               \</span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a>                     | cut -f1 -d'.'           \</span>
+<span id="cb15-19"><a href="#cb15-19" aria-hidden="true" tabindex="-1"></a>                     | sed 's/\//\./g'         \</span>
+<span id="cb15-20"><a href="#cb15-20" aria-hidden="true" tabindex="-1"></a>                     | sed 's/^/open import /' \</span>
+<span id="cb15-21"><a href="#cb15-21" aria-hidden="true" tabindex="-1"></a>                     &gt;&gt; Everything.agda</span>
+<span id="cb15-22"><a href="#cb15-22" aria-hidden="true" tabindex="-1"></a>        rm FileList</span>
+<span id="cb15-23"><a href="#cb15-23" aria-hidden="true" tabindex="-1"></a>        agda --html --html-dir=docs Everything.agda</span>
+<span id="cb15-24"><a href="#cb15-24" aria-hidden="true" tabindex="-1"></a>        rm Everything.agda</span>
+<span id="cb15-25"><a href="#cb15-25" aria-hidden="true" tabindex="-1"></a>        cd ..</span>
+<span id="cb15-26"><a href="#cb15-26" aria-hidden="true" tabindex="-1"></a>        cp -f -R main/ ~/main-build/</span></code></pre></div>
+<p>And then we need to deploy the generated <code>html</code> so we can
+see the rendered library.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode yaml"><code class="sourceCode yaml"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="at">    </span><span class="kw">-</span><span class="at"> </span><span class="fu">name</span><span class="kw">:</span><span class="at"> Deploy html to github pages</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">uses</span><span class="kw">:</span><span class="at"> peaceiris/actions-gh-pages@v3</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="at">      </span><span class="fu">with</span><span class="kw">:</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">github_token</span><span class="kw">:</span><span class="at"> ${{ secrets.GITHUB_TOKEN }}</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="at">        </span><span class="fu">publish_dir</span><span class="kw">:</span><span class="at"> main/docs</span></span></code></pre></div>
+<p>This last step will need you to turn on the github pages setting in
+your repository, and have it serve from the <code>gh-pages</code>
+branch.</p>
 <h1 id="conclusion">Conclusion</h1>
-<p>Hopefully this script will be useful to some other people! The first time it runs it should take between 30 minutes and an hour; subsequently it takes about a minute for me.</p>
+<p>Hopefully this script will be useful to some other people! The first
+time it runs it should take between 30 minutes and an hour; subsequently
+it takes about a minute for me.</p>
 
         </div>
     </body>

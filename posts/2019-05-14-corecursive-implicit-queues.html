@@ -32,151 +32,185 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
 <h1 id="fusion">Fusion</h1>
-<p>I was looking again at one of my implementations of breadth-first traversals:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="ot">bfe ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>bfe r <span class="ot">=</span> f r b []</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs <span class="op">:</span> bw)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  </span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a>    b [] <span class="ot">=</span> []</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">foldr</span> f) b qs []</span></code></pre></div>
-<p>And I was wondering if I could <em>fuse</em> away the intermediate list. On the following line:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs <span class="op">:</span> bw)</span></code></pre></div>
-<p>The <code>xs : bw</code> is a little annoying, because we <em>know</em> it’s going to be consumed eventually by a fold. When that happens, it’s often a good idea to remove the list, and just inline the fold. In other words, if you see the following:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">foldr</span> f b (x <span class="op">:</span> y <span class="op">:</span> [])</span></code></pre></div>
+<p>I was looking again at one of my implementations of breadth-first
+traversals:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bfe ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>bfe r <span class="ot">=</span> f r b []</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs <span class="op">:</span> bw)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    b [] <span class="ot">=</span> []</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    b qs <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">foldr</span> f) b qs []</span></code></pre></div>
+<p>And I was wondering if I could <em>fuse</em> away the intermediate
+list. On the following line:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (xs <span class="op">:</span> bw)</span></code></pre></div>
+<p>The <code>xs : bw</code> is a little annoying, because we
+<em>know</em> it’s going to be consumed eventually by a fold. When that
+happens, it’s often a good idea to remove the list, and just inline the
+fold. In other words, if you see the following:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">foldr</span> f b (x <span class="op">:</span> y <span class="op">:</span> [])</span></code></pre></div>
 <p>You should replace it with this:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>f x (f y b)</span></code></pre></div>
-<p>If you try and do that with the above definition, you get something like the following:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>bfenum t <span class="ot">=</span> f t b b</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    b x <span class="ot">=</span> x b</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>f x (f y b)</span></code></pre></div>
+<p>If you try and do that with the above definition, you get something
+like the following:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>bfenum t <span class="ot">=</span> f t b b</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw bw <span class="ot">=</span> x <span class="op">:</span> fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    b x <span class="ot">=</span> x b</span></code></pre></div>
 <h1 id="infinite-types">Infinite Types</h1>
 <p>The trouble is that the above comes with type errors:</p>
 <pre><code>Cannot construct the infinite type: b ~ (b -&gt; c) -&gt; [a]</code></pre>
-<p>This error shows up occasionally when you try and do heavy church-encoding in Haskell. You get a similar error when trying to encode the Y combinator:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>y <span class="ot">=</span> \f <span class="ot">-&gt;</span> (\x <span class="ot">-&gt;</span> f (x x)) (\x <span class="ot">-&gt;</span> f (x x))</span></code></pre></div>
+<p>This error shows up occasionally when you try and do heavy
+church-encoding in Haskell. You get a similar error when trying to
+encode the Y combinator:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">=</span> \f <span class="ot">-&gt;</span> (\x <span class="ot">-&gt;</span> f (x x)) (\x <span class="ot">-&gt;</span> f (x x))</span></code></pre></div>
 <pre><code>• Occurs check: cannot construct the infinite type: t0 ~ t0 -&gt; t</code></pre>
-<p>The solution for the y combinator is to use a newtype, where we can catch the recursion at a certain point to help the typechecker.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Mu</span> a <span class="ot">=</span> <span class="dt">Mu</span> (<span class="dt">Mu</span> a <span class="ot">-&gt;</span> a)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>y f <span class="ot">=</span> (\h <span class="ot">-&gt;</span> h <span class="op">$</span> <span class="dt">Mu</span> h) (\x <span class="ot">-&gt;</span> f <span class="op">.</span> (\(<span class="dt">Mu</span> g) <span class="ot">-&gt;</span> g) x <span class="op">$</span> x)</span></code></pre></div>
+<p>The solution for the y combinator is to use a newtype, where we can
+catch the recursion at a certain point to help the typechecker.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Mu</span> a <span class="ot">=</span> <span class="dt">Mu</span> (<span class="dt">Mu</span> a <span class="ot">-&gt;</span> a)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>y f <span class="ot">=</span> (\h <span class="ot">-&gt;</span> h <span class="op">$</span> <span class="dt">Mu</span> h) (\x <span class="ot">-&gt;</span> f <span class="op">.</span> (\(<span class="dt">Mu</span> g) <span class="ot">-&gt;</span> g) x <span class="op">$</span> x)</span></code></pre></div>
 <p>The trick for our queue is similar:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs))</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">flip</span> <span class="fu">id</span>)</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>    e <span class="ot">=</span> fix (<span class="fu">flip</span> q)</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs))</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">flip</span> <span class="fu">id</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">=</span> fix (<span class="fu">flip</span> q)</span></code></pre></div>
 <p>This is actually equivalent to the continuation monad:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Fix</span> f <span class="ot">=</span> <span class="dt">Fix</span> {<span class="ot"> unFix ::</span> f (<span class="dt">Fix</span> f) }</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Fix</span> (<span class="dt">ContT</span> a [])</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>q <span class="ot">=</span> runContT <span class="op">.</span> unFix</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Fix</span> (mapContT (x<span class="op">:</span>) (<span class="fu">flip</span> (<span class="fu">foldr</span> f) xs <span class="op">&lt;$&gt;</span> unFix fw))</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>    b <span class="ot">=</span> fix (<span class="dt">Fix</span> <span class="op">.</span> <span class="fu">pure</span>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a>    e <span class="ot">=</span> fix (<span class="fu">flip</span> q)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Fix</span> f <span class="ot">=</span> <span class="dt">Fix</span> {<span class="ot"> unFix ::</span> f (<span class="dt">Fix</span> f) }</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Fix</span> (<span class="dt">ContT</span> a [])</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>q <span class="ot">=</span> runContT <span class="op">.</span> unFix</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Fix</span> (mapContT (x<span class="op">:</span>) (<span class="fu">flip</span> (<span class="fu">foldr</span> f) xs <span class="op">&lt;$&gt;</span> unFix fw))</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> fix (<span class="dt">Fix</span> <span class="op">.</span> <span class="fu">pure</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">=</span> fix (<span class="fu">flip</span> q)</span></code></pre></div>
 <h1 id="terminating">Terminating</h1>
-<p>There’s a problem though: this algorithm never checks for an end. That’s ok if there isn’t one, mind you. For instance, with the following “unfold” function:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">9</span> <span class="op">#.</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="ot">(#.) ::</span> <span class="dt">Coercible</span> b c <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>(<span class="op">#.</span>) _ <span class="ot">=</span> coerce</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a><span class="ot">{-# INLINE (#.) #-}</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a><span class="ot">bfUnfold ::</span> (a <span class="ot">-&gt;</span> (b,[a])) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [b]</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>bfUnfold f t <span class="ot">=</span> g t (fix (<span class="dt">Q</span> <span class="op">#.</span> <span class="fu">flip</span> <span class="fu">id</span>)) (fix (<span class="fu">flip</span> q))</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>    g b fw bw <span class="ot">=</span> x <span class="op">:</span> q fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> ((<span class="dt">Q</span> <span class="op">.</span>) <span class="op">#.</span> g)) xs)</span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true"></a>        (x,xs) <span class="ot">=</span> f b</span></code></pre></div>
+<p>There’s a problem though: this algorithm never checks for an end.
+That’s ok if there isn’t one, mind you. For instance, with the following
+“unfold” function:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">9</span> <span class="op">#.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="ot">(#.) ::</span> <span class="dt">Coercible</span> b c <span class="ot">=&gt;</span> (b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> c</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>(<span class="op">#.</span>) _ <span class="ot">=</span> coerce</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINE (#.) #-}</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="ot">bfUnfold ::</span> (a <span class="ot">-&gt;</span> (b,[a])) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> [b]</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>bfUnfold f t <span class="ot">=</span> g t (fix (<span class="dt">Q</span> <span class="op">#.</span> <span class="fu">flip</span> <span class="fu">id</span>)) (fix (<span class="fu">flip</span> q))</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>    g b fw bw <span class="ot">=</span> x <span class="op">:</span> q fw (bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> ((<span class="dt">Q</span> <span class="op">.</span>) <span class="op">#.</span> g)) xs)</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        (x,xs) <span class="ot">=</span> f b</span></code></pre></div>
 <p>We can write a decent enumeration of the rationals.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="co">-- Stern-Brocot</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a><span class="ot">rats1 ::</span> [<span class="dt">Rational</span>]</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>rats1 <span class="ot">=</span> bfUnfold step ((<span class="dv">0</span>,<span class="dv">1</span>),(<span class="dv">1</span>,<span class="dv">0</span>))</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>    step (lb,rb) <span class="ot">=</span> (n <span class="op">%</span> d,[(lb , m),(m , rb)])</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>        m<span class="op">@</span>(n,d) <span class="ot">=</span> adj lb rb</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a>    adj (w,x) (y,z) <span class="ot">=</span> (w<span class="op">+</span>y,x<span class="op">+</span>z)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>    </span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a><span class="co">-- Calkin-Wilf</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a><span class="ot">rats2 ::</span> [<span class="dt">Rational</span>]</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true"></a>rats2 <span class="ot">=</span> bfUnfold step (<span class="dv">1</span>,<span class="dv">1</span>)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true"></a>    step (m,n) <span class="ot">=</span> (m <span class="op">%</span> n,[(m,m<span class="op">+</span>n),(n<span class="op">+</span>m,n)])</span></code></pre></div>
-<p>However, if we <em>do</em> want to stop at some point, we need a slight change to the queue type.</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>  <span class="kw">where</span> </span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)))</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">maybe</span> [] <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q e)</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Stern-Brocot</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="ot">rats1 ::</span> [<span class="dt">Rational</span>]</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>rats1 <span class="ot">=</span> bfUnfold step ((<span class="dv">0</span>,<span class="dv">1</span>),(<span class="dv">1</span>,<span class="dv">0</span>))</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    step (lb,rb) <span class="ot">=</span> (n <span class="op">%</span> d,[(lb , m),(m , rb)])</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>        m<span class="op">@</span>(n,d) <span class="ot">=</span> adj lb rb</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    adj (w,x) (y,z) <span class="ot">=</span> (w<span class="op">+</span>y,x<span class="op">+</span>z)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- Calkin-Wilf</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="ot">rats2 ::</span> [<span class="dt">Rational</span>]</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>rats2 <span class="ot">=</span> bfUnfold step (<span class="dv">1</span>,<span class="dv">1</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    step (m,n) <span class="ot">=</span> (m <span class="op">%</span> n,[(m,m<span class="op">+</span>n),(n<span class="op">+</span>m,n)])</span></code></pre></div>
+<p>However, if we <em>do</em> want to stop at some point, we need a
+slight change to the queue type.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>bfenum t <span class="ot">=</span> q (f t b) e</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span> </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) fw <span class="ot">=</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> f) xs)))</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">maybe</span> [] <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q e)</span></code></pre></div>
 <h1 id="monadic">Monadic</h1>
-<p>We can actually add in a monad to the above unfold without much difficulty.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q</span> m a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> m a <span class="ot">-&gt;</span> m [a]) <span class="ot">-&gt;</span> m [a] }</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a><span class="ot">bfUnfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m (b,[a])) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m [b]</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>bfUnfold f t <span class="ot">=</span> g t b e</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>    g s fw bw <span class="ot">=</span> f s <span class="op">&gt;&gt;=</span> </span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>       \ <span class="op">~</span>(x,xs) <span class="ot">-&gt;</span> (x <span class="op">:</span>) <span class="op">&lt;$&gt;</span>  q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> ((<span class="dt">Q</span> <span class="op">.</span>) <span class="op">#.</span> g)) xs))</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>        </span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">#.</span> <span class="fu">maybe</span> (<span class="fu">pure</span> []) <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>    e <span class="ot">=</span> <span class="dt">Nothing</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q e)</span></code></pre></div>
-<p>And it passes the torture tests for a linear-time breadth-first unfold from <span class="citation" data-cites="feuer_is_2015">Feuer (<a href="#ref-feuer_is_2015" role="doc-biblioref">2015</a>)</span>. It breaks when you try and use it to build a tree, though.</p>
+<p>We can actually add in a monad to the above unfold without much
+difficulty.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q</span> m a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> m a <span class="ot">-&gt;</span> m [a]) <span class="ot">-&gt;</span> m [a] }</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="ot">bfUnfold ::</span> <span class="dt">Monad</span> m <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> m (b,[a])) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> m [b]</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>bfUnfold f t <span class="ot">=</span> g t b e</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    g s fw bw <span class="ot">=</span> f s <span class="op">&gt;&gt;=</span> </span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>       \ <span class="op">~</span>(x,xs) <span class="ot">-&gt;</span> (x <span class="op">:</span>) <span class="op">&lt;$&gt;</span>  q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> <span class="fu">flip</span> (<span class="fu">foldr</span> ((<span class="dt">Q</span> <span class="op">.</span>) <span class="op">#.</span> g)) xs))</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">#.</span> <span class="fu">maybe</span> (<span class="fu">pure</span> []) <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    e <span class="ot">=</span> <span class="dt">Nothing</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q e)</span></code></pre></div>
+<p>And it passes the torture tests for a linear-time breadth-first
+unfold from <span class="citation" data-cites="feuer_is_2015">Feuer
+(2015)</span>. It breaks when you try and use it to build a tree,
+though.</p>
 <h1 id="phases">Phases</h1>
-<p>Finally, we can try and make the above code a little more modular, by actually packaging up the queue type as a queue.</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Queue</span> a <span class="ot">=</span> <span class="dt">Queue</span> {<span class="ot"> runQueue ::</span> <span class="dt">Q</span> a <span class="ot">-&gt;</span> <span class="dt">Q</span> a }</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a><span class="ot">now ::</span> a <span class="ot">-&gt;</span> <span class="dt">Queue</span> a</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>now x <span class="ot">=</span> <span class="dt">Queue</span> (\fw <span class="ot">-&gt;</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw bw))</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true"></a>    </span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true"></a><span class="ot">delay ::</span> <span class="dt">Queue</span> a <span class="ot">-&gt;</span> <span class="dt">Queue</span> a</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true"></a>delay xs <span class="ot">=</span> <span class="dt">Queue</span> (\fw <span class="ot">-&gt;</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> runQueue xs))))</span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q <span class="dt">Nothing</span>)</span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true"></a>    </span>
-<span id="cb16-12"><a href="#cb16-12" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Queue</span> a) <span class="kw">where</span></span>
-<span id="cb16-13"><a href="#cb16-13" aria-hidden="true"></a>    <span class="fu">mempty</span> <span class="ot">=</span> <span class="dt">Queue</span> <span class="fu">id</span></span>
-<span id="cb16-14"><a href="#cb16-14" aria-hidden="true"></a>    <span class="fu">mappend</span> (<span class="dt">Queue</span> xs) (<span class="dt">Queue</span> ys) <span class="ot">=</span> <span class="dt">Queue</span> (xs <span class="op">.</span> ys)</span>
-<span id="cb16-15"><a href="#cb16-15" aria-hidden="true"></a>    </span>
-<span id="cb16-16"><a href="#cb16-16" aria-hidden="true"></a><span class="ot">run ::</span> <span class="dt">Queue</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb16-17"><a href="#cb16-17" aria-hidden="true"></a>run (<span class="dt">Queue</span> xs) <span class="ot">=</span> q (xs b) <span class="dt">Nothing</span></span>
-<span id="cb16-18"><a href="#cb16-18" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb16-19"><a href="#cb16-19" aria-hidden="true"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">maybe</span> [] <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
-<span id="cb16-20"><a href="#cb16-20" aria-hidden="true"></a></span>
-<span id="cb16-21"><a href="#cb16-21" aria-hidden="true"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
-<span id="cb16-22"><a href="#cb16-22" aria-hidden="true"></a>bfenum t <span class="ot">=</span> run (f t)</span>
-<span id="cb16-23"><a href="#cb16-23" aria-hidden="true"></a>  <span class="kw">where</span> </span>
-<span id="cb16-24"><a href="#cb16-24" aria-hidden="true"></a>    f (<span class="dt">Node</span> x xs) <span class="ot">=</span> now x <span class="op">&lt;&gt;</span> delay (<span class="fu">foldMap</span> f xs)</span></code></pre></div>
-<p>At this point, our type is starting to look a lot like the <a href="https://hackage.haskell.org/package/tree-traversals-0.1.0.0/docs/Control-Applicative-Phases.html#t:Phases"><code>Phases</code></a> type from Noah Easterly’s tree-traversals package. This is exciting: the <code>Phases</code> type has the ideal interface for level-wise traversals. Unfortunately, it has the wrong time complexity for <code>&lt;*&gt;</code> and so on: my suspicion is that the queue type above here is to <code>Phases</code> as the continuation monad is to the free monad. In other words, we’ll get efficient construction at the expense of no inspection. Unfortunately, I can’t figure out how to turn the above type into an applicative. Maybe in a future post!</p>
-<p>Finally, a lot of this is working towards finally understanding <span class="citation" data-cites="smith_lloyd_2009">Smith (<a href="#ref-smith_lloyd_2009" role="doc-biblioref">2009</a>)</span> and <span class="citation" data-cites="allison_circular_2006">Allison (<a href="#ref-allison_circular_2006" role="doc-biblioref">2006</a>)</span>.</p>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-allison_circular_2006">
-<p>Allison, Lloyd. 2006. “Circular Programs and Self-Referential Structures.” <em>Software: Practice and Experience</em> 19 (2) (October): 99–109. doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>. <a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.</p>
+<p>Finally, we can try and make the above code a little more modular, by
+actually packaging up the queue type as a queue.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Q</span> a <span class="ot">=</span> <span class="dt">Q</span> {<span class="ot"> q ::</span> <span class="dt">Maybe</span> (<span class="dt">Q</span> a <span class="ot">-&gt;</span> [a]) <span class="ot">-&gt;</span> [a] }</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Queue</span> a <span class="ot">=</span> <span class="dt">Queue</span> {<span class="ot"> runQueue ::</span> <span class="dt">Q</span> a <span class="ot">-&gt;</span> <span class="dt">Q</span> a }</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="ot">now ::</span> a <span class="ot">-&gt;</span> <span class="dt">Queue</span> a</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>now x <span class="ot">=</span> <span class="dt">Queue</span> (\fw <span class="ot">-&gt;</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> x <span class="op">:</span> q fw bw))</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="ot">delay ::</span> <span class="dt">Queue</span> a <span class="ot">-&gt;</span> <span class="dt">Queue</span> a</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>delay xs <span class="ot">=</span> <span class="dt">Queue</span> (\fw <span class="ot">-&gt;</span> <span class="dt">Q</span> (\bw <span class="ot">-&gt;</span> q fw (<span class="dt">Just</span> (m bw <span class="op">.</span> runQueue xs))))</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    m <span class="ot">=</span> fromMaybe (<span class="fu">flip</span> q <span class="dt">Nothing</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Monoid</span> (<span class="dt">Queue</span> a) <span class="kw">where</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mempty</span> <span class="ot">=</span> <span class="dt">Queue</span> <span class="fu">id</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mappend</span> (<span class="dt">Queue</span> xs) (<span class="dt">Queue</span> ys) <span class="ot">=</span> <span class="dt">Queue</span> (xs <span class="op">.</span> ys)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="ot">run ::</span> <span class="dt">Queue</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>run (<span class="dt">Queue</span> xs) <span class="ot">=</span> q (xs b) <span class="dt">Nothing</span></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> fix (<span class="dt">Q</span> <span class="op">.</span> <span class="fu">maybe</span> [] <span class="op">.</span> <span class="fu">flip</span> (<span class="op">$</span>))</span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="ot">bfenum ::</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> [a]</span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>bfenum t <span class="ot">=</span> run (f t)</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span> </span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>    f (<span class="dt">Node</span> x xs) <span class="ot">=</span> now x <span class="op">&lt;&gt;</span> delay (<span class="fu">foldMap</span> f xs)</span></code></pre></div>
+<p>At this point, our type is starting to look a lot like the <a href="https://hackage.haskell.org/package/tree-traversals-0.1.0.0/docs/Control-Applicative-Phases.html#t:Phases"><code>Phases</code></a>
+type from Noah Easterly’s tree-traversals package. This is exciting: the
+<code>Phases</code> type has the ideal interface for level-wise
+traversals. Unfortunately, it has the wrong time complexity for
+<code>&lt;*&gt;</code> and so on: my suspicion is that the queue type
+above here is to <code>Phases</code> as the continuation monad is to the
+free monad. In other words, we’ll get efficient construction at the
+expense of no inspection. Unfortunately, I can’t figure out how to turn
+the above type into an applicative. Maybe in a future post!</p>
+<p>Finally, a lot of this is working towards finally understanding <span class="citation" data-cites="smith_lloyd_2009">Smith (2009)</span> and
+<span class="citation" data-cites="allison_circular_2006">Allison
+(2006)</span>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-allison_circular_2006" class="csl-entry" role="listitem">
+Allison, Lloyd. 2006. <span>“Circular <span>Programs</span> and
+<span>Self</span>-<span>Referential Structures</span>.”</span>
+<em>Software: Practice and Experience</em> 19 (2) (October): 99–109.
+doi:<a href="https://doi.org/10.1002/spe.4380190202">10.1002/spe.4380190202</a>.
+<a href="http://users.monash.edu/~lloyd/tildeFP/1989SPE/">http://users.monash.edu/~lloyd/tildeFP/1989SPE/</a>.
 </div>
-<div id="ref-feuer_is_2015">
-<p>Feuer, David. 2015. “Is a Lazy, Breadth-First Monadic Rose Tree Unfold Possible?” Question. <em>Stack Overflow</em>. <a href="https://stackoverflow.com/q/27748526">https://stackoverflow.com/q/27748526</a>.</p>
+<div id="ref-feuer_is_2015" class="csl-entry" role="listitem">
+Feuer, David. 2015. <span>“Is a lazy, breadth-first monadic rose tree
+unfold possible?”</span> Question. <em>Stack Overflow</em>. <a href="https://stackoverflow.com/q/27748526">https://stackoverflow.com/q/27748526</a>.
 </div>
-<div id="ref-smith_lloyd_2009">
-<p>Smith, Leon P. 2009. “Lloyd Allison’s Corecursive Queues: Why Continuations Matter.” <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.</p>
+<div id="ref-smith_lloyd_2009" class="csl-entry" role="listitem">
+Smith, Leon P. 2009. <span>“Lloyd <span>Allison</span>’s
+<span>Corecursive Queues</span>: <span>Why Continuations
+Matter</span>.”</span> <em>The Monad.Reader</em> 14 (14) (July): 28. <a href="https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf">https://meldingmonads.files.wordpress.com/2009/06/corecqueues.pdf</a>.
 </div>
 </div>
 

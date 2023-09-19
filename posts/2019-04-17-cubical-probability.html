@@ -30,15 +30,27 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>, <a title="All pages tagged 'Probability'." href="../tags/Probability.html">Probability</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>, <a title="All pages tagged 'Probability'." href="../tags/Probability.html" rel="tag">Probability</a>
     
 </div>
 
-<p><a href="https://agda.readthedocs.io/en/latest/language/cubical.html">Cubical Agda</a> has just come out, and I’ve been playing around with it for a bit. There’s a bunch of info out there on the theory of cubical types, and Homotopy Type Theory more generally (cubical type theory is kind of like an “implementation” of Homotopy type theory), but I wanted to make a post demonstrating cubical Agda in practice, and one of its cool uses from a programming perspective.</p>
+<p><a href="https://agda.readthedocs.io/en/latest/language/cubical.html">Cubical
+Agda</a> has just come out, and I’ve been playing around with it for a
+bit. There’s a bunch of info out there on the theory of cubical types,
+and Homotopy Type Theory more generally (cubical type theory is kind of
+like an “implementation” of Homotopy type theory), but I wanted to make
+a post demonstrating cubical Agda in practice, and one of its cool uses
+from a programming perspective.</p>
 <h1 id="so-what-is-cubical-agda">So What is Cubical Agda?</h1>
-<p>I don’t really know! Cubical type theory is quite complex (even for a type theory), and I’m not nearly qualified to properly explain it. In lieu of a proper first-principles explanation, then, I’ll try and give a few examples of how it differs from normal Agda, before moving on to the main example of this post.</p>
+<p>I don’t really know! Cubical type theory is quite complex (even for a
+type theory), and I’m not nearly qualified to properly explain it. In
+lieu of a proper first-principles explanation, then, I’ll try and give a
+few examples of how it differs from normal Agda, before moving on to the
+main example of this post.</p>
 <details>
-<summary>Imports</summary>
+<summary>
+Imports
+</summary>
 <pre class="Agda"><a id="920" class="Symbol">{-#</a> <a id="924" class="Keyword">OPTIONS</a> <a id="932" class="Pragma">--cubical</a> <a id="942" class="Symbol">#-}</a>
 
 <a id="947" class="Keyword">open</a> <a id="952" class="Keyword">import</a> <a id="959" href="../code/probability/ProbabilityModule.Semirings.html" class="Module">ProbabilityModule.Semirings</a>
@@ -54,33 +66,73 @@
 </details>
 <dl>
 <dt>Extensionality</dt>
-<dd>One of the big annoyances in standard Agda is that we can’t prove the following:
+<dd>
+One of the big annoyances in standard Agda is that we can’t prove the
+following:
 <pre class="Agda"><a id="extensionality"></a><a id="1407" href="#1407" class="Function">extensionality</a> <a id="1422" class="Symbol">:</a> <a id="1424" class="Symbol">∀</a> <a id="1426" class="Symbol">{</a><a id="1427" href="#1427" class="Bound">f</a> <a id="1429" href="#1429" class="Bound">g</a> <a id="1431" class="Symbol">:</a> <a id="1433" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="1435" class="Symbol">→</a> <a id="1437" href="../code/probability/ProbabilityModule.Utils.html#206" class="Generalizable">B</a><a id="1438" class="Symbol">}</a>
            <a id="1455" class="Symbol">→</a> <a id="1457" class="Symbol">(∀</a> <a id="1460" href="#1460" class="Bound">x</a> <a id="1462" class="Symbol">→</a> <a id="1464" href="#1427" class="Bound">f</a> <a id="1466" href="#1460" class="Bound">x</a> <a id="1468" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="1470" href="#1429" class="Bound">g</a> <a id="1472" href="#1460" class="Bound">x</a><a id="1473" class="Symbol">)</a>
            <a id="1490" class="Symbol">→</a> <a id="1492" href="#1427" class="Bound">f</a> <a id="1494" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="1496" href="#1429" class="Bound">g</a>
 </pre>
-It’s emblematic of a wider problem in Agda: we can’t say “two things are equal if they always behave the same”. Infinite types, for instance (like streams) are often only equal via bisimulation: we can’t translate this into normal equality in standard Agda. Cubical type theory, though, has a different notion of “equality”, which allow a wide variety of things (including bisimulations and extensional proofs) to be translated into a proper equality
+It’s emblematic of a wider problem in Agda: we can’t say “two things are
+equal if they always behave the same”. Infinite types, for instance
+(like streams) are often only equal via bisimulation: we can’t translate
+this into normal equality in standard Agda. Cubical type theory, though,
+has a different notion of “equality”, which allow a wide variety of
+things (including bisimulations and extensional proofs) to be translated
+into a proper equality
 <pre class="Agda"><a id="1989" href="#1407" class="Function">extensionality</a> <a id="2004" class="Symbol">=</a> <a id="2006" href="../code/probability/Cubical.Foundations.Prelude.html#4401" class="Function">funExt</a>
 </pre>
 </dd>
 <dt>Isomorphisms</dt>
-<dd>One of these such things we can promote to a “proper equality” is an isomorphism. In the <a href="https://github.com/agda/cubical">cubical repo</a> this is used to <a href="https://github.com/agda/cubical/blob/8391a4835b3d2478e9394c6c3ec7e6fff42ede62/Cubical/Data/BinNat/BinNat.agda">prove things about binary numbers</a>: by proving that there’s an isomorphism between the Peano numbers and binary numbers, they can lift any properties on the Peano numbers to the binary numbers.
+<dd>
+One of these such things we can promote to a “proper equality” is an
+isomorphism. In the <a href="https://github.com/agda/cubical">cubical
+repo</a> this is used to <a href="https://github.com/agda/cubical/blob/8391a4835b3d2478e9394c6c3ec7e6fff42ede62/Cubical/Data/BinNat/BinNat.agda">prove
+things about binary numbers</a>: by proving that there’s an isomorphism
+between the Peano numbers and binary numbers, they can lift any
+properties on the Peano numbers to the binary numbers.
 </dd>
 </dl>
-<p>So those are two useful examples, but the <em>most</em> interesting use I’ve seen so far is the following:</p>
+<p>So those are two useful examples, but the <em>most</em> interesting
+use I’ve seen so far is the following:</p>
 <h1 id="higher-inductive-types">Higher Inductive Types</h1>
-Higher Inductive Types are an extension of normal inductive types, like the list:
+Higher Inductive Types are an extension of normal inductive types, like
+the list:
 <pre class="Agda"><a id="2741" class="Keyword">module</a> <a id="NormalList"></a><a id="2748" href="#2748" class="Module">NormalList</a> <a id="2759" class="Keyword">where</a>
  <a id="2766" class="Keyword">data</a> <a id="NormalList.List"></a><a id="2771" href="#2771" class="Datatype">List</a> <a id="2776" class="Symbol">{</a><a id="2777" href="#2777" class="Bound">a</a><a id="2778" class="Symbol">}</a> <a id="2780" class="Symbol">(</a><a id="2781" href="#2781" class="Bound">A</a> <a id="2783" class="Symbol">:</a> <a id="2785" class="PrimitiveType">Set</a> <a id="2789" href="#2777" class="Bound">a</a><a id="2790" class="Symbol">)</a> <a id="2792" class="Symbol">:</a> <a id="2794" class="PrimitiveType">Set</a> <a id="2798" href="#2777" class="Bound">a</a> <a id="2800" class="Keyword">where</a>
    <a id="NormalList.List.[]"></a><a id="2809" href="#2809" class="InductiveConstructor">[]</a> <a id="2812" class="Symbol">:</a> <a id="2814" href="#2771" class="Datatype">List</a> <a id="2819" href="#2781" class="Bound">A</a>
    <a id="NormalList.List._∷_"></a><a id="2824" href="#2824" class="InductiveConstructor Operator">_∷_</a> <a id="2828" class="Symbol">:</a> <a id="2830" href="#2781" class="Bound">A</a> <a id="2832" class="Symbol">→</a> <a id="2834" href="#2771" class="Datatype">List</a> <a id="2839" href="#2781" class="Bound">A</a> <a id="2841" class="Symbol">→</a> <a id="2843" href="#2771" class="Datatype">List</a> <a id="2848" href="#2781" class="Bound">A</a>
 </pre>
-<p>They allow us to add new equations to a type, as well as constructors. To demonstrate what this means, as well as why you’d want it, I’m going to talk about free objects.</p>
-<p>Very informally, a free object on some algebra is the <em>minimal</em> type which satisfies the laws of the algebra. Lists, for instance, are the free monoid. They satisfy all of the monoid laws (<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>•</mo><annotation encoding="application/x-tex">\bullet</annotation></semantics></math> is <code>++</code> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math> is <code>[]</code>):</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">(</mo><mi>x</mi><mo>•</mo><mi>y</mi><mo stretchy="false" form="postfix">)</mo><mo>•</mo><mi>z</mi><mo>=</mo><mi>x</mi><mo>•</mo><mo stretchy="false" form="prefix">(</mo><mi>y</mi><mo>•</mo><mi>z</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">(x \bullet y) \bullet z = x \bullet (y \bullet z)</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>ϵ</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet \epsilon = x</annotation></semantics></math> <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>•</mo><mi>x</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">\epsilon \bullet x = x</annotation></semantics></math></p>
-<p>But <em>nothing else</em>. That means they don’t satisfy any extra laws (like, for example, commutativity), and they don’t have any extra structure they don’t need.</p>
-<p>How did we get to the definition of lists from the monoid laws, though? It doesn’t look anything like them. It would be nice if there was some systematic way to construct the corresponding free object given the laws of an algebra. Unfortunately, in normal Agda, this isn’t possible. Consider, for instance, if we added the commutativity law to the algebra: <math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>y</mi><mo>=</mo><mi>y</mi><mo>•</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet y = y \bullet x</annotation></semantics></math> Not only is it not obvious how we’d write the corresponding free object, it’s actually <em>not possible</em> in normal Agda!</p>
-<p>This kind of problem comes up a lot: we have a type, and we want it to obey just <em>one more</em> equation, but there is no inductive type which does so. Higher Inductive Types solve the problem in quite a straightforward way. So we want lists to satisfy another equation? Well, just add it to the definition!</p>
+<p>They allow us to add new equations to a type, as well as
+constructors. To demonstrate what this means, as well as why you’d want
+it, I’m going to talk about free objects.</p>
+<p>Very informally, a free object on some algebra is the
+<em>minimal</em> type which satisfies the laws of the algebra. Lists,
+for instance, are the free monoid. They satisfy all of the monoid laws
+(<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mo>•</mo><annotation encoding="application/x-tex">\bullet</annotation></semantics></math>
+is <code>++</code> and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>ϵ</mi><annotation encoding="application/x-tex">\epsilon</annotation></semantics></math>
+is <code>[]</code>):</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mo stretchy="true" form="prefix">(</mo><mi>x</mi><mo>•</mo><mi>y</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo>•</mo><mi>z</mi><mo>=</mo><mi>x</mi><mo>•</mo><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo>•</mo><mi>z</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">(x \bullet y) \bullet z = x \bullet (y \bullet z)</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>ϵ</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet \epsilon = x</annotation></semantics></math>
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ϵ</mi><mo>•</mo><mi>x</mi><mo>=</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">\epsilon \bullet x = x</annotation></semantics></math></p>
+<p>But <em>nothing else</em>. That means they don’t satisfy any extra
+laws (like, for example, commutativity), and they don’t have any extra
+structure they don’t need.</p>
+<p>How did we get to the definition of lists from the monoid laws,
+though? It doesn’t look anything like them. It would be nice if there
+was some systematic way to construct the corresponding free object given
+the laws of an algebra. Unfortunately, in normal Agda, this isn’t
+possible. Consider, for instance, if we added the commutativity law to
+the algebra:
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>•</mo><mi>y</mi><mo>=</mo><mi>y</mi><mo>•</mo><mi>x</mi></mrow><annotation encoding="application/x-tex">x \bullet y = y \bullet x</annotation></semantics></math>
+Not only is it not obvious how we’d write the corresponding free object,
+it’s actually <em>not possible</em> in normal Agda!</p>
+<p>This kind of problem comes up a lot: we have a type, and we want it
+to obey just <em>one more</em> equation, but there is no inductive type
+which does so. Higher Inductive Types solve the problem in quite a
+straightforward way. So we want lists to satisfy another equation? Well,
+just add it to the definition!</p>
 <pre class="Agda"><a id="4347" class="Keyword">module</a> <a id="OddList"></a><a id="4354" href="#4354" class="Module">OddList</a> <a id="4362" class="Keyword">where</a>
  <a id="4369" class="Keyword">mutual</a>
   <a id="4378" class="Keyword">data</a> <a id="OddList.List"></a><a id="4383" href="#4383" class="Datatype">List</a> <a id="4388" class="Symbol">{</a><a id="4389" href="#4389" class="Bound">a</a><a id="4390" class="Symbol">}</a> <a id="4392" class="Symbol">(</a><a id="4393" href="#4393" class="Bound">A</a> <a id="4395" class="Symbol">:</a> <a id="4397" class="PrimitiveType">Set</a> <a id="4401" href="#4389" class="Bound">a</a><a id="4402" class="Symbol">)</a> <a id="4404" class="Symbol">:</a> <a id="4406" class="PrimitiveType">Set</a> <a id="4410" href="#4389" class="Bound">a</a> <a id="4412" class="Keyword">where</a>
@@ -90,7 +142,10 @@ Higher Inductive Types are an extension of normal inductive types, like the list
 
   <a id="4508" class="Keyword">postulate</a> <a id="OddList._++_"></a><a id="4518" href="#4518" class="Postulate Operator">_++_</a> <a id="4523" class="Symbol">:</a> <a id="4525" href="#4383" class="Datatype">List</a> <a id="4530" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="4532" class="Symbol">→</a> <a id="4534" href="#4383" class="Datatype">List</a> <a id="4539" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="4541" class="Symbol">→</a> <a id="4543" href="#4383" class="Datatype">List</a> <a id="4548" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a>
 </pre>
-Now, when we write a function that processes lists, Agda will check that the function behaves the same on <code>xs ++ ys</code> and <code>ys ++ xs</code>. As an example, here’s how you might define the free monoid as a HIT:
+Now, when we write a function that processes lists, Agda will check that
+the function behaves the same on <code>xs ++ ys</code> and
+<code>ys ++ xs</code>. As an example, here’s how you might define the
+free monoid as a HIT:
 <pre class="Agda"><a id="4765" class="Keyword">data</a> <a id="FreeMonoid"></a><a id="4770" href="#4770" class="Datatype">FreeMonoid</a> <a id="4781" class="Symbol">{</a><a id="4782" href="#4782" class="Bound">a</a><a id="4783" class="Symbol">}</a> <a id="4785" class="Symbol">(</a><a id="4786" href="#4786" class="Bound">A</a> <a id="4788" class="Symbol">:</a> <a id="4790" class="PrimitiveType">Set</a> <a id="4794" href="#4782" class="Bound">a</a><a id="4795" class="Symbol">)</a> <a id="4797" class="Symbol">:</a> <a id="4799" class="PrimitiveType">Set</a> <a id="4803" href="#4782" class="Bound">a</a> <a id="4805" class="Keyword">where</a>
   <a id="FreeMonoid.[_]"></a><a id="4813" href="#4813" class="InductiveConstructor Operator">[_]</a> <a id="4817" class="Symbol">:</a> <a id="4819" href="#4786" class="Bound">A</a> <a id="4821" class="Symbol">→</a> <a id="4823" href="#4770" class="Datatype">FreeMonoid</a> <a id="4834" href="#4786" class="Bound">A</a>
   <a id="FreeMonoid._∙_"></a><a id="4838" href="#4838" class="InductiveConstructor Operator">_∙_</a> <a id="4842" class="Symbol">:</a> <a id="4844" href="#4770" class="Datatype">FreeMonoid</a> <a id="4855" href="#4786" class="Bound">A</a> <a id="4857" class="Symbol">→</a> <a id="4859" href="#4770" class="Datatype">FreeMonoid</a> <a id="4870" href="#4786" class="Bound">A</a> <a id="4872" class="Symbol">→</a> <a id="4874" href="#4770" class="Datatype">FreeMonoid</a> <a id="4885" href="#4786" class="Bound">A</a>
@@ -99,8 +154,11 @@ Now, when we write a function that processes lists, Agda will check that the fun
   <a id="FreeMonoid.ε∙"></a><a id="4931" href="#4931" class="InductiveConstructor">ε∙</a> <a id="4934" class="Symbol">:</a> <a id="4936" class="Symbol">∀</a> <a id="4938" href="#4938" class="Bound">x</a> <a id="4940" class="Symbol">→</a> <a id="4942" href="#4889" class="InductiveConstructor">ε</a> <a id="4944" href="#4838" class="InductiveConstructor Operator">∙</a> <a id="4946" href="#4938" class="Bound">x</a> <a id="4948" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="4950" href="#4938" class="Bound">x</a>
   <a id="FreeMonoid.assoc"></a><a id="4954" href="#4954" class="InductiveConstructor">assoc</a> <a id="4960" class="Symbol">:</a> <a id="4962" class="Symbol">∀</a> <a id="4964" href="#4964" class="Bound">x</a> <a id="4966" href="#4966" class="Bound">y</a> <a id="4968" href="#4968" class="Bound">z</a> <a id="4970" class="Symbol">→</a> <a id="4972" class="Symbol">(</a><a id="4973" href="#4964" class="Bound">x</a> <a id="4975" href="#4838" class="InductiveConstructor Operator">∙</a> <a id="4977" href="#4966" class="Bound">y</a><a id="4978" class="Symbol">)</a> <a id="4980" href="#4838" class="InductiveConstructor Operator">∙</a> <a id="4982" href="#4968" class="Bound">z</a> <a id="4984" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="4986" href="#4964" class="Bound">x</a> <a id="4988" href="#4838" class="InductiveConstructor Operator">∙</a> <a id="4990" class="Symbol">(</a><a id="4991" href="#4966" class="Bound">y</a> <a id="4993" href="#4838" class="InductiveConstructor Operator">∙</a> <a id="4995" href="#4968" class="Bound">z</a><a id="4996" class="Symbol">)</a>
 </pre>
-<p>It’s quite a satisfying definition, and very easy to see how we got to it from the monoid laws.</p>
-Now, when we write functions, we have to prove that those functions themselves also obey the monoid laws. For instance, here’s how we would take the length:
+<p>It’s quite a satisfying definition, and very easy to see how we got
+to it from the monoid laws.</p>
+Now, when we write functions, we have to prove that those functions
+themselves also obey the monoid laws. For instance, here’s how we would
+take the length:
 <pre class="Agda"><a id="5265" class="Keyword">module</a> <a id="Length"></a><a id="5272" href="#5272" class="Module">Length</a> <a id="5279" class="Keyword">where</a>
   <a id="5287" class="Keyword">open</a> <a id="5292" class="Keyword">import</a> <a id="5299" href="../code/probability/ProbabilityModule.Semirings.Nat.html" class="Module">ProbabilityModule.Semirings.Nat</a>
   <a id="5333" class="Keyword">open</a> <a id="5338" href="../code/probability/ProbabilityModule.Semirings.html#125" class="Module">Semiring</a> <a id="5347" href="../code/probability/ProbabilityModule.Semirings.Nat.html#1820" class="Function">+-*-𝕊</a>
@@ -113,16 +171,25 @@ Now, when we write functions, we have to prove that those functions themselves a
   <a id="5499" href="#5356" class="Function">length</a> <a id="5506" class="Symbol">(</a><a id="5507" href="#4931" class="InductiveConstructor">ε∙</a> <a id="5510" href="#5510" class="Bound">xs</a> <a id="5513" href="#5513" class="Bound">i</a><a id="5514" class="Symbol">)</a> <a id="5516" class="Symbol">=</a> <a id="5518" href="../code/probability/ProbabilityModule.Semirings.html#430" class="Function">0+</a> <a id="5521" class="Symbol">(</a><a id="5522" href="#5356" class="Function">length</a> <a id="5529" href="#5510" class="Bound">xs</a><a id="5531" class="Symbol">)</a> <a id="5533" href="#5513" class="Bound">i</a>
   <a id="5537" href="#5356" class="Function">length</a> <a id="5544" class="Symbol">(</a><a id="5545" href="#4954" class="InductiveConstructor">assoc</a> <a id="5551" href="#5551" class="Bound">xs</a> <a id="5554" href="#5554" class="Bound">ys</a> <a id="5557" href="#5557" class="Bound">zs</a> <a id="5560" href="#5560" class="Bound">i</a><a id="5561" class="Symbol">)</a> <a id="5563" class="Symbol">=</a> <a id="5565" href="../code/probability/ProbabilityModule.Semirings.html#276" class="Function">+-assoc</a> <a id="5573" class="Symbol">(</a><a id="5574" href="#5356" class="Function">length</a> <a id="5581" href="#5551" class="Bound">xs</a><a id="5583" class="Symbol">)</a> <a id="5585" class="Symbol">(</a><a id="5586" href="#5356" class="Function">length</a> <a id="5593" href="#5554" class="Bound">ys</a><a id="5595" class="Symbol">)</a> <a id="5597" class="Symbol">(</a><a id="5598" href="#5356" class="Function">length</a> <a id="5605" href="#5557" class="Bound">zs</a><a id="5607" class="Symbol">)</a> <a id="5609" href="#5560" class="Bound">i</a>
 </pre>
-<p>The first three clauses are the actual function: they deal with the three normal constructors of the type. The next three clauses prove that those previous clauses obey the equalities defined on the type.</p>
-<p>With the preliminary stuff out of the way, let’s get on to the type I wanted to talk about:</p>
+<p>The first three clauses are the actual function: they deal with the
+three normal constructors of the type. The next three clauses prove that
+those previous clauses obey the equalities defined on the type.</p>
+<p>With the preliminary stuff out of the way, let’s get on to the type I
+wanted to talk about:</p>
 <h1 id="probability">Probability</h1>
-<p>First things first, let’s remember the classic definition of the probability monad:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="ot">=</span> <span class="dt">Prob</span> {<span class="ot"> runProb ::</span> [(a, <span class="dt">Rational</span>)] }</span></code></pre></div>
-<p>Definitionally speaking, this doesn’t really represent what we’re talking about. For instance, the following two things express the same distribution, but have different representations:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="dt">Prob</span> [(<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="dt">Prob</span> [(<span class="dt">True</span> , <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span></code></pre></div>
-<p>So it’s the perfect candidate for an extra equality clause like we had above.</p>
-<p>Second, in an effort to generalise, we won’t deal specifically with <code>Rational</code>, and instead we’ll use any semiring. After all of that, we get the following definition:</p>
+<p>First things first, let’s remember the classic definition of the
+probability monad:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Prob</span> a <span class="ot">=</span> <span class="dt">Prob</span> {<span class="ot"> runProb ::</span> [(a, <span class="dt">Rational</span>)] }</span></code></pre></div>
+<p>Definitionally speaking, this doesn’t really represent what we’re
+talking about. For instance, the following two things express the same
+distribution, but have different representations:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="dt">Prob</span> [(<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">True</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">4</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="dt">Prob</span> [(<span class="dt">True</span> , <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>), (<span class="dt">False</span>, <span class="dv">1</span> <span class="op">/</span> <span class="dv">2</span>)]</span></code></pre></div>
+<p>So it’s the perfect candidate for an extra equality clause like we
+had above.</p>
+<p>Second, in an effort to generalise, we won’t deal specifically with
+<code>Rational</code>, and instead we’ll use any semiring. After all of
+that, we get the following definition:</p>
 <pre class="Agda"><a id="6634" class="Keyword">open</a> <a id="6639" href="../code/probability/ProbabilityModule.Semirings.html#125" class="Module">Semiring</a> <a id="6648" href="#1024" class="Bound">rng</a>
 
 <a id="6653" class="Keyword">module</a> <a id="Initial"></a><a id="6660" href="#6660" class="Module">Initial</a> <a id="6668" class="Keyword">where</a>
@@ -134,7 +201,9 @@ Now, when we write functions, we have to prove that those functions themselves a
    <a id="Initial.𝒫.com"></a><a id="6845" href="#6845" class="InductiveConstructor">com</a> <a id="6849" class="Symbol">:</a> <a id="6851" class="Symbol">∀</a> <a id="6853" href="#6853" class="Bound">p</a> <a id="6855" href="#6855" class="Bound">x</a> <a id="6857" href="#6857" class="Bound">q</a> <a id="6859" href="#6859" class="Bound">y</a> <a id="6861" href="#6861" class="Bound">xs</a> <a id="6864" class="Symbol">→</a> <a id="6866" href="#6853" class="Bound">p</a> <a id="6868" href="#6746" class="InductiveConstructor Operator">&amp;</a> <a id="6870" href="#6855" class="Bound">x</a> <a id="6872" href="#6746" class="InductiveConstructor Operator">∷</a> <a id="6874" href="#6857" class="Bound">q</a> <a id="6876" href="#6746" class="InductiveConstructor Operator">&amp;</a> <a id="6878" href="#6859" class="Bound">y</a> <a id="6880" href="#6746" class="InductiveConstructor Operator">∷</a> <a id="6882" href="#6861" class="Bound">xs</a> <a id="6885" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="6887" href="#6857" class="Bound">q</a> <a id="6889" href="#6746" class="InductiveConstructor Operator">&amp;</a> <a id="6891" href="#6859" class="Bound">y</a> <a id="6893" href="#6746" class="InductiveConstructor Operator">∷</a> <a id="6895" href="#6853" class="Bound">p</a> <a id="6897" href="#6746" class="InductiveConstructor Operator">&amp;</a> <a id="6899" href="#6855" class="Bound">x</a> <a id="6901" href="#6746" class="InductiveConstructor Operator">∷</a> <a id="6903" href="#6861" class="Bound">xs</a>
    <a id="Initial.𝒫.del"></a><a id="6909" href="#6909" class="InductiveConstructor">del</a> <a id="6913" class="Symbol">:</a> <a id="6915" class="Symbol">∀</a> <a id="6917" href="#6917" class="Bound">x</a> <a id="6919" href="#6919" class="Bound">xs</a> <a id="6922" class="Symbol">→</a> <a id="6924" href="../code/probability/ProbabilityModule.Semirings.html#254" class="Field">0#</a> <a id="6927" href="#6746" class="InductiveConstructor Operator">&amp;</a> <a id="6929" href="#6917" class="Bound">x</a> <a id="6931" href="#6746" class="InductiveConstructor Operator">∷</a> <a id="6933" href="#6919" class="Bound">xs</a> <a id="6936" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="6938" href="#6919" class="Bound">xs</a>
 </pre>
-<p>The three extra conditions are pretty sensible: the first removes duplicates, the second makes things commutative, and the third removes impossible events.</p>
+<p>The three extra conditions are pretty sensible: the first removes
+duplicates, the second makes things commutative, and the third removes
+impossible events.</p>
 <p>Let’s get to writing some functions, then:</p>
 <pre class="Agda"> <a id="Initial.∫"></a><a id="7156" href="#7156" class="Function">∫</a> <a id="7158" class="Symbol">:</a> <a id="7160" class="Symbol">(</a><a id="7161" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="7163" class="Symbol">→</a> <a id="7165" href="../code/probability/ProbabilityModule.Semirings.html#200" class="Field">R</a><a id="7166" class="Symbol">)</a> <a id="7168" class="Symbol">→</a> <a id="7170" href="#6696" class="Datatype">𝒫</a> <a id="7172" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="7174" class="Symbol">→</a> <a id="7176" href="../code/probability/ProbabilityModule.Semirings.html#200" class="Field">R</a>
  <a id="7179" href="#7156" class="Function">∫</a> <a id="7181" href="#7181" class="Bound">f</a> <a id="7183" href="#6733" class="InductiveConstructor">[]</a> <a id="7186" class="Symbol">=</a> <a id="7188" href="../code/probability/ProbabilityModule.Semirings.html#254" class="Field">0#</a>
@@ -153,8 +222,17 @@ Now, when we write functions, we have to prove that those functions themselves a
    <a id="7830" href="../code/probability/ProbabilityModule.Semirings.html#254" class="Field">0#</a> <a id="7833" href="../code/probability/ProbabilityModule.Semirings.html#214" class="Field Operator">+</a> <a id="7835" href="#7156" class="Function">∫</a> <a id="7837" href="#7745" class="Bound">f</a> <a id="7839" href="#7754" class="Bound">xs</a>       <a id="7848" href="../code/probability/ProbabilityModule.Utils.html#436" class="Function">≡⟨</a> <a id="7851" href="../code/probability/ProbabilityModule.Semirings.html#430" class="Field">0+</a> <a id="7854" class="Symbol">(</a><a id="7855" href="#7156" class="Function">∫</a> <a id="7857" href="#7745" class="Bound">f</a> <a id="7859" href="#7754" class="Bound">xs</a><a id="7861" class="Symbol">)</a> <a id="7863" href="../code/probability/ProbabilityModule.Utils.html#436" class="Function">⟩</a>
    <a id="7868" href="#7156" class="Function">∫</a> <a id="7870" href="#7745" class="Bound">f</a> <a id="7872" href="#7754" class="Bound">xs</a> <a id="7875" href="../code/probability/Cubical.Foundations.Prelude.html#2745" class="Function Operator">∎</a>
 </pre>
-<p>This is much more involved than the free monoid function, but the principle is the same: we first write the actual function (on the first three lines), and then we show that the function doesn’t care about the “rewrite rules” we have in the next three clauses.</p>
-<p>Before going any further, we will have to amend the definition a little. The problem is that if we tried to prove something about any function on our <code>𝒫</code> type, we’d have to prove equalities <em>between equalities</em> as well. I’m sure that this is possible, but it’s very annoying, so I’m going to use a technique I saw in <a href="https://github.com/L-TChen/FiniteSets">this repository</a>. We add another rule to our type, stating that all equalities on the type are themselves equal. The new definition looks like this:</p>
+<p>This is much more involved than the free monoid function, but the
+principle is the same: we first write the actual function (on the first
+three lines), and then we show that the function doesn’t care about the
+“rewrite rules” we have in the next three clauses.</p>
+<p>Before going any further, we will have to amend the definition a
+little. The problem is that if we tried to prove something about any
+function on our <code>𝒫</code> type, we’d have to prove equalities
+<em>between equalities</em> as well. I’m sure that this is possible, but
+it’s very annoying, so I’m going to use a technique I saw in <a href="https://github.com/L-TChen/FiniteSets">this repository</a>. We add
+another rule to our type, stating that all equalities on the type are
+themselves equal. The new definition looks like this:</p>
 <pre class="Agda"><a id="8659" class="Keyword">infixr</a> <a id="8666" class="Number">5</a> <a id="8668" href="#8727" class="InductiveConstructor Operator">_&amp;_∷_</a>
 <a id="8674" class="Keyword">data</a> <a id="𝒫"></a><a id="8679" href="#8679" class="Datatype">𝒫</a> <a id="8681" class="Symbol">(</a><a id="8682" href="#8682" class="Bound">A</a> <a id="8684" class="Symbol">:</a> <a id="8686" class="PrimitiveType">Set</a> <a id="8690" href="../code/probability/ProbabilityModule.Utils.html#178" class="Generalizable">a</a><a id="8691" class="Symbol">)</a> <a id="8693" class="Symbol">:</a> <a id="8695" class="PrimitiveType">Set</a> <a id="8699" class="Symbol">(</a><a id="8700" href="#8690" class="Bound">a</a> <a id="8702" href="../code/probability/ProbabilityModule.Utils.html#242" class="Function Operator">⊔</a> <a id="8704" href="#1020" class="Bound">s</a><a id="8705" class="Symbol">)</a> <a id="8707" class="Keyword">where</a>
   <a id="𝒫.[]"></a><a id="8715" href="#8715" class="InductiveConstructor">[]</a>  <a id="8719" class="Symbol">:</a> <a id="8721" href="#8679" class="Datatype">𝒫</a> <a id="8723" href="#8682" class="Bound">A</a>
@@ -165,8 +243,15 @@ Now, when we write functions, we have to prove that those functions themselves a
   <a id="𝒫.trunc"></a><a id="8921" href="#8921" class="InductiveConstructor">trunc</a> <a id="8927" class="Symbol">:</a> <a id="8929" href="../code/probability/Cubical.Foundations.Prelude.html#5455" class="Function">isSet</a> <a id="8935" class="Symbol">(</a><a id="8936" href="#8679" class="Datatype">𝒫</a> <a id="8938" href="#8682" class="Bound">A</a><a id="8939" class="Symbol">)</a>
 </pre>
 <h1 id="eliminators">Eliminators</h1>
-<p>Unfortunately, after adding that case we have to deal with it explicitly in every pattern-match on <code>𝒫</code>. We can get around it by writing an eliminator for the type which deals with it itself. Eliminators are often irritating to work with, though: we give up the nice pattern-matching syntax we get when we program directly. It’s a bit like having to rely on church encoding everywhere.</p>
-<p>However, we can get back some pattern-like syntax if we use <em>copatterns</em>. Here’s an example of what I mean, for folds on lists:</p>
+<p>Unfortunately, after adding that case we have to deal with it
+explicitly in every pattern-match on <code>𝒫</code>. We can get around
+it by writing an eliminator for the type which deals with it itself.
+Eliminators are often irritating to work with, though: we give up the
+nice pattern-matching syntax we get when we program directly. It’s a bit
+like having to rely on church encoding everywhere.</p>
+<p>However, we can get back some pattern-like syntax if we use
+<em>copatterns</em>. Here’s an example of what I mean, for folds on
+lists:</p>
 <pre class="Agda"><a id="9484" class="Keyword">module</a> <a id="ListElim"></a><a id="9491" href="#9491" class="Module">ListElim</a> <a id="9500" class="Keyword">where</a>
  <a id="9507" class="Keyword">open</a> <a id="9512" href="#2748" class="Module">NormalList</a>
  <a id="9524" class="Keyword">open</a> <a id="9529" class="Keyword">import</a> <a id="9536" href="../code/probability/ProbabilityModule.Semirings.Nat.html" class="Module">ProbabilityModule.Semirings.Nat</a>
@@ -188,9 +273,13 @@ Now, when we write functions, we have to prove that those functions themselves a
  <a id="ListElim.sum"></a><a id="9880" href="#9880" class="Function">sum</a> <a id="9884" class="Symbol">:</a> <a id="9886" href="#2771" class="Datatype">List</a> <a id="9891" href="Agda.Builtin.Nat.html#165" class="Datatype">ℕ</a> <a id="9893" class="Symbol">→</a> <a id="9895" href="Agda.Builtin.Nat.html#165" class="Datatype">ℕ</a>
  <a id="9898" href="#9880" class="Function">sum</a> <a id="9902" class="Symbol">=</a> <a id="9904" href="#9722" class="Function Operator">[</a> <a id="9906" href="#9808" class="Function">sum-alg</a> <a id="9914" href="#9722" class="Function Operator">]↓</a>
 </pre>
-<p>For the probability monad, there’s an eliminator for the whole thing, and eliminator for propositional proofs, and a normal eliminator for folding. Their definitions are quite long, but mechanical.</p>
+<p>For the probability monad, there’s an eliminator for the whole thing,
+and eliminator for propositional proofs, and a normal eliminator for
+folding. Their definitions are quite long, but mechanical.</p>
 <details>
-<summary>Eliminator Definitions</summary>
+<summary>
+Eliminator Definitions
+</summary>
 <pre class="Agda"><a id="10181" class="Keyword">record</a> <a id="⟅_↝_⟆"></a><a id="10188" href="#10188" class="Record Operator">⟅_↝_⟆</a> <a id="10194" class="Symbol">{</a><a id="10195" href="#10195" class="Bound">a</a> <a id="10197" href="#10197" class="Bound">ℓ</a><a id="10198" class="Symbol">}</a> <a id="10200" class="Symbol">(</a><a id="10201" href="#10201" class="Bound">A</a> <a id="10203" class="Symbol">:</a> <a id="10205" class="PrimitiveType">Set</a> <a id="10209" href="#10195" class="Bound">a</a><a id="10210" class="Symbol">)</a> <a id="10212" class="Symbol">(</a><a id="10213" href="#10213" class="Bound">P</a> <a id="10215" class="Symbol">:</a> <a id="10217" href="#8679" class="Datatype">𝒫</a> <a id="10219" href="#10201" class="Bound">A</a> <a id="10221" class="Symbol">→</a> <a id="10223" class="PrimitiveType">Set</a> <a id="10227" href="#10197" class="Bound">ℓ</a><a id="10228" class="Symbol">)</a> <a id="10230" class="Symbol">:</a> <a id="10232" class="PrimitiveType">Set</a> <a id="10236" class="Symbol">(</a><a id="10237" href="#10195" class="Bound">a</a> <a id="10239" href="../code/probability/ProbabilityModule.Utils.html#242" class="Function Operator">⊔</a> <a id="10241" href="#10197" class="Bound">ℓ</a> <a id="10243" href="../code/probability/ProbabilityModule.Utils.html#242" class="Function Operator">⊔</a> <a id="10245" href="#1020" class="Bound">s</a><a id="10246" class="Symbol">)</a> <a id="10248" class="Keyword">where</a>
   <a id="10256" class="Keyword">constructor</a> <a id="⟅_↝_⟆.elim"></a><a id="10268" href="#10268" class="InductiveConstructor">elim</a>
   <a id="10275" class="Keyword">field</a>
@@ -279,7 +368,8 @@ Now, when we write functions, we have to prove that those functions themselves a
   <a id="13203" href="#12570" class="Field Operator">[</a> <a id="13205" href="#13043" class="Function">map′</a> <a id="13210" href="#13210" class="Bound">f</a> <a id="13212" href="#12570" class="Field Operator">]-com</a> <a id="13218" href="#13218" class="Bound">p</a> <a id="13220" href="#13220" class="Bound">x</a> <a id="13222" href="#13222" class="Bound">q</a> <a id="13224" href="#13224" class="Bound">y</a> <a id="13226" href="#13226" class="Bound">xs</a> <a id="13229" class="Symbol">=</a> <a id="13231" href="#8824" class="InductiveConstructor">com</a> <a id="13235" href="#13218" class="Bound">p</a> <a id="13237" class="Symbol">(</a><a id="13238" href="#13210" class="Bound">f</a> <a id="13240" href="#13220" class="Bound">x</a><a id="13241" class="Symbol">)</a> <a id="13243" href="#13222" class="Bound">q</a> <a id="13245" class="Symbol">(</a><a id="13246" href="#13210" class="Bound">f</a> <a id="13248" href="#13224" class="Bound">y</a><a id="13249" class="Symbol">)</a> <a id="13251" href="#13226" class="Bound">xs</a>
   <a id="13256" href="#12635" class="Field Operator">[</a> <a id="13258" href="#13043" class="Function">map′</a> <a id="13263" href="#13263" class="Bound">f</a> <a id="13265" href="#12635" class="Field Operator">]-del</a> <a id="13271" href="#13271" class="Bound">x</a> <a id="13273" href="#13273" class="Bound">xs</a> <a id="13276" class="Symbol">=</a> <a id="13278" href="#8887" class="InductiveConstructor">del</a> <a id="13282" class="Symbol">(</a><a id="13283" href="#13263" class="Bound">f</a> <a id="13285" href="#13271" class="Bound">x</a><a id="13286" class="Symbol">)</a> <a id="13288" href="#13273" class="Bound">xs</a>
 </pre>
-<p>And here’s how we’d define union, and then prove that it’s associative:</p>
+<p>And here’s how we’d define union, and then prove that it’s
+associative:</p>
 <pre class="Agda"><a id="13377" class="Keyword">infixr</a> <a id="13384" class="Number">5</a> <a id="13386" href="#13390" class="Function Operator">_∪_</a>
 <a id="_∪_"></a><a id="13390" href="#13390" class="Function Operator">_∪_</a> <a id="13394" class="Symbol">:</a> <a id="13396" href="#8679" class="Datatype">𝒫</a> <a id="13398" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="13400" class="Symbol">→</a> <a id="13402" href="#8679" class="Datatype">𝒫</a> <a id="13404" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="13406" class="Symbol">→</a> <a id="13408" href="#8679" class="Datatype">𝒫</a> <a id="13410" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a>
 <a id="13412" href="#13390" class="Function Operator">_∪_</a> <a id="13416" class="Symbol">=</a> <a id="13418" class="Symbol">λ</a> <a id="13420" href="#13420" class="Bound">xs</a> <a id="13423" href="#13423" class="Bound">ys</a> <a id="13426" class="Symbol">→</a> <a id="13428" href="#12874" class="Function Operator">[</a> <a id="13430" href="#13468" class="Function">union</a> <a id="13436" href="#13423" class="Bound">ys</a> <a id="13439" href="#12874" class="Function Operator">]↓</a> <a id="13442" href="#13420" class="Bound">xs</a>
@@ -302,7 +392,9 @@ Now, when we write functions, we have to prove that those functions themselves a
 </pre>
 <p>There’s a lot more stuff here that I won’t bore you with.</p>
 <details>
-<summary>Boring Stuff</summary>
+<summary>
+Boring Stuff
+</summary>
 <pre class="Agda"><a id="14096" class="Keyword">infixl</a> <a id="14103" class="Number">7</a> <a id="14105" href="#14109" class="Function Operator">_⋊_</a>
 <a id="_⋊_"></a><a id="14109" href="#14109" class="Function Operator">_⋊_</a> <a id="14113" class="Symbol">:</a> <a id="14115" href="../code/probability/ProbabilityModule.Semirings.html#200" class="Field">R</a> <a id="14117" class="Symbol">→</a> <a id="14119" href="#8679" class="Datatype">𝒫</a> <a id="14121" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a> <a id="14123" class="Symbol">→</a> <a id="14125" href="#8679" class="Datatype">𝒫</a> <a id="14127" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a>
 <a id="14129" href="#14109" class="Function Operator">_⋊_</a> <a id="14133" class="Symbol">=</a> <a id="14135" class="Symbol">λ</a> <a id="14137" href="#14137" class="Bound">p</a> <a id="14139" class="Symbol">→</a> <a id="14141" href="#12874" class="Function Operator">[</a> <a id="14143" href="#14137" class="Bound">p</a> <a id="14145" href="#14173" class="Function Operator">⋊′</a> <a id="14148" href="#12874" class="Function Operator">]↓</a>
@@ -434,7 +526,9 @@ Now, when we write functions, we have to prove that those functions themselves a
 </pre>
 <p>And we can prove the monad laws, also:</p>
 <details>
-<p><summary>Proofs of Monad Laws</summary></p>
+<summary>
+Proofs of Monad Laws
+</summary>
 <pre class="Agda"><a id="1⋊"></a><a id="18904" href="#18904" class="Function">1⋊</a> <a id="18907" class="Symbol">:</a> <a id="18909" class="Symbol">(</a><a id="18910" href="#18910" class="Bound">xs</a> <a id="18913" class="Symbol">:</a> <a id="18915" href="#8679" class="Datatype">𝒫</a> <a id="18917" href="../code/probability/ProbabilityModule.Utils.html#194" class="Generalizable">A</a><a id="18918" class="Symbol">)</a> <a id="18920" class="Symbol">→</a> <a id="18922" href="../code/probability/ProbabilityModule.Semirings.html#265" class="Field">1#</a> <a id="18925" href="#14109" class="Function Operator">⋊</a> <a id="18927" href="#18910" class="Bound">xs</a> <a id="18930" href="Agda.Builtin.Cubical.Path.html#353" class="Function Operator">≡</a> <a id="18932" href="#18910" class="Bound">xs</a>
 <a id="18935" href="#18904" class="Function">1⋊</a> <a id="18938" class="Symbol">=</a> <a id="18940" href="#12103" class="Function Operator">⟦</a> <a id="18942" href="#18974" class="Function">1⋊′</a> <a id="18946" href="#12103" class="Function Operator">⟧⇓</a>
   <a id="18951" class="Keyword">module</a> <a id="OneJoin"></a><a id="18958" href="#18958" class="Module">OneJoin</a> <a id="18966" class="Keyword">where</a>
@@ -530,7 +624,9 @@ Now, when we write functions, we have to prove that those functions themselves a
 </pre>
 </details>
 <h1 id="conclusion">Conclusion</h1>
-<p>I’ve really enjoyed working with cubical Agda so far, and the proofs above were a pleasure to write. I think I can use the above definition to get a workable differential privacy monad, also.</p>
+<p>I’ve really enjoyed working with cubical Agda so far, and the proofs
+above were a pleasure to write. I think I can use the above definition
+to get a workable differential privacy monad, also.</p>
 <p>Anyway, all the code is available <a href="https://oisdk.github.io/agda-cubical-probability/Probability.html">here</a>.</p>
 
         </div>

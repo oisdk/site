@@ -30,182 +30,230 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>, <a title="All pages tagged 'Recursion Schemes'." href="../tags/Recursion%20Schemes.html">Recursion Schemes</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>, <a title="All pages tagged 'Recursion Schemes'." href="../tags/Recursion%20Schemes.html" rel="tag">Recursion Schemes</a>
     
 </div>
 
 <h2 id="folding-algebras">Folding Algebras</h2>
-<p>I saw <a href="https://www.reddit.com/r/haskell/comments/608y0l/would_this_sugar_make_sense/">this</a> post on reddit recently, and it got me thinking about recursion schemes. One of the primary motivations behind them is the reduction of boilerplate. The classic example is evaluation of arithmetic expressions:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Expr</span> <span class="ot">=</span> <span class="dt">Fix</span> <span class="dt">ExprF</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a><span class="ot">eval ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>eval <span class="ot">=</span> unfix <span class="op">&gt;&gt;&gt;</span> \<span class="kw">case</span></span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>  x <span class="op">:+:</span> y <span class="ot">-&gt;</span> eval x <span class="op">+</span> eval y</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a>  x <span class="op">:*:</span> y <span class="ot">-&gt;</span> eval x <span class="op">*</span> eval y</span></code></pre></div>
-<p>The calls to <code class="sourceCode haskell">eval</code> are the boilerplate: this is where the main recursion scheme, <code class="sourceCode haskell">cata</code> can help.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> \<span class="kw">case</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>  x <span class="op">:+:</span> y <span class="ot">-&gt;</span> x <span class="op">+</span> y</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>  x <span class="op">:*:</span> y <span class="ot">-&gt;</span> x <span class="op">*</span> y</span></code></pre></div>
-<p>I still feel like there’s boilerplate, though. Ideally I’d like to write this:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> <span class="op">???</span> <span class="op">$</span> \<span class="kw">case</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="dt">Lit</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
-<p>The <code class="sourceCode haskell"><span class="op">???</span></code> needs to be filled in. It’s a little tricky, though: the type of the algebra changes depending on what expression it’s given. GADTs will allow us to attach types to cases:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ExprI</span> a r f <span class="kw">where</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="dt">Lit</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (<span class="dt">Integer</span> <span class="ot">-&gt;</span> b)</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="dt">Add</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  <span class="dt">Mul</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</span></code></pre></div>
-<p>The first type parameter is the same as the first type parameter to <code class="sourceCode haskell"><span class="dt">ExprF</span></code>. The second is the output type of the algebra, and the third is the type of the fold required to produce that output type. The third type parameter <em>depends</em> on the case matched in the GADT. Using this, we can write a function which converts a fold/pattern match to a standard algebra:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="ot">foldAlg ::</span> (<span class="kw">forall</span> f<span class="op">.</span> <span class="dt">ExprI</span> a r f <span class="ot">-&gt;</span> f) <span class="ot">-&gt;</span> (<span class="dt">ExprF</span> a <span class="ot">-&gt;</span> r)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>foldAlg f (<span class="dt">LitF</span> i)  <span class="ot">=</span> f <span class="dt">Lit</span> i</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>foldAlg f (x <span class="op">:+:</span> y) <span class="ot">=</span> f <span class="dt">Add</span> x y</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>foldAlg f (x <span class="op">:*:</span> y) <span class="ot">=</span> f <span class="dt">Mul</span> x y</span></code></pre></div>
+<p>I saw <a href="https://www.reddit.com/r/haskell/comments/608y0l/would_this_sugar_make_sense/">this</a>
+post on reddit recently, and it got me thinking about recursion schemes.
+One of the primary motivations behind them is the reduction of
+boilerplate. The classic example is evaluation of arithmetic
+expressions:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Expr</span> <span class="ot">=</span> <span class="dt">Fix</span> <span class="dt">ExprF</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="ot">eval ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>eval <span class="ot">=</span> unfix <span class="op">&gt;&gt;&gt;</span> \<span class="kw">case</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  x <span class="op">:+:</span> y <span class="ot">-&gt;</span> eval x <span class="op">+</span> eval y</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  x <span class="op">:*:</span> y <span class="ot">-&gt;</span> eval x <span class="op">*</span> eval y</span></code></pre></div>
+<p>The calls to <code class="sourceCode haskell">eval</code> are the
+boilerplate: this is where the main recursion scheme, <code class="sourceCode haskell">cata</code> can help.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> \<span class="kw">case</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LitF</span> n <span class="ot">-&gt;</span> n</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  x <span class="op">:+:</span> y <span class="ot">-&gt;</span> x <span class="op">+</span> y</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  x <span class="op">:*:</span> y <span class="ot">-&gt;</span> x <span class="op">*</span> y</span></code></pre></div>
+<p>I still feel like there’s boilerplate, though. Ideally I’d like to
+write this:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> <span class="op">???</span> <span class="op">$</span> \<span class="kw">case</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lit</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
+<p>The <code class="sourceCode haskell"><span class="op">???</span></code> needs to
+be filled in. It’s a little tricky, though: the type of the algebra
+changes depending on what expression it’s given. GADTs will allow us to
+attach types to cases:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ExprI</span> a r f <span class="kw">where</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lit</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (<span class="dt">Integer</span> <span class="ot">-&gt;</span> b)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Add</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Mul</span><span class="ot"> ::</span> <span class="dt">ExprI</span> a b (a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b)</span></code></pre></div>
+<p>The first type parameter is the same as the first type parameter to
+<code class="sourceCode haskell"><span class="dt">ExprF</span></code>.
+The second is the output type of the algebra, and the third is the type
+of the fold required to produce that output type. The third type
+parameter <em>depends</em> on the case matched in the GADT. Using this,
+we can write a function which converts a fold/pattern match to a
+standard algebra:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">foldAlg ::</span> (<span class="kw">forall</span> f<span class="op">.</span> <span class="dt">ExprI</span> a r f <span class="ot">-&gt;</span> f) <span class="ot">-&gt;</span> (<span class="dt">ExprF</span> a <span class="ot">-&gt;</span> r)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>foldAlg f (<span class="dt">LitF</span> i)  <span class="ot">=</span> f <span class="dt">Lit</span> i</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>foldAlg f (x <span class="op">:+:</span> y) <span class="ot">=</span> f <span class="dt">Add</span> x y</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>foldAlg f (x <span class="op">:*:</span> y) <span class="ot">=</span> f <span class="dt">Mul</span> x y</span></code></pre></div>
 <p>And finally, we can write the nice evaluation algebra:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> foldAlg <span class="op">$</span> \<span class="kw">case</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  <span class="dt">Lit</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
-<p>I hacked together some quick template Haskell to generate the matchers over <a href="https://github.com/oisdk/pattern-folds">here</a>. It uses a class <code class="sourceCode haskell"><span class="dt">AsPatternFold</span></code>:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">class</span> <span class="dt">AsPatternFold</span> x f <span class="op">|</span> x <span class="ot">-&gt;</span> f <span class="kw">where</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="ot">  foldMatch ::</span> (<span class="kw">forall</span> a<span class="op">.</span> f r a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> r)</span></code></pre></div>
-<p>And you generate the extra data type, with an instance, by doing this:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>makePatternFolds '<span class="dt">'ExprF</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> foldAlg <span class="op">$</span> \<span class="kw">case</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lit</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Add</span> <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Mul</span> <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
+<p>I hacked together some quick template Haskell to generate the
+matchers over <a href="https://github.com/oisdk/pattern-folds">here</a>.
+It uses a class <code class="sourceCode haskell"><span class="dt">AsPatternFold</span></code>:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">AsPatternFold</span> x f <span class="op">|</span> x <span class="ot">-&gt;</span> f <span class="kw">where</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ot">  foldMatch ::</span> (<span class="kw">forall</span> a<span class="op">.</span> f r a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (x <span class="ot">-&gt;</span> r)</span></code></pre></div>
+<p>And you generate the extra data type, with an instance, by doing
+this:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>makePatternFolds '<span class="dt">'ExprF</span></span></code></pre></div>
 <p>The code it generates can be used like this:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> foldMatch <span class="op">$</span> \<span class="kw">case</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="dt">LitI</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>  (<span class="op">:+|</span>) <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>  (<span class="op">:*|</span>) <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">evalF ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>evalF <span class="ot">=</span> cata <span class="op">$</span> foldMatch <span class="op">$</span> \<span class="kw">case</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">LitI</span> <span class="ot">-&gt;</span> <span class="fu">id</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  (<span class="op">:+|</span>) <span class="ot">-&gt;</span> (<span class="op">+</span>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  (<span class="op">:*|</span>) <span class="ot">-&gt;</span> (<span class="op">*</span>)</span></code></pre></div>
 <p>It’s terribly hacky at the moment, I may clean it up later.</p>
 <h2 id="record-case">Record Case</h2>
-<p>There’s another approach to the same idea that is slightly more sensible, using record wildcards. You define a handler for you datatype (an algebra):</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ExprAlg</span> a r</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">ExprAlg</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  {<span class="ot"> litF ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> r</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>  ,<span class="ot"> (+:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>  ,<span class="ot"> (*:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r }</span></code></pre></div>
-<p>Then, to use it, you define how to interact between the handler and the datatype, like before. The benefit is that record wildcard syntax allows you to piggy back on the function definition syntax, like so:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>makeHandler '<span class="dt">'ExprF</span></span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a><span class="ot">exprAlg ::</span> <span class="dt">ExprF</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a>exprAlg <span class="ot">=</span> <span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="kw">where</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>  litF <span class="ot">=</span> <span class="fu">id</span></span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a>  (<span class="op">+:</span>) <span class="ot">=</span> (<span class="op">+</span>)</span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a>  (<span class="op">*:</span>) <span class="ot">=</span> (<span class="op">*</span>)</span></code></pre></div>
-<p>This approach is much more principled: the <code class="sourceCode haskell"><span class="fu">index</span></code> function, for example, comes from the <a href="https://hackage.haskell.org/package/adjunctions">adjunctions</a> package, from the <a href="https://hackage.haskell.org/package/adjunctions-4.3/docs/Data-Functor-Rep.html"><code class="sourceCode haskell"><span class="dt">Representable</span></code></a> class. That’s because those algebras are actually representable functors, with their representation being the thing they match. They also conform to a whole bunch of things automatically, letting you combine them interesting ways.</p>
+<p>There’s another approach to the same idea that is slightly more
+sensible, using record wildcards. You define a handler for you datatype
+(an algebra):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ExprAlg</span> a r</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">ExprAlg</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  {<span class="ot"> litF ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> r</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> (+:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  ,<span class="ot"> (*:) ::</span> a <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> r }</span></code></pre></div>
+<p>Then, to use it, you define how to interact between the handler and
+the datatype, like before. The benefit is that record wildcard syntax
+allows you to piggy back on the function definition syntax, like so:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>makeHandler '<span class="dt">'ExprF</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="ot">exprAlg ::</span> <span class="dt">ExprF</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Integer</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>exprAlg <span class="ot">=</span> <span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="kw">where</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  litF <span class="ot">=</span> <span class="fu">id</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  (<span class="op">+:</span>) <span class="ot">=</span> (<span class="op">+</span>)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  (<span class="op">*:</span>) <span class="ot">=</span> (<span class="op">*</span>)</span></code></pre></div>
+<p>This approach is much more principled: the <code class="sourceCode haskell"><span class="fu">index</span></code>
+function, for example, comes from the <a href="https://hackage.haskell.org/package/adjunctions">adjunctions</a>
+package, from the <a href="https://hackage.haskell.org/package/adjunctions-4.3/docs/Data-Functor-Rep.html"><code class="sourceCode haskell"><span class="dt">Representable</span></code></a>
+class. That’s because those algebras are actually representable
+functors, with their representation being the thing they match. They
+also conform to a whole bunch of things automatically, letting you
+combine them interesting ways.</p>
 <h2 id="printing-expressions">Printing Expressions</h2>
-<p>Properly printing expressions, with minimal parentheses, is a surprisingly difficult problem. <span class="citation" data-cites="ramsey_unparsing_1998">Ramsey (<a href="#ref-ramsey_unparsing_1998" role="doc-biblioref">1998</a>)</span> provides a solution of the form:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>isParens side (<span class="dt">Assoc</span> ao po) (<span class="dt">Assoc</span> ai <span class="fu">pi</span>) <span class="ot">=</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="fu">pi</span> <span class="op">&lt;=</span> po <span class="op">&amp;&amp;</span> (<span class="fu">pi</span> <span class="op">/=</span> po <span class="op">||</span> ai <span class="op">/=</span> ao <span class="op">||</span> ao <span class="op">/=</span> side)</span></code></pre></div>
-<p>Using this, we can write an algebra for printing expressions. It should work in the general case, not just on the expression type defined above, so we need to make another unfixed functor to describe the printing of an expression:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Side</span> <span class="ot">=</span> <span class="dt">L</span> <span class="op">|</span> <span class="dt">R</span> <span class="kw">deriving</span> <span class="dt">Eq</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ShowExpr</span> t e</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">ShowLit</span> {<span class="ot"> _repr ::</span> t }</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Prefix</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Postfix</span> {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true"></a>  <span class="op">|</span> <span class="dt">Binary</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _lchild ::</span> e</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true"></a>                                              ,<span class="ot"> _rchild ::</span> e }</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true"></a>  </span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true"></a>makeLenses '<span class="dt">'ShowExpr</span></span></code></pre></div>
-<p>The lenses are probably overkill. For printing, we need not only the precedence of the current level, but also the precedence one level below. Seems like the perfect case for a zygomorphism:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">showExprAlg ::</span> <span class="dt">Semigroup</span> t</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>            <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>            <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t (<span class="dt">Maybe</span> (<span class="dt">Int</span>,<span class="dt">Side</span>), t)</span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>            <span class="ot">-&gt;</span> t</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>showExprAlg prns <span class="ot">=</span> \<span class="kw">case</span> </span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>    <span class="dt">ShowLit</span> t               <span class="ot">-&gt;</span>                   t</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>    <span class="dt">Prefix</span>  t s       (q,y) <span class="ot">-&gt;</span>                   t <span class="op">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>    <span class="dt">Postfix</span> t s (p,x)       <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="op">&lt;&gt;</span> t</span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true"></a>    <span class="dt">Binary</span>  t s (p,x) (q,y) <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="op">&lt;&gt;</span> t <span class="op">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true"></a>    ifPrns sid (op,oa) (<span class="dt">Just</span> (ip,ia))</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true"></a>      <span class="op">|</span> ip <span class="op">&lt;</span> op <span class="op">||</span> ip <span class="op">==</span> op <span class="op">&amp;&amp;</span> (ia <span class="op">/=</span> oa <span class="op">||</span> sid <span class="op">/=</span> oa) <span class="ot">=</span> prns</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true"></a>    ifPrns _ _ _ <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
-<p>The first argument to this algebra is the parenthesizing function. This algebra works fine for when the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> type is already constructed:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a><span class="ot">showExpr' ::</span> <span class="dt">Semigroup</span> t <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t) <span class="ot">-&gt;</span> <span class="dt">Fix</span> (<span class="dt">ShowExpr</span> t) <span class="ot">-&gt;</span> t</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>showExpr' <span class="ot">=</span> zygo (preview assoc) <span class="op">.</span> showExprAlg</span></code></pre></div>
-<p>But we still need to construct the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> from something else first. <code class="sourceCode haskell">hylo</code> might be a good fit:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (f b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span></code></pre></div>
-<p>But that performs a catamorphism after an anamorphism, and we want a zygomorphism after an anamorphism. Luckily, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a> library is constructed in such a way that different schemes can be stuck together relatively easily:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>hylozygo</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a><span class="ot">    ::</span> <span class="dt">Functor</span> f</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>    <span class="ot">=&gt;</span> (f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f (a, b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (c <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> b</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>hylozygo x y z <span class="ot">=</span> ghylo (distZygo x) distAna y (<span class="fu">fmap</span> <span class="dt">Identity</span> <span class="op">.</span> z)</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a></span>
-<span id="cb17-6"><a href="#cb17-6" aria-hidden="true"></a><span class="ot">showExpr ::</span> <span class="dt">Semigroup</span> t</span>
-<span id="cb17-7"><a href="#cb17-7" aria-hidden="true"></a>         <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)</span>
-<span id="cb17-8"><a href="#cb17-8" aria-hidden="true"></a>         <span class="ot">-&gt;</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t e)</span>
-<span id="cb17-9"><a href="#cb17-9" aria-hidden="true"></a>         <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> t</span>
-<span id="cb17-10"><a href="#cb17-10" aria-hidden="true"></a>showExpr <span class="ot">=</span> hylozygo (preview assoc) <span class="op">.</span> showExprAlg</span></code></pre></div>
-<p>Let’s try it out, with a right-associative operator this time to make things more difficult:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>  <span class="op">|</span> (<span class="op">:^:</span>) a a</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a>makeHandler '<span class="dt">'ExprF</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Expr</span> <span class="ot">=</span> <span class="dt">Expr</span> {<span class="ot"> runExpr ::</span> <span class="dt">ExprF</span> <span class="dt">Expr</span> }</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a></span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true"></a>  <span class="fu">fromInteger</span> <span class="ot">=</span> <span class="dt">Expr</span> <span class="op">.</span> <span class="dt">LitF</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true"></a>  x <span class="op">+</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:+:</span> y)</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true"></a>  x <span class="op">*</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:*:</span> y)</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true"></a>  </span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true"></a><span class="kw">infixr</span> <span class="dv">8</span> <span class="op">^*</span></span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true"></a><span class="ot">(^*) ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span></span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true"></a>x <span class="op">^*</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:^:</span> y)</span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true"></a></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true"></a>  <span class="fu">show</span> <span class="ot">=</span></span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true"></a>    showExpr</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true"></a>      (\x <span class="ot">-&gt;</span> <span class="st">&quot;(&quot;</span> <span class="op">++</span> x <span class="op">++</span> <span class="st">&quot;)&quot;</span>)</span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true"></a>      (<span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="op">.</span> runExpr)</span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true"></a>    <span class="kw">where</span></span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true"></a>      litF <span class="ot">=</span> <span class="dt">ShowLit</span> <span class="op">.</span> <span class="fu">show</span></span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true"></a>      (<span class="op">+:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; + &quot;</span> (<span class="dv">6</span>,<span class="dt">L</span>)</span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true"></a>      (<span class="op">*:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; * &quot;</span> (<span class="dv">7</span>,<span class="dt">L</span>)</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true"></a>      (<span class="op">^:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; ^ &quot;</span> (<span class="dv">8</span>,<span class="dt">R</span>)</span></code></pre></div>
-<p>Since we only specified <code class="sourceCode haskell"><span class="dt">Semigroup</span></code> in the definition of <code class="sourceCode haskell">showExpr</code>, we can use the more efficient difference-list definition of <code class="sourceCode haskell"><span class="dt">Show</span></code>:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>    <span class="fu">showsPrec</span> _ <span class="ot">=</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>      appEndo <span class="op">.</span> showExpr</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>        (<span class="dt">Endo</span> <span class="op">.</span> <span class="fu">showParen</span> <span class="dt">True</span> <span class="op">.</span> appEndo)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>        (<span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="op">.</span> runExpr)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>      <span class="kw">where</span></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a>        litF <span class="ot">=</span> <span class="dt">ShowLit</span> <span class="op">.</span> <span class="dt">Endo</span> <span class="op">.</span> <span class="fu">shows</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>        (<span class="op">+:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; + &quot;</span> <span class="op">++</span>)) (<span class="dv">6</span>,<span class="dt">L</span>)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a>        (<span class="op">*:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; * &quot;</span> <span class="op">++</span>)) (<span class="dv">7</span>,<span class="dt">L</span>)</span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a>        (<span class="op">^:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; ^ &quot;</span> <span class="op">++</span>)) (<span class="dv">8</span>,<span class="dt">R</span>)</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true"></a></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true"></a><span class="dv">1</span> <span class="op">^*</span> <span class="dv">2</span> <span class="op">^*</span> <span class="dv">3</span>         <span class="co">-- 1 ^ 2 ^ 3</span></span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true"></a>(<span class="dv">1</span> <span class="op">^*</span> <span class="dv">2</span>) <span class="op">^*</span> <span class="dv">3</span>       <span class="co">-- (1 ^ 2) ^ 3</span></span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true"></a><span class="dv">1</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span><span class="ot">   ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * 2 + 3</span></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true"></a><span class="dv">1</span> <span class="op">*</span> (<span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>)<span class="ot"> ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * (2 + 3)</span></span></code></pre></div>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-ramsey_unparsing_1998">
-<p>Ramsey, Norman. 1998. “Unparsing Expressions With Prefix and Postfix Operators.” <em>Software—Practice &amp; Experience</em> 28 (12): 1327–1356. <a href="http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html">http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html</a>.</p>
+<p>Properly printing expressions, with minimal parentheses, is a
+surprisingly difficult problem. <span class="citation" data-cites="ramsey_unparsing_1998">Ramsey (1998)</span> provides a
+solution of the form:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>isParens side (<span class="dt">Assoc</span> ao po) (<span class="dt">Assoc</span> ai <span class="fu">pi</span>) <span class="ot">=</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pi</span> <span class="op">&lt;=</span> po <span class="op">&amp;&amp;</span> (<span class="fu">pi</span> <span class="op">/=</span> po <span class="op">||</span> ai <span class="op">/=</span> ao <span class="op">||</span> ao <span class="op">/=</span> side)</span></code></pre></div>
+<p>Using this, we can write an algebra for printing expressions. It
+should work in the general case, not just on the expression type defined
+above, so we need to make another unfixed functor to describe the
+printing of an expression:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Side</span> <span class="ot">=</span> <span class="dt">L</span> <span class="op">|</span> <span class="dt">R</span> <span class="kw">deriving</span> <span class="dt">Eq</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ShowExpr</span> t e</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">ShowLit</span> {<span class="ot"> _repr ::</span> t }</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Prefix</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Postfix</span> {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _child  ::</span> e }</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> <span class="dt">Binary</span>  {<span class="ot"> _repr ::</span> t,<span class="ot"> _assoc ::</span> (<span class="dt">Int</span>,<span class="dt">Side</span>),<span class="ot"> _lchild ::</span> e</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>                                              ,<span class="ot"> _rchild ::</span> e }</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>makeLenses '<span class="dt">'ShowExpr</span></span></code></pre></div>
+<p>The lenses are probably overkill. For printing, we need not only the
+precedence of the current level, but also the precedence one level
+below. Seems like the perfect case for a zygomorphism:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ot">showExprAlg ::</span> <span class="dt">Semigroup</span> t</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>            <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>            <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t (<span class="dt">Maybe</span> (<span class="dt">Int</span>,<span class="dt">Side</span>), t)</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>            <span class="ot">-&gt;</span> t</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>showExprAlg prns <span class="ot">=</span> \<span class="kw">case</span> </span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">ShowLit</span> t               <span class="ot">-&gt;</span>                   t</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Prefix</span>  t s       (q,y) <span class="ot">-&gt;</span>                   t <span class="op">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Postfix</span> t s (p,x)       <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="op">&lt;&gt;</span> t</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Binary</span>  t s (p,x) (q,y) <span class="ot">-&gt;</span> ifPrns <span class="dt">L</span> s p x <span class="op">&lt;&gt;</span> t <span class="op">&lt;&gt;</span> ifPrns <span class="dt">R</span> s q y</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>    ifPrns sid (op,oa) (<span class="dt">Just</span> (ip,ia))</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>      <span class="op">|</span> ip <span class="op">&lt;</span> op <span class="op">||</span> ip <span class="op">==</span> op <span class="op">&amp;&amp;</span> (ia <span class="op">/=</span> oa <span class="op">||</span> sid <span class="op">/=</span> oa) <span class="ot">=</span> prns</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    ifPrns _ _ _ <span class="ot">=</span> <span class="fu">id</span></span></code></pre></div>
+<p>The first argument to this algebra is the parenthesizing function.
+This algebra works fine for when the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> type
+is already constructed:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="ot">showExpr' ::</span> <span class="dt">Semigroup</span> t <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t) <span class="ot">-&gt;</span> <span class="dt">Fix</span> (<span class="dt">ShowExpr</span> t) <span class="ot">-&gt;</span> t</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>showExpr' <span class="ot">=</span> zygo (preview assoc) <span class="op">.</span> showExprAlg</span></code></pre></div>
+<p>But we still need to construct the <code class="sourceCode haskell"><span class="dt">ShowExpr</span></code> from
+something else first. <code class="sourceCode haskell">hylo</code> might
+be a good fit:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">hylo ::</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> (f b <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (a <span class="ot">-&gt;</span> f a) <span class="ot">-&gt;</span> a <span class="ot">-&gt;</span> b</span></code></pre></div>
+<p>But that performs a catamorphism after an anamorphism, and we want a
+zygomorphism after an anamorphism. Luckily, the <a href="https://hackage.haskell.org/package/recursion-schemes">recursion-schemes</a>
+library is constructed in such a way that different schemes can be stuck
+together relatively easily:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>hylozygo</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="ot">    ::</span> <span class="dt">Functor</span> f</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=&gt;</span> (f a <span class="ot">-&gt;</span> a) <span class="ot">-&gt;</span> (f (a, b) <span class="ot">-&gt;</span> b) <span class="ot">-&gt;</span> (c <span class="ot">-&gt;</span> f c) <span class="ot">-&gt;</span> c <span class="ot">-&gt;</span> b</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>hylozygo x y z <span class="ot">=</span> ghylo (distZygo x) distAna y (<span class="fu">fmap</span> <span class="dt">Identity</span> <span class="op">.</span> z)</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="ot">showExpr ::</span> <span class="dt">Semigroup</span> t</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>         <span class="ot">=&gt;</span> (t <span class="ot">-&gt;</span> t)</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>         <span class="ot">-&gt;</span> (e <span class="ot">-&gt;</span> <span class="dt">ShowExpr</span> t e)</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>         <span class="ot">-&gt;</span> e <span class="ot">-&gt;</span> t</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>showExpr <span class="ot">=</span> hylozygo (preview assoc) <span class="op">.</span> showExprAlg</span></code></pre></div>
+<p>Let’s try it out, with a right-associative operator this time to make
+things more difficult:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">ExprF</span> a</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="ot">=</span> <span class="dt">LitF</span> <span class="dt">Integer</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:+:</span>) a a</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:*:</span>) a a</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> (<span class="op">:^:</span>) a a</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> <span class="dt">Functor</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>makeHandler '<span class="dt">'ExprF</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Expr</span> <span class="ot">=</span> <span class="dt">Expr</span> {<span class="ot"> runExpr ::</span> <span class="dt">ExprF</span> <span class="dt">Expr</span> }</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fromInteger</span> <span class="ot">=</span> <span class="dt">Expr</span> <span class="op">.</span> <span class="dt">LitF</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  x <span class="op">+</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:+:</span> y)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  x <span class="op">*</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:*:</span> y)</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="kw">infixr</span> <span class="dv">8</span> <span class="op">^*</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="ot">(^*) ::</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span> <span class="ot">-&gt;</span> <span class="dt">Expr</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>x <span class="op">^*</span> y <span class="ot">=</span> <span class="dt">Expr</span> (x <span class="op">:^:</span> y)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">show</span> <span class="ot">=</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>    showExpr</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>      (\x <span class="ot">-&gt;</span> <span class="st">&quot;(&quot;</span> <span class="op">++</span> x <span class="op">++</span> <span class="st">&quot;)&quot;</span>)</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a>      (<span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="op">.</span> runExpr)</span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">where</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>      litF <span class="ot">=</span> <span class="dt">ShowLit</span> <span class="op">.</span> <span class="fu">show</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a>      (<span class="op">+:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; + &quot;</span> (<span class="dv">6</span>,<span class="dt">L</span>)</span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>      (<span class="op">*:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; * &quot;</span> (<span class="dv">7</span>,<span class="dt">L</span>)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>      (<span class="op">^:</span>) <span class="ot">=</span> <span class="dt">Binary</span> <span class="st">&quot; ^ &quot;</span> (<span class="dv">8</span>,<span class="dt">R</span>)</span></code></pre></div>
+<p>Since we only specified <code class="sourceCode haskell"><span class="dt">Semigroup</span></code> in
+the definition of <code class="sourceCode haskell">showExpr</code>, we
+can use the more efficient difference-list definition of <code class="sourceCode haskell"><span class="dt">Show</span></code>:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Show</span> <span class="dt">Expr</span> <span class="kw">where</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>    <span class="fu">showsPrec</span> _ <span class="ot">=</span></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>      appEndo <span class="op">.</span> showExpr</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>        (<span class="dt">Endo</span> <span class="op">.</span> <span class="fu">showParen</span> <span class="dt">True</span> <span class="op">.</span> appEndo)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>        (<span class="fu">index</span> <span class="dt">ExprFAlg</span> {<span class="op">..</span>} <span class="op">.</span> runExpr)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        litF <span class="ot">=</span> <span class="dt">ShowLit</span> <span class="op">.</span> <span class="dt">Endo</span> <span class="op">.</span> <span class="fu">shows</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>        (<span class="op">+:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; + &quot;</span> <span class="op">++</span>)) (<span class="dv">6</span>,<span class="dt">L</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>        (<span class="op">*:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; * &quot;</span> <span class="op">++</span>)) (<span class="dv">7</span>,<span class="dt">L</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>        (<span class="op">^:</span>) <span class="ot">=</span> <span class="dt">Binary</span> (<span class="dt">Endo</span> (<span class="st">&quot; ^ &quot;</span> <span class="op">++</span>)) (<span class="dv">8</span>,<span class="dt">R</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">^*</span> <span class="dv">2</span> <span class="op">^*</span> <span class="dv">3</span>         <span class="co">-- 1 ^ 2 ^ 3</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>(<span class="dv">1</span> <span class="op">^*</span> <span class="dv">2</span>) <span class="op">^*</span> <span class="dv">3</span>       <span class="co">-- (1 ^ 2) ^ 3</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">*</span> <span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span><span class="ot">   ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * 2 + 3</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">*</span> (<span class="dv">2</span> <span class="op">+</span> <span class="dv">3</span>)<span class="ot"> ::</span> <span class="dt">Expr</span> <span class="co">-- 1 * (2 + 3)</span></span></code></pre></div>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-ramsey_unparsing_1998" class="csl-entry" role="listitem">
+Ramsey, Norman. 1998. <span>“Unparsing <span>Expressions</span>
+<span>With</span> <span>Prefix</span> and <span>Postfix</span>
+<span>Operators</span>.”</span> <em>Software—Practice &amp;
+Experience</em> 28 (12): 1327–1356. <a href="http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html">http://www.cs.tufts.edu/%7Enr/pubs/unparse-abstract.html</a>.
 </div>
 </div>
 

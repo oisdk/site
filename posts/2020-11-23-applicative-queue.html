@@ -32,159 +32,219 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>We pick up the story again at the question of a breadth-first (Applicative) traversal of a rose tree <span class="citation" data-cites="gibbons_breadthfirst_2015">(Gibbons <a href="#ref-gibbons_breadthfirst_2015" role="doc-biblioref">2015</a>)</span>. In the last post, I finally came up with an implementation I was happy with:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Tree</span> a <span class="ot">=</span> a <span class="op">:&amp;</span> [<span class="dt">Tree</span> a]</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>bft f (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (f x) (bftF f xs)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a><span class="ot">bftF ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> a] <span class="ot">-&gt;</span> f [<span class="dt">Tree</span> b]</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>bftF t <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> (<span class="op">&lt;*&gt;</span>) (<span class="fu">pure</span> []) <span class="op">.</span> <span class="fu">foldr</span> f [<span class="fu">pure</span> ([]<span class="op">:</span>)]</span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true"></a>    f (x <span class="op">:&amp;</span> xs) (q <span class="op">:</span> qs) <span class="ot">=</span> liftA2 c (t x) q <span class="op">:</span> <span class="fu">foldr</span> f (p qs) xs</span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true"></a>    </span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true"></a>    p []     <span class="ot">=</span> [<span class="fu">pure</span> ([]<span class="op">:</span>)]</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true"></a>    p (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="fu">fmap</span> (([]<span class="op">:</span>)<span class="op">.</span>) x <span class="op">:</span> xs</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true"></a></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true"></a>    c x k (xs <span class="op">:</span> ks) <span class="ot">=</span> ((x <span class="op">:&amp;</span> xs) <span class="op">:</span> y) <span class="op">:</span> ys</span>
-<span id="cb1-15"><a href="#cb1-15" aria-hidden="true"></a>      <span class="kw">where</span> (y <span class="op">:</span> ys) <span class="ot">=</span> k ks</span></code></pre></div>
+<p>We pick up the story again at the question of a breadth-first
+(Applicative) traversal of a rose tree <span class="citation" data-cites="gibbons_breadthfirst_2015">(Gibbons 2015)</span>. In the
+last post, I finally came up with an implementation I was happy
+with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Tree</span> a <span class="ot">=</span> a <span class="op">:&amp;</span> [<span class="dt">Tree</span> a]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>bft f (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (f x) (bftF f xs)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="ot">bftF ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> [<span class="dt">Tree</span> a] <span class="ot">-&gt;</span> f [<span class="dt">Tree</span> b]</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>bftF t <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> (<span class="op">&lt;*&gt;</span>) (<span class="fu">pure</span> []) <span class="op">.</span> <span class="fu">foldr</span> f [<span class="fu">pure</span> ([]<span class="op">:</span>)]</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    f (x <span class="op">:&amp;</span> xs) (q <span class="op">:</span> qs) <span class="ot">=</span> liftA2 c (t x) q <span class="op">:</span> <span class="fu">foldr</span> f (p qs) xs</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    p []     <span class="ot">=</span> [<span class="fu">pure</span> ([]<span class="op">:</span>)]</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    p (x<span class="op">:</span>xs) <span class="ot">=</span> <span class="fu">fmap</span> (([]<span class="op">:</span>)<span class="op">.</span>) x <span class="op">:</span> xs</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    c x k (xs <span class="op">:</span> ks) <span class="ot">=</span> ((x <span class="op">:&amp;</span> xs) <span class="op">:</span> y) <span class="op">:</span> ys</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>      <span class="kw">where</span> (y <span class="op">:</span> ys) <span class="ot">=</span> k ks</span></code></pre></div>
 <p>It has the correct semantics and asymptotics.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a>tree <span class="ot">=</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>    <span class="dv">1</span> <span class="op">:&amp;</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>      [ <span class="dv">2</span> <span class="op">:&amp;</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>          [ <span class="dv">5</span> <span class="op">:&amp;</span></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>              [ <span class="dv">9</span>  <span class="op">:&amp;</span> []</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>              , <span class="dv">10</span> <span class="op">:&amp;</span> []]</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>          , <span class="dv">6</span> <span class="op">:&amp;</span> []]</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a>      , <span class="dv">3</span> <span class="op">:&amp;</span> []</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a>      , <span class="dv">4</span> <span class="op">:&amp;</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>          [ <span class="dv">7</span> <span class="op">:&amp;</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>              [ <span class="dv">11</span> <span class="op">:&amp;</span> []</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true"></a>              , <span class="dv">12</span> <span class="op">:&amp;</span> []]</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true"></a>          , <span class="dv">8</span> <span class="op">:&amp;</span> []]]</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true"></a>          </span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> bft <span class="fu">print</span> tree</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true"></a><span class="dv">1</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true"></a><span class="dv">2</span></span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true"></a><span class="dv">3</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true"></a><span class="dv">4</span></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true"></a><span class="dv">5</span></span>
-<span id="cb2-21"><a href="#cb2-21" aria-hidden="true"></a><span class="dv">6</span></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true"></a><span class="dv">7</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true"></a><span class="dv">8</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true"></a><span class="dv">9</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true"></a><span class="dv">10</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true"></a><span class="dv">11</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true"></a><span class="dv">12</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true"></a>() <span class="op">:&amp;</span></span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true"></a>   [ () <span class="op">:&amp;</span></span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true"></a>        [ () <span class="op">:&amp;</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true"></a>             [ () <span class="op">:&amp;</span> []</span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true"></a>             , () <span class="op">:&amp;</span> []]</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true"></a>        , () <span class="op">:&amp;</span> []]</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true"></a>   , () <span class="op">:&amp;</span>   []</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true"></a>   , () <span class="op">:&amp;</span></span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true"></a>        [ () <span class="op">:&amp;</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true"></a>             [ () <span class="op">:&amp;</span> []</span>
-<span id="cb2-38"><a href="#cb2-38" aria-hidden="true"></a>             , () <span class="op">:&amp;</span> []]</span>
-<span id="cb2-39"><a href="#cb2-39" aria-hidden="true"></a>        , () <span class="op">:&amp;</span> []]]</span></code></pre></div>
-<p>But it’s quite difficult to understand, and doesn’t lend much insight into what’s going on with the whole “breadth-first” notion. The technique the function uses also isn’t reusable.</p>
-<p>A much nicer function uses the <code>Phases</code> Applicative <span class="citation" data-cites="easterly_functions_2019">(Easterly <a href="#ref-easterly_functions_2019" role="doc-biblioref">2019</a>)</span>:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>bft f <span class="ot">=</span> runPhases <span class="op">.</span> go</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    go (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (<span class="dt">Lift</span> (f x)) (later (<span class="fu">traverse</span> go xs))</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tree <span class="ot">=</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1</span> <span class="op">:&amp;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>      [ <span class="dv">2</span> <span class="op">:&amp;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>          [ <span class="dv">5</span> <span class="op">:&amp;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>              [ <span class="dv">9</span>  <span class="op">:&amp;</span> []</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>              , <span class="dv">10</span> <span class="op">:&amp;</span> []]</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>          , <span class="dv">6</span> <span class="op">:&amp;</span> []]</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      , <span class="dv">3</span> <span class="op">:&amp;</span> []</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      , <span class="dv">4</span> <span class="op">:&amp;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>          [ <span class="dv">7</span> <span class="op">:&amp;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>              [ <span class="dv">11</span> <span class="op">:&amp;</span> []</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>              , <span class="dv">12</span> <span class="op">:&amp;</span> []]</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>          , <span class="dv">8</span> <span class="op">:&amp;</span> []]]</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>          </span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> bft <span class="fu">print</span> tree</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="dv">3</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="dv">4</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="dv">5</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="dv">6</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a><span class="dv">7</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="dv">8</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="dv">9</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="dv">10</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="dv">11</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="dv">12</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>() <span class="op">:&amp;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>   [ () <span class="op">:&amp;</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>        [ () <span class="op">:&amp;</span></span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>             [ () <span class="op">:&amp;</span> []</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>             , () <span class="op">:&amp;</span> []]</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>        , () <span class="op">:&amp;</span> []]</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>   , () <span class="op">:&amp;</span>   []</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>   , () <span class="op">:&amp;</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>        [ () <span class="op">:&amp;</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>             [ () <span class="op">:&amp;</span> []</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>             , () <span class="op">:&amp;</span> []]</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>        , () <span class="op">:&amp;</span> []]]</span></code></pre></div>
+<p>But it’s quite difficult to understand, and doesn’t lend much insight
+into what’s going on with the whole “breadth-first” notion. The
+technique the function uses also isn’t reusable.</p>
+<p>A much nicer function uses the <code>Phases</code> Applicative <span class="citation" data-cites="easterly_functions_2019">(Easterly
+2019)</span>:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>bft f <span class="ot">=</span> runPhases <span class="op">.</span> go</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    go (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (<span class="dt">Lift</span> (f x)) (later (<span class="fu">traverse</span> go xs))</span></code></pre></div>
 <p>But this function is quadratic.</p>
-<p>So the task for this post today is to derive a type like the <code>Phases</code> type with a <code>later</code> operation, but which has the appropriate performance characteristics. At the end I’ll look into what the theoretical properties of this type are.</p>
+<p>So the task for this post today is to derive a type like the
+<code>Phases</code> type with a <code>later</code> operation, but which
+has the appropriate performance characteristics. At the end I’ll look
+into what the theoretical properties of this type are.</p>
 <h1 id="a-free-applicative">A Free Applicative</h1>
-<p>At its core, the <code>Phases</code> type is basically a free Applicative <span class="citation" data-cites="capriotti_free_2014">(Capriotti and Kaposi <a href="#ref-capriotti_free_2014" role="doc-biblioref">2014</a>)</span>. I’ll reimplement it here as a slightly different free Applicative (one that’s based on <code>liftA2</code> rather than <code>&lt;*&gt;</code>):</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Free</span> f a <span class="kw">where</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  <span class="dt">Pure</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  <span class="dt">Lift</span><span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f b <span class="ot">-&gt;</span> <span class="dt">Free</span> f c</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>  </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a><span class="ot">lower ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Free</span> f a <span class="ot">-&gt;</span> f a</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>lower (<span class="dt">Pure</span> x) <span class="ot">=</span> <span class="fu">pure</span> x</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>lower (<span class="dt">Lift</span> f x xs) <span class="ot">=</span> liftA2 f x (lower xs)</span></code></pre></div>
-<p>The key with the <code>Phases</code> type is to observe that there’s actually two possible implementations of <code>Applicative</code> for the <code>Free</code> type above: one which makes it the “correct” free applicative:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Pure</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>  liftA2 c (<span class="dt">Pure</span> x) ys <span class="ot">=</span> <span class="fu">fmap</span> (c x) ys</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>  liftA2 c (<span class="dt">Lift</span> f x xs) ys <span class="ot">=</span> <span class="dt">Lift</span> (\x (y,z) <span class="ot">-&gt;</span> c (f x y) z) x (liftA2 (,) xs ys)</span></code></pre></div>
+<p>At its core, the <code>Phases</code> type is basically a free
+Applicative <span class="citation" data-cites="capriotti_free_2014">(Capriotti and Kaposi 2014)</span>.
+I’ll reimplement it here as a slightly different free Applicative (one
+that’s based on <code>liftA2</code> rather than
+<code>&lt;*&gt;</code>):</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Free</span> f a <span class="kw">where</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Pure</span><span class="ot"> ::</span> a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lift</span><span class="ot"> ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f b <span class="ot">-&gt;</span> <span class="dt">Free</span> f c</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="ot">lower ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Free</span> f a <span class="ot">-&gt;</span> f a</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>lower (<span class="dt">Pure</span> x) <span class="ot">=</span> <span class="fu">pure</span> x</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>lower (<span class="dt">Lift</span> f x xs) <span class="ot">=</span> liftA2 f x (lower xs)</span></code></pre></div>
+<p>The key with the <code>Phases</code> type is to observe that there’s
+actually two possible implementations of <code>Applicative</code> for
+the <code>Free</code> type above: one which makes it the “correct” free
+applicative:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Pure</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  liftA2 c (<span class="dt">Pure</span> x) ys <span class="ot">=</span> <span class="fu">fmap</span> (c x) ys</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  liftA2 c (<span class="dt">Lift</span> f x xs) ys <span class="ot">=</span> <span class="dt">Lift</span> (\x (y,z) <span class="ot">-&gt;</span> c (f x y) z) x (liftA2 (,) xs ys)</span></code></pre></div>
 <p>And then one which <em>zips</em> effects together:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Pure</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  liftA2 c (<span class="dt">Pure</span> x) ys <span class="ot">=</span> <span class="fu">fmap</span> (c x) ys</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>  liftA2 c xs (<span class="dt">Pure</span> y) <span class="ot">=</span> <span class="fu">fmap</span> (<span class="fu">flip</span> c y) xs</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>  liftA2 c (<span class="dt">Lift</span> f x xs) (<span class="dt">Lift</span> g y ys) <span class="ot">=</span> </span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>    <span class="dt">Lift</span> </span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>      (\(x,y) (xs,ys) <span class="ot">-&gt;</span> c (f x xs) (g y ys)) </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>      (liftA2 (,) x y) </span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a>      (liftA2 (,) xs ys)</span></code></pre></div>
-<p>This second instance makes the <code>Free</code> type into not a free Applicative at all: instead it’s some kind of Applicative transformer which we can use to reorder effects. Since effects are combined only when they’re at the same point in the list, we can use it to do our breadth-first traversal.</p>
-<p>As an aside, from this perspective it’s clear that this is some kind of <code>FunList</code> <span class="citation" data-cites="vanlaarhoven_nonregular_2009">(van Laarhoven <a href="#ref-vanlaarhoven_nonregular_2009" role="doc-biblioref">2009</a>)</span>: this opens up a lot of interesting curiosities about the type, since that type in particular is quite well-studied.</p>
-<p>Anyway, we’re able to do the <code>later</code> operation quite simply:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="ot">later ::</span> <span class="dt">Free</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>later <span class="ot">=</span> <span class="dt">Lift</span> (<span class="fu">const</span> <span class="fu">id</span>) (<span class="fu">pure</span> ())</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Free</span> f) <span class="kw">where</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> <span class="ot">=</span> <span class="dt">Pure</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  liftA2 c (<span class="dt">Pure</span> x) ys <span class="ot">=</span> <span class="fu">fmap</span> (c x) ys</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  liftA2 c xs (<span class="dt">Pure</span> y) <span class="ot">=</span> <span class="fu">fmap</span> (<span class="fu">flip</span> c y) xs</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  liftA2 c (<span class="dt">Lift</span> f x xs) (<span class="dt">Lift</span> g y ys) <span class="ot">=</span> </span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Lift</span> </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      (\(x,y) (xs,ys) <span class="ot">-&gt;</span> c (f x xs) (g y ys)) </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>      (liftA2 (,) x y) </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>      (liftA2 (,) xs ys)</span></code></pre></div>
+<p>This second instance makes the <code>Free</code> type into not a free
+Applicative at all: instead it’s some kind of Applicative transformer
+which we can use to reorder effects. Since effects are combined only
+when they’re at the same point in the list, we can use it to do our
+breadth-first traversal.</p>
+<p>As an aside, from this perspective it’s clear that this is some kind
+of <code>FunList</code> <span class="citation" data-cites="vanlaarhoven_nonregular_2009">(van Laarhoven 2009)</span>:
+this opens up a lot of interesting curiosities about the type, since
+that type in particular is quite well-studied.</p>
+<p>Anyway, we’re able to do the <code>later</code> operation quite
+simply:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="ot">later ::</span> <span class="dt">Free</span> f a <span class="ot">-&gt;</span> <span class="dt">Free</span> f a</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>later <span class="ot">=</span> <span class="dt">Lift</span> (<span class="fu">const</span> <span class="fu">id</span>) (<span class="fu">pure</span> ())</span></code></pre></div>
 <h1 id="making-it-efficient">Making it Efficient</h1>
-<p>The problem at the moment is that the Applicative instance has an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> <code>liftA2</code> implementation: this translates into an <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math> traversal overall.</p>
-<p>If we were working in a more simple context of just enumerating the contents of the tree, we might at this point look to something like difference lists: these use the cayley transform on the list monoid to turn the append operation from <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math> to <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>. It turns out that there is a similar cayley transformation for Applicative functors <span class="citation" data-cites="rivas_notions_2014 rivas_monoids_2015">(Rivas and Jaskelioff <a href="#ref-rivas_notions_2014" role="doc-biblioref">2014</a>; Rivas, Jaskelioff, and Schrijvers <a href="#ref-rivas_monoids_2015" role="doc-biblioref">2015</a>)</span>:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Day</span> f a <span class="ot">=</span> <span class="dt">Day</span> {<span class="ot"> runDay ::</span> <span class="ot">∀</span> b<span class="op">.</span> f b <span class="ot">-&gt;</span> f (a, b) }</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Day</span> f) <span class="kw">where</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>  <span class="fu">fmap</span> f xs <span class="ot">=</span> <span class="dt">Day</span> (<span class="fu">fmap</span> (first f) <span class="op">.</span> runDay xs)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>  </span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Day</span> f) <span class="kw">where</span></span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>  <span class="fu">pure</span> x <span class="ot">=</span> <span class="dt">Day</span> (<span class="fu">fmap</span> ((,) x))</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>  liftA2 c xs ys <span class="ot">=</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    <span class="dt">Day</span> (<span class="fu">fmap</span> (\(x,(y,z)) <span class="ot">-&gt;</span> (c x y, z)) <span class="op">.</span> runDay xs <span class="op">.</span> runDay ys)</span></code></pre></div>
-<p>And with this type we can implement our queue of applicative effects:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">Queue</span> f <span class="ot">=</span> <span class="dt">Day</span> (<span class="dt">Free</span> f)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a><span class="ot">runQueue ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Queue</span> f a <span class="ot">-&gt;</span> f a</span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>runQueue <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">fst</span> <span class="op">.</span> lower <span class="op">.</span> <span class="fu">flip</span> runDay (<span class="dt">Pure</span> ())</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a></span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a><span class="ot">now ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Queue</span> f a</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a>now xs <span class="ot">=</span> <span class="dt">Day</span> \<span class="kw">case</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>  <span class="dt">Pure</span> x      <span class="ot">-&gt;</span> <span class="dt">Lift</span> (,) xs (<span class="dt">Pure</span> x)</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>  <span class="dt">Lift</span> f y ys <span class="ot">-&gt;</span> <span class="dt">Lift</span> (\(x,y) z <span class="ot">-&gt;</span> (x, f y z)) (liftA2 (,) xs y) ys</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a></span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a><span class="ot">later ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Queue</span> f a <span class="ot">-&gt;</span> <span class="dt">Queue</span> f a</span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a>later xs <span class="ot">=</span> <span class="dt">Day</span> \<span class="kw">case</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>  <span class="dt">Pure</span> x      <span class="ot">-&gt;</span> <span class="dt">Lift</span> (<span class="fu">const</span> <span class="fu">id</span>) (<span class="fu">pure</span> ()) (runDay xs (<span class="dt">Pure</span> x))</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>  <span class="dt">Lift</span> f y ys <span class="ot">-&gt;</span> <span class="dt">Lift</span> (\x (y,z) <span class="ot">-&gt;</span> (y, f x z)) y (runDay xs ys)</span></code></pre></div>
-<p>As expected, this gives us the clean implementation of a breadth-first traversal with the right asymptotics (I think):</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>bft f <span class="ot">=</span> runQueue <span class="op">.</span> go</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>    go (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (now (f x)) (later (<span class="fu">traverse</span> go xs))</span></code></pre></div>
-<p>(it’s worth pointing out that we haven’t actually used the applicative instance on the free applicative at any point: we have inlined all of the “zipping” to make it absolutely clear that everything has stayed linear).</p>
+<p>The problem at the moment is that the Applicative instance has an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>
+<code>liftA2</code> implementation: this translates into an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>
+traversal overall.</p>
+<p>If we were working in a more simple context of just enumerating the
+contents of the tree, we might at this point look to something like
+difference lists: these use the cayley transform on the list monoid to
+turn the append operation from
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math>
+to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n^2)</annotation></semantics></math>.
+It turns out that there is a similar cayley transformation for
+Applicative functors <span class="citation" data-cites="rivas_notions_2014 rivas_monoids_2015">(Rivas and Jaskelioff
+2014; Rivas, Jaskelioff, and Schrijvers 2015)</span>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Day</span> f a <span class="ot">=</span> <span class="dt">Day</span> {<span class="ot"> runDay ::</span> ∀ b<span class="op">.</span> f b <span class="ot">-&gt;</span> f (a, b) }</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Functor</span> (<span class="dt">Day</span> f) <span class="kw">where</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fmap</span> f xs <span class="ot">=</span> <span class="dt">Day</span> (<span class="fu">fmap</span> (first f) <span class="op">.</span> runDay xs)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Functor</span> f <span class="ot">=&gt;</span> <span class="dt">Applicative</span> (<span class="dt">Day</span> f) <span class="kw">where</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pure</span> x <span class="ot">=</span> <span class="dt">Day</span> (<span class="fu">fmap</span> ((,) x))</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  liftA2 c xs ys <span class="ot">=</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Day</span> (<span class="fu">fmap</span> (\(x,(y,z)) <span class="ot">-&gt;</span> (c x y, z)) <span class="op">.</span> runDay xs <span class="op">.</span> runDay ys)</span></code></pre></div>
+<p>And with this type we can implement our queue of applicative
+effects:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">Queue</span> f <span class="ot">=</span> <span class="dt">Day</span> (<span class="dt">Free</span> f)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="ot">runQueue ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Queue</span> f a <span class="ot">-&gt;</span> f a</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>runQueue <span class="ot">=</span> <span class="fu">fmap</span> <span class="fu">fst</span> <span class="op">.</span> lower <span class="op">.</span> <span class="fu">flip</span> runDay (<span class="dt">Pure</span> ())</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="ot">now ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> f a <span class="ot">-&gt;</span> <span class="dt">Queue</span> f a</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>now xs <span class="ot">=</span> <span class="dt">Day</span> \<span class="kw">case</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Pure</span> x      <span class="ot">-&gt;</span> <span class="dt">Lift</span> (,) xs (<span class="dt">Pure</span> x)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lift</span> f y ys <span class="ot">-&gt;</span> <span class="dt">Lift</span> (\(x,y) z <span class="ot">-&gt;</span> (x, f y z)) (liftA2 (,) xs y) ys</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="ot">later ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> <span class="dt">Queue</span> f a <span class="ot">-&gt;</span> <span class="dt">Queue</span> f a</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>later xs <span class="ot">=</span> <span class="dt">Day</span> \<span class="kw">case</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Pure</span> x      <span class="ot">-&gt;</span> <span class="dt">Lift</span> (<span class="fu">const</span> <span class="fu">id</span>) (<span class="fu">pure</span> ()) (runDay xs (<span class="dt">Pure</span> x))</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="dt">Lift</span> f y ys <span class="ot">-&gt;</span> <span class="dt">Lift</span> (\x (y,z) <span class="ot">-&gt;</span> (y, f x z)) y (runDay xs ys)</span></code></pre></div>
+<p>As expected, this gives us the clean implementation of a
+breadth-first traversal with the right asymptotics (I think):</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">bft ::</span> <span class="dt">Applicative</span> f <span class="ot">=&gt;</span> (a <span class="ot">-&gt;</span> f b) <span class="ot">-&gt;</span> <span class="dt">Tree</span> a <span class="ot">-&gt;</span> f (<span class="dt">Tree</span> b)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>bft f <span class="ot">=</span> runQueue <span class="op">.</span> go</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    go (x <span class="op">:&amp;</span> xs) <span class="ot">=</span> liftA2 (<span class="op">:&amp;</span>) (now (f x)) (later (<span class="fu">traverse</span> go xs))</span></code></pre></div>
+<p>(it’s worth pointing out that we haven’t actually used the
+applicative instance on the free applicative at any point: we have
+inlined all of the “zipping” to make it absolutely clear that everything
+has stayed linear).</p>
 <h1 id="so-whats-the-theory">So what’s the Theory?</h1>
-<p>I have yet to really dive deep on any of the theory involved in this type, I just quickly wrote up this post when I realised I was able to use the cayley transform from the mentioned papers to implement the proper breadth-first traversal. It certainly seems worth looking at more!</p>
+<p>I have yet to really dive deep on any of the theory involved in this
+type, I just quickly wrote up this post when I realised I was able to
+use the cayley transform from the mentioned papers to implement the
+proper breadth-first traversal. It certainly seems worth looking at
+more!</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-capriotti_free_2014">
-<p>Capriotti, Paolo, and Ambrus Kaposi. 2014. “Free Applicative Functors.” <em>Electronic Proceedings in Theoretical Computer Science</em> 153 (June): 2–30. doi:<a href="https://doi.org/10.4204/EPTCS.153.2">10.4204/EPTCS.153.2</a>. <a href="http://www.paolocapriotti.com/assets/applicative.pdf">http://www.paolocapriotti.com/assets/applicative.pdf</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-capriotti_free_2014" class="csl-entry" role="listitem">
+Capriotti, Paolo, and Ambrus Kaposi. 2014. <span>“Free <span>Applicative
+Functors</span>.”</span> <em>Electronic Proceedings in Theoretical
+Computer Science</em> 153 (June): 2–30. doi:<a href="https://doi.org/10.4204/EPTCS.153.2">10.4204/EPTCS.153.2</a>. <a href="http://www.paolocapriotti.com/assets/applicative.pdf">http://www.paolocapriotti.com/assets/applicative.pdf</a>.
 </div>
-<div id="ref-easterly_functions_2019">
-<p>Easterly, Noah. 2019. “Functions and Newtype Wrappers for Traversing Trees: Rampion/Tree-Traversals.” <a href="https://github.com/rampion/tree-traversals">https://github.com/rampion/tree-traversals</a>.</p>
+<div id="ref-easterly_functions_2019" class="csl-entry" role="listitem">
+Easterly, Noah. 2019. <span>“Functions and newtype wrappers for
+traversing <span>Trees</span>: Rampion/tree-traversals.”</span> <a href="https://github.com/rampion/tree-traversals">https://github.com/rampion/tree-traversals</a>.
 </div>
-<div id="ref-gibbons_breadthfirst_2015">
-<p>Gibbons, Jeremy. 2015. “Breadth-First Traversal.” <em>Patterns in Functional Programming</em>. <a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.</p>
+<div id="ref-gibbons_breadthfirst_2015" class="csl-entry" role="listitem">
+Gibbons, Jeremy. 2015. <span>“Breadth-<span>First
+Traversal</span>.”</span> <em>Patterns in Functional Programming</em>.
+<a href="https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/">https://patternsinfp.wordpress.com/2015/03/05/breadth-first-traversal/</a>.
 </div>
-<div id="ref-rivas_notions_2014">
-<p>Rivas, Exequiel, and Mauro Jaskelioff. 2014. “Notions of Computation as Monoids.” <em>arXiv:1406.4823 [cs, math]</em> (May). <a href="http://arxiv.org/abs/1406.4823">http://arxiv.org/abs/1406.4823</a>.</p>
+<div id="ref-rivas_notions_2014" class="csl-entry" role="listitem">
+Rivas, Exequiel, and Mauro Jaskelioff. 2014. <span>“Notions of
+<span>Computation</span> as <span>Monoids</span>.”</span>
+<em>arXiv:1406.4823 [cs, math]</em> (May). <a href="http://arxiv.org/abs/1406.4823">http://arxiv.org/abs/1406.4823</a>.
 </div>
-<div id="ref-rivas_monoids_2015">
-<p>Rivas, Exequiel, Mauro Jaskelioff, and Tom Schrijvers. 2015. “From Monoids to Near-Semirings: The Essence of MonadPlus and Alternative.” In <em>Proceedings of the 17th International Symposium on Principles and Practice of Declarative Programming</em>, 196–207. ACM. doi:<a href="https://doi.org/10.1145/2790449.2790514">10.1145/2790449.2790514</a>. <a href="http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf">http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf</a>.</p>
+<div id="ref-rivas_monoids_2015" class="csl-entry" role="listitem">
+Rivas, Exequiel, Mauro Jaskelioff, and Tom Schrijvers. 2015. <span>“From
+monoids to near-semirings: The essence of <span>MonadPlus</span> and
+<span>Alternative</span>.”</span> In <em>Proceedings of the 17th
+<span>International Symposium</span> on <span>Principles</span> and
+<span>Practice</span> of <span>Declarative Programming</span></em>,
+196–207. <span>ACM</span>. doi:<a href="https://doi.org/10.1145/2790449.2790514">10.1145/2790449.2790514</a>.
+<a href="http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf">http://www.fceia.unr.edu.ar/~mauro/pubs/FromMonoidstoNearsemirings.pdf</a>.
 </div>
-<div id="ref-vanlaarhoven_nonregular_2009">
-<p>van Laarhoven, Twan. 2009. “A Non-Regular Data Type Challenge.” <em>Twan van Laarhoven’s Blog</em>. <a href="https://twanvl.nl/blog/haskell/non-regular1">https://twanvl.nl/blog/haskell/non-regular1</a>.</p>
+<div id="ref-vanlaarhoven_nonregular_2009" class="csl-entry" role="listitem">
+van Laarhoven, Twan. 2009. <span>“A non-regular data type
+challenge.”</span> <em>Twan van Laarhoven’s Blog</em>. <a href="https://twanvl.nl/blog/haskell/non-regular1">https://twanvl.nl/blog/haskell/non-regular1</a>.
 </div>
 </div>
 

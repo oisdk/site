@@ -32,104 +32,219 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>
     
 </div>
 
-<p>I’m in the middle of quite a large Agda project at the moment, and I’ve picked up a few tips and tricks in the past few weeks. I’d imagine a lot of these are quite obvious once you get to grips with Agda, so I’m writing them down before I forget that they were once confusing stumbling blocks. Hopefully this helps other people trying to learn the language!</p>
-<h1 id="parameterized-modules-strangeness">Parameterized Modules Strangeness</h1>
-<p>Agda lets you parameterize modules, just as you can datatypes, with types, values, etc. It’s extremely handy for those situations where you want to be generic over some type, but that type won’t change inside the generic code. The keys to dictionaries is a good example: you can start the module with:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">module</span> Map <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="kw">where</span></span></code></pre></div>
-<p>And now, where in Haskell you’d have to write something like <code>Ord a =&gt; Map a</code>… in pretty much any function signature, you can just refer to <code>Key</code>, and you’re good to go. It’s kind of like a dynamic type synonym, in that way.</p>
-<p>Here’s the strangeness, though: what if you don’t supply one of the arguments?</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">import</span> Map</span></code></pre></div>
-<p>This won’t give you a type error, strange as it may seem. This will perform <em>lambda lifting</em>, meaning that now, every function exported by the module will have the type signature:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="ot">...</span></span></code></pre></div>
-<p>Preceding its normal signature. In other words, it changes it into what you would have had to write in Haskell.</p>
-<p>This is a powerful feature, but it can also give you some confusing errors if you don’t know about it (especially if the module has implicit arguments).</p>
+<p>I’m in the middle of quite a large Agda project at the moment, and
+I’ve picked up a few tips and tricks in the past few weeks. I’d imagine
+a lot of these are quite obvious once you get to grips with Agda, so I’m
+writing them down before I forget that they were once confusing
+stumbling blocks. Hopefully this helps other people trying to learn the
+language!</p>
+<h1 id="parameterized-modules-strangeness">Parameterized Modules
+Strangeness</h1>
+<p>Agda lets you parameterize modules, just as you can datatypes, with
+types, values, etc. It’s extremely handy for those situations where you
+want to be generic over some type, but that type won’t change inside the
+generic code. The keys to dictionaries is a good example: you can start
+the module with:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">module</span> Map <span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="kw">where</span></span></code></pre></div>
+<p>And now, where in Haskell you’d have to write something like
+<code>Ord a =&gt; Map a</code>… in pretty much any function signature,
+you can just refer to <code>Key</code>, and you’re good to go. It’s kind
+of like a dynamic type synonym, in that way.</p>
+<p>Here’s the strangeness, though: what if you don’t supply one of the
+arguments?</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> Map</span></code></pre></div>
+<p>This won’t give you a type error, strange as it may seem. This will
+perform <em>lambda lifting</em>, meaning that now, every function
+exported by the module will have the type signature:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">(</span>Key <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">(</span>Ordering <span class="ot">:</span> Ord Key<span class="ot">)</span> <span class="ot">...</span></span></code></pre></div>
+<p>Preceding its normal signature. In other words, it changes it into
+what you would have had to write in Haskell.</p>
+<p>This is a powerful feature, but it can also give you some confusing
+errors if you don’t know about it (especially if the module has implicit
+arguments).</p>
 <h1 id="auto">Auto</h1>
-<p>If you’ve got a hole in your program, you can put the cursor in it and press <code>SPC-m-a</code> (in spacemacs), and Agda will try and find the automatic solution to the problem. For a while, I didn’t think much of this feature, as rare was the program which Agda could figure out. Turns out I was just using it wrong! Into the hole you should type the options for the proof search: enabling case-splitting (<code>-c</code>), enabling the use of available definitions (<code>-r</code>), and listing possible solutions (<code>-l</code>).</p>
+<p>If you’ve got a hole in your program, you can put the cursor in it
+and press <code>SPC-m-a</code> (in spacemacs), and Agda will try and
+find the automatic solution to the problem. For a while, I didn’t think
+much of this feature, as rare was the program which Agda could figure
+out. Turns out I was just using it wrong! Into the hole you should type
+the options for the proof search: enabling case-splitting
+(<code>-c</code>), enabling the use of available definitions
+(<code>-r</code>), and listing possible solutions (<code>-l</code>).</p>
 <h1 id="well-founded-recursion">Well-Founded Recursion</h1>
-<p>Often, a program will not be obviously terminating (according to Agda’s termination checker). The first piece of advice is this: <em>don’t</em> use well-founded recursion. It’s a huge hammer, and often you can get away with fiddling with the function (try inlining definitions, rewriting generic functions to monomorphic versions, or replacing with-blocks with helper functions), or using one of the <a href="https://gallais.github.io/blog/termination-tricks.html">more lightweight techniques</a> out there.</p>
-<p>However, sometimes it really is the best option, so you have to grit your teeth and use it. What I expected (and what I used originally) was a recursion combinator, with a type something like:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>wf-rec <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a b<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">{</span>B <span class="ot">:</span> <span class="dt">Set</span> b<span class="ot">}</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>       <span class="ot">→</span> <span class="ot">((</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> <span class="ot">((</span>y <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> y &lt; x <span class="ot">→</span> B<span class="ot">)</span> <span class="ot">→</span> B<span class="ot">)</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>       <span class="ot">→</span> A <span class="ot">→</span> B</span></code></pre></div>
-<p>So we’re trying to generate a function of type <code>A → B</code>, but there’s a hairy recursive call in there somewhere. Instead we use this function, and pass it a version of our function that uses the supplied function rather than making a recursive call:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>terminating <span class="ot">:</span> A <span class="ot">→</span> B</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>terminating <span class="ot">=</span> wf-rec <span class="ot">(λ</span> x recursive-call <span class="ot">→</span> <span class="ot">...)</span></span></code></pre></div>
-<p>In other words, instead of calling the function itself, you call <code>recursive-call</code> above. Along with the argument, you supply a proof that it’s smaller than the outer argument (<code>y &lt; x</code>; assume for now that the definition of <code>&lt;</code> is just some relation like <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L31"><code>_&lt;_</code> in Data.Nat</a>).</p>
-<p>But wait! You don’t have to use it! Instead of all that, you can just pass the <code>Acc _&lt;_ x</code> type as a parameter to your function. In other words, if you have a dangerous function:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>f <span class="ot">:</span> A <span class="ot">→</span> B</span></code></pre></div>
+<p>Often, a program will not be obviously terminating (according to
+Agda’s termination checker). The first piece of advice is this:
+<em>don’t</em> use well-founded recursion. It’s a huge hammer, and often
+you can get away with fiddling with the function (try inlining
+definitions, rewriting generic functions to monomorphic versions, or
+replacing with-blocks with helper functions), or using one of the <a href="https://gallais.github.io/blog/termination-tricks.html">more
+lightweight techniques</a> out there.</p>
+<p>However, sometimes it really is the best option, so you have to grit
+your teeth and use it. What I expected (and what I used originally) was
+a recursion combinator, with a type something like:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>wf-rec <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a b<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">{</span>B <span class="ot">:</span> <span class="dt">Set</span> b<span class="ot">}</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> <span class="ot">((</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> <span class="ot">((</span>y <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> y &lt; x <span class="ot">→</span> B<span class="ot">)</span> <span class="ot">→</span> B<span class="ot">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>       <span class="ot">→</span> A <span class="ot">→</span> B</span></code></pre></div>
+<p>So we’re trying to generate a function of type <code>A → B</code>,
+but there’s a hairy recursive call in there somewhere. Instead we use
+this function, and pass it a version of our function that uses the
+supplied function rather than making a recursive call:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>terminating <span class="ot">:</span> A <span class="ot">→</span> B</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>terminating <span class="ot">=</span> wf-rec <span class="ot">(λ</span> x recursive-call <span class="ot">→</span> <span class="ot">...)</span></span></code></pre></div>
+<p>In other words, instead of calling the function itself, you call
+<code>recursive-call</code> above. Along with the argument, you supply a
+proof that it’s smaller than the outer argument (<code>y &lt; x</code>;
+assume for now that the definition of <code>&lt;</code> is just some
+relation like <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L31"><code>_&lt;_</code>
+in Data.Nat</a>).</p>
+<p>But wait! You don’t have to use it! Instead of all that, you can just
+pass the <code>Acc _&lt;_ x</code> type as a parameter to your function.
+In other words, if you have a dangerous function:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>f <span class="ot">:</span> A <span class="ot">→</span> B</span></code></pre></div>
 <p>Instead write:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>f-step <span class="ot">:</span> <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> Acc <span class="ot">_</span>&lt;<span class="ot">_</span> x <span class="ot">→</span> B</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>f-step <span class="ot">=</span> <span class="ot">...</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>f <span class="ot">:</span> A <span class="ot">→</span> B</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>f x <span class="ot">=</span> f-step x <span class="ot">...</span></span></code></pre></div>
-<p>Once you pattern match on the accessibility relation, the termination checker is satisfied. This is much easier to understand (for me anyway), and made it <em>much</em> easier to write proofs about it.</p>
-<p>Thanks to <a href="http://oleg.fi">Oleg Grenrus (phadej)</a> on irc for helping me out with this! Funnily enough, he actually recommended the <code>Acc</code> approach, and I instead originally went with the recursion combinator. Would have saved a couple hours if I’d just listened! Also worth mentioning is the approach recommended by <a href="https://gallais.github.io">Guillaume Allais (gallais)</a>, detailed <a href="https://gallais.github.io/agdarsec/Induction.Nat.Strong.html">here</a>. Haven’t had time to figure it out, so this article may be updated to recommend it instead in the future.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>f-step <span class="ot">:</span> <span class="ot">(</span>x <span class="ot">:</span> A<span class="ot">)</span> <span class="ot">→</span> Acc <span class="ot">_</span>&lt;<span class="ot">_</span> x <span class="ot">→</span> B</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>f-step <span class="ot">=</span> <span class="ot">...</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>f <span class="ot">:</span> A <span class="ot">→</span> B</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>f x <span class="ot">=</span> f-step x <span class="ot">...</span></span></code></pre></div>
+<p>Once you pattern match on the accessibility relation, the termination
+checker is satisfied. This is much easier to understand (for me anyway),
+and made it <em>much</em> easier to write proofs about it.</p>
+<p>Thanks to <a href="http://oleg.fi">Oleg Grenrus (phadej)</a> on irc
+for helping me out with this! Funnily enough, he actually recommended
+the <code>Acc</code> approach, and I instead originally went with the
+recursion combinator. Would have saved a couple hours if I’d just
+listened! Also worth mentioning is the approach recommended by <a href="https://gallais.github.io">Guillaume Allais (gallais)</a>,
+detailed <a href="https://gallais.github.io/agdarsec/Induction.Nat.Strong.html">here</a>.
+Haven’t had time to figure it out, so this article may be updated to
+recommend it instead in the future.</p>
 <h1 id="dont-touch-the-green-slime">Don’t Touch The Green Slime!</h1>
-<p>This one is really important. If I hadn’t read the exact explanation <a href="https://twitter.com/pigworker/status/1013535783234473984">here</a> I think I may have given up with Agda (or at the very least the project I’m working on) out of frustration.</p>
-<p>Basically the problem arises like this. Say you’re writing a function to split a vector in two. You can specify the type pretty precisely:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>split <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a n m<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">→</span> Vec A <span class="ot">(</span>n + m<span class="ot">)</span> <span class="ot">→</span> Vec A n × Vec A m</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>split xs <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
-<p>Try to pattern-match on <code>xs</code>, though, and you’ll get the following error:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>I'm not sure if there should be a case for the <span class="kw">constructor</span> [],</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>because I get stuck when trying <span class="kw">to</span> solve the following unification</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>  zero ≟ n + m</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>when checking that the expression ? has type Vec <span class="ot">.</span>A <span class="ot">.</span>n × Vec <span class="ot">.</span>A <span class="ot">.</span>m</span></code></pre></div>
-<p>What?! That’s weird. Anyway, you fiddle around with the function, end up pattern matching on the <code>n</code> instead, and continue on with your life.</p>
-<p>What about this, though: you want to write a type for proofs that one number is less than or equal to another. You go with something like this:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≤<span class="ot">_</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a><span class="kw">data</span> <span class="ot">_</span>≤<span class="ot">_</span> <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  proof <span class="ot">:</span> <span class="ot">∀</span> k <span class="ot">→</span> n ≤ n + k</span></code></pre></div>
-<p>And you want to use it in a proof. Here’s the example we’ll be using: if two numbers are less than some limit <code>u</code>, then their maximum is also less than that limit:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>max <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>max zero m <span class="ot">=</span> m</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>max <span class="ot">(</span>suc n<span class="ot">)</span> zero <span class="ot">=</span> suc n</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>max <span class="ot">(</span>suc n<span class="ot">)</span> <span class="ot">(</span>suc m<span class="ot">)</span> <span class="ot">=</span> suc <span class="ot">(</span>max n m<span class="ot">)</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>max-≤ <span class="ot">:</span> <span class="ot">∀</span> n m <span class="ot">{</span>u<span class="ot">}</span> <span class="ot">→</span> n ≤ u <span class="ot">→</span> m ≤ u <span class="ot">→</span> max n m ≤ u</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>max-≤ n m <span class="ot">(</span>proof k<span class="ot">)</span> m≤u <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
+<p>This one is really important. If I hadn’t read the exact explanation
+<a href="https://twitter.com/pigworker/status/1013535783234473984">here</a>
+I think I may have given up with Agda (or at the very least the project
+I’m working on) out of frustration.</p>
+<p>Basically the problem arises like this. Say you’re writing a function
+to split a vector in two. You can specify the type pretty precisely:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>split <span class="ot">:</span> <span class="ot">∀</span> <span class="ot">{</span>a n m<span class="ot">}</span> <span class="ot">{</span>A <span class="ot">:</span> <span class="dt">Set</span> a<span class="ot">}</span> <span class="ot">→</span> Vec A <span class="ot">(</span>n + m<span class="ot">)</span> <span class="ot">→</span> Vec A n × Vec A m</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>split xs <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
+<p>Try to pattern-match on <code>xs</code>, though, and you’ll get the
+following error:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>I'm not sure if there should be a case for the <span class="kw">constructor</span> [],</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>because I get stuck when trying <span class="kw">to</span> solve the following unification</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  zero ≟ n + m</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>when checking that the expression ? has type Vec <span class="ot">.</span>A <span class="ot">.</span>n × Vec <span class="ot">.</span>A <span class="ot">.</span>m</span></code></pre></div>
+<p>What?! That’s weird. Anyway, you fiddle around with the function, end
+up pattern matching on the <code>n</code> instead, and continue on with
+your life.</p>
+<p>What about this, though: you want to write a type for proofs that one
+number is less than or equal to another. You go with something like
+this:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">infix</span> <span class="dv">4</span> <span class="ot">_</span>≤<span class="ot">_</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="ot">_</span>≤<span class="ot">_</span> <span class="ot">(</span>n <span class="ot">:</span> ℕ<span class="ot">)</span> <span class="ot">:</span> ℕ <span class="ot">→</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  proof <span class="ot">:</span> <span class="ot">∀</span> k <span class="ot">→</span> n ≤ n + k</span></code></pre></div>
+<p>And you want to use it in a proof. Here’s the example we’ll be using:
+if two numbers are less than some limit <code>u</code>, then their
+maximum is also less than that limit:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>max <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>max zero m <span class="ot">=</span> m</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>max <span class="ot">(</span>suc n<span class="ot">)</span> zero <span class="ot">=</span> suc n</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>max <span class="ot">(</span>suc n<span class="ot">)</span> <span class="ot">(</span>suc m<span class="ot">)</span> <span class="ot">=</span> suc <span class="ot">(</span>max n m<span class="ot">)</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>max-≤ <span class="ot">:</span> <span class="ot">∀</span> n m <span class="ot">{</span>u<span class="ot">}</span> <span class="ot">→</span> n ≤ u <span class="ot">→</span> m ≤ u <span class="ot">→</span> max n m ≤ u</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>max-≤ n m <span class="ot">(</span>proof k<span class="ot">)</span> m≤u <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
 <p>It won’t let you match on <code>m≤u</code>! Here’s the error:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>I'm not sure if there should be a case for the <span class="kw">constructor</span> proof,</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>because I get stuck when trying <span class="kw">to</span> solve the following unification</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>  m₁ + k₂ ≟ n₁ + k₁</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>when checking that the expression ? has type max n m ≤ n + k</span></code></pre></div>
-<p>What do you <em>mean</em> you’re not sure if there’s a case for the constructor <code>proof</code>: it’s the <em>only</em> case!</p>
-<p>The problem is that Agda is trying to <em>unify</em> two types who both have calls to user-defined functions in them, which is a hard problem. As phrased by Conor McBride:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>I'm not sure if there should be a case for the <span class="kw">constructor</span> proof,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>because I get stuck when trying <span class="kw">to</span> solve the following unification</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>problems <span class="ot">(</span>inferred index ≟ expected index<span class="ot">):</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  m₁ + k₂ ≟ n₁ + k₁</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>when checking that the expression ? has type max n m ≤ n + k</span></code></pre></div>
+<p>What do you <em>mean</em> you’re not sure if there’s a case for the
+constructor <code>proof</code>: it’s the <em>only</em> case!</p>
+<p>The problem is that Agda is trying to <em>unify</em> two types who
+both have calls to user-defined functions in them, which is a hard
+problem. As phrased by Conor McBride:</p>
 <blockquote>
-<p>When combining prescriptive and descriptive indices, ensure both are in constructor form. Exclude defined functions which yield difficult unification problems.</p>
+<p>When combining prescriptive and descriptive indices, ensure both are
+in constructor form. Exclude defined functions which yield difficult
+unification problems.</p>
 </blockquote>
 <p>So if you ever get the “I’m not sure if…” error, try either to:</p>
 <ol>
 <li>Redefine the indices so they use constructors, not functions.</li>
-<li>Remove the index, instead having a proof inside the type of equality. What does that mean? Basically, transform the definition of <code>≤</code> above into <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L72-L76">the one in Data.Nat</a>.</li>
+<li>Remove the index, instead having a proof inside the type of
+equality. What does that mean? Basically, transform the definition of
+<code>≤</code> above into <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Data/Nat/Base.agda#L72-L76">the
+one in Data.Nat</a>.</li>
 </ol>
 <h1 id="inspect">Inspect</h1>
-<p>The use-case I had for this is a little long, I’m afraid (too long to include here), but it <em>did</em> come in handy. Basically, if you’re trying to prove something about a function, you may well want to <em>run</em> that function and pattern match on the result.</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>f-is-the-same-as-g x <span class="kw">with</span> f x</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
-<p>This is a little different from the normal way of doing things, where you’d pattern match on the argument. It is a pattern you’ll sometimes need to write, though. And here’s the issue: that <code>y</code> has nothing to do with <code>f x</code>, as far as Agda is concerned. All you’ve done is introduced a new variable, and that’s that.</p>
-<p>This is exactly the problem <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Relation/Binary/PropositionalEquality.agda#L111-L113"><code>inspect</code></a> solves: it runs your function, giving you a result, but <em>also</em> giving you a proof that the result is equal to running the function. You use it like this:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>f-is-the-same-as-g x <span class="kw">with</span> f x <span class="ot">|</span> inspect f x</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">|</span> [ fx≡y ] <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
+<p>The use-case I had for this is a little long, I’m afraid (too long to
+include here), but it <em>did</em> come in handy. Basically, if you’re
+trying to prove something about a function, you may well want to
+<em>run</em> that function and pattern match on the result.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g x <span class="kw">with</span> f x</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
+<p>This is a little different from the normal way of doing things, where
+you’d pattern match on the argument. It is a pattern you’ll sometimes
+need to write, though. And here’s the issue: that <code>y</code> has
+nothing to do with <code>f x</code>, as far as Agda is concerned. All
+you’ve done is introduced a new variable, and that’s that.</p>
+<p>This is exactly the problem <a href="https://github.com/agda/agda-stdlib/blob/442cd8a06b63f7e3550af55fb75c9d345c6ddb8f/src/Relation/Binary/PropositionalEquality.agda#L111-L113"><code>inspect</code></a>
+solves: it runs your function, giving you a result, but <em>also</em>
+giving you a proof that the result is equal to running the function. You
+use it like this:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> f x ≡ g x</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g x <span class="kw">with</span> f x <span class="ot">|</span> inspect f x</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>f-is-the-same-as-g x <span class="ot">|</span> y <span class="ot">|</span> [ fx≡y ] <span class="ot">=</span> <span class="ot">{!!}</span></span></code></pre></div>
 <h1 id="spc-g-g">SPC-G-G</h1>
-<p>Because the Agda standard library is a big fan of type synonyms (<code>Op₂ A</code> instead of <code>A → A → A</code> for example), it’s handy to know that pressing <code>SPC-G-G</code> (in spacemacs) over any identifier will bring you to the definition. Also, you can normalize a type with <code>SPC-m-n</code>.</p>
+<p>Because the Agda standard library is a big fan of type synonyms
+(<code>Op₂ A</code> instead of <code>A → A → A</code> for example), it’s
+handy to know that pressing <code>SPC-G-G</code> (in spacemacs) over any
+identifier will bring you to the definition. Also, you can normalize a
+type with <code>SPC-m-n</code>.</p>
 <h1 id="irrelevance">Irrelevance</h1>
-<p>This one is a little confusing, because Agda’s notion of “irrelevance” is different from Idris’, or Haskell’s. In all three languages, irrelevance is used for performance: it means that a value doesn’t need to be around at runtime, so the compiler can elide it.</p>
-<p>That’s where the similarities stop though. In Haskell, <em>all</em> types are irrelevant: they’re figments of the typechecker’s imagination. You can’t get a type at runtime full stop.</p>
-<p>In dependently typed languages, this isn’t a distinction we can rely on. The line between runtime entities and compile-time entities is drawn elsewhere, so quite often types <em>need</em> to exist at runtime. As you might guess, though, they don’t always need to. The length of a length-indexed vector, for instance, is completely determined by the structure of the vector: why would you bother storing all of that information at runtime? This is what Idris recognizes, and what it tries to remedy: it analyses code for these kinds of opportunities for elision, and does so when it can. Kind of like Haskell’s fusion, though, it’s an invisible optimization, and there’s no way to make Idris throw a type error when it can’t elide something you want it to elide.</p>
-<p>Agda is totally different. Something is irrelevant in Agda if it’s <em>unique</em>. Or, rather, it’s irrelevant if all you rely on is its existence. It’s used for proofs that you carry around with you: in a rational number type, you might use it to say that the numerator and denominator have no common factors. The only information you want from this proof is whether it holds or not, so it’s the perfect candidate for irrelevance.</p>
-<p>Weirdly, this means it’s useless for the length-indexed vector kind of stuff mentioned above. In fact, it doe exactly the opposite of what you might expect: if the length parameter is marked as irrelevant, the the types <code>Vec A n</code> and <code>Vec A (suc n)</code> are the same!</p>
-<p>The way you <em>can</em> use it is to pattern-match if it’s impossible. Again, it’s designed for eliding proofs that you may carry with you otherwise.</p>
+<p>This one is a little confusing, because Agda’s notion of
+“irrelevance” is different from Idris’, or Haskell’s. In all three
+languages, irrelevance is used for performance: it means that a value
+doesn’t need to be around at runtime, so the compiler can elide it.</p>
+<p>That’s where the similarities stop though. In Haskell, <em>all</em>
+types are irrelevant: they’re figments of the typechecker’s imagination.
+You can’t get a type at runtime full stop.</p>
+<p>In dependently typed languages, this isn’t a distinction we can rely
+on. The line between runtime entities and compile-time entities is drawn
+elsewhere, so quite often types <em>need</em> to exist at runtime. As
+you might guess, though, they don’t always need to. The length of a
+length-indexed vector, for instance, is completely determined by the
+structure of the vector: why would you bother storing all of that
+information at runtime? This is what Idris recognizes, and what it tries
+to remedy: it analyses code for these kinds of opportunities for
+elision, and does so when it can. Kind of like Haskell’s fusion, though,
+it’s an invisible optimization, and there’s no way to make Idris throw a
+type error when it can’t elide something you want it to elide.</p>
+<p>Agda is totally different. Something is irrelevant in Agda if it’s
+<em>unique</em>. Or, rather, it’s irrelevant if all you rely on is its
+existence. It’s used for proofs that you carry around with you: in a
+rational number type, you might use it to say that the numerator and
+denominator have no common factors. The only information you want from
+this proof is whether it holds or not, so it’s the perfect candidate for
+irrelevance.</p>
+<p>Weirdly, this means it’s useless for the length-indexed vector kind
+of stuff mentioned above. In fact, it doe exactly the opposite of what
+you might expect: if the length parameter is marked as irrelevant, the
+the types <code>Vec A n</code> and <code>Vec A (suc n)</code> are the
+same!</p>
+<p>The way you <em>can</em> use it is to pattern-match if it’s
+impossible. Again, it’s designed for eliding proofs that you may carry
+with you otherwise.</p>
 <h1 id="future-tips">Future Tips</h1>
-<p>Once I’m finished the project, I’ll try write up a guide on how to do literate Agda files. There were a couple of weird nuances that I had to pick up on the way, mainly to do with getting unicode to work.</p>
+<p>Once I’m finished the project, I’ll try write up a guide on how to do
+literate Agda files. There were a couple of weird nuances that I had to
+pick up on the way, mainly to do with getting unicode to work.</p>
 
         </div>
     </body>

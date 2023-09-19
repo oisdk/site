@@ -30,390 +30,585 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Swift'." href="../tags/Swift.html">Swift</a>, <a title="All pages tagged 'Data Structures'." href="../tags/Data%20Structures.html">Data Structures</a>
+        Tags: <a title="All pages tagged 'Swift'." href="../tags/Swift.html" rel="tag">Swift</a>, <a title="All pages tagged 'Data Structures'." href="../tags/Data%20Structures.html" rel="tag">Data Structures</a>
     
 </div>
 
-<p>Recursive enums have finally arrived. Woo! The first thing to do with these is to make a recursive list:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>public enum List&lt;Element&gt; {</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a>  <span class="kw">case</span> Nil</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a>  indirect <span class="kw">case</span> <span class="fu">Cons</span>(head: Element, tail: List&lt;Element&gt;)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The <code class="sourceCode scala">head</code> stores the element, and <code class="sourceCode scala">tail</code> is a reference to the rest of the list. As you can imagine, getting at the <code class="sourceCode scala">head</code> is pretty easy, while accessing elements further along is more difficult. There’s a common pattern for dealing with these recursive structures: if you have a function that performs some transformation on a list, it will take the <code class="sourceCode scala">head</code>, perform that transformation on it, and then call itself recursively on the <code class="sourceCode scala">tail</code>. If it’s given an empty list, it returns an empty list. For instance, here’s the <code class="sourceCode haskell"><span class="fu">map</span></code> function, defined in Haskell:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="fu">map</span> _ []     <span class="ot">=</span> []</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a><span class="fu">map</span> f (x<span class="op">:</span>xs) <span class="ot">=</span> f x <span class="op">:</span> <span class="fu">map</span> f xs</span></code></pre></div>
-<p>The two lines are analogous to a switch statement in Swift. The parameters for <code class="sourceCode haskell"><span class="fu">map</span></code> are a transformation function and a list. So, the first line has <code class="sourceCode haskell">_</code> (wildcard) for the function, and <code class="sourceCode haskell">[]</code> (empty) for the list, meaning it will match any function and an empty list. It returns an empty list.</p>
-<p>The second line matches a function (which it assigns the name <code class="sourceCode scala">f</code>) and then decomposes the list it’s given into a head (<code class="sourceCode scala">x</code>) and tail (<code class="sourceCode scala">xs</code>). It then calls <code class="sourceCode scala">f</code> on the head, and prepends (the <code class="sourceCode scala">:</code> operator is prepends, also called “cons” by convention) the result to itself called recursively on the tail.</p>
-<p>With switch statements and the <code class="sourceCode scala">indirect</code> keyword, we’re getting pretty close to that level of brevity (terseness?) in Swift:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a>  public func map&lt;T&gt;(@noescape transform: Element -&gt; T) -&gt; List&lt;T&gt; {</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> .<span class="fu">Nil</span></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(head, tail): <span class="kw">return</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>      .<span class="fu">Cons</span>(head: <span class="fu">transform</span>(head), tail: tail.<span class="fu">map</span>(transform))</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true"></a>    }</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true"></a>  }</span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true"></a>}</span></code></pre></div>
-<p>We can define our own “cons”, to clean it up a little. We’re not allowed to use <code class="sourceCode scala">:</code>, so I went with <code class="sourceCode scala">|&gt;</code>, which is, in my mind, reasonably representative of “cons”.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>infix operator |&gt; {</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>  associativity right</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a>  precedence <span class="dv">100</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a>}</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true"></a>public func |&gt; &lt;T&gt;(lhs: T, rhs: List&lt;T&gt;) -&gt; List&lt;T&gt; {</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true"></a>  <span class="kw">return</span> .<span class="fu">Cons</span>(head: lhs, tail: rhs)</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true"></a>}</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true"></a>extension List {</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true"></a>  public func map&lt;T&gt;(@noescape transform: Element -&gt; T) -&gt; List&lt;T&gt; {</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true"></a>    switch self {</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> .<span class="fu">Nil</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(head, tail):</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true"></a>      <span class="kw">return</span> <span class="fu">transform</span>(head) |&gt; tail.<span class="fu">map</span>(transform)</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true"></a>    }</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true"></a>  }</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Pretty soon you can start doing some elegant and exciting things with lists. The recursive pattern is <em>very</em> well suited to higher-order functions and other FP staples. Take, for instance, the <code class="sourceCode scala">reduce</code> function:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  public func reduce&lt;T&gt;(initial: T, @noescape combine: (T, Element) -&gt; T) -&gt; T {</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> initial</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(h, t):</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true"></a>      <span class="kw">return</span> t.<span class="fu">reduce</span>(<span class="fu">combine</span>(initial, h), combine: combine)</span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true"></a>    }</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true"></a>  }</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true"></a>}</span></code></pre></div>
+<p>Recursive enums have finally arrived. Woo! The first thing to do with
+these is to make a recursive list:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>public enum <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> Nil</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  indirect <span class="cf">case</span> <span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="ex">Element</span><span class="op">,</span> tail<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The <code class="sourceCode scala">head</code> stores the element,
+and <code class="sourceCode scala">tail</code> is a reference to the
+rest of the list. As you can imagine, getting at the <code class="sourceCode scala">head</code> is pretty easy, while accessing
+elements further along is more difficult. There’s a common pattern for
+dealing with these recursive structures: if you have a function that
+performs some transformation on a list, it will take the <code class="sourceCode scala">head</code>, perform that transformation on it,
+and then call itself recursively on the <code class="sourceCode scala">tail</code>. If it’s given an empty list, it
+returns an empty list. For instance, here’s the <code class="sourceCode haskell"><span class="fu">map</span></code> function,
+defined in Haskell:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span> _ []     <span class="ot">=</span> []</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">map</span> f (x<span class="op">:</span>xs) <span class="ot">=</span> f x <span class="op">:</span> <span class="fu">map</span> f xs</span></code></pre></div>
+<p>The two lines are analogous to a switch statement in Swift. The
+parameters for <code class="sourceCode haskell"><span class="fu">map</span></code> are a
+transformation function and a list. So, the first line has <code class="sourceCode haskell">_</code> (wildcard) for the function, and
+<code class="sourceCode haskell">[]</code> (empty) for the list, meaning
+it will match any function and an empty list. It returns an empty
+list.</p>
+<p>The second line matches a function (which it assigns the name <code class="sourceCode scala">f</code>) and then decomposes the list it’s
+given into a head (<code class="sourceCode scala">x</code>) and tail
+(<code class="sourceCode scala">xs</code>). It then calls <code class="sourceCode scala">f</code> on the head, and prepends (the <code class="sourceCode scala"><span class="op">:</span></code> operator is
+prepends, also called “cons” by convention) the result to itself called
+recursively on the tail.</p>
+<p>With switch statements and the <code class="sourceCode scala">indirect</code> keyword, we’re getting pretty
+close to that level of brevity (terseness?) in Swift:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  public func map<span class="op">&lt;</span>T<span class="op">&gt;(</span>@noescape transform<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> T<span class="op">)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> <span class="op">.</span>Nil</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">):</span> <span class="cf">return</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>      <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="fu">transform</span><span class="op">(</span>head<span class="op">),</span> tail<span class="op">:</span> tail<span class="op">.</span><span class="fu">map</span><span class="op">(</span>transform<span class="op">))</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>We can define our own “cons”, to clean it up a little. We’re not
+allowed to use <code class="sourceCode scala"><span class="op">:</span></code>, so I went
+with <code class="sourceCode scala"><span class="op">|&gt;</span></code>, which is,
+in my mind, reasonably representative of “cons”.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>infix operator <span class="op">|&gt;</span> <span class="op">{</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  associativity right</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  precedence <span class="dv">100</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>public func <span class="op">|&gt;</span> <span class="op">&lt;</span>T<span class="op">&gt;(</span>lhs<span class="op">:</span> T<span class="op">,</span> rhs<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> lhs<span class="op">,</span> tail<span class="op">:</span> rhs<span class="op">)</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  public func map<span class="op">&lt;</span>T<span class="op">&gt;(</span>@noescape transform<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> T<span class="op">)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> <span class="op">.</span>Nil</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">):</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="fu">transform</span><span class="op">(</span>head<span class="op">)</span> <span class="op">|&gt;</span> tail<span class="op">.</span><span class="fu">map</span><span class="op">(</span>transform<span class="op">)</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Pretty soon you can start doing some elegant and exciting things with
+lists. The recursive pattern is <em>very</em> well suited to
+higher-order functions and other FP staples. Take, for instance, the
+<code class="sourceCode scala">reduce</code> function:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  public func reduce<span class="op">&lt;</span>T<span class="op">&gt;(</span>initial<span class="op">:</span> T<span class="op">,</span> @noescape combine<span class="op">:</span> <span class="op">(</span>T<span class="op">,</span> <span class="ex">Element</span><span class="op">)</span> <span class="op">-&gt;</span> T<span class="op">)</span> <span class="op">-&gt;</span> T <span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> initial</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>h<span class="op">,</span> t<span class="op">):</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> t<span class="op">.</span><span class="fu">reduce</span><span class="op">(</span><span class="fu">combine</span><span class="op">(</span>initial<span class="op">,</span> h<span class="op">),</span> combine<span class="op">:</span> combine<span class="op">)</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>Or a transposing function:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>func transpose&lt;T&gt;(mat: List&lt;List&lt;T&gt;&gt;) -&gt; List&lt;List&lt;T&gt;&gt; {</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>  switch mat {</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>  <span class="kw">case</span> let .<span class="fu">Cons</span>(x, xs) where x.<span class="fu">isEmpty</span>: <span class="kw">return</span> <span class="fu">transpose</span>(xs)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>  <span class="kw">case</span> let .<span class="fu">Cons</span>(.<span class="fu">Cons</span>(x, xs), xss):</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>    <span class="kw">return</span> (x |&gt; xss.<span class="fu">flatMap</span>{$<span class="fl">0.f</span>irst}) |&gt;</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>      <span class="fu">transpose</span>(xs |&gt; xss.<span class="fu">map</span>{$<span class="fl">0.</span>tail})</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true"></a>  default: <span class="kw">return</span> .<span class="fu">Nil</span></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true"></a>  }</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true"></a>}</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true"></a>let jo: List&lt;List&lt;Int&gt;&gt; = [[<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>], [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]]</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true"></a><span class="fu">transpose</span>(jo) <span class="co">// [[1, 1, 1], [2, 2, 2], [3, 3, 3]]</span></span></code></pre></div>
-<p>You can do <code class="sourceCode scala">foldr</code>, which is like <code class="sourceCode scala">reduce</code>, but works in reverse:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a>  func foldr&lt;T&gt;(initial: T, @noescape combine: (element: Element, accumulator: T) -&gt; T) -&gt; T {</span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> initial</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(x, xs):</span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>      <span class="kw">return</span> <span class="fu">combine</span>(</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>        element: x,</span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>        accumulator: xs.<span class="fu">foldr</span>(initial, combine: combine)</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>      )</span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true"></a>    }</span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true"></a>  }</span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Using <code class="sourceCode scala">foldr</code>, you can get all of the non-empty subsequences of a list:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a>  <span class="kw">var</span> subsequences: List&lt;List&lt;Element&gt;&gt; {</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> .<span class="fu">Nil</span></span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(x, xs):</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>      <span class="kw">return</span> [x] |&gt; xs.<span class="fu">subsequences</span>.<span class="fu">foldr</span>([]) {</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>        (ys, r) in ys |&gt; (x |&gt; ys) |&gt; r</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>      }</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>    }</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true"></a>  }</span>
-<span id="cb8-11"><a href="#cb8-11" aria-hidden="true"></a>}</span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true"></a>let jo: List = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>]</span>
-<span id="cb8-13"><a href="#cb8-13" aria-hidden="true"></a>jo.<span class="fu">subsequences</span> <span class="co">// [[1], [2], [1, 2], [1, 3], [2, 3], [1, 2, 3]]</span></span></code></pre></div>
-<p>(these examples are all translated from the Haskell standard library) Lists are extremely fun, and some functions you would have found yourself writing on 10-15 lines can be got into 2-3. To get a better feel for playing around with lists, it’s useful to have them conform to some protocols that make them easier to work with in a playground.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>func transpose<span class="op">&lt;</span>T<span class="op">&gt;(</span>mat<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;&gt;)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">List</span><span class="op">&lt;</span>T<span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  switch mat <span class="op">{</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>x<span class="op">,</span> xs<span class="op">)</span> where x<span class="op">.</span>isEmpty<span class="op">:</span> <span class="cf">return</span> <span class="fu">transpose</span><span class="op">(</span>xs<span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(.</span><span class="fu">Cons</span><span class="op">(</span>x<span class="op">,</span> xs<span class="op">),</span> xss<span class="op">):</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">(</span>x <span class="op">|&gt;</span> xss<span class="op">.</span>flatMap<span class="op">{</span>$<span class="fl">0.f</span>irst<span class="op">})</span> <span class="op">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">transpose</span><span class="op">(</span>xs <span class="op">|&gt;</span> xss<span class="op">.</span>map<span class="op">{</span>$<span class="fl">0.</span>tail<span class="op">})</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  default<span class="op">:</span> <span class="cf">return</span> <span class="op">.</span>Nil</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>let jo<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">List</span><span class="op">&lt;</span><span class="bu">Int</span><span class="op">&gt;&gt;</span> <span class="op">=</span> <span class="op">[[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">],</span> <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">],</span> <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">]]</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="fu">transpose</span><span class="op">(</span>jo<span class="op">)</span> <span class="co">// [[1, 1, 1], [2, 2, 2], [3, 3, 3]]</span></span></code></pre></div>
+<p>You can do <code class="sourceCode scala">foldr</code>, which is like
+<code class="sourceCode scala">reduce</code>, but works in reverse:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  func foldr<span class="op">&lt;</span>T<span class="op">&gt;(</span>initial<span class="op">:</span> T<span class="op">,</span> @noescape combine<span class="op">:</span> <span class="op">(</span>element<span class="op">:</span> <span class="ex">Element</span><span class="op">,</span> accumulator<span class="op">:</span> T<span class="op">)</span> <span class="op">-&gt;</span> T<span class="op">)</span> <span class="op">-&gt;</span> T <span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> initial</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>x<span class="op">,</span> xs<span class="op">):</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="fu">combine</span><span class="op">(</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        element<span class="op">:</span> x<span class="op">,</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        accumulator<span class="op">:</span> xs<span class="op">.</span><span class="fu">foldr</span><span class="op">(</span>initial<span class="op">,</span> combine<span class="op">:</span> combine<span class="op">)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>      <span class="op">)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Using <code class="sourceCode scala">foldr</code>, you can get all of
+the non-empty subsequences of a list:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">var</span> subsequences<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> <span class="op">.</span>Nil</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>x<span class="op">,</span> xs<span class="op">):</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> <span class="op">[</span>x<span class="op">]</span> <span class="op">|&gt;</span> xs<span class="op">.</span>subsequences<span class="op">.</span><span class="fu">foldr</span><span class="op">([])</span> <span class="op">{</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="op">(</span>ys<span class="op">,</span> r<span class="op">)</span> in ys <span class="op">|&gt;</span> <span class="op">(</span>x <span class="op">|&gt;</span> ys<span class="op">)</span> <span class="op">|&gt;</span> r</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>let jo<span class="op">:</span> <span class="ex">List</span> <span class="op">=</span> <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">]</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>jo<span class="op">.</span>subsequences <span class="co">// [[1], [2], [1, 2], [1, 3], [2, 3], [1, 2, 3]]</span></span></code></pre></div>
+<p>(these examples are all translated from the Haskell standard library)
+Lists are extremely fun, and some functions you would have found
+yourself writing on 10-15 lines can be got into 2-3. To get a better
+feel for playing around with lists, it’s useful to have them conform to
+some protocols that make them easier to work with in a playground.</p>
 <p>For instance, making a list currently looks like this:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a>let jo: List = <span class="dv">1</span> |&gt; <span class="dv">2</span> |&gt; <span class="dv">3</span> |&gt; .<span class="fu">Nil</span></span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>let jo<span class="op">:</span> <span class="ex">List</span> <span class="op">=</span> <span class="dv">1</span> <span class="op">|&gt;</span> <span class="dv">2</span> <span class="op">|&gt;</span> <span class="dv">3</span> <span class="op">|&gt;</span> <span class="op">.</span>Nil</span></code></pre></div>
 <p>Which is fine, and better than:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>let jo: List = .<span class="fu">Cons</span>(head: <span class="dv">1</span>, tail: .<span class="fu">Cons</span>(head: <span class="dv">2</span>, tail: .<span class="fu">Cons</span>(head: <span class="dv">3</span>, tail: .<span class="fu">Nil</span>)))</span></code></pre></div>
-<p>but still not fantastic. The obvious next step is making <code class="sourceCode scala">List</code> <code class="sourceCode scala">ArrayLiteralConvertible</code>, but there’s a small catch. We don’t have an <code class="sourceCode scala">append</code> function for lists (yet). So we can’t, off the bat, do something like this:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>extension List : ArrayLiteralConvertible {</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>  public <span class="fu">init</span>(arrayLiteral: Element...) {</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>    <span class="kw">var</span> ret: List&lt;Element&gt; = .<span class="fu">Nil</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>    <span class="kw">for</span> el in arrayLiteral { ret.<span class="fu">append</span>(el) }</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>    self = ret</span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a>  }</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>}</span></code></pre></div>
-<p>And nor do I think we’d want to. Operations on the end of lists are slow: you have to walk along the entire list every time.</p>
-<p>We could <em>reverse</em> the sequence we want to turn into a list, and prepend as we go. But… that’s inefficient too. Sure, <code class="sourceCode scala">Array</code>s are fast to reverse, but other sequences aren’t. For those that can’t be reversed lazily, you’re storing an extra sequence in memory unnecessarily.</p>
-<p>But there’s something that we can use: generators. In Swift, generators are like super-imperative, crazy-unsafe recursive lists. When you can the <code class="sourceCode scala"><span class="fu">next</span>()</code> method on a generator, you get the “head” back. Crucially, though: <em>the generator is left with the tail</em>. Making use of this fact too often will lead to bugs, but if we wrap it up in <code class="sourceCode scala"><span class="kw">private</span></code>, it’s a perfect fit:</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="kw">private</span> init&lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;(<span class="kw">var</span> gen: G) {</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>    <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true"></a>      self = head |&gt; List(gen: gen)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true"></a>    } <span class="kw">else</span> {</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true"></a>      self = .<span class="fu">Nil</span></span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true"></a>    }</span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true"></a>  }</span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The potential bug here is kind of interesting. If, instead of an infix operator for cons, we’d had a method on <code class="sourceCode scala">List</code> that did the same thing:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>  public func <span class="fu">prepended</span>(<span class="kw">with</span>: Element) -&gt; List&lt;Element&gt; {</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>    <span class="kw">return</span> .<span class="fu">Cons</span>(head: <span class="kw">with</span>, tail: self)</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true"></a>  }</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true"></a>}</span></code></pre></div>
-<p>We’d be able to curry that function in a <code class="sourceCode scala"><span class="fu">map</span>()</code>, and get an <code class="sourceCode scala">init</code> function that’s very pretty:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="kw">private</span> init&lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;(<span class="kw">var</span> g: G) {</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>    self = g.<span class="fu">next</span>().<span class="fu">map</span>(List(g: g).<span class="fu">prepended</span>) ?? .<span class="fu">Nil</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>  }</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>}</span></code></pre></div>
-<p>But it won’t run. Since the recursive call to the function is curried, it’s resolved before the <code class="sourceCode scala">g.<span class="fu">next</span>()</code> part. Which means that, regardless of whether <code class="sourceCode scala">g</code> returns <code class="sourceCode scala">nil</code> or not, the call will be made, causing an infinite loop of sadness. To fix it, you have to make the order of operations clear: <em>do not</em> make a recursive call if <code class="sourceCode scala">g.<span class="fu">next</span>()</code> returns <code class="sourceCode scala">nil</code>.</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="kw">private</span> init&lt;G : GeneratorType where G.<span class="fu">Element</span> == Element&gt;(<span class="kw">var</span> gen: G) {</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>    <span class="kw">if</span> let head = gen.<span class="fu">next</span>() {</span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>      self = head |&gt; List(gen: gen)</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>    } <span class="kw">else</span> {</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>      self = .<span class="fu">Nil</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>    }</span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>  }</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>  public init&lt;S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element&gt;(_ seq: S) {</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>    self = List(gen: seq.<span class="fu">generate</span>())</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a>  }</span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>}</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>extension List : ArrayLiteralConvertible {</span>
-<span id="cb15-15"><a href="#cb15-15" aria-hidden="true"></a>  public <span class="fu">init</span>(arrayLiteral: Element...) {</span>
-<span id="cb15-16"><a href="#cb15-16" aria-hidden="true"></a>    self = List(arrayLiteral.<span class="fu">generate</span>())</span>
-<span id="cb15-17"><a href="#cb15-17" aria-hidden="true"></a>  }</span>
-<span id="cb15-18"><a href="#cb15-18" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This all makes it easy to initialise a list. Being able to <em>see</em> the list and its contents is also important. Currently, we’ve got this mess:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>let jo<span class="op">:</span> <span class="ex">List</span> <span class="op">=</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="dv">1</span><span class="op">,</span> tail<span class="op">:</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="dv">2</span><span class="op">,</span> tail<span class="op">:</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="dv">3</span><span class="op">,</span> tail<span class="op">:</span> <span class="op">.</span>Nil<span class="op">)))</span></span></code></pre></div>
+<p>but still not fantastic. The obvious next step is making <code class="sourceCode scala"><span class="ex">List</span></code> <code class="sourceCode scala">ArrayLiteralConvertible</code>, but there’s a
+small catch. We don’t have an <code class="sourceCode scala">append</code> function for lists (yet). So we
+can’t, off the bat, do something like this:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">:</span> ArrayLiteralConvertible <span class="op">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  public <span class="fu">init</span><span class="op">(</span>arrayLiteral<span class="op">:</span> <span class="ex">Element</span><span class="op">...)</span> <span class="op">{</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">var</span> ret<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">=</span> <span class="op">.</span>Nil</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> el in arrayLiteral <span class="op">{</span> ret<span class="op">.</span><span class="fu">append</span><span class="op">(</span>el<span class="op">)</span> <span class="op">}</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    self <span class="op">=</span> ret</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>And nor do I think we’d want to. Operations on the end of lists are
+slow: you have to walk along the entire list every time.</p>
+<p>We could <em>reverse</em> the sequence we want to turn into a list,
+and prepend as we go. But… that’s inefficient too. Sure, <code class="sourceCode scala"><span class="ex">Array</span></code>s are fast
+to reverse, but other sequences aren’t. For those that can’t be reversed
+lazily, you’re storing an extra sequence in memory unnecessarily.</p>
+<p>But there’s something that we can use: generators. In Swift,
+generators are like super-imperative, crazy-unsafe recursive lists. When
+you can the <code class="sourceCode scala"><span class="fu">next</span><span class="op">()</span></code>
+method on a generator, you get the “head” back. Crucially, though:
+<em>the generator is left with the tail</em>. Making use of this fact
+too often will lead to bugs, but if we wrap it up in <code class="sourceCode scala"><span class="kw">private</span></code>, it’s a
+perfect fit:</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> init<span class="op">&lt;</span>G <span class="op">:</span> GeneratorType where G<span class="op">.</span><span class="ex">Element</span> <span class="op">==</span> <span class="ex">Element</span><span class="op">&gt;(</span><span class="kw">var</span> gen<span class="op">:</span> G<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> let head <span class="op">=</span> gen<span class="op">.</span><span class="fu">next</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      self <span class="op">=</span> head <span class="op">|&gt;</span> <span class="ex">List</span><span class="op">(</span>gen<span class="op">:</span> gen<span class="op">)</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      self <span class="op">=</span> <span class="op">.</span>Nil</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The potential bug here is kind of interesting. If, instead of an
+infix operator for cons, we’d had a method on <code class="sourceCode scala"><span class="ex">List</span></code> that did
+the same thing:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">prepended</span><span class="op">(</span><span class="kw">with</span><span class="op">:</span> <span class="ex">Element</span><span class="op">)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="kw">with</span><span class="op">,</span> tail<span class="op">:</span> self<span class="op">)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>We’d be able to curry that function in a <code class="sourceCode scala"><span class="fu">map</span><span class="op">()</span></code>,
+and get an <code class="sourceCode scala">init</code> function that’s
+very pretty:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> init<span class="op">&lt;</span>G <span class="op">:</span> GeneratorType where G<span class="op">.</span><span class="ex">Element</span> <span class="op">==</span> <span class="ex">Element</span><span class="op">&gt;(</span><span class="kw">var</span> g<span class="op">:</span> G<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    self <span class="op">=</span> g<span class="op">.</span><span class="fu">next</span><span class="op">().</span><span class="fu">map</span><span class="op">(</span><span class="ex">List</span><span class="op">(</span>g<span class="op">:</span> g<span class="op">).</span>prepended<span class="op">)</span> <span class="op">??</span> <span class="op">.</span>Nil</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>But it won’t run. Since the recursive call to the function is
+curried, it’s resolved before the <code class="sourceCode scala">g<span class="op">.</span><span class="fu">next</span><span class="op">()</span></code>
+part. Which means that, regardless of whether <code class="sourceCode scala">g</code> returns <code class="sourceCode scala">nil</code> or not, the call will be made,
+causing an infinite loop of sadness. To fix it, you have to make the
+order of operations clear: <em>do not</em> make a recursive call if
+<code class="sourceCode scala">g<span class="op">.</span><span class="fu">next</span><span class="op">()</span></code>
+returns <code class="sourceCode scala">nil</code>.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> init<span class="op">&lt;</span>G <span class="op">:</span> GeneratorType where G<span class="op">.</span><span class="ex">Element</span> <span class="op">==</span> <span class="ex">Element</span><span class="op">&gt;(</span><span class="kw">var</span> gen<span class="op">:</span> G<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> let head <span class="op">=</span> gen<span class="op">.</span><span class="fu">next</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>      self <span class="op">=</span> head <span class="op">|&gt;</span> <span class="ex">List</span><span class="op">(</span>gen<span class="op">:</span> gen<span class="op">)</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>      self <span class="op">=</span> <span class="op">.</span>Nil</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  public init<span class="op">&lt;</span>S <span class="op">:</span> SequenceType where S<span class="op">.</span>Generator<span class="op">.</span><span class="ex">Element</span> <span class="op">==</span> <span class="ex">Element</span><span class="op">&gt;(</span>_ seq<span class="op">:</span> S<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    self <span class="op">=</span> <span class="ex">List</span><span class="op">(</span>gen<span class="op">:</span> seq<span class="op">.</span><span class="fu">generate</span><span class="op">())</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">:</span> ArrayLiteralConvertible <span class="op">{</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  public <span class="fu">init</span><span class="op">(</span>arrayLiteral<span class="op">:</span> <span class="ex">Element</span><span class="op">...)</span> <span class="op">{</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>    self <span class="op">=</span> <span class="ex">List</span><span class="op">(</span>arrayLiteral<span class="op">.</span><span class="fu">generate</span><span class="op">())</span></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb15-18"><a href="#cb15-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This all makes it easy to initialise a list. Being able to
+<em>see</em> the list and its contents is also important. Currently,
+we’ve got this mess:</p>
 <p><img class="aligncenter size-full wp-image-404" src="https://bigonotetaking.files.wordpress.com/2015/07/screen-shot-2015-07-29-at-12-12-56.png" alt="Screen Shot 2015-07-29 at 12.12.56" width="660" height="39" /></p>
-<p>When what we really want is a comma-separated list of the contents. We also probably want some demarcation at either end, so it’s easier to recognise nested lists. I’m not sure what the best demarcation would be: ideally it should be different to an Array’s square brackets, but not confusing either. I went with <code class="sourceCode scala">[:</code> and <code class="sourceCode scala">:]</code> in the end, though I’m not terribly happy about it:</p>
+<p>When what we really want is a comma-separated list of the contents.
+We also probably want some demarcation at either end, so it’s easier to
+recognise nested lists. I’m not sure what the best demarcation would be:
+ideally it should be different to an Array’s square brackets, but not
+confusing either. I went with <code class="sourceCode scala"><span class="op">[:</span></code> and <code class="sourceCode scala"><span class="op">:]</span></code> in the end,
+though I’m not terribly happy about it:</p>
 <p><img class="aligncenter size-full wp-image-406" src="https://bigonotetaking.files.wordpress.com/2015/07/screen-shot-2015-07-29-at-12-27-53.png" alt="Screen Shot 2015-07-29 at 12.27.53" width="522" height="32" /></p>
-<p>To get that printout on the right-hand-side of your playground, you need to make your type <code class="sourceCode scala">CustomDebugStringConvertible</code>. There’s one one interesting problem with this: how do you know the contents of your list are printable? You can’t extend your struct to have conditional conformance, like this:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a>extension List (where Element : CustomDebugStringConvertible) : CustomDebugStringConvertible {...</span></code></pre></div>
-<p>However, you can’t just get a string representation of something that doesn’t have one. Luckily, <code class="sourceCode scala">String</code> has an initialiser that takes <em>anything</em>. It uses runtime reflection to do so. Here’s what the extension ends up looking like:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>extension List : CustomDebugStringConvertible {</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>  public <span class="kw">var</span> debugDescription: String {</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>    return<span class="st">&quot;[:&quot;</span> + <span class="st">&quot;, &quot;</span>.<span class="fu">join</span>(map{String(reflecting: $<span class="dv">0</span>)}) + <span class="st">&quot;:]&quot;</span></span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>  }</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a>}</span></code></pre></div>
-<p>To use the <code class="sourceCode scala"><span class="fu">join</span>()</code> function, of course, <code class="sourceCode scala">List</code> needs to conform to <code class="sourceCode scala">SequenceType</code>. We’ll need some generator that swaps out the current <code class="sourceCode scala">List</code> struct on each iteration, and returns the head. You <em>could</em> just use <code class="sourceCode scala">anyGenerator</code> but, since it’s a class, it’s significantly slower than defining a new struct.</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a>public struct ListGenerator&lt;Element&gt; : GeneratorType, SequenceType {</span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>  <span class="kw">private</span> <span class="kw">var</span> list: List&lt;Element&gt;</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>  public mutating func <span class="fu">next</span>() -&gt; Element? {</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a>    switch list {</span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> nil</span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(head, tail):</span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>      list = tail</span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a>      <span class="kw">return</span> head</span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a>    }</span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a>  }</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a>  public func <span class="fu">generate</span>() -&gt; ListGenerator { <span class="kw">return</span> self }</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a>}</span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true"></a></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true"></a>extension List : SequenceType {</span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true"></a>  public func <span class="fu">generate</span>() -&gt; ListGenerator&lt;Element&gt; {</span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">ListGenerator</span>(list: self)</span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true"></a>  }</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true"></a>}</span></code></pre></div>
-<p>And you’ve got a <code class="sourceCode scala">SequenceType</code> that’s normal-looking and easy to work with.</p>
+<p>To get that printout on the right-hand-side of your playground, you
+need to make your type <code class="sourceCode scala">CustomDebugStringConvertible</code>. There’s
+one one interesting problem with this: how do you know the contents of
+your list are printable? You can’t extend your struct to have
+conditional conformance, like this:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">(</span>where <span class="ex">Element</span> <span class="op">:</span> CustomDebugStringConvertible<span class="op">)</span> <span class="op">:</span> CustomDebugStringConvertible <span class="op">{...</span></span></code></pre></div>
+<p>However, you can’t just get a string representation of something that
+doesn’t have one. Luckily, <code class="sourceCode scala"><span class="ex">String</span></code> has an
+initialiser that takes <em>anything</em>. It uses runtime reflection to
+do so. Here’s what the extension ends up looking like:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">:</span> CustomDebugStringConvertible <span class="op">{</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  public <span class="kw">var</span> debugDescription<span class="op">:</span> <span class="ex">String</span> <span class="op">{</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    return<span class="st">&quot;[:&quot;</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span><span class="op">.</span><span class="fu">join</span><span class="op">(</span>map<span class="op">{</span><span class="ex">String</span><span class="op">(</span>reflecting<span class="op">:</span> $<span class="dv">0</span><span class="op">)})</span> <span class="op">+</span> <span class="st">&quot;:]&quot;</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>To use the <code class="sourceCode scala"><span class="fu">join</span><span class="op">()</span></code>
+function, of course, <code class="sourceCode scala"><span class="ex">List</span></code> needs to
+conform to <code class="sourceCode scala">SequenceType</code>. We’ll
+need some generator that swaps out the current <code class="sourceCode scala"><span class="ex">List</span></code> struct on
+each iteration, and returns the head. You <em>could</em> just use <code class="sourceCode scala">anyGenerator</code> but, since it’s a class,
+it’s significantly slower than defining a new struct.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>public struct ListGenerator<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">:</span> GeneratorType<span class="op">,</span> SequenceType <span class="op">{</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="kw">var</span> list<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  public mutating func <span class="fu">next</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">Element</span><span class="op">?</span> <span class="op">{</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    switch list <span class="op">{</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> nil</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">):</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>      list <span class="op">=</span> tail</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> head</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">generate</span><span class="op">()</span> <span class="op">-&gt;</span> ListGenerator <span class="op">{</span> <span class="cf">return</span> self <span class="op">}</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">:</span> SequenceType <span class="op">{</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">generate</span><span class="op">()</span> <span class="op">-&gt;</span> ListGenerator<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">ListGenerator</span><span class="op">(</span>list<span class="op">:</span> self<span class="op">)</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>And you’ve got a <code class="sourceCode scala">SequenceType</code>
+that’s normal-looking and easy to work with.</p>
 <h3 id="laziness">Laziness</h3>
-<p>I’m not sure if this is entirely relevant here, but I <em>do</em> like laziness, so I thought I’d make a version of <code class="sourceCode scala">List</code> that was lazy. It turns out it’s easy to do: in fact, it was possible before <code class="sourceCode scala">indirect</code> enums. So, starting with the standard <code class="sourceCode scala">List</code> definition:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a>public enum LazyList&lt;Element&gt; {</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>  <span class="kw">case</span> Nil</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>  indirect <span class="kw">case</span> <span class="fu">Cons</span>(head: Element, tail: LazyList&lt;Element&gt;)</span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Let’s make it lazy. The main idea would be to defer the resolution of <code class="sourceCode scala">tail</code>. What we really want is for tail to be a function that <em>returns</em> a list, rather than a list itself.</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>public enum LazyList&lt;Element&gt; {</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>  <span class="kw">case</span> Nil</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  <span class="kw">case</span> <span class="fu">Cons</span>(head: Element, tail: () -&gt; LazyList&lt;Element&gt;)</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This is the reason that <code class="sourceCode scala">indirect</code> isn’t needed: because tail isn’t a list, all that’s stored in the enum is the reference to the function. This is what <code class="sourceCode scala">indirect</code> does automatically, or what the <code class="sourceCode scala">Box</code> struct did manually.</p>
-<p>There are some more wrinkles with laziness. For instance, our old infix operator won’t work:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a>public func |&gt; &lt;T&gt;(lhs: T, rhs: LazyList&lt;T&gt;) -&gt; LazyList&lt;T&gt; {</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>  <span class="kw">return</span> .<span class="fu">Cons</span>(head: lhs, tail: rhs)</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Again, because tail is meant to be a function that returns a list, not a list itself. This <em>would</em> work, but not in the way we intend it:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a>public func |&gt; &lt;T&gt;(lhs: T, rhs: LazyList&lt;T&gt;) -&gt; LazyList&lt;T&gt; {</span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true"></a>  <span class="kw">return</span> .<span class="fu">Cons</span>(head: lhs, tail: {rhs})</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Whatever’s to the right-hand-side of the operator will get resolved, and <em>then</em> put into the closure, which we don’t want. For instance, this:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a>func <span class="fu">printAndGiveList</span>() -&gt; LazyList&lt;Int&gt; {</span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>  <span class="fu">print</span>(<span class="dv">2</span>)</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a>  <span class="kw">return</span> .<span class="fu">Nil</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a>}</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true"></a><span class="dv">2</span> |&gt; <span class="dv">1</span> |&gt; <span class="fu">printAndGiveList</span>()</span></code></pre></div>
-<p>Will give you a “<code class="sourceCode scala">LazyList</code>”, but 2 gets printed, meaning that it’s not <em>really</em> behaving lazily.</p>
-<p><code class="sourceCode scala">@autoclosure</code> to the rescue! This is a little annotation you put before your parameters that can let you decide when to evaluate the argument.</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>public func |&gt; &lt;T&gt;(lhs: T, @<span class="fu">autoclosure</span>(escaping) rhs: () -&gt; LazyList&lt;T&gt;) -&gt; LazyList&lt;T&gt; {</span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true"></a>  <span class="kw">return</span> .<span class="fu">Cons</span>(head: lhs, tail: rhs)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The <code class="sourceCode scala">escaping</code> in the brackets is needed to signify that the closure will last longer than the lifetime of the scope it is declared in. If you test this new version with the <code class="sourceCode scala"><span class="fu">printAndGiveList</span>()</code> function, you’ll see that 2 does <em>not</em> get printed. In fact, the behaviour of this operator lets us use a lot of the same code from the strict list, <em>without</em> the strictness. (The generator initialiser, for instance: the same code, if used to initialise a lazy list, will work. In fact, if the underlying sequence that the generator comes from is lazy, <em>that laziness is maintained in the lazy list</em>. That’s pretty cool.)</p>
-<p>There’s an interesting point to be made, here. The usual definition for a lazy programming language is one in which functions do not evaluate their arguments until they need to. In contrast, eager languages evaluate function arguments before the body of the function. This kind of makes it seem that you could treat Swift as a totally lazy language…</p>
-<p>At any rate, this new-and-improved operator works exactly as we want it. It’s properly lazy. The rest is easy: every time <code class="sourceCode scala">tail</code> was used in <code class="sourceCode scala">List</code>, replace it with <code class="sourceCode scala"><span class="fu">tail</span>()</code>.</p>
+<p>I’m not sure if this is entirely relevant here, but I <em>do</em>
+like laziness, so I thought I’d make a version of <code class="sourceCode scala"><span class="ex">List</span></code> that was
+lazy. It turns out it’s easy to do: in fact, it was possible before
+<code class="sourceCode scala">indirect</code> enums. So, starting with
+the standard <code class="sourceCode scala"><span class="ex">List</span></code>
+definition:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>public enum LazyList<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> Nil</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  indirect <span class="cf">case</span> <span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="ex">Element</span><span class="op">,</span> tail<span class="op">:</span> LazyList<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Let’s make it lazy. The main idea would be to defer the resolution of
+<code class="sourceCode scala">tail</code>. What we really want is for
+tail to be a function that <em>returns</em> a list, rather than a list
+itself.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>public enum LazyList<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> Nil</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> <span class="ex">Element</span><span class="op">,</span> tail<span class="op">:</span> <span class="op">()</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This is the reason that <code class="sourceCode scala">indirect</code> isn’t needed: because tail
+isn’t a list, all that’s stored in the enum is the reference to the
+function. This is what <code class="sourceCode scala">indirect</code>
+does automatically, or what the <code class="sourceCode scala"><span class="ex">Box</span></code> struct did
+manually.</p>
+<p>There are some more wrinkles with laziness. For instance, our old
+infix operator won’t work:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>public func <span class="op">|&gt;</span> <span class="op">&lt;</span>T<span class="op">&gt;(</span>lhs<span class="op">:</span> T<span class="op">,</span> rhs<span class="op">:</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;)</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> lhs<span class="op">,</span> tail<span class="op">:</span> rhs<span class="op">)</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Again, because tail is meant to be a function that returns a list,
+not a list itself. This <em>would</em> work, but not in the way we
+intend it:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>public func <span class="op">|&gt;</span> <span class="op">&lt;</span>T<span class="op">&gt;(</span>lhs<span class="op">:</span> T<span class="op">,</span> rhs<span class="op">:</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;)</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> lhs<span class="op">,</span> tail<span class="op">:</span> <span class="op">{</span>rhs<span class="op">})</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Whatever’s to the right-hand-side of the operator will get resolved,
+and <em>then</em> put into the closure, which we don’t want. For
+instance, this:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>func <span class="fu">printAndGiveList</span><span class="op">()</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span><span class="bu">Int</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span><span class="op">(</span><span class="dv">2</span><span class="op">)</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">.</span>Nil</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="dv">2</span> <span class="op">|&gt;</span> <span class="dv">1</span> <span class="op">|&gt;</span> <span class="fu">printAndGiveList</span><span class="op">()</span></span></code></pre></div>
+<p>Will give you a “<code class="sourceCode scala">LazyList</code>”, but
+2 gets printed, meaning that it’s not <em>really</em> behaving
+lazily.</p>
+<p><code class="sourceCode scala">@autoclosure</code> to the rescue!
+This is a little annotation you put before your parameters that can let
+you decide when to evaluate the argument.</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>public func <span class="op">|&gt;</span> <span class="op">&lt;</span>T<span class="op">&gt;(</span>lhs<span class="op">:</span> T<span class="op">,</span> @<span class="fu">autoclosure</span><span class="op">(</span>escaping<span class="op">)</span> rhs<span class="op">:</span> <span class="op">()</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;)</span> <span class="op">-&gt;</span> LazyList<span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">:</span> lhs<span class="op">,</span> tail<span class="op">:</span> rhs<span class="op">)</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The <code class="sourceCode scala">escaping</code> in the brackets is
+needed to signify that the closure will last longer than the lifetime of
+the scope it is declared in. If you test this new version with the <code class="sourceCode scala"><span class="fu">printAndGiveList</span><span class="op">()</span></code>
+function, you’ll see that 2 does <em>not</em> get printed. In fact, the
+behaviour of this operator lets us use a lot of the same code from the
+strict list, <em>without</em> the strictness. (The generator
+initialiser, for instance: the same code, if used to initialise a lazy
+list, will work. In fact, if the underlying sequence that the generator
+comes from is lazy, <em>that laziness is maintained in the lazy
+list</em>. That’s pretty cool.)</p>
+<p>There’s an interesting point to be made, here. The usual definition
+for a lazy programming language is one in which functions do not
+evaluate their arguments until they need to. In contrast, eager
+languages evaluate function arguments before the body of the function.
+This kind of makes it seem that you could treat Swift as a totally lazy
+language…</p>
+<p>At any rate, this new-and-improved operator works exactly as we want
+it. It’s properly lazy. The rest is easy: every time <code class="sourceCode scala">tail</code> was used in <code class="sourceCode scala"><span class="ex">List</span></code>, replace it
+with <code class="sourceCode scala"><span class="fu">tail</span><span class="op">()</span></code>.</p>
 <h3 id="the-deque">The Deque</h3>
-<p>Lists are useful. They let you operate on their first element in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math> time, which makes a lot of sense, since you often find yourself starting there.</p>
-<p>They’ve got some disadvantages, though: for one, to get to the nth element, you have to walk along n elements in the list. So while operations of the <em>start</em> are fast, operations on the end are painfully slow. And forget about efficient indexing.</p>
-<p>This is where a Deque comes in. When you need to operate on two ends of a collection, a Deque is what you want to be using. Removal of the first and last element, prepending, and appending are all <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math>.</p>
-<p>It’s made up of two lists: one for the front half, and one, in reverse, for the back half. With that information we’ve enough to get a definition down:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a>public struct Deque&lt;Element&gt; {</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a>  <span class="kw">private</span> <span class="kw">var</span> front, back: List&lt;Element&gt;</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a>}</span></code></pre></div>
-<p>You’ve got to do similar things that you did to the list to get an easy-to-work-with struct. <code class="sourceCode scala">CustomDebugStringConvertible</code>, <code class="sourceCode scala">ArrayLiteralConvertible</code>, etc. It’s not tremendously interesting, so here it is:</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a>extension Deque : CustomDebugStringConvertible {</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>  public <span class="kw">var</span> debugDescription: String {</span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true"></a>    <span class="kw">return</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true"></a>      <span class="st">&quot;, &quot;</span>.<span class="fu">join</span>(front.<span class="fu">map</span>{String(reflecting: $<span class="dv">0</span>)}) +</span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true"></a>      <span class="st">&quot; | &quot;</span> +</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true"></a>      <span class="st">&quot;, &quot;</span>.<span class="fu">join</span>(back.<span class="fu">reverse</span>().<span class="fu">map</span>{String(reflecting: $<span class="dv">0</span>)})</span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true"></a>  }</span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true"></a>}</span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true"></a></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true"></a>  public <span class="fu">init</span>(array: [Element]) {</span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true"></a>    let half = array.<span class="fu">endIndex</span> / <span class="dv">2</span></span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true"></a>    front = List(array[<span class="dv">0</span>..&lt;half])</span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true"></a>    back = List(array[half..&lt;array.<span class="fu">endIndex</span>].<span class="fu">reverse</span>())</span>
-<span id="cb26-15"><a href="#cb26-15" aria-hidden="true"></a>  }</span>
-<span id="cb26-16"><a href="#cb26-16" aria-hidden="true"></a>}</span>
-<span id="cb26-17"><a href="#cb26-17" aria-hidden="true"></a></span>
-<span id="cb26-18"><a href="#cb26-18" aria-hidden="true"></a>extension Deque : ArrayLiteralConvertible {</span>
-<span id="cb26-19"><a href="#cb26-19" aria-hidden="true"></a>  public <span class="fu">init</span>(arrayLiteral: Element...) {</span>
-<span id="cb26-20"><a href="#cb26-20" aria-hidden="true"></a>    self.<span class="fu">init</span>(array: arrayLiteral)</span>
-<span id="cb26-21"><a href="#cb26-21" aria-hidden="true"></a>  }</span>
-<span id="cb26-22"><a href="#cb26-22" aria-hidden="true"></a>}</span>
-<span id="cb26-23"><a href="#cb26-23" aria-hidden="true"></a></span>
-<span id="cb26-24"><a href="#cb26-24" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb26-25"><a href="#cb26-25" aria-hidden="true"></a>  public init&lt;S : SequenceType where S.<span class="fu">Generator</span>.<span class="fu">Element</span> == Element&gt;(_ seq: S) {</span>
-<span id="cb26-26"><a href="#cb26-26" aria-hidden="true"></a>    self.<span class="fu">init</span>(array: Array(seq))</span>
-<span id="cb26-27"><a href="#cb26-27" aria-hidden="true"></a>  }</span>
-<span id="cb26-28"><a href="#cb26-28" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The debug output puts a <code class="sourceCode scala">|</code> between the two lists:</p>
+<p>Lists are useful. They let you operate on their first element in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math>
+time, which makes a lot of sense, since you often find yourself starting
+there.</p>
+<p>They’ve got some disadvantages, though: for one, to get to the nth
+element, you have to walk along n elements in the list. So while
+operations of the <em>start</em> are fast, operations on the end are
+painfully slow. And forget about efficient indexing.</p>
+<p>This is where a Deque comes in. When you need to operate on two ends
+of a collection, a Deque is what you want to be using. Removal of the
+first and last element, prepending, and appending are all
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">O(1)</annotation></semantics></math>.</p>
+<p>It’s made up of two lists: one for the front half, and one, in
+reverse, for the back half. With that information we’ve enough to get a
+definition down:</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>public struct <span class="ex">Deque</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="kw">var</span> front<span class="op">,</span> back<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>You’ve got to do similar things that you did to the list to get an
+easy-to-work-with struct. <code class="sourceCode scala">CustomDebugStringConvertible</code>, <code class="sourceCode scala">ArrayLiteralConvertible</code>, etc. It’s not
+tremendously interesting, so here it is:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">:</span> CustomDebugStringConvertible <span class="op">{</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  public <span class="kw">var</span> debugDescription<span class="op">:</span> <span class="ex">String</span> <span class="op">{</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;, &quot;</span><span class="op">.</span><span class="fu">join</span><span class="op">(</span>front<span class="op">.</span>map<span class="op">{</span><span class="ex">String</span><span class="op">(</span>reflecting<span class="op">:</span> $<span class="dv">0</span><span class="op">)})</span> <span class="op">+</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot; | &quot;</span> <span class="op">+</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>      <span class="st">&quot;, &quot;</span><span class="op">.</span><span class="fu">join</span><span class="op">(</span>back<span class="op">.</span><span class="fu">reverse</span><span class="op">().</span>map<span class="op">{</span><span class="ex">String</span><span class="op">(</span>reflecting<span class="op">:</span> $<span class="dv">0</span><span class="op">)})</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>  public <span class="fu">init</span><span class="op">(</span>array<span class="op">:</span> <span class="op">[</span><span class="ex">Element</span><span class="op">])</span> <span class="op">{</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>    let half <span class="op">=</span> array<span class="op">.</span>endIndex <span class="op">/</span> <span class="dv">2</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    front <span class="op">=</span> <span class="ex">List</span><span class="op">(</span>array<span class="op">[</span><span class="dv">0</span><span class="op">..&lt;</span>half<span class="op">])</span></span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>    back <span class="op">=</span> <span class="ex">List</span><span class="op">(</span>array<span class="op">[</span>half<span class="op">..&lt;</span>array<span class="op">.</span>endIndex<span class="op">].</span><span class="fu">reverse</span><span class="op">())</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">:</span> ArrayLiteralConvertible <span class="op">{</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a>  public <span class="fu">init</span><span class="op">(</span>arrayLiteral<span class="op">:</span> <span class="ex">Element</span><span class="op">...)</span> <span class="op">{</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a>    self<span class="op">.</span><span class="fu">init</span><span class="op">(</span>array<span class="op">:</span> arrayLiteral<span class="op">)</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a>  public init<span class="op">&lt;</span>S <span class="op">:</span> SequenceType where S<span class="op">.</span>Generator<span class="op">.</span><span class="ex">Element</span> <span class="op">==</span> <span class="ex">Element</span><span class="op">&gt;(</span>_ seq<span class="op">:</span> S<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>    self<span class="op">.</span><span class="fu">init</span><span class="op">(</span>array<span class="op">:</span> <span class="ex">Array</span><span class="op">(</span>seq<span class="op">))</span></span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The debug output puts a <code class="sourceCode scala"><span class="op">|</span></code> between the
+two lists:</p>
 <p><img class="aligncenter size-full wp-image-395" src="https://bigonotetaking.files.wordpress.com/2015/07/screen-shot-2015-07-28-at-21-32-44.png" alt="Screen Shot 2015-07-28 at 21.32.44" width="660" height="29" /></p>
-<p>This makes it clear how the performance characteristics come about: because the second half is a reversed list, all of the operations on the end of the Deque are operations on the beginning of a list. And that’s where lists are fast.</p>
-<p>But there’s an obvious issue. Say we take that list, and start removing the first element from it:</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a>let a = an.<span class="fu">tail</span> <span class="co">// 2, 3 | 4, 5, 6</span></span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>let b = a.<span class="fu">tail</span>  <span class="co">// 3 | 4, 5, 6</span></span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>let c = b.<span class="fu">tail</span>  <span class="co">// | 4, 5, 6</span></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a>let d = c.<span class="fu">tail</span>  <span class="co">// ?????</span></span></code></pre></div>
-<p>The front will end up being empty. The solution to this is the second important element to a Deque. It needs an invariant: if its number of elements is greater than one, neither the front list nor the back will be empty. When the invariant gets violated, it needs to fix it. We can check that the invariant has been upheld with a <code class="sourceCode scala">switch</code> statement:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a>  <span class="kw">private</span> mutating func <span class="fu">check</span>() {</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a>    <span class="fu">switch</span> (front, back) {</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true"></a>    <span class="kw">case</span> (.<span class="fu">Nil</span>, let .<span class="fu">Cons</span>(head, tail)) where !tail.<span class="fu">isEmpty</span>: <span class="fu">fix</span>()</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true"></a>    <span class="kw">case</span> (let .<span class="fu">Cons</span>(head, tail), .<span class="fu">Nil</span>) where !tail.<span class="fu">isEmpty</span>: <span class="fu">fix</span>()</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true"></a>    default:</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true"></a>      <span class="kw">return</span></span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true"></a>    }</span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true"></a>  }</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The first case is the front is empty, and the back has more than one element, and the second case is the back is empty, and the front has more than one element. To fix it, just chop off the tail of the non-empty list, reverse it, and assign it to the empty list:</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a>  <span class="kw">private</span> mutating func <span class="fu">check</span>() {</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>    <span class="fu">switch</span> (front, back) {</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>    <span class="kw">case</span> (.<span class="fu">Nil</span>, let .<span class="fu">Cons</span>(head, tail)) where !tail.<span class="fu">isEmpty</span>:</span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a>      (front, back) = (tail.<span class="fu">reverse</span>(), [head])</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true"></a>    <span class="kw">case</span> (let .<span class="fu">Cons</span>(head, tail), .<span class="fu">Nil</span>) where !tail.<span class="fu">isEmpty</span>:</span>
-<span id="cb29-7"><a href="#cb29-7" aria-hidden="true"></a>      (back, front) = (tail.<span class="fu">reverse</span>(), [head])</span>
-<span id="cb29-8"><a href="#cb29-8" aria-hidden="true"></a>    default:</span>
-<span id="cb29-9"><a href="#cb29-9" aria-hidden="true"></a>      <span class="kw">return</span></span>
-<span id="cb29-10"><a href="#cb29-10" aria-hidden="true"></a>    }</span>
-<span id="cb29-11"><a href="#cb29-11" aria-hidden="true"></a>  }</span>
-<span id="cb29-12"><a href="#cb29-12" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Now, wherever we have a mutating method that may cause a violation of the invariant, this <code class="sourceCode scala">check</code> is called. One particularly cool way to do this is by using <code class="sourceCode scala">didSet</code>:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a>public struct Deque&lt;Element&gt; {</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true"></a>  <span class="kw">private</span> <span class="kw">var</span> front: List&lt;Element&gt; { didSet { <span class="fu">check</span>() } }</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true"></a>  <span class="kw">private</span> <span class="kw">var</span> back : List&lt;Element&gt; { didSet { <span class="fu">check</span>() } }</span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true"></a>}</span></code></pre></div>
-<p>This will call <code class="sourceCode scala"><span class="fu">check</span>()</code> whenever either list is mutated, ensuring you can’t forget. If a <em>new</em> Deque is initialised, though, it won’t be called. I don’t trust myself to remember the <code class="sourceCode scala"><span class="fu">check</span>()</code> on every init, so we can put it into the initialiser:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a>  <span class="kw">private</span> <span class="fu">init</span>(_ front: List&lt;Element&gt;, _ back: List&lt;Element&gt;) {</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true"></a>    (self.<span class="fu">front</span>, self.<span class="fu">back</span>) = (front, back)</span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true"></a>    <span class="fu">check</span>()</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true"></a>  }</span></code></pre></div>
-<p>This is the only initialiser so far, so it’s the only one I’m allowed to call. However, there may be some cases where I <em>know</em> that the front and back are balanced. So I want a separate initialiser for those, for efficiency’s sake. But it’s got to be called <code class="sourceCode scala">init</code> no matter what, so how can I specify that I want to use the non-checking initialiser, over the checking one? I could have a function called something like <code class="sourceCode scala">initialiseFromBalanced</code> that returns a Deque, but I don’t like that. You could use labelled arguments. <a href="http://ericasadun.com/2015/06/01/swift-safe-array-indexing-my-favorite-thing-of-the-new-week/">Erica Sadun has a cool post on using them with subscripts</a>, and here’s what it would look like with <code class="sourceCode scala">init</code>:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a>  <span class="kw">private</span> <span class="fu">init</span>(balancedFront: List&lt;Element&gt;, balancedBack: List&lt;Element&gt;) {</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true"></a>    (front, back) = (balancedFront, balancedBack)</span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true"></a>  }</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true"></a>}</span></code></pre></div>
-<p>So now we have a default initialiser that automatically balances the Deque, and a specialised one that takes two lists already balanced.</p>
-<p>There is an extra function on lists in the <code class="sourceCode scala"><span class="fu">check</span>()</code> function: <code class="sourceCode scala"><span class="fu">reverse</span>()</code>. There are a load of different ways to do it. If you’re in the mood for golf:</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true"></a>let joanne: List = [<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>, <span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>]</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true"></a>joanne.<span class="fu">reduce</span>(.<span class="fu">Nil</span>) { $<span class="dv">1</span> |&gt; $<span class="dv">0</span> } <span class="co">// 6, 5, 4, 3, 2, 1</span></span></code></pre></div>
+<p>This makes it clear how the performance characteristics come about:
+because the second half is a reversed list, all of the operations on the
+end of the Deque are operations on the beginning of a list. And that’s
+where lists are fast.</p>
+<p>But there’s an obvious issue. Say we take that list, and start
+removing the first element from it:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>let a <span class="op">=</span> an<span class="op">.</span>tail <span class="co">// 2, 3 | 4, 5, 6</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>let b <span class="op">=</span> a<span class="op">.</span>tail  <span class="co">// 3 | 4, 5, 6</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>let c <span class="op">=</span> b<span class="op">.</span>tail  <span class="co">// | 4, 5, 6</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>let d <span class="op">=</span> c<span class="op">.</span>tail  <span class="co">// ?????</span></span></code></pre></div>
+<p>The front will end up being empty. The solution to this is the second
+important element to a Deque. It needs an invariant: if its number of
+elements is greater than one, neither the front list nor the back will
+be empty. When the invariant gets violated, it needs to fix it. We can
+check that the invariant has been upheld with a <code class="sourceCode scala">switch</code> statement:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> mutating func <span class="fu">check</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">switch</span> <span class="op">(</span>front<span class="op">,</span> back<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">(.</span>Nil<span class="op">,</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">))</span> where <span class="op">!</span>tail<span class="op">.</span>isEmpty<span class="op">:</span> <span class="fu">fix</span><span class="op">()</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">(</span>let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">),</span> <span class="op">.</span>Nil<span class="op">)</span> where <span class="op">!</span>tail<span class="op">.</span>isEmpty<span class="op">:</span> <span class="fu">fix</span><span class="op">()</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>    default<span class="op">:</span></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The first case is the front is empty, and the back has more than one
+element, and the second case is the back is empty, and the front has
+more than one element. To fix it, just chop off the tail of the
+non-empty list, reverse it, and assign it to the empty list:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> mutating func <span class="fu">check</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">switch</span> <span class="op">(</span>front<span class="op">,</span> back<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">(.</span>Nil<span class="op">,</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">))</span> where <span class="op">!</span>tail<span class="op">.</span>isEmpty<span class="op">:</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>front<span class="op">,</span> back<span class="op">)</span> <span class="op">=</span> <span class="op">(</span>tail<span class="op">.</span><span class="fu">reverse</span><span class="op">(),</span> <span class="op">[</span>head<span class="op">])</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">(</span>let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">),</span> <span class="op">.</span>Nil<span class="op">)</span> where <span class="op">!</span>tail<span class="op">.</span>isEmpty<span class="op">:</span></span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>back<span class="op">,</span> front<span class="op">)</span> <span class="op">=</span> <span class="op">(</span>tail<span class="op">.</span><span class="fu">reverse</span><span class="op">(),</span> <span class="op">[</span>head<span class="op">])</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    default<span class="op">:</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Now, wherever we have a mutating method that may cause a violation of
+the invariant, this <code class="sourceCode scala">check</code> is
+called. One particularly cool way to do this is by using <code class="sourceCode scala">didSet</code>:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>public struct <span class="ex">Deque</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="kw">var</span> front<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span> didSet <span class="op">{</span> <span class="fu">check</span><span class="op">()</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="kw">var</span> back <span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span> didSet <span class="op">{</span> <span class="fu">check</span><span class="op">()</span> <span class="op">}</span> <span class="op">}</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>This will call <code class="sourceCode scala"><span class="fu">check</span><span class="op">()</span></code>
+whenever either list is mutated, ensuring you can’t forget. If a
+<em>new</em> Deque is initialised, though, it won’t be called. I don’t
+trust myself to remember the <code class="sourceCode scala"><span class="fu">check</span><span class="op">()</span></code>
+on every init, so we can put it into the initialiser:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="fu">init</span><span class="op">(</span>_ front<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;,</span> _ back<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span> <span class="op">{</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>self<span class="op">.</span>front<span class="op">,</span> self<span class="op">.</span>back<span class="op">)</span> <span class="op">=</span> <span class="op">(</span>front<span class="op">,</span> back<span class="op">)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">check</span><span class="op">()</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span></code></pre></div>
+<p>This is the only initialiser so far, so it’s the only one I’m allowed
+to call. However, there may be some cases where I <em>know</em> that the
+front and back are balanced. So I want a separate initialiser for those,
+for efficiency’s sake. But it’s got to be called <code class="sourceCode scala">init</code> no matter what, so how can I
+specify that I want to use the non-checking initialiser, over the
+checking one? I could have a function called something like <code class="sourceCode scala">initialiseFromBalanced</code> that returns a
+Deque, but I don’t like that. You could use labelled arguments. <a href="http://ericasadun.com/2015/06/01/swift-safe-array-indexing-my-favorite-thing-of-the-new-week/">Erica
+Sadun has a cool post on using them with subscripts</a>, and here’s what
+it would look like with <code class="sourceCode scala">init</code>:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="fu">init</span><span class="op">(</span>balancedFront<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;,</span> balancedBack<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span> <span class="op">{</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>front<span class="op">,</span> back<span class="op">)</span> <span class="op">=</span> <span class="op">(</span>balancedFront<span class="op">,</span> balancedBack<span class="op">)</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>So now we have a default initialiser that automatically balances the
+Deque, and a specialised one that takes two lists already balanced.</p>
+<p>There is an extra function on lists in the <code class="sourceCode scala"><span class="fu">check</span><span class="op">()</span></code>
+function: <code class="sourceCode scala"><span class="fu">reverse</span><span class="op">()</span></code>.
+There are a load of different ways to do it. If you’re in the mood for
+golf:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>let joanne<span class="op">:</span> <span class="ex">List</span> <span class="op">=</span> <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">5</span><span class="op">,</span> <span class="dv">6</span><span class="op">]</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>joanne<span class="op">.</span><span class="fu">reduce</span><span class="op">(.</span>Nil<span class="op">)</span> <span class="op">{</span> $<span class="dv">1</span> <span class="op">|&gt;</span> $<span class="dv">0</span> <span class="op">}</span> <span class="co">// 6, 5, 4, 3, 2, 1</span></span></code></pre></div>
 <p>Or, if you’d like to keep it recursive:</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true"></a>  <span class="kw">private</span> func <span class="fu">reverse</span>(other: List&lt;Element&gt;) -&gt; List&lt;Element&gt; {</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="kw">return</span> other</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(head, tail): <span class="kw">return</span> tail.<span class="fu">reverse</span>(head |&gt; other)</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true"></a>    }</span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true"></a>  }</span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true"></a>  public func <span class="fu">reverse</span>() -&gt; List&lt;Element&gt; {</span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">reverse</span>(.<span class="fu">Nil</span>)</span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true"></a>  }</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true"></a>}</span></code></pre></div>
-<p>Obviously, you want to avoid this operation as much as possible. We’ll have to bear that in mind when we’re adding other functions.</p>
-<p>So what kind of operations do we want on Deques? Well, <code class="sourceCode scala"><span class="fu">removeFirst</span>()</code> and <code class="sourceCode scala"><span class="fu">removeLast</span>()</code> would be a start:</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true"></a>  public mutating func <span class="fu">removeFirst</span>() -&gt; Element {</span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true"></a>    <span class="kw">return</span> front.<span class="fu">removeFirst</span>()</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true"></a>  }</span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true"></a>  public mutating func <span class="fu">removeLast</span>() -&gt; Element {</span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true"></a>    <span class="kw">return</span> back.<span class="fu">removeFirst</span>()</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true"></a>  }</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true"></a>}</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> func <span class="fu">reverse</span><span class="op">(</span>other<span class="op">:</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;)</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="cf">return</span> other</span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">):</span> <span class="cf">return</span> tail<span class="op">.</span><span class="fu">reverse</span><span class="op">(</span>head <span class="op">|&gt;</span> other<span class="op">)</span></span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">reverse</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">List</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="fu">reverse</span><span class="op">(.</span>Nil<span class="op">)</span></span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>Obviously, you want to avoid this operation as much as possible.
+We’ll have to bear that in mind when we’re adding other functions.</p>
+<p>So what kind of operations do we want on Deques? Well, <code class="sourceCode scala"><span class="fu">removeFirst</span><span class="op">()</span></code>
+and <code class="sourceCode scala"><span class="fu">removeLast</span><span class="op">()</span></code>
+would be a start:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>  public mutating func <span class="fu">removeFirst</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">Element</span> <span class="op">{</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> front<span class="op">.</span><span class="fu">removeFirst</span><span class="op">()</span></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>  public mutating func <span class="fu">removeLast</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">Element</span> <span class="op">{</span></span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> back<span class="op">.</span><span class="fu">removeFirst</span><span class="op">()</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
 <p>And the function on lists:</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true"></a>extension List {</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true"></a>  public mutating func <span class="fu">removeFirst</span>() -&gt; Element {</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true"></a>    switch self {</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true"></a>    <span class="kw">case</span> .<span class="fu">Nil</span>: <span class="fu">fatalError</span>(<span class="st">&quot;Cannot call removeFirst() on an empty list&quot;</span>)</span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true"></a>    <span class="kw">case</span> let .<span class="fu">Cons</span>(head, tail):</span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true"></a>      self = tail</span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true"></a>      <span class="kw">return</span> head</span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true"></a>    }</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true"></a>  }</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true"></a>}</span></code></pre></div>
-<p>The other functions are easy enough to figure out: <code class="sourceCode scala"><span class="fu">dropFirst</span>()</code>, <code class="sourceCode scala"><span class="fu">dropLast</span>()</code>, etc. And, since it conforms to <code class="sourceCode scala">SequenceType</code>, it gets all of the sequence methods from the standard library, as well. However, those methods are designed for other kinds of sequences - <code class="sourceCode scala">Array</code>s, <code class="sourceCode scala">String.<span class="fu">CharacterView</span></code>s, etc. There are <em>much</em> more efficient ways to do most of them. <code class="sourceCode scala">reverse</code>, for instance, is just this:</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true"></a>  public func <span class="fu">reverse</span>() -&gt; Deque&lt;Element&gt; {</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">Deque</span>(balancedFront: back, balancedBack: front)</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true"></a>  }</span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true"></a>}</span></code></pre></div>
-<p>(Since reverse can’t change the number of elements in either list, we can use the initialiser that takes a balanced front and back.) Other methods like <code class="sourceCode scala"><span class="fu">map</span>()</code>, <code class="sourceCode scala"><span class="fu">filter</span>()</code>, etc., will just give you back an array. If we wanted to keep the Deque, we’d have to convert it back, which involves reversing, which is expensive. So we should do our own methods for those:</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true"></a>  public func map&lt;T&gt;(@noescape transform: Element -&gt; T) -&gt; Deque&lt;T&gt; {</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true"></a>    <span class="kw">return</span> Deque&lt;T&gt;(</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true"></a>      balancedFront: front.<span class="fu">map</span>(transform),</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true"></a>      balancedBack : back .<span class="fu">map</span>(transform)</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true"></a>    )</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true"></a>  }</span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true"></a>}</span>
-<span id="cb38-9"><a href="#cb38-9" aria-hidden="true"></a></span>
-<span id="cb38-10"><a href="#cb38-10" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb38-11"><a href="#cb38-11" aria-hidden="true"></a>  public func <span class="fu">filter</span>(@noescape includeElement: Element -&gt; Bool) -&gt; Deque&lt;Element&gt; {</span>
-<span id="cb38-12"><a href="#cb38-12" aria-hidden="true"></a>    <span class="kw">return</span> <span class="fu">Deque</span>(front.<span class="fu">filter</span>(includeElement), back.<span class="fu">filter</span>(includeElement))</span>
-<span id="cb38-13"><a href="#cb38-13" aria-hidden="true"></a>  }</span>
-<span id="cb38-14"><a href="#cb38-14" aria-hidden="true"></a>}</span></code></pre></div>
-<p><code class="sourceCode scala"><span class="fu">filter</span>()</code> changes the number of elements in each list, which could cause violation of the invariant. So we use the unlabelled initialiser, which automatically <code class="sourceCode scala"><span class="fu">check</span>()</code>s.</p>
-<p>Notice that we don’t have to do any reversing here. This is a huge efficiency gain, but you’ve got to bear in mind that we’re assuming the order of execution of the closures for <code class="sourceCode scala">filter</code> and <code class="sourceCode scala">map</code> don’t matter. This isn’t always the case. Take this function, which is supposed to skip two elements of a sequence:</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true"></a><span class="kw">var</span> i = <span class="dv">0</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true"></a>[Int](<span class="dv">1</span>...<span class="dv">10</span>).<span class="fu">filter</span> { _ in i++ % <span class="dv">3</span> == <span class="dv">0</span> } <span class="co">// [1, 4, 7, 10]</span></span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">List</span> <span class="op">{</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>  public mutating func <span class="fu">removeFirst</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">Element</span> <span class="op">{</span></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>    switch self <span class="op">{</span></span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> <span class="op">.</span>Nil<span class="op">:</span> <span class="fu">fatalError</span><span class="op">(</span><span class="st">&quot;Cannot call removeFirst() on an empty list&quot;</span><span class="op">)</span></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">case</span> let <span class="op">.</span><span class="fu">Cons</span><span class="op">(</span>head<span class="op">,</span> tail<span class="op">):</span></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>      self <span class="op">=</span> tail</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>      <span class="cf">return</span> head</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>The other functions are easy enough to figure out: <code class="sourceCode scala"><span class="fu">dropFirst</span><span class="op">()</span></code>,
+<code class="sourceCode scala"><span class="fu">dropLast</span><span class="op">()</span></code>,
+etc. And, since it conforms to <code class="sourceCode scala">SequenceType</code>, it gets all of the
+sequence methods from the standard library, as well. However, those
+methods are designed for other kinds of sequences - <code class="sourceCode scala"><span class="ex">Array</span></code>s, <code class="sourceCode scala"><span class="ex">String</span><span class="op">.</span>CharacterView</code>s,
+etc. There are <em>much</em> more efficient ways to do most of them.
+<code class="sourceCode scala">reverse</code>, for instance, is just
+this:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">reverse</span><span class="op">()</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ex">Deque</span><span class="op">(</span>balancedFront<span class="op">:</span> back<span class="op">,</span> balancedBack<span class="op">:</span> front<span class="op">)</span></span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>(Since reverse can’t change the number of elements in either list, we
+can use the initialiser that takes a balanced front and back.) Other
+methods like <code class="sourceCode scala"><span class="fu">map</span><span class="op">()</span></code>,
+<code class="sourceCode scala"><span class="fu">filter</span><span class="op">()</span></code>,
+etc., will just give you back an array. If we wanted to keep the Deque,
+we’d have to convert it back, which involves reversing, which is
+expensive. So we should do our own methods for those:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  public func map<span class="op">&lt;</span>T<span class="op">&gt;(</span>@noescape transform<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> T<span class="op">)</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;(</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>      balancedFront<span class="op">:</span> front<span class="op">.</span><span class="fu">map</span><span class="op">(</span>transform<span class="op">),</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>      balancedBack <span class="op">:</span> back <span class="op">.</span><span class="fu">map</span><span class="op">(</span>transform<span class="op">)</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb38-9"><a href="#cb38-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-10"><a href="#cb38-10" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb38-11"><a href="#cb38-11" aria-hidden="true" tabindex="-1"></a>  public func <span class="fu">filter</span><span class="op">(</span>@noescape includeElement<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> Bool<span class="op">)</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span><span class="ex">Element</span><span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb38-12"><a href="#cb38-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ex">Deque</span><span class="op">(</span>front<span class="op">.</span><span class="fu">filter</span><span class="op">(</span>includeElement<span class="op">),</span> back<span class="op">.</span><span class="fu">filter</span><span class="op">(</span>includeElement<span class="op">))</span></span>
+<span id="cb38-13"><a href="#cb38-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb38-14"><a href="#cb38-14" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p><code class="sourceCode scala"><span class="fu">filter</span><span class="op">()</span></code>
+changes the number of elements in each list, which could cause violation
+of the invariant. So we use the unlabelled initialiser, which
+automatically <code class="sourceCode scala"><span class="fu">check</span><span class="op">()</span></code>s.</p>
+<p>Notice that we don’t have to do any reversing here. This is a huge
+efficiency gain, but you’ve got to bear in mind that we’re assuming the
+order of execution of the closures for <code class="sourceCode scala">filter</code> and <code class="sourceCode scala">map</code> don’t matter. This isn’t always the
+case. Take this function, which is supposed to skip two elements of a
+sequence:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="kw">var</span> i <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="op">[</span><span class="bu">Int</span><span class="op">](</span><span class="dv">1</span><span class="op">...</span><span class="dv">10</span><span class="op">).</span>filter <span class="op">{</span> _ in i<span class="op">++</span> <span class="op">%</span> <span class="dv">3</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">}</span> <span class="co">// [1, 4, 7, 10]</span></span></code></pre></div>
 <p>It won’t work for a Deque:</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true"></a><span class="fu">Deque</span>(<span class="dv">1</span>...<span class="dv">10</span>).<span class="fu">filter</span> { _ in i++ % <span class="dv">3</span> == <span class="dv">0</span> } <span class="co">// 1, 4 | 6, 9</span></span></code></pre></div>
-<p>There’s been talk of a <code class="sourceCode scala">@pure</code> attribute. The idea is this: put it before your function or closure name, and the compiler will verify that it has no side effects. It can only use its arguments as variables, or call other <code class="sourceCode scala">@pure</code> functions. It would be very useful here, as it wouldn’t allow the <code class="sourceCode scala">i</code> to be used by <code class="sourceCode scala">filter</code>. Without it, you’ll probably just have to mention in the docs that the order of execution is not knowable.</p>
-<p>For completeness’ sake, there are also <code class="sourceCode scala"><span class="fu">flatMap</span>()</code>s for the Deque, implemented in a similar fashion to the functions above:</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true"></a>extension Deque {</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true"></a>  public func flatMap&lt;T&gt;(@noescape transform: Element -&gt; Deque&lt;T&gt;) -&gt; Deque&lt;T&gt; {</span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true"></a>    <span class="kw">return</span> Deque&lt;T&gt;(</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true"></a>      front.<span class="fu">flatMap</span>{List(<span class="fu">transform</span>($<span class="dv">0</span>))},</span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true"></a>      back .<span class="fu">flatMap</span>{List(<span class="fu">transform</span>($<span class="dv">0</span>).<span class="fu">reverse</span>())}</span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true"></a>    )</span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true"></a>  }</span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true"></a></span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true"></a>  public func flatMap&lt;T&gt;(@noescape transform: Element -&gt; T?) -&gt; Deque&lt;T&gt; {</span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true"></a>    <span class="kw">return</span> Deque&lt;T&gt;(</span>
-<span id="cb41-11"><a href="#cb41-11" aria-hidden="true"></a>      front.<span class="fu">flatMap</span>(transform),</span>
-<span id="cb41-12"><a href="#cb41-12" aria-hidden="true"></a>      back .<span class="fu">flatMap</span>(transform)</span>
-<span id="cb41-13"><a href="#cb41-13" aria-hidden="true"></a>    )</span>
-<span id="cb41-14"><a href="#cb41-14" aria-hidden="true"></a>  }</span>
-<span id="cb41-15"><a href="#cb41-15" aria-hidden="true"></a>}</span></code></pre></div>
-<p>All of this code is available as a playground, <a href="https://github.com/oisdk/Deques-Queues-and-Lists-in-Swift-with-indirect">here</a>. These two structs are also implemented a little more fully in <a href="https://github.com/oisdk/SwiftSequence">SwiftSequence</a>.</p>
-<p>Since the only real constitutive part of the Deque is a list, it’s probably possible to implement it lazily, by just substituting in <code class="sourceCode scala">LazyList</code>s. Or, if you were feeling adventurous, you could have one of the lists lazy, and one strict. This isn’t as crazy as it sounds: <code class="sourceCode scala"><span class="fu">reverse</span>()</code> can <em>only</em> be performed eagerly, since the entire list needs to be walked to get to the last element. So the front and back lists have different functions (slightly). Also, because of the lazy initialisation of <code class="sourceCode scala">LazyList</code>, swapping between lazy and strict needn’t be very expensive. I’ll leave it up to someone else to try, though.</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="ex">Deque</span><span class="op">(</span><span class="dv">1</span><span class="op">...</span><span class="dv">10</span><span class="op">).</span>filter <span class="op">{</span> _ in i<span class="op">++</span> <span class="op">%</span> <span class="dv">3</span> <span class="op">==</span> <span class="dv">0</span> <span class="op">}</span> <span class="co">// 1, 4 | 6, 9</span></span></code></pre></div>
+<p>There’s been talk of a <code class="sourceCode scala">@pure</code>
+attribute. The idea is this: put it before your function or closure
+name, and the compiler will verify that it has no side effects. It can
+only use its arguments as variables, or call other <code class="sourceCode scala">@pure</code> functions. It would be very useful
+here, as it wouldn’t allow the <code class="sourceCode scala">i</code>
+to be used by <code class="sourceCode scala">filter</code>. Without it,
+you’ll probably just have to mention in the docs that the order of
+execution is not knowable.</p>
+<p>For completeness’ sake, there are also <code class="sourceCode scala"><span class="fu">flatMap</span><span class="op">()</span></code>s
+for the Deque, implemented in a similar fashion to the functions
+above:</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode scala"><code class="sourceCode scala"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>extension <span class="ex">Deque</span> <span class="op">{</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  public func flatMap<span class="op">&lt;</span>T<span class="op">&gt;(</span>@noescape transform<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;)</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;(</span></span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>      front<span class="op">.</span>flatMap<span class="op">{</span><span class="ex">List</span><span class="op">(</span><span class="fu">transform</span><span class="op">(</span>$<span class="dv">0</span><span class="op">))},</span></span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>      back <span class="op">.</span>flatMap<span class="op">{</span><span class="ex">List</span><span class="op">(</span><span class="fu">transform</span><span class="op">(</span>$<span class="dv">0</span><span class="op">).</span><span class="fu">reverse</span><span class="op">())}</span></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>  public func flatMap<span class="op">&lt;</span>T<span class="op">&gt;(</span>@noescape transform<span class="op">:</span> <span class="ex">Element</span> <span class="op">-&gt;</span> T<span class="op">?)</span> <span class="op">-&gt;</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;</span> <span class="op">{</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ex">Deque</span><span class="op">&lt;</span>T<span class="op">&gt;(</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>      front<span class="op">.</span><span class="fu">flatMap</span><span class="op">(</span>transform<span class="op">),</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>      back <span class="op">.</span><span class="fu">flatMap</span><span class="op">(</span>transform<span class="op">)</span></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>All of this code is available as a playground, <a href="https://github.com/oisdk/Deques-Queues-and-Lists-in-Swift-with-indirect">here</a>.
+These two structs are also implemented a little more fully in <a href="https://github.com/oisdk/SwiftSequence">SwiftSequence</a>.</p>
+<p>Since the only real constitutive part of the Deque is a list, it’s
+probably possible to implement it lazily, by just substituting in <code class="sourceCode scala">LazyList</code>s. Or, if you were feeling
+adventurous, you could have one of the lists lazy, and one strict. This
+isn’t as crazy as it sounds: <code class="sourceCode scala"><span class="fu">reverse</span><span class="op">()</span></code>
+can <em>only</em> be performed eagerly, since the entire list needs to
+be walked to get to the last element. So the front and back lists have
+different functions (slightly). Also, because of the lazy initialisation
+of <code class="sourceCode scala">LazyList</code>, swapping between lazy
+and strict needn’t be very expensive. I’ll leave it up to someone else
+to try, though.</p>
 
         </div>
     </body>

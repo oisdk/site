@@ -30,181 +30,242 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
-<p>This post is a collection of some of the tricks I’ve learned for manipulating lists in Haskell. Each one starts with a puzzle: you should try the puzzle yourself before seeing the solution!</p>
+<p>This post is a collection of some of the tricks I’ve learned for
+manipulating lists in Haskell. Each one starts with a puzzle: you should
+try the puzzle yourself before seeing the solution!</p>
 <h1 id="the-tortoise-and-the-hare">The Tortoise and the Hare</h1>
 <blockquote>
-<p>How can you split a list in half, in one pass, without taking its length?</p>
+<p>How can you split a list in half, in one pass, without taking its
+length?</p>
 </blockquote>
-<p>This first one is a relatively well-known trick, but it occasionally comes in handy, so I thought I’d mention it. The naive way is as follows:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a>splitHalf xs <span class="ot">=</span> <span class="fu">splitAt</span> (<span class="fu">length</span> xs <span class="ot">`div`</span> <span class="dv">2</span>) xs</span></code></pre></div>
-<p>But it’s unsatisfying: we have to traverse the list twice, and we’re taking its length (which is almost always a bad idea). Instead, we use the following function:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="ot">splitHalf ::</span> [a] <span class="ot">-&gt;</span> ([a],[a])</span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>splitHalf xs <span class="ot">=</span> go xs xs</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> first (y<span class="op">:</span>) (go ys zs)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a>    go ys _ <span class="ot">=</span> ([],ys)</span></code></pre></div>
-<p>The “tortoise and the hare” is the two arguments to <code>go</code>: it traverses the second one twice as fast, so when it hits the end, we know that the first list must be halfway done.</p>
+<p>This first one is a relatively well-known trick, but it occasionally
+comes in handy, so I thought I’d mention it. The naive way is as
+follows:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>splitHalf xs <span class="ot">=</span> <span class="fu">splitAt</span> (<span class="fu">length</span> xs <span class="ot">`div`</span> <span class="dv">2</span>) xs</span></code></pre></div>
+<p>But it’s unsatisfying: we have to traverse the list twice, and we’re
+taking its length (which is almost always a bad idea). Instead, we use
+the following function:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ot">splitHalf ::</span> [a] <span class="ot">-&gt;</span> ([a],[a])</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>splitHalf xs <span class="ot">=</span> go xs xs</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> first (y<span class="op">:</span>) (go ys zs)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    go ys _ <span class="ot">=</span> ([],ys)</span></code></pre></div>
+<p>The “tortoise and the hare” is the two arguments to <code>go</code>:
+it traverses the second one twice as fast, so when it hits the end, we
+know that the first list must be halfway done.</p>
 <h1 id="there-and-back-again">There and Back Again</h1>
 <blockquote>
-<p>Given two lists, <code>xs</code> and <code>ys</code>, write a function which zips <code>xs</code> with the <em>reverse</em> of <code>ys</code> (in one pass).</p>
+<p>Given two lists, <code>xs</code> and <code>ys</code>, write a
+function which zips <code>xs</code> with the <em>reverse</em> of
+<code>ys</code> (in one pass).</p>
 </blockquote>
-<p>There’s a lovely paper <span class="citation" data-cites="danvy_there_2005">(Danvy and Goldberg <a href="#ref-danvy_there_2005" role="doc-biblioref">2005</a>)</span> which goes though a number of tricks for how to do certain list manipulations “in reverse”. Their technique is known as “there and back again”. However, I’d like to describe a different way to get to the same technique, using folds.</p>
-<p>Whenever I need to do some list manipulation in reverse (i.e., I need the input list to be reversed), I first see if I can rewrite the function as a fold, and then just switch out <code>foldr</code> for <code>foldl</code>.</p>
-<p>For our puzzle here, we need to first write <code>zip</code> as a fold:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="fu">zip</span> <span class="ot">=</span> <span class="fu">foldr</span> f b</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true"></a>    f x k (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> k ys</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true"></a>    f x k [] <span class="ot">=</span> []</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
-<p>If that looks complex, or difficult to write, don’t worry! There’s a systematic way to get to the above definition from the normal version of <code>zip</code>. First, let’s start with a normal <code>zip</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a><span class="fu">zip</span> [] ys <span class="ot">=</span> []</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true"></a><span class="fu">zip</span> xs [] <span class="ot">=</span> []</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true"></a><span class="fu">zip</span> (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
-<p>Then, we need to turn it into a case-tree, where the first branch is on the list we want to fold over. In other words, we want the function to look like this:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a>  <span class="op">???</span></span></code></pre></div>
-<p>To figure out the cases, we factor out the cases in the original function. Since the second clause (<code>zip xs [] = []</code>) is only reachable when <code>xs /= []</code>, it’s effectively a case for the <code>x:xs</code> branch.</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a>    [] <span class="ot">-&gt;</span> \_ <span class="ot">-&gt;</span> []</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true"></a>        [] <span class="ot">-&gt;</span> []</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
+<p>There’s a lovely paper <span class="citation" data-cites="danvy_there_2005">(Danvy and Goldberg 2005)</span> which
+goes though a number of tricks for how to do certain list manipulations
+“in reverse”. Their technique is known as “there and back again”.
+However, I’d like to describe a different way to get to the same
+technique, using folds.</p>
+<p>Whenever I need to do some list manipulation in reverse (i.e., I need
+the input list to be reversed), I first see if I can rewrite the
+function as a fold, and then just switch out <code>foldr</code> for
+<code>foldl</code>.</p>
+<p>For our puzzle here, we need to first write <code>zip</code> as a
+fold:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> <span class="ot">=</span> <span class="fu">foldr</span> f b</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    f x k (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> k ys</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    f x k [] <span class="ot">=</span> []</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
+<p>If that looks complex, or difficult to write, don’t worry! There’s a
+systematic way to get to the above definition from the normal version of
+<code>zip</code>. First, let’s start with a normal <code>zip</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> [] ys <span class="ot">=</span> []</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> xs [] <span class="ot">=</span> []</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
+<p>Then, we need to turn it into a case-tree, where the first branch is
+on the list we want to fold over. In other words, we want the function
+to look like this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">???</span></span></code></pre></div>
+<p>To figure out the cases, we factor out the cases in the original
+function. Since the second clause (<code>zip xs [] = []</code>) is only
+reachable when <code>xs /= []</code>, it’s effectively a case for the
+<code>x:xs</code> branch.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    [] <span class="ot">-&gt;</span> \_ <span class="ot">-&gt;</span> []</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>        [] <span class="ot">-&gt;</span> []</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
 <p>Now, we rewrite the different cases to be auxiliary functions:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a>    [] <span class="ot">-&gt;</span> b</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> f x xs</span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true"></a>    b <span class="ot">=</span> \_ <span class="ot">-&gt;</span> []</span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true"></a>    f <span class="ot">=</span> \x xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true"></a>        [] <span class="ot">-&gt;</span> []</span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
-<p>And finally, we <em>refactor</em> the recursive call to the first case expression.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>    [] <span class="ot">-&gt;</span> b</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> f x (<span class="fu">zip</span> xs)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true"></a>    b <span class="ot">=</span> \_ <span class="ot">-&gt;</span> []</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true"></a>    f <span class="ot">=</span> \x xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true"></a>        [] <span class="ot">-&gt;</span> []</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> xs ys</span></code></pre></div>
-<p>Then those two auxiliary functions are what you pass to <code>foldr</code>!</p>
-<p>So, to reverse it, we simply take wherever we wrote <code>foldr f b</code>, and replace it with <code>foldl (flip f) b</code>:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>zipRev <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">flip</span> f) b</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    f x k (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> k ys</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    f x k [] <span class="ot">=</span> []</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
-<p>Of course, we’re reversing the wrong list here. Fixing that is simple:</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>zipRev <span class="ot">=</span> <span class="fu">flip</span> (<span class="fu">foldl</span> (<span class="fu">flip</span> f) b)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>    f y k (x<span class="op">:</span>xs) <span class="ot">=</span> (x,y) <span class="op">:</span> k xs</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a>    f y k [] <span class="ot">=</span> []</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    [] <span class="ot">-&gt;</span> b</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> f x xs</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> \_ <span class="ot">-&gt;</span> []</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">=</span> \x xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        [] <span class="ot">-&gt;</span> []</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> <span class="fu">zip</span> xs ys</span></code></pre></div>
+<p>And finally, we <em>refactor</em> the recursive call to the first
+case expression.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span><span class="ot"> ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">zip</span> xs <span class="ot">=</span> <span class="kw">case</span> xs <span class="kw">of</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    [] <span class="ot">-&gt;</span> b</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    x<span class="op">:</span>xs <span class="ot">-&gt;</span> f x (<span class="fu">zip</span> xs)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    b <span class="ot">=</span> \_ <span class="ot">-&gt;</span> []</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    f <span class="ot">=</span> \x xs <span class="ot">-&gt;</span> \<span class="kw">case</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>        [] <span class="ot">-&gt;</span> []</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>        y<span class="op">:</span>ys <span class="ot">-&gt;</span> (x,y) <span class="op">:</span> xs ys</span></code></pre></div>
+<p>Then those two auxiliary functions are what you pass to
+<code>foldr</code>!</p>
+<p>So, to reverse it, we simply take wherever we wrote
+<code>foldr f b</code>, and replace it with
+<code>foldl (flip f) b</code>:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>zipRev <span class="ot">=</span> <span class="fu">foldl</span> (<span class="fu">flip</span> f) b</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    f x k (y<span class="op">:</span>ys) <span class="ot">=</span> (x,y) <span class="op">:</span> k ys</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    f x k [] <span class="ot">=</span> []</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
+<p>Of course, we’re reversing the wrong list here. Fixing that is
+simple:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="ot">zipRev ::</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> [(a,b)]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>zipRev <span class="ot">=</span> <span class="fu">flip</span> (<span class="fu">foldl</span> (<span class="fu">flip</span> f) b)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    f y k (x<span class="op">:</span>xs) <span class="ot">=</span> (x,y) <span class="op">:</span> k xs</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    f y k [] <span class="ot">=</span> []</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    b _ <span class="ot">=</span> []</span></code></pre></div>
 <h1 id="maintaining-laziness">Maintaining Laziness</h1>
 <blockquote>
 <p>Rewrite the above function without using continuations.</p>
 </blockquote>
-<p><code>zipRev</code>, as written above, actually uses <em>continuation-passing style</em>. In most languages (including standard ML, which was the one used in <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (<a href="#ref-danvy_there_2005" role="doc-biblioref">2005</a>)</span>), this is pretty much equivalent to a direct-style implementation (modulo some performance weirdness). In a lazy language like Haskell, though, continuation-passing style often makes things unnecessarily strict.</p>
+<p><code>zipRev</code>, as written above, actually uses
+<em>continuation-passing style</em>. In most languages (including
+standard ML, which was the one used in <span class="citation" data-cites="danvy_there_2005">Danvy and Goldberg (2005)</span>), this is
+pretty much equivalent to a direct-style implementation (modulo some
+performance weirdness). In a lazy language like Haskell, though,
+continuation-passing style often makes things unnecessarily strict.</p>
 <p>Consider the church-encoded pairs:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a><span class="kw">newtype</span> <span class="dt">Pair</span> a b</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>    <span class="ot">=</span> <span class="dt">Pair</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true"></a>    {<span class="ot"> runPair ::</span> <span class="kw">forall</span> c<span class="op">.</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> c</span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true"></a>    }</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true"></a>    </span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true"></a><span class="ot">firstC ::</span> (a <span class="ot">-&gt;</span> a') <span class="ot">-&gt;</span> <span class="dt">Pair</span> a b <span class="ot">-&gt;</span> <span class="dt">Pair</span> a' b</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true"></a>firstC f p <span class="ot">=</span> <span class="dt">Pair</span> (\k <span class="ot">-&gt;</span> runPair p (k <span class="op">.</span> f))</span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true"></a></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true"></a><span class="ot">firstD ::</span> (a <span class="ot">-&gt;</span> a') <span class="ot">-&gt;</span> (a, b) <span class="ot">-&gt;</span> (a', b)</span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true"></a>firstD f <span class="op">~</span>(x,y) <span class="ot">=</span> (f x, y)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true"></a></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true"></a><span class="ot">fstD ::</span> (a, b) <span class="ot">-&gt;</span> a</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true"></a>fstD <span class="op">~</span>(x,y) <span class="ot">=</span> x</span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true"></a></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true"></a><span class="ot">fstC ::</span> <span class="dt">Pair</span> a b <span class="ot">-&gt;</span> a</span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true"></a>fstC p <span class="ot">=</span> runPair p <span class="fu">const</span></span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true"></a></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> fstC (firstC (<span class="fu">const</span> ()) <span class="fu">undefined</span>)</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true"></a><span class="fu">undefined</span></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true"></a></span>
-<span id="cb11-21"><a href="#cb11-21" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> fstD (firstD (<span class="fu">const</span> ()) <span class="fu">undefined</span>)</span>
-<span id="cb11-22"><a href="#cb11-22" aria-hidden="true"></a>()</span></code></pre></div>
-<p>So it’s sometimes worth trying to avoid continuations if there is a fast direct-style solution. (alternatively, continuations can give you extra strictness when you <em>do</em> want it)</p>
-<p>First, I’m going to write a different version of <code>zipRev</code>, which folds on the first list, not the second.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldl</span> f (\_ r <span class="ot">-&gt;</span> r) xs ys []</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true"></a>    f k x (y<span class="op">:</span>ys) r <span class="ot">=</span> k ys ((x,y)<span class="op">:</span>r)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Pair</span> a b</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="ot">=</span> <span class="dt">Pair</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    {<span class="ot"> runPair ::</span> <span class="kw">forall</span> c<span class="op">.</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> c</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="ot">firstC ::</span> (a <span class="ot">-&gt;</span> a') <span class="ot">-&gt;</span> <span class="dt">Pair</span> a b <span class="ot">-&gt;</span> <span class="dt">Pair</span> a' b</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>firstC f p <span class="ot">=</span> <span class="dt">Pair</span> (\k <span class="ot">-&gt;</span> runPair p (k <span class="op">.</span> f))</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="ot">firstD ::</span> (a <span class="ot">-&gt;</span> a') <span class="ot">-&gt;</span> (a, b) <span class="ot">-&gt;</span> (a', b)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>firstD f <span class="op">~</span>(x,y) <span class="ot">=</span> (f x, y)</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="ot">fstD ::</span> (a, b) <span class="ot">-&gt;</span> a</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>fstD <span class="op">~</span>(x,y) <span class="ot">=</span> x</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="ot">fstC ::</span> <span class="dt">Pair</span> a b <span class="ot">-&gt;</span> a</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>fstC p <span class="ot">=</span> runPair p <span class="fu">const</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> fstC (firstC (<span class="fu">const</span> ()) <span class="fu">undefined</span>)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a><span class="fu">undefined</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> fstD (firstD (<span class="fu">const</span> ()) <span class="fu">undefined</span>)</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>()</span></code></pre></div>
+<p>So it’s sometimes worth trying to avoid continuations if there is a
+fast direct-style solution. (alternatively, continuations can give you
+extra strictness when you <em>do</em> want it)</p>
+<p>First, I’m going to write a different version of <code>zipRev</code>,
+which folds on the first list, not the second.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldl</span> f (\_ r <span class="ot">-&gt;</span> r) xs ys []</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    f k x (y<span class="op">:</span>ys) r <span class="ot">=</span> k ys ((x,y)<span class="op">:</span>r)</span></code></pre></div>
 <p>Then, we inline the definition of <code>foldl</code>:</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> xs (\_ r <span class="ot">-&gt;</span> r) ys []</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true"></a>    f x k c <span class="ot">=</span> k (\(y<span class="op">:</span>ys) r <span class="ot">-&gt;</span> c ys ((x,y)<span class="op">:</span>r)) </span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> xs (\_ r <span class="ot">-&gt;</span> r) ys []</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    f x k c <span class="ot">=</span> k (\(y<span class="op">:</span>ys) r <span class="ot">-&gt;</span> c ys ((x,y)<span class="op">:</span>r)) </span></code></pre></div>
 <p>Then, as a hint, we tuple up the two accumulating parameters:</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> xs <span class="fu">snd</span> (ys,[])</span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>    f x k c <span class="ot">=</span> k (\((y<span class="op">:</span>ys),r) <span class="ot">-&gt;</span> c (ys,(x,y)<span class="op">:</span>r)) </span></code></pre></div>
-<p>What we can see here is that we have two continuations stacked on top of each other. When this happens, they can often “cancel out”, like so:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">snd</span> (<span class="fu">foldr</span> f (ys,[]) xs)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x,y)<span class="op">:</span>r)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">foldr</span> f <span class="fu">id</span> xs <span class="fu">snd</span> (ys,[])</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    f x k c <span class="ot">=</span> k (\((y<span class="op">:</span>ys),r) <span class="ot">-&gt;</span> c (ys,(x,y)<span class="op">:</span>r)) </span></code></pre></div>
+<p>What we can see here is that we have two continuations stacked on top
+of each other. When this happens, they can often “cancel out”, like
+so:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>zipRev xs ys <span class="ot">=</span> <span class="fu">snd</span> (<span class="fu">foldr</span> f (ys,[]) xs)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x,y)<span class="op">:</span>r)</span></code></pre></div>
 <p>And we have our direct-style implementation!</p>
-<p>Note 14/05/2019: the “cancel-out” explanation there is a little handwavy, as I’m sure you’ll notice. However, there are a number of <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">excellent explanations on this stackoverflow thread</a> which explain it much better than I ever could. Thanks to Anders Kaseorg, Will Ness, user11228628, and to Joseph Sible <span class="citation" data-cites="sible_how_2019">(<a href="#ref-sible_how_2019" role="doc-biblioref">2019</a>)</span> for asking the question.</p>
+<p>Note 14/05/2019: the “cancel-out” explanation there is a little
+handwavy, as I’m sure you’ll notice. However, there are a number of <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">excellent
+explanations on this stackoverflow thread</a> which explain it much
+better than I ever could. Thanks to Anders Kaseorg, Will Ness,
+user11228628, and to Joseph Sible -<span class="citation" data-cites="sible_how_2019">Sible (2019)</span> for asking the
+question.</p>
 <h1 id="manual-fusion">Manual Fusion</h1>
 <blockquote>
 <p>Detect that a list is a palindrome, in one pass.</p>
 </blockquote>
-<p>We now know a good way to split a list in two, and a good way to zip a list with its reverse. We can <em>combine</em> the two to get a program that checks if a list is a palindrome. Here’s a first attempt:</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a>isPal xs <span class="ot">=</span> <span class="fu">all</span> (<span class="fu">uncurry</span> (<span class="op">==</span>)) (<span class="fu">uncurry</span> zipRev (splitHalf xs))</span></code></pre></div>
+<p>We now know a good way to split a list in two, and a good way to zip
+a list with its reverse. We can <em>combine</em> the two to get a
+program that checks if a list is a palindrome. Here’s a first
+attempt:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>isPal xs <span class="ot">=</span> <span class="fu">all</span> (<span class="fu">uncurry</span> (<span class="op">==</span>)) (<span class="fu">uncurry</span> zipRev (splitHalf xs))</span></code></pre></div>
 <p>But this is doing <em>three</em> passes!</p>
-<p>To get around it, we can manually do some fusion. Fusion is a technique where we can spot scenarios like the following:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a><span class="fu">foldr</span> f b (x <span class="op">:</span> y <span class="op">:</span> [])</span></code></pre></div>
+<p>To get around it, we can manually do some fusion. Fusion is a
+technique where we can spot scenarios like the following:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">foldr</span> f b (x <span class="op">:</span> y <span class="op">:</span> [])</span></code></pre></div>
 <p>And translate them into a version without a list:</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a>x <span class="ot">`f`</span> (y <span class="ot">`f`</span> b)</span></code></pre></div>
-<p>The trick is making sure that the consumer is written as a fold, and then we just put its <code>f</code> and <code>b</code> in place of the <code>:</code> and <code>[]</code> in the producer.</p>
-<p>So, when we inline the definition of <code>splitHalf</code> into <code>zipRev</code>, we get the following:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a><span class="ot">zipRevHalf ::</span> [a] <span class="ot">-&gt;</span> [(a,a)]</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>zipRevHalf xs <span class="ot">=</span> <span class="fu">snd</span> (go xs xs)</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y (go ys zs)</span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,[])</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true"></a>    go ys []           <span class="ot">=</span> (ys,[])</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true"></a></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x,y)<span class="op">:</span>r)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true"></a>isPal xs <span class="ot">=</span> <span class="fu">all</span> (<span class="fu">uncurry</span> (<span class="op">==</span>)) (zipRevHalf xs)</span></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>x <span class="ot">`f`</span> (y <span class="ot">`f`</span> b)</span></code></pre></div>
+<p>The trick is making sure that the consumer is written as a fold, and
+then we just put its <code>f</code> and <code>b</code> in place of the
+<code>:</code> and <code>[]</code> in the producer.</p>
+<p>So, when we inline the definition of <code>splitHalf</code> into
+<code>zipRev</code>, we get the following:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="ot">zipRevHalf ::</span> [a] <span class="ot">-&gt;</span> [(a,a)]</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>zipRevHalf xs <span class="ot">=</span> <span class="fu">snd</span> (go xs xs)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y (go ys zs)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,[])</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    go ys []           <span class="ot">=</span> (ys,[])</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x,y)<span class="op">:</span>r)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>isPal xs <span class="ot">=</span> <span class="fu">all</span> (<span class="fu">uncurry</span> (<span class="op">==</span>)) (zipRevHalf xs)</span></code></pre></div>
 <p>(adding a special case for odd-length lists)</p>
-<p>Finally, the <code>all (uncurry (==))</code> is implemented as a fold also. So we can fuse it with the rest of the definitions:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>isPal xs <span class="ot">=</span> <span class="fu">snd</span> (go xs xs)</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y (go ys zs)</span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,<span class="dt">True</span>)</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true"></a>    go ys     []       <span class="ot">=</span> (ys,<span class="dt">True</span>)</span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true"></a>    </span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x <span class="op">==</span> y) <span class="op">&amp;&amp;</span> r)</span></code></pre></div>
-<p>You may have spotted the writer monad over <code>All</code> there. Indeed, we can rewrite it to use the monadic bind:</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>isPal xs <span class="ot">=</span> getAll (<span class="fu">fst</span> (go xs xs)) <span class="kw">where</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y <span class="op">=&lt;&lt;</span> go ys zs</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>  go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> <span class="fu">pure</span> ys</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>  go ys     []       <span class="ot">=</span> <span class="fu">pure</span> ys</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>  </span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a>  f y (z<span class="op">:</span>zs) <span class="ot">=</span> (<span class="dt">All</span> (y <span class="op">==</span> z), zs)</span></code></pre></div>
-<h1 id="eliminating-multiple-passes-with-laziness">Eliminating Multiple Passes with Laziness</h1>
+<p>Finally, the <code>all (uncurry (==))</code> is implemented as a fold
+also. So we can fuse it with the rest of the definitions:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>isPal xs <span class="ot">=</span> <span class="fu">snd</span> (go xs xs)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>    go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y (go ys zs)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>    go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> (ys,<span class="dt">True</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>    go ys     []       <span class="ot">=</span> (ys,<span class="dt">True</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>    f x (y<span class="op">:</span>ys,r) <span class="ot">=</span> (ys,(x <span class="op">==</span> y) <span class="op">&amp;&amp;</span> r)</span></code></pre></div>
+<p>You may have spotted the writer monad over <code>All</code> there.
+Indeed, we can rewrite it to use the monadic bind:</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ot">isPal ::</span> <span class="dt">Eq</span> a <span class="ot">=&gt;</span> [a] <span class="ot">-&gt;</span> <span class="dt">Bool</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>isPal xs <span class="ot">=</span> getAll (<span class="fu">fst</span> (go xs xs)) <span class="kw">where</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  go (y<span class="op">:</span>ys) (_<span class="op">:</span>_<span class="op">:</span>zs) <span class="ot">=</span> f y <span class="op">=&lt;&lt;</span> go ys zs</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  go (_<span class="op">:</span>ys) [_]      <span class="ot">=</span> <span class="fu">pure</span> ys</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  go ys     []       <span class="ot">=</span> <span class="fu">pure</span> ys</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  f y (z<span class="op">:</span>zs) <span class="ot">=</span> (<span class="dt">All</span> (y <span class="op">==</span> z), zs)</span></code></pre></div>
+<h1 id="eliminating-multiple-passes-with-laziness">Eliminating Multiple
+Passes with Laziness</h1>
 <blockquote>
 <p>Construct a Braun tree from a list in linear time.</p>
 </blockquote>
-<p>This is also a very well-known trick <span class="citation" data-cites="bird_using_1984">(Bird <a href="#ref-bird_using_1984" role="doc-biblioref">1984</a>)</span>, but today I’m going to use it to write a function for constructing Braun trees.</p>
-<p>A Braun tree is a peculiar structure. It’s a binary tree, where adjacent branches can differ in size by only 1. When used as an array, it has <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math> lookup times. It’s enumerated like so:</p>
+<p>This is also a very well-known trick <span class="citation" data-cites="bird_using_1984">(Bird 1984)</span>, but today I’m going to
+use it to write a function for constructing Braun trees.</p>
+<p>A Braun tree is a peculiar structure. It’s a binary tree, where
+adjacent branches can differ in size by only 1. When used as an array,
+it has
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mo>log</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log n)</annotation></semantics></math>
+lookup times. It’s enumerated like so:</p>
 <pre><code>     ┌─7
    ┌3┤
    │ └11
@@ -220,79 +281,100 @@
    │ ┌10
    └6┤
      └14</code></pre>
-<p>The objective is to construct a tree from a list in linear time, in the order defined above. <span class="citation" data-cites="okasaki_three_1997">Okasaki (<a href="#ref-okasaki_three_1997" role="doc-biblioref">1997</a>)</span> observed that, from the list:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a>[<span class="dv">0</span><span class="op">..</span><span class="dv">14</span>]</span></code></pre></div>
-<p>Each level in the tree is constructed from chucks of powers of two. In other words:</p>
-<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true"></a>[[<span class="dv">0</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>],[<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">12</span>,<span class="dv">13</span>,<span class="dv">14</span>]]</span></code></pre></div>
+<p>The objective is to construct a tree from a list in linear time, in
+the order defined above. <span class="citation" data-cites="okasaki_three_1997">Okasaki (1997)</span> observed that,
+from the list:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>[<span class="dv">0</span><span class="op">..</span><span class="dv">14</span>]</span></code></pre></div>
+<p>Each level in the tree is constructed from chucks of powers of two.
+In other words:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>[[<span class="dv">0</span>],[<span class="dv">1</span>,<span class="dv">2</span>],[<span class="dv">3</span>,<span class="dv">4</span>,<span class="dv">5</span>,<span class="dv">6</span>],[<span class="dv">7</span>,<span class="dv">8</span>,<span class="dv">9</span>,<span class="dv">10</span>,<span class="dv">11</span>,<span class="dv">12</span>,<span class="dv">13</span>,<span class="dv">14</span>]]</span></code></pre></div>
 <p>From this, we can write the following function:</p>
-<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true"></a>rows k [] <span class="ot">=</span> []</span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true"></a>rows k xs <span class="ot">=</span> (k , <span class="fu">take</span> k xs) <span class="op">:</span> rows (<span class="dv">2</span><span class="op">*</span>k) (<span class="fu">drop</span> k xs)</span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true"></a></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true"></a>build (k,xs) ts <span class="ot">=</span> <span class="fu">zipWith3</span> <span class="dt">Node</span> xs ts1 ts2</span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true"></a>    (ts1,ts2) <span class="ot">=</span> <span class="fu">splitAt</span> k (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>)</span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true"></a>    </span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true"></a>fromList <span class="ot">=</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> build [<span class="dt">Leaf</span>] <span class="op">.</span> rows <span class="dv">1</span></span></code></pre></div>
-<p>The first place we’ll look to eliminate a pass is the <code>build</code> function. It combines two rows by splitting the second in half, and zipping it with the first.</p>
-<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> build (<span class="dv">3</span>, [x1,x2,x3]) [y1,y2,y3,y4,y5,y6]</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true"></a>[(x1,y1,y4),(x2,y2,y5),(x3,y3,y6)]</span></code></pre></div>
-<p>We don’t need to store the length of the first list, though, as we are only using it to split the second, and we can do <em>that</em> at the same time as the zipping.</p>
-<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true"></a><span class="ot">zipUntil ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> ([c],[b])</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true"></a>zipUntil _ [] ys <span class="ot">=</span> ([],ys)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true"></a>zipUntil f (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> first (f x y<span class="op">:</span>) (zipUntil f xs ys)</span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true"></a></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> zipUntil (,) [<span class="dv">1</span>,<span class="dv">2</span>] <span class="st">&quot;abc&quot;</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true"></a>([(<span class="dv">1</span>,<span class="ch">'a'</span>),(<span class="dv">2</span>,<span class="ch">'b'</span>)],<span class="st">&quot;c&quot;</span>)</span></code></pre></div>
-<p>Using this function in <code>build</code> looks like the following:</p>
-<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true"></a>build (k,xs) ts <span class="ot">=</span> <span class="fu">zipWith</span> (<span class="op">$</span>) ys ts2</span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true"></a>    (ys,ts2) <span class="ot">=</span> zipUntil <span class="dt">Node</span> xs (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>)</span></code></pre></div>
-<p>That top-level <code>zipWith</code> is <em>also</em> unnecessary, though. If we make the program circular, we can produce <code>ts2</code> as we consume it, making the whole thing single-pass.</p>
-<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true"></a>build xs ts <span class="ot">=</span> ys</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true"></a>    (ys,ts2) <span class="ot">=</span> zip3Node xs (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>) ts2</span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true"></a>    zip3Node (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (zip3Node xs ys zs) </span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true"></a>    zip3Node [] ys _ <span class="ot">=</span> ([], ys)</span></code></pre></div>
-<p>That <code>zip3Node</code> is a good candidate for rewriting as a fold, also, making the whole thing look like this:</p>
-<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true"></a>rows k [] <span class="ot">=</span> []</span>
-<span id="cb30-2"><a href="#cb30-2" aria-hidden="true"></a>rows k xs <span class="ot">=</span> <span class="fu">take</span> k xs <span class="op">:</span> rows (<span class="dv">2</span><span class="op">*</span>k) (<span class="fu">drop</span> k xs)</span>
-<span id="cb30-3"><a href="#cb30-3" aria-hidden="true"></a></span>
-<span id="cb30-4"><a href="#cb30-4" aria-hidden="true"></a>build xs ts <span class="ot">=</span> ys</span>
-<span id="cb30-5"><a href="#cb30-5" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb30-6"><a href="#cb30-6" aria-hidden="true"></a>    (ys,zs) <span class="ot">=</span> <span class="fu">foldr</span> f b xs ts zs</span>
-<span id="cb30-7"><a href="#cb30-7" aria-hidden="true"></a>    f x xs (y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (xs ys zs) </span>
-<span id="cb30-8"><a href="#cb30-8" aria-hidden="true"></a>    b ys _ <span class="ot">=</span> ([],ys)</span>
-<span id="cb30-9"><a href="#cb30-9" aria-hidden="true"></a>    </span>
-<span id="cb30-10"><a href="#cb30-10" aria-hidden="true"></a>fromList <span class="ot">=</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> build (<span class="fu">repeat</span> <span class="dt">Leaf</span>) <span class="op">.</span> rows <span class="dv">1</span></span></code></pre></div>
-<p>To fuse all of those definitions, we first will need to rewrite <code>rows</code> as a fold:</p>
-<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true"></a>rows xs <span class="ot">=</span> <span class="fu">uncurry</span> (<span class="op">:</span>) (<span class="fu">foldr</span> f b xs <span class="dv">1</span> <span class="dv">2</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true"></a>    b _ _ <span class="ot">=</span> ([],[])</span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true"></a>    f x k <span class="dv">0</span> j <span class="ot">=</span> ([], <span class="fu">uncurry</span> (<span class="op">:</span>) (f x k j (j<span class="op">*</span><span class="dv">2</span>)))</span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true"></a>    f x k i j <span class="ot">=</span> first (x<span class="op">:</span>) (k (i<span class="op">-</span><span class="dv">1</span>) j)</span></code></pre></div>
-<p>Once we have everything as a fold, the rest of the transformation is pretty mechanical. At the end of it all, we get the following linear-time function for constructing a Braun tree from a list:</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true"></a><span class="ot">fromList ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true"></a>fromList xs <span class="ot">=</span> <span class="fu">head</span> (l (<span class="fu">foldr</span> f b xs <span class="dv">1</span> <span class="dv">2</span>))</span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true"></a>    b _ _ ys zs <span class="ot">=</span> (<span class="fu">repeat</span> <span class="dt">Leaf</span>, (<span class="fu">repeat</span> <span class="dt">Leaf</span>, ys))</span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true"></a>    </span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true"></a>    l k <span class="ot">=</span> <span class="kw">let</span> (xs, ys) <span class="ot">=</span> <span class="fu">uncurry</span> k ys <span class="kw">in</span> xs</span>
-<span id="cb32-7"><a href="#cb32-7" aria-hidden="true"></a>    </span>
-<span id="cb32-8"><a href="#cb32-8" aria-hidden="true"></a>    f x k <span class="dv">0</span> j ys zs           <span class="ot">=</span> ([], (l (f x k j (j<span class="op">*</span><span class="dv">2</span>)), ys))</span>
-<span id="cb32-9"><a href="#cb32-9" aria-hidden="true"></a>    f x k i j <span class="op">~</span>(y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (k (i<span class="op">-</span><span class="dv">1</span>) j ys zs)</span></code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>rows k [] <span class="ot">=</span> []</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>rows k xs <span class="ot">=</span> (k , <span class="fu">take</span> k xs) <span class="op">:</span> rows (<span class="dv">2</span><span class="op">*</span>k) (<span class="fu">drop</span> k xs)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>build (k,xs) ts <span class="ot">=</span> <span class="fu">zipWith3</span> <span class="dt">Node</span> xs ts1 ts2</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    (ts1,ts2) <span class="ot">=</span> <span class="fu">splitAt</span> k (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>fromList <span class="ot">=</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> build [<span class="dt">Leaf</span>] <span class="op">.</span> rows <span class="dv">1</span></span></code></pre></div>
+<p>The first place we’ll look to eliminate a pass is the
+<code>build</code> function. It combines two rows by splitting the
+second in half, and zipping it with the first.</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> build (<span class="dv">3</span>, [x1,x2,x3]) [y1,y2,y3,y4,y5,y6]</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>[(x1,y1,y4),(x2,y2,y5),(x3,y3,y6)]</span></code></pre></div>
+<p>We don’t need to store the length of the first list, though, as we
+are only using it to split the second, and we can do <em>that</em> at
+the same time as the zipping.</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="ot">zipUntil ::</span> (a <span class="ot">-&gt;</span> b <span class="ot">-&gt;</span> c) <span class="ot">-&gt;</span> [a] <span class="ot">-&gt;</span> [b] <span class="ot">-&gt;</span> ([c],[b])</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>zipUntil _ [] ys <span class="ot">=</span> ([],ys)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>zipUntil f (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="ot">=</span> first (f x y<span class="op">:</span>) (zipUntil f xs ys)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> zipUntil (,) [<span class="dv">1</span>,<span class="dv">2</span>] <span class="st">&quot;abc&quot;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>([(<span class="dv">1</span>,<span class="ch">'a'</span>),(<span class="dv">2</span>,<span class="ch">'b'</span>)],<span class="st">&quot;c&quot;</span>)</span></code></pre></div>
+<p>Using this function in <code>build</code> looks like the
+following:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>build (k,xs) ts <span class="ot">=</span> <span class="fu">zipWith</span> (<span class="op">$</span>) ys ts2</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>    (ys,ts2) <span class="ot">=</span> zipUntil <span class="dt">Node</span> xs (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>)</span></code></pre></div>
+<p>That top-level <code>zipWith</code> is <em>also</em> unnecessary,
+though. If we make the program circular, we can produce <code>ts2</code>
+as we consume it, making the whole thing single-pass.</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>build xs ts <span class="ot">=</span> ys</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>    (ys,ts2) <span class="ot">=</span> zip3Node xs (ts <span class="op">++</span> <span class="fu">repeat</span> <span class="dt">Leaf</span>) ts2</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>    zip3Node (x<span class="op">:</span>xs) (y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (zip3Node xs ys zs) </span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>    zip3Node [] ys _ <span class="ot">=</span> ([], ys)</span></code></pre></div>
+<p>That <code>zip3Node</code> is a good candidate for rewriting as a
+fold, also, making the whole thing look like this:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>rows k [] <span class="ot">=</span> []</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>rows k xs <span class="ot">=</span> <span class="fu">take</span> k xs <span class="op">:</span> rows (<span class="dv">2</span><span class="op">*</span>k) (<span class="fu">drop</span> k xs)</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>build xs ts <span class="ot">=</span> ys</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    (ys,zs) <span class="ot">=</span> <span class="fu">foldr</span> f b xs ts zs</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    f x xs (y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (xs ys zs) </span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>    b ys _ <span class="ot">=</span> ([],ys)</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>fromList <span class="ot">=</span> <span class="fu">head</span> <span class="op">.</span> <span class="fu">foldr</span> build (<span class="fu">repeat</span> <span class="dt">Leaf</span>) <span class="op">.</span> rows <span class="dv">1</span></span></code></pre></div>
+<p>To fuse all of those definitions, we first will need to rewrite
+<code>rows</code> as a fold:</p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>rows xs <span class="ot">=</span> <span class="fu">uncurry</span> (<span class="op">:</span>) (<span class="fu">foldr</span> f b xs <span class="dv">1</span> <span class="dv">2</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    b _ _ <span class="ot">=</span> ([],[])</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    f x k <span class="dv">0</span> j <span class="ot">=</span> ([], <span class="fu">uncurry</span> (<span class="op">:</span>) (f x k j (j<span class="op">*</span><span class="dv">2</span>)))</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    f x k i j <span class="ot">=</span> first (x<span class="op">:</span>) (k (i<span class="op">-</span><span class="dv">1</span>) j)</span></code></pre></div>
+<p>Once we have everything as a fold, the rest of the transformation is
+pretty mechanical. At the end of it all, we get the following
+linear-time function for constructing a Braun tree from a list:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ot">fromList ::</span> [a] <span class="ot">-&gt;</span> <span class="dt">Tree</span> a</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>fromList xs <span class="ot">=</span> <span class="fu">head</span> (l (<span class="fu">foldr</span> f b xs <span class="dv">1</span> <span class="dv">2</span>))</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>    b _ _ ys zs <span class="ot">=</span> (<span class="fu">repeat</span> <span class="dt">Leaf</span>, (<span class="fu">repeat</span> <span class="dt">Leaf</span>, ys))</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    l k <span class="ot">=</span> <span class="kw">let</span> (xs, ys) <span class="ot">=</span> <span class="fu">uncurry</span> k ys <span class="kw">in</span> xs</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>    f x k <span class="dv">0</span> j ys zs           <span class="ot">=</span> ([], (l (f x k j (j<span class="op">*</span><span class="dv">2</span>)), ys))</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>    f x k i j <span class="op">~</span>(y<span class="op">:</span>ys) <span class="op">~</span>(z<span class="op">:</span>zs) <span class="ot">=</span> first (<span class="dt">Node</span> x y z<span class="op">:</span>) (k (i<span class="op">-</span><span class="dv">1</span>) j ys zs)</span></code></pre></div>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-bird_using_1984">
-<p>Bird, R. S. 1984. “Using Circular Programs to Eliminate Multiple Traversals of Data.” <em>Acta Inf.</em> 21 (3) (October): 239–250. doi:<a href="https://doi.org/10.1007/BF00264249">10.1007/BF00264249</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-bird_using_1984" class="csl-entry" role="listitem">
+Bird, R. S. 1984. <span>“Using <span>Circular Programs</span> to
+<span>Eliminate Multiple Traversals</span> of <span>Data</span>.”</span>
+<em>Acta Inf.</em> 21 (3) (October): 239–250. doi:<a href="https://doi.org/10.1007/BF00264249">10.1007/BF00264249</a>.
 </div>
-<div id="ref-danvy_there_2005">
-<p>Danvy, Olivier, and Mayer Goldberg. 2005. “There and Back Again.” <em>Fundamenta Informaticae</em> 66 (4) (December): 397–413. <a href="https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf">https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf</a>.</p>
+<div id="ref-danvy_there_2005" class="csl-entry" role="listitem">
+Danvy, Olivier, and Mayer Goldberg. 2005. <span>“There and <span>Back
+Again</span>.”</span> <em>Fundamenta Informaticae</em> 66 (4)
+(December): 397–413. <a href="https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf">https://cs.au.dk/~danvy/DSc/08_danvy-goldberg_fi-2005.pdf</a>.
 </div>
-<div id="ref-okasaki_three_1997">
-<p>Okasaki, Chris. 1997. “Three Algorithms on Braun Trees.” <em>Journal of Functional Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>.</p>
+<div id="ref-okasaki_three_1997" class="csl-entry" role="listitem">
+Okasaki, Chris. 1997. <span>“Three <span>Algorithms</span> on
+<span>Braun Trees</span>.”</span> <em>Journal of Functional
+Programming</em> 7 (6) (November): 661–666. doi:<a href="https://doi.org/10.1017/S0956796897002876">10.1017/S0956796897002876</a>.
 </div>
-<div id="ref-sible_how_2019">
-<p>Sible, Joseph. 2019. “How can two continuations cancel each other out?” <em>Stack Overflow</em>. <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out</a>.</p>
+<div id="ref-sible_how_2019" class="csl-entry" role="listitem">
+Sible, Joseph. 2019. <span>“How can two continuations cancel each other
+out?”</span> <em>Stack Overflow</em>. <a href="https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out">https://stackoverflow.com/questions/56122022/how-can-two-continuations-cancel-each-other-out</a>.
 </div>
 </div>
 

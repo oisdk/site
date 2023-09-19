@@ -32,12 +32,13 @@
 </div>
 <div class="info">
     
-        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html">Agda</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html">Haskell</a>
+        Tags: <a title="All pages tagged 'Agda'." href="../tags/Agda.html" rel="tag">Agda</a>, <a title="All pages tagged 'Haskell'." href="../tags/Haskell.html" rel="tag">Haskell</a>
     
 </div>
 
 <h1 id="number-representations">Number Representations</h1>
-<p>When working with numbers in Agda, we usually use the following definition:</p>
+<p>When working with numbers in Agda, we usually use the following
+definition:</p>
 <style>
 .column {
     float: left;
@@ -51,27 +52,27 @@
 </style>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span> <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Ord</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">N</span> <span class="kw">where</span></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true"></a>    <span class="dt">Z</span> <span class="op">+</span> n <span class="ot">=</span> n</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true"></a>    <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true"></a></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true"></a>    <span class="dt">Z</span> <span class="op">*</span> m <span class="ot">=</span> <span class="dt">Z</span></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true"></a>    <span class="dt">S</span> n <span class="op">*</span> m <span class="ot">=</span> m <span class="op">+</span> n <span class="op">*</span> m</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">N</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">N</span> <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Ord</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">instance</span> <span class="dt">Num</span> <span class="dt">N</span> <span class="kw">where</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Z</span> <span class="op">+</span> n <span class="ot">=</span> n</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">S</span> n <span class="op">+</span> m <span class="ot">=</span> <span class="dt">S</span> (n <span class="op">+</span> m)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Z</span> <span class="op">*</span> m <span class="ot">=</span> <span class="dt">Z</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">S</span> n <span class="op">*</span> m <span class="ot">=</span> m <span class="op">+</span> n <span class="op">*</span> m</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true"></a><span class="kw">data</span> ℕ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true"></a>  zero <span class="ot">:</span> ℕ</span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true"></a>  suc <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true"></a><span class="ot">_</span>+<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true"></a>zero  + y <span class="ot">=</span> y</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true"></a>suc x + y <span class="ot">=</span> suc <span class="ot">(</span>x + y<span class="ot">)</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true"></a></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true"></a><span class="ot">_</span>*<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true"></a>zero  * y <span class="ot">=</span> zero</span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true"></a>suc x * y <span class="ot">=</span> y + <span class="ot">(</span>x * y<span class="ot">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> ℕ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  zero <span class="ot">:</span> ℕ</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  suc <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>+<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>zero  + y <span class="ot">=</span> y</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>suc x + y <span class="ot">=</span> suc <span class="ot">(</span>x + y<span class="ot">)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>*<span class="ot">_</span> <span class="ot">:</span> ℕ <span class="ot">→</span> ℕ <span class="ot">→</span> ℕ</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>zero  * y <span class="ot">=</span> zero</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>suc x * y <span class="ot">=</span> y + <span class="ot">(</span>x * y<span class="ot">)</span></span></code></pre></div>
 </div>
 </div>
 <div class="row">
@@ -93,113 +94,142 @@
 <tbody>
 <tr class="odd">
 <td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>+</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n + m</annotation></semantics></math></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(n)</annotation></semantics></math></td>
 </tr>
 <tr class="even">
 <td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n \times m</annotation></semantics></math></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mi>m</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(nm)</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(nm)</annotation></semantics></math></td>
 </tr>
 </tbody>
 </table>
-<p>Why use them at all, then? Well, in Agda, we need them so we can <em>prove</em> things about the natural numbers. Machine-level integers are fast, but they’re opaque: their implementation isn’t written in Agda, and therefore it’s not available for the compiler to reason about.</p>
-<p>In Haskell, they occasionally find uses due to their <em>laziness</em>. This can help in Agda as well. By lazy here I mean that operations on them don’t have to inspect the full structure before giving some output.</p>
+<p>Why use them at all, then? Well, in Agda, we need them so we can
+<em>prove</em> things about the natural numbers. Machine-level integers
+are fast, but they’re opaque: their implementation isn’t written in
+Agda, and therefore it’s not available for the compiler to reason
+about.</p>
+<p>In Haskell, they occasionally find uses due to their
+<em>laziness</em>. This can help in Agda as well. By lazy here I mean
+that operations on them don’t have to inspect the full structure before
+giving some output.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="dt">Z</span> <span class="op">&lt;</span> <span class="dt">S</span> <span class="fu">undefined</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true"></a><span class="dt">True</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="dt">Z</span> <span class="op">&lt;</span> <span class="dt">S</span> <span class="fu">undefined</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="dt">True</span></span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true"></a>*-zeroˡ <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> zero * x ≡ zero</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true"></a>*-zeroˡ x <span class="ot">=</span> refl</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>*-zeroˡ <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> zero * x ≡ zero</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>*-zeroˡ x <span class="ot">=</span> refl</span></code></pre></div>
 </div>
 </div>
-<p>In Haskell, as we can see, this lets us run computations without scrutinising some arguments. Agda benefits similarly: here it lets the compiler see more “obvious” facts that it may have missed otherwise.</p>
-<p>It’s not <em>completely</em> lazy, though. In particular, it tends to be left-biased:</p>
+<p>In Haskell, as we can see, this lets us run computations without
+scrutinising some arguments. Agda benefits similarly: here it lets the
+compiler see more “obvious” facts that it may have missed otherwise.</p>
+<p>It’s not <em>completely</em> lazy, though. In particular, it tends to
+be left-biased:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">undefined</span> <span class="op">*</span> <span class="dt">Z</span> <span class="op">==</span> <span class="dt">Z</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true"></a><span class="op">**</span> <span class="dt">Exception</span><span class="op">:</span> Prelude.undefined</span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="op">&gt;&gt;&gt;</span> <span class="fu">undefined</span> <span class="op">*</span> <span class="dt">Z</span> <span class="op">==</span> <span class="dt">Z</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">**</span> <span class="dt">Exception</span><span class="op">:</span> Prelude.undefined</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true"></a>*-zeroʳ <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> x * zero ≡ zero</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true"></a>*-zeroʳ x <span class="ot">=</span> refl</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true"></a><span class="co">-- x * zero != zero of type ℕ</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>*-zeroʳ <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> x * zero ≡ zero</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>*-zeroʳ x <span class="ot">=</span> refl</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- x * zero != zero of type ℕ</span></span></code></pre></div>
 </div>
 </div>
-<p>Like Boolean short-circuiting operators, operations on Peano numbers will usually have to scrutinise the left-hand-side argument quite a bit before giving an output.</p>
+<p>Like Boolean short-circuiting operators, operations on Peano numbers
+will usually have to scrutinise the left-hand-side argument quite a bit
+before giving an output.</p>
 <p>So, Peano numbers are good because:</p>
 <ol>
 <li>We can prove things about them.</li>
 <li>They’re lazy.</li>
 </ol>
-<p>In this post, I’m going to look at some other number representations that maintain these two desirable properties, while improving on the efficiency somewhat.</p>
+<p>In this post, I’m going to look at some other number representations
+that maintain these two desirable properties, while improving on the
+efficiency somewhat.</p>
 <h2 id="list-of-bits-binary">List-of-Bits-Binary</h2>
-<p>The first option for an improved representation is binary numbers. We can represent binary numbers as a list of bits:</p>
+<p>The first option for an improved representation is binary numbers. We
+can represent binary numbers as a list of bits:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Bit</span> <span class="ot">=</span> <span class="dt">O</span> <span class="op">|</span> <span class="dt">I</span> <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>, <span class="dt">Ord</span>)</span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">B</span> <span class="ot">=</span> [<span class="dt">Bit</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Bit</span> <span class="ot">=</span> <span class="dt">O</span> <span class="op">|</span> <span class="dt">I</span> <span class="kw">deriving</span> (<span class="dt">Eq</span>, <span class="dt">Show</span>, <span class="dt">Ord</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">B</span> <span class="ot">=</span> [<span class="dt">Bit</span>]</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true"></a><span class="kw">data</span> Bit <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span> O I <span class="ot">:</span> Bit</span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true"></a></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true"></a>𝔹 <span class="ot">=</span> List Bit</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> Bit <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span> O I <span class="ot">:</span> Bit</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">=</span> List Bit</span></code></pre></div>
 </div>
 </div>
-<p>As we’re using these to represent natural numbers, we’ll need to define a way to convert between them:</p>
+<p>As we’re using these to represent natural numbers, we’ll need to
+define a way to convert between them:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true"></a><span class="ot">eval ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">N</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true"></a>eval <span class="ot">=</span> <span class="fu">foldr</span> f <span class="dt">Z</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true"></a>    f <span class="dt">O</span> xs <span class="ot">=</span> xs <span class="op">+</span> xs</span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true"></a>    f <span class="dt">I</span> xs <span class="ot">=</span> <span class="dt">S</span> (xs <span class="op">+</span> xs)</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true"></a></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true"></a>inc [] <span class="ot">=</span> [<span class="dt">I</span>]</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true"></a>inc (<span class="dt">O</span><span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> xs</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true"></a>inc (<span class="dt">I</span><span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">O</span> <span class="op">:</span> inc xs</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true"></a></span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true"></a><span class="ot">fromN ::</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true"></a>fromN <span class="dt">Z</span> <span class="ot">=</span> []</span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true"></a>fromN (<span class="dt">S</span> n) <span class="ot">=</span> inc (fromN n)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="ot">eval ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">N</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>eval <span class="ot">=</span> <span class="fu">foldr</span> f <span class="dt">Z</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">O</span> xs <span class="ot">=</span> xs <span class="op">+</span> xs</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    f <span class="dt">I</span> xs <span class="ot">=</span> <span class="dt">S</span> (xs <span class="op">+</span> xs)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>inc [] <span class="ot">=</span> [<span class="dt">I</span>]</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>inc (<span class="dt">O</span><span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">I</span> <span class="op">:</span> xs</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>inc (<span class="dt">I</span><span class="op">:</span>xs) <span class="ot">=</span> <span class="dt">O</span> <span class="op">:</span> inc xs</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="ot">fromN ::</span> <span class="dt">N</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>fromN <span class="dt">Z</span> <span class="ot">=</span> []</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>fromN (<span class="dt">S</span> n) <span class="ot">=</span> inc (fromN n)</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">:</span> 𝔹 <span class="ot">→</span> ℕ</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">=</span> foldr <span class="ot">(λ</span> <span class="ot">{</span> O xs <span class="ot">→</span> xs + xs</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true"></a>                <span class="ot">;</span> I xs <span class="ot">→</span> suc <span class="ot">(</span>xs + xs<span class="ot">)</span> <span class="ot">})</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true"></a>             zero</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true"></a></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true"></a>inc [] <span class="ot">=</span> I ∷ []</span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true"></a>inc <span class="ot">(</span>O ∷ xs<span class="ot">)</span> <span class="ot">=</span> I ∷ xs</span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true"></a>inc <span class="ot">(</span>I ∷ xs<span class="ot">)</span> <span class="ot">=</span> O ∷ inc xs</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true"></a></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true"></a>⟦<span class="ot">_</span>⇑⟧ <span class="ot">:</span> ℕ <span class="ot">→</span> 𝔹</span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true"></a>⟦ zero  ⇑⟧ <span class="ot">=</span> []</span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true"></a>⟦ suc n ⇑⟧ <span class="ot">=</span> inc ⟦ n ⇑⟧</span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">:</span> 𝔹 <span class="ot">→</span> ℕ</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>⟦<span class="ot">_</span>⇓⟧ <span class="ot">=</span> foldr <span class="ot">(λ</span> <span class="ot">{</span> O xs <span class="ot">→</span> xs + xs</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>                <span class="ot">;</span> I xs <span class="ot">→</span> suc <span class="ot">(</span>xs + xs<span class="ot">)</span> <span class="ot">})</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>             zero</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>inc [] <span class="ot">=</span> I ∷ []</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">(</span>O ∷ xs<span class="ot">)</span> <span class="ot">=</span> I ∷ xs</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">(</span>I ∷ xs<span class="ot">)</span> <span class="ot">=</span> O ∷ inc xs</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>⟦<span class="ot">_</span>⇑⟧ <span class="ot">:</span> ℕ <span class="ot">→</span> 𝔹</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>⟦ zero  ⇑⟧ <span class="ot">=</span> []</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>⟦ suc n ⇑⟧ <span class="ot">=</span> inc ⟦ n ⇑⟧</span></code></pre></div>
 </div>
 </div>
-<p>And here we run into our first problem: redundancy. There are multiple ways to represent the same number according to the semantics defined above. We can actually prove this in Agda:</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true"></a>redundant <span class="ot">:</span> ∃₂ <span class="ot">λ</span> x y <span class="ot">→</span> x ≢ y × ⟦ x ⇓⟧ ≡ ⟦ y ⇓⟧</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true"></a>redundant <span class="ot">=</span> [] , O ∷ [] , <span class="ot">(λ</span> <span class="ot">())</span> , refl</span></code></pre></div>
-<p>In English: “There are two binary numbers which are not the same, but which do evaluate to the same natural number”. (This proof was actually automatically filled in for me after writing the signature)</p>
-<p>This represents a huge problem for proofs. It means that even simple things like <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>×</mo><mn>0</mn><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x \times 0 = 0</annotation></semantics></math> aren’t true, depending on how multiplication is implemented. On to our next option:</p>
+<p>And here we run into our first problem: redundancy. There are
+multiple ways to represent the same number according to the semantics
+defined above. We can actually prove this in Agda:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>redundant <span class="ot">:</span> ∃₂ <span class="ot">λ</span> x y <span class="ot">→</span> x ≢ y × ⟦ x ⇓⟧ ≡ ⟦ y ⇓⟧</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>redundant <span class="ot">=</span> [] , O ∷ [] , <span class="ot">(λ</span> <span class="ot">())</span> , refl</span></code></pre></div>
+<p>In English: “There are two binary numbers which are not the same, but
+which do evaluate to the same natural number”. (This proof was actually
+automatically filled in for me after writing the signature)</p>
+<p>This represents a huge problem for proofs. It means that even simple
+things like
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>x</mi><mo>×</mo><mn>0</mn><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">x \times 0 = 0</annotation></semantics></math>
+aren’t true, depending on how multiplication is implemented. On to our
+next option:</p>
 <h2 id="list-of-gaps-binary">List-of-Gaps-Binary</h2>
-<p>Instead of looking at the bits directly, let’s think about a binary number as a list of chunks of 0s, each followed by a 1. In this way, we simply <em>can’t</em> have trailing zeroes, because the definition implies that every number other than 0 ends in 1.</p>
+<p>Instead of looking at the bits directly, let’s think about a binary
+number as a list of chunks of 0s, each followed by a 1. In this way, we
+simply <em>can’t</em> have trailing zeroes, because the definition
+implies that every number other than 0 ends in 1.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true"></a><span class="kw">data</span> <span class="dt">Gap</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Gap</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true"></a><span class="kw">type</span> <span class="dt">B</span> <span class="ot">=</span> [<span class="dt">Gap</span>]</span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> <span class="dt">Gap</span> <span class="ot">=</span> <span class="dt">Z</span> <span class="op">|</span> <span class="dt">S</span> <span class="dt">Gap</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">B</span> <span class="ot">=</span> [<span class="dt">Gap</span>]</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true"></a>𝔹 <span class="ot">=</span> List ℕ</span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">=</span> List ℕ</span></code></pre></div>
 </div>
 </div>
-<p>This guarantees a unique representation. As in the representation above, it has much improved time complexities for the familiar operations:</p>
+<p>This guarantees a unique representation. As in the representation
+above, it has much improved time complexities for the familiar
+operations:</p>
 <table>
 <thead>
 <tr class="header">
@@ -210,187 +240,278 @@
 <tbody>
 <tr class="odd">
 <td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>+</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n + m</annotation></semantics></math></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 n)</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 n)</annotation></semantics></math></td>
 </tr>
 <tr class="even">
 <td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>n</mi><mo>×</mo><mi>m</mi></mrow><annotation encoding="application/x-tex">n \times m</annotation></semantics></math></td>
-<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mo stretchy="false" form="prefix">(</mo><mi>n</mi><mo>+</mo><mi>m</mi><mo stretchy="false" form="postfix">)</mo><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 (n + m))</annotation></semantics></math></td>
+<td><math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mrow><mo stretchy="true" form="prefix">(</mo><mi>n</mi><mo>+</mo><mi>m</mi><mo stretchy="true" form="postfix">)</mo></mrow><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 (n + m))</annotation></semantics></math></td>
 </tr>
 </tbody>
 </table>
-<p>Encoding the zeroes as gaps also makes multiplication much faster in certain cases: multiplying by a high power of 2 is a constant-time operation, for instance.</p>
-<p>It does have one disadvantage, and it’s to do with the increment function:</p>
+<p>Encoding the zeroes as gaps also makes multiplication much faster in
+certain cases: multiplying by a high power of 2 is a constant-time
+operation, for instance.</p>
+<p>It does have one disadvantage, and it’s to do with the increment
+function:</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true"></a>inc <span class="ot">=</span> <span class="fu">uncurry</span> (<span class="fu">flip</span> (<span class="op">:</span>)) <span class="op">.</span> inc'</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true"></a>  <span class="kw">where</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true"></a>    inc' [] <span class="ot">=</span> ([], <span class="dt">Z</span>)</span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true"></a>    inc' (x<span class="op">:</span>xs) <span class="ot">=</span> inc'' x xs</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true"></a>    </span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true"></a>    inc'' <span class="dt">Z</span> ns <span class="ot">=</span> <span class="fu">fmap</span> <span class="dt">S</span> (inc' ns)</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true"></a>    inc'' (<span class="dt">S</span> n) ns <span class="ot">=</span> (n<span class="op">:</span>ns,<span class="dt">Z</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">=</span> <span class="fu">uncurry</span> (<span class="fu">flip</span> (<span class="op">:</span>)) <span class="op">.</span> inc'</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">where</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    inc' [] <span class="ot">=</span> ([], <span class="dt">Z</span>)</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    inc' (x<span class="op">:</span>xs) <span class="ot">=</span> inc'' x xs</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    inc'' <span class="dt">Z</span> ns <span class="ot">=</span> <span class="fu">fmap</span> <span class="dt">S</span> (inc' ns)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    inc'' (<span class="dt">S</span> n) ns <span class="ot">=</span> (n<span class="op">:</span>ns,<span class="dt">Z</span>)</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true"></a>𝔹⁺ <span class="ot">:</span> <span class="dt">Set</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true"></a>𝔹⁺ <span class="ot">=</span> ℕ × 𝔹</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true"></a>inc <span class="ot">=</span> uncurry <span class="ot">_</span>∷<span class="ot">_</span> ∘ inc′</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true"></a>  <span class="kw">module</span> Inc <span class="kw">where</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true"></a>  <span class="kw">mutual</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true"></a>    inc′ <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true"></a>    inc′ [] <span class="ot">=</span> <span class="dv">0</span> , []</span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true"></a>    inc′ <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">=</span> inc″ x xs</span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true"></a></span>
-<span id="cb15-12"><a href="#cb15-12" aria-hidden="true"></a>    inc″ <span class="ot">:</span> ℕ <span class="ot">→</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
-<span id="cb15-13"><a href="#cb15-13" aria-hidden="true"></a>    inc″ zero ns <span class="ot">=</span> map₁ suc <span class="ot">(</span>inc′ ns<span class="ot">)</span></span>
-<span id="cb15-14"><a href="#cb15-14" aria-hidden="true"></a>    inc″ <span class="ot">(</span>suc n<span class="ot">)</span> ns <span class="ot">=</span> <span class="dv">0</span> , n ∷ ns</span></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>𝔹⁺ <span class="ot">:</span> <span class="dt">Set</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>𝔹⁺ <span class="ot">=</span> ℕ × 𝔹</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">=</span> uncurry <span class="ot">_</span>∷<span class="ot">_</span> ∘ inc′</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">module</span> Inc <span class="kw">where</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">mutual</span></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    inc′ <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>    inc′ [] <span class="ot">=</span> <span class="dv">0</span> , []</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>    inc′ <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">=</span> inc″ x xs</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    inc″ <span class="ot">:</span> ℕ <span class="ot">→</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    inc″ zero ns <span class="ot">=</span> map₁ suc <span class="ot">(</span>inc′ ns<span class="ot">)</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    inc″ <span class="ot">(</span>suc n<span class="ot">)</span> ns <span class="ot">=</span> <span class="dv">0</span> , n ∷ ns</span></code></pre></div>
 </div>
 </div>
-<p>With all of their problems, Peano numbers performed this operation in constant time. The above implementation is only <em>amortised</em> constant-time, though, with a worst case of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mi>n</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 n)</annotation></semantics></math> (same as the list-of-bits version). There are a number of ways to remedy this, the most famous being:</p>
+<p>With all of their problems, Peano numbers performed this operation in
+constant time. The above implementation is only <em>amortised</em>
+constant-time, though, with a worst case of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><msub><mo>log</mo><mn>2</mn></msub><mi>n</mi><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(\log_2 n)</annotation></semantics></math>
+(same as the list-of-bits version). There are a number of ways to remedy
+this, the most famous being:</p>
 <h2 id="skew-binary">Skew Binary</h2>
-<p>This encoding has three digits: 0, 1, and 2. To guarantee a unique representation, we add the condition that there can be at most one 2 in the number, which must be the first non-zero digit if it’s present.</p>
-<p>To represent this we’ll encode “gaps”, as before, with the condition that if the second gap is 0 it <em>actually</em> represents a 2 digit in the preceding position. That weirdness out of the way, we are rewarded with an <code>inc</code> implementation which is clearly <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>.</p>
+<p>This encoding has three digits: 0, 1, and 2. To guarantee a unique
+representation, we add the condition that there can be at most one 2 in
+the number, which must be the first non-zero digit if it’s present.</p>
+<p>To represent this we’ll encode “gaps”, as before, with the condition
+that if the second gap is 0 it <em>actually</em> represents a 2 digit in
+the preceding position. That weirdness out of the way, we are rewarded
+with an <code>inc</code> implementation which is clearly
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>.</p>
 <div class="row">
 <div class="column">
-<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true"></a>inc [] <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> []</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true"></a>inc (x<span class="op">:</span>[]) <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> x <span class="op">:</span> []</span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true"></a>inc (x  <span class="op">:</span> <span class="dt">Z</span> <span class="op">:</span> xs) <span class="ot">=</span> <span class="dt">S</span> x <span class="op">:</span> xs</span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true"></a>inc (x1 <span class="op">:</span> <span class="dt">S</span> x2 <span class="op">:</span> xs) <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> x1 <span class="op">:</span> x2 <span class="op">:</span> xs</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="ot">inc ::</span> <span class="dt">B</span> <span class="ot">-&gt;</span> <span class="dt">B</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>inc [] <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> []</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>inc (x<span class="op">:</span>[]) <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> x <span class="op">:</span> []</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>inc (x  <span class="op">:</span> <span class="dt">Z</span> <span class="op">:</span> xs) <span class="ot">=</span> <span class="dt">S</span> x <span class="op">:</span> xs</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>inc (x1 <span class="op">:</span> <span class="dt">S</span> x2 <span class="op">:</span> xs) <span class="ot">=</span> <span class="dt">Z</span> <span class="op">:</span> x1 <span class="op">:</span> x2 <span class="op">:</span> xs</span></code></pre></div>
 </div>
 <div class="column">
-<div class="sourceCode" id="cb17"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
-<span id="cb17-2"><a href="#cb17-2" aria-hidden="true"></a>inc [] <span class="ot">=</span> <span class="dv">0</span> ∷ []</span>
-<span id="cb17-3"><a href="#cb17-3" aria-hidden="true"></a>inc <span class="ot">(</span>x ∷ []<span class="ot">)</span> <span class="ot">=</span> <span class="dv">0</span> ∷ x ∷ []</span>
-<span id="cb17-4"><a href="#cb17-4" aria-hidden="true"></a>inc <span class="ot">(</span>x₁ ∷ zero ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x₁ ∷ xs</span>
-<span id="cb17-5"><a href="#cb17-5" aria-hidden="true"></a>inc <span class="ot">(</span>x₁ ∷ suc x₂ ∷ xs<span class="ot">)</span> <span class="ot">=</span> <span class="dv">0</span> ∷ x₁ ∷ x₂ ∷ xs</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>inc [] <span class="ot">=</span> <span class="dv">0</span> ∷ []</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">(</span>x ∷ []<span class="ot">)</span> <span class="ot">=</span> <span class="dv">0</span> ∷ x ∷ []</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">(</span>x₁ ∷ zero ∷ xs<span class="ot">)</span> <span class="ot">=</span> suc x₁ ∷ xs</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">(</span>x₁ ∷ suc x₂ ∷ xs<span class="ot">)</span> <span class="ot">=</span> <span class="dv">0</span> ∷ x₁ ∷ x₂ ∷ xs</span></code></pre></div>
 </div>
 </div>
-<p>Unfortunately, though, we’ve lost the other efficiencies! Addition and multiplication have no easy or direct encoding in this system, so we have to convert back and forth between this and regular binary to perform them.</p>
+<p>Unfortunately, though, we’ve lost the other efficiencies! Addition
+and multiplication have no easy or direct encoding in this system, so we
+have to convert back and forth between this and regular binary to
+perform them.</p>
 <h2 id="list-of-segments-binary">List-of-Segments-Binary</h2>
-<p>The key problem with incrementing in the normal binary system is that it can cascade: when we hit a long string of 1s, all the 1s become 0 followed by a single 1. We can turn this problem to our advantage if we use a representation which encodes both 1s and 0s as strings of gaps. We’ll have to use a couple more tricks to ensure a unique representation, but all in all this is what we have (switching to just Agda now):</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true"></a><span class="kw">data</span> 0≤<span class="ot">_</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true"></a>  0₂  <span class="ot">:</span> 0≤ A</span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true"></a>  0&lt;<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> 0≤ A</span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true"></a></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true"></a><span class="kw">mutual</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true"></a>  <span class="kw">record</span> 𝔹₀ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true"></a>    <span class="kw">constructor</span> <span class="ot">_</span>0&amp;<span class="ot">_</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true"></a>    <span class="kw">inductive</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true"></a>    <span class="kw">field</span></span>
-<span id="cb18-10"><a href="#cb18-10" aria-hidden="true"></a>      H₀ <span class="ot">:</span> ℕ</span>
-<span id="cb18-11"><a href="#cb18-11" aria-hidden="true"></a>      T₀ <span class="ot">:</span> 𝔹₁</span>
-<span id="cb18-12"><a href="#cb18-12" aria-hidden="true"></a></span>
-<span id="cb18-13"><a href="#cb18-13" aria-hidden="true"></a>  <span class="kw">record</span> 𝔹₁ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb18-14"><a href="#cb18-14" aria-hidden="true"></a>    <span class="kw">constructor</span> <span class="ot">_</span>1&amp;<span class="ot">_</span></span>
-<span id="cb18-15"><a href="#cb18-15" aria-hidden="true"></a>    <span class="kw">inductive</span></span>
-<span id="cb18-16"><a href="#cb18-16" aria-hidden="true"></a>    <span class="kw">field</span></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true"></a>      H₁ <span class="ot">:</span> ℕ</span>
-<span id="cb18-18"><a href="#cb18-18" aria-hidden="true"></a>      T₁ <span class="ot">:</span> 0≤  𝔹₀</span>
-<span id="cb18-19"><a href="#cb18-19" aria-hidden="true"></a><span class="kw">open</span> 𝔹₀ <span class="kw">public</span></span>
-<span id="cb18-20"><a href="#cb18-20" aria-hidden="true"></a><span class="kw">open</span> 𝔹₁ <span class="kw">public</span></span>
-<span id="cb18-21"><a href="#cb18-21" aria-hidden="true"></a></span>
-<span id="cb18-22"><a href="#cb18-22" aria-hidden="true"></a><span class="kw">data</span> 𝔹⁺ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb18-23"><a href="#cb18-23" aria-hidden="true"></a>  B₀<span class="ot">_</span> <span class="ot">:</span> 𝔹₀ <span class="ot">→</span> 𝔹⁺</span>
-<span id="cb18-24"><a href="#cb18-24" aria-hidden="true"></a>  B₁<span class="ot">_</span> <span class="ot">:</span> 𝔹₁ <span class="ot">→</span> 𝔹⁺</span>
-<span id="cb18-25"><a href="#cb18-25" aria-hidden="true"></a></span>
-<span id="cb18-26"><a href="#cb18-26" aria-hidden="true"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
-<span id="cb18-27"><a href="#cb18-27" aria-hidden="true"></a>𝔹 <span class="ot">=</span> 0≤ 𝔹⁺</span>
-<span id="cb18-28"><a href="#cb18-28" aria-hidden="true"></a></span>
-<span id="cb18-29"><a href="#cb18-29" aria-hidden="true"></a>inc⁺ <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
-<span id="cb18-30"><a href="#cb18-30" aria-hidden="true"></a>inc⁺ 0₂                               <span class="ot">=</span>      B₁ <span class="dv">0</span>     1&amp; 0₂</span>
-<span id="cb18-31"><a href="#cb18-31" aria-hidden="true"></a>inc⁺ <span class="ot">(</span>0&lt; B₀ zero  0&amp; y 1&amp; xs        <span class="ot">)</span> <span class="ot">=</span>      B₁ suc y 1&amp; xs</span>
-<span id="cb18-32"><a href="#cb18-32" aria-hidden="true"></a>inc⁺ <span class="ot">(</span>0&lt; B₀ suc x 0&amp; y 1&amp; xs        <span class="ot">)</span> <span class="ot">=</span>      B₁ <span class="dv">0</span>     1&amp; 0&lt; x 0&amp; y 1&amp; xs</span>
-<span id="cb18-33"><a href="#cb18-33" aria-hidden="true"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0₂                 <span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; <span class="dv">0</span>     1&amp; 0₂</span>
-<span id="cb18-34"><a href="#cb18-34" aria-hidden="true"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0&lt; zero  0&amp; z 1&amp; xs<span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; suc z 1&amp; xs</span>
-<span id="cb18-35"><a href="#cb18-35" aria-hidden="true"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0&lt; suc y 0&amp; z 1&amp; xs<span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; <span class="dv">0</span>     1&amp; 0&lt; y 0&amp; z 1&amp; xs</span>
-<span id="cb18-36"><a href="#cb18-36" aria-hidden="true"></a></span>
-<span id="cb18-37"><a href="#cb18-37" aria-hidden="true"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
-<span id="cb18-38"><a href="#cb18-38" aria-hidden="true"></a>inc x <span class="ot">=</span> 0&lt; inc⁺ x</span></code></pre></div>
-<p>Perfect! Increments are obviously <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mstyle mathvariant="script"><mi>𝒪</mi></mstyle><mo stretchy="false" form="prefix">(</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>, and we’ve guaranteed a unique representation.</p>
-<p>I’ve been working on this type for a couple of days, and you can see my code <a href="https://github.com/oisdk/agda-binary/">here</a>. So far, I’ve done the following:</p>
+<p>The key problem with incrementing in the normal binary system is that
+it can cascade: when we hit a long string of 1s, all the 1s become 0
+followed by a single 1. We can turn this problem to our advantage if we
+use a representation which encodes both 1s and 0s as strings of gaps.
+We’ll have to use a couple more tricks to ensure a unique
+representation, but all in all this is what we have (switching to just
+Agda now):</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> 0≤<span class="ot">_</span> <span class="ot">(</span>A <span class="ot">:</span> <span class="dt">Set</span><span class="ot">)</span> <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  0₂  <span class="ot">:</span> 0≤ A</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  0&lt;<span class="ot">_</span> <span class="ot">:</span> A <span class="ot">→</span> 0≤ A</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="kw">mutual</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">record</span> 𝔹₀ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constructor</span> <span class="ot">_</span>0&amp;<span class="ot">_</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">inductive</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">field</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>      H₀ <span class="ot">:</span> ℕ</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>      T₀ <span class="ot">:</span> 𝔹₁</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">record</span> 𝔹₁ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">constructor</span> <span class="ot">_</span>1&amp;<span class="ot">_</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">inductive</span></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">field</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>      H₁ <span class="ot">:</span> ℕ</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>      T₁ <span class="ot">:</span> 0≤  𝔹₀</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a><span class="kw">open</span> 𝔹₀ <span class="kw">public</span></span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a><span class="kw">open</span> 𝔹₁ <span class="kw">public</span></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> 𝔹⁺ <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  B₀<span class="ot">_</span> <span class="ot">:</span> 𝔹₀ <span class="ot">→</span> 𝔹⁺</span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  B₁<span class="ot">_</span> <span class="ot">:</span> 𝔹₁ <span class="ot">→</span> 𝔹⁺</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">:</span> <span class="dt">Set</span></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a>𝔹 <span class="ot">=</span> 0≤ 𝔹⁺</span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹⁺</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a>inc⁺ 0₂                               <span class="ot">=</span>      B₁ <span class="dv">0</span>     1&amp; 0₂</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">(</span>0&lt; B₀ zero  0&amp; y 1&amp; xs        <span class="ot">)</span> <span class="ot">=</span>      B₁ suc y 1&amp; xs</span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">(</span>0&lt; B₀ suc x 0&amp; y 1&amp; xs        <span class="ot">)</span> <span class="ot">=</span>      B₁ <span class="dv">0</span>     1&amp; 0&lt; x 0&amp; y 1&amp; xs</span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0₂                 <span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; <span class="dv">0</span>     1&amp; 0₂</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0&lt; zero  0&amp; z 1&amp; xs<span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; suc z 1&amp; xs</span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a>inc⁺ <span class="ot">(</span>0&lt; B₁ x 1&amp; 0&lt; suc y 0&amp; z 1&amp; xs<span class="ot">)</span> <span class="ot">=</span> B₀ x 0&amp; <span class="dv">0</span>     1&amp; 0&lt; y 0&amp; z 1&amp; xs</span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a>inc <span class="ot">:</span> 𝔹 <span class="ot">→</span> 𝔹</span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a>inc x <span class="ot">=</span> 0&lt; inc⁺ x</span></code></pre></div>
+<p>Perfect! Increments are obviously
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒪</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">\mathcal{O}(1)</annotation></semantics></math>,
+and we’ve guaranteed a unique representation.</p>
+<p>I’ve been working on this type for a couple of days, and you can see
+my code <a href="https://github.com/oisdk/agda-binary/">here</a>. So
+far, I’ve done the following:</p>
 <dl>
 <dt>Defined <code>inc</code>, addition, and multiplication</dt>
-<dd><p>These were a little tricky to get right (<a href="https://github.com/oisdk/agda-binary/blob/master/Data/Binary/Operations/Addition.agda#L9">addition is particularly hairy</a>), but they’re all there, and maximally lazy.</p>
+<dd>
+<p>These were a little tricky to get right (<a href="https://github.com/oisdk/agda-binary/blob/master/Data/Binary/Operations/Addition.agda#L9">addition
+is particularly hairy</a>), but they’re all there, and maximally
+lazy.</p>
 </dd>
 <dt>Proved Homomorphism</dt>
-<dd><p>For each one of the functions, you want them to correspond precisely to the equivalent functions on Peano numbers. Proving that fact amounts to filling in definitions for the following:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true"></a>inc-homo <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> ⟦ inc x ⇓⟧ ≡ suc ⟦ x ⇓⟧</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true"></a>+-homo <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> ⟦ x + y ⇓⟧ ≡ ⟦ x ⇓⟧ + ⟦ y ⇓⟧</span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true"></a>*-homo <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> ⟦ x * y ⇓⟧ ≡ ⟦ x ⇓⟧ * ⟦ y ⇓⟧</span></code></pre></div>
+<dd>
+<p>For each one of the functions, you want them to correspond precisely
+to the equivalent functions on Peano numbers. Proving that fact amounts
+to filling in definitions for the following:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>inc-homo <span class="ot">:</span> <span class="ot">∀</span> x <span class="ot">→</span> ⟦ inc x ⇓⟧ ≡ suc ⟦ x ⇓⟧</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>+-homo <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> ⟦ x + y ⇓⟧ ≡ ⟦ x ⇓⟧ + ⟦ y ⇓⟧</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>*-homo <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> ⟦ x * y ⇓⟧ ≡ ⟦ x ⇓⟧ * ⟦ y ⇓⟧</span></code></pre></div>
 </dd>
 <dt>Proved Bijection</dt>
-<dd><p>As we went to so much trouble, it’s important to prove that these numbers form a one-to-one correspondence with the Peano numbers. As well as that, once done, we can use it to prove facts about the homomorphic functions above, by reusing any proofs about the same functions on Peano numbers. For instance, here is a proof of commutativity of addition:</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true"></a>+-comm <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> x + y ≡ y + x</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true"></a>+-comm x y <span class="ot">=</span> injective <span class="ot">(</span>+-homo x y ⟨ trans ⟩</span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true"></a>                        ℕ<span class="ot">.</span>+-comm ⟦ x ⇓⟧ ⟦ y ⇓⟧ ⟨ trans ⟩</span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true"></a>                        sym <span class="ot">(</span>+-homo y x<span class="ot">))</span></span></code></pre></div>
+<dd>
+<p>As we went to so much trouble, it’s important to prove that these
+numbers form a one-to-one correspondence with the Peano numbers. As well
+as that, once done, we can use it to prove facts about the homomorphic
+functions above, by reusing any proofs about the same functions on Peano
+numbers. For instance, here is a proof of commutativity of addition:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>+-comm <span class="ot">:</span> <span class="ot">∀</span> x y <span class="ot">→</span> x + y ≡ y + x</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>+-comm x y <span class="ot">=</span> injective <span class="ot">(</span>+-homo x y ⟨ trans ⟩</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>                        ℕ<span class="ot">.</span>+-comm ⟦ x ⇓⟧ ⟦ y ⇓⟧ ⟨ trans ⟩</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                        sym <span class="ot">(</span>+-homo y x<span class="ot">))</span></span></code></pre></div>
 </dd>
 </dl>
 <h1 id="applications">Applications</h1>
-<p>So now that we have our nice number representation, what can we do with it? One use is as a general-purpose number type in Agda: it represents a good balance between speed and “proofiness”, and Coq uses a similar type in its standard library.</p>
+<p>So now that we have our nice number representation, what can we do
+with it? One use is as a general-purpose number type in Agda: it
+represents a good balance between speed and “proofiness”, and Coq uses a
+similar type in its standard library.</p>
 <p>There are other, more unusual uses of such a type, though.</p>
 <h2 id="data-structures">Data Structures</h2>
-<p>It’s a well-known technique to build a data structure out of some number representation <span class="citation" data-cites="hinze_numerical_1998">(Hinze <a href="#ref-hinze_numerical_1998" role="doc-biblioref">1998</a>)</span>: in fact, all of the representations above are explored in Okasaki <span class="citation" data-cites="okasaki_purely_1999">(<a href="#ref-okasaki_purely_1999" role="doc-biblioref">1999</a>, chap. 9.2)</span>.</p>
+<p>It’s a well-known technique to build a data structure out of some
+number representation <span class="citation" data-cites="hinze_numerical_1998">(Hinze 1998)</span>: in fact, all of
+the representations above are explored in Okasaki <span class="citation" data-cites="okasaki_purely_1999">(1999, chap. 9.2)</span>.</p>
 <h2 id="logic-programming">Logic Programming</h2>
-<p>Logic programming languages like Prolog let us write programs in a backwards kind of way. We say what the output looks like, and the unifier will figure out the set of inputs that generates it.</p>
-<p>In Haskell, we have a very rough approximation of a similar system: the list monad.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true"></a><span class="ot">pyth ::</span> [(<span class="dt">Int</span>,<span class="dt">Int</span>,<span class="dt">Int</span>)]</span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true"></a>pyth <span class="ot">=</span> <span class="kw">do</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true"></a>  x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true"></a>  y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true"></a>  z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true"></a>  guard (x<span class="op">*</span>x <span class="op">+</span> y<span class="op">*</span>y <span class="op">==</span> z<span class="op">*</span>z)</span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true"></a>  <span class="fu">return</span> (x,y,z)</span></code></pre></div>
-<p>There are tons of inefficiencies in the above code: for us, though, we can look at one: the number representation. In the equation:</p>
+<p>Logic programming languages like Prolog let us write programs in a
+backwards kind of way. We say what the output looks like, and the
+unifier will figure out the set of inputs that generates it.</p>
+<p>In Haskell, we have a very rough approximation of a similar system:
+the list monad.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="ot">pyth ::</span> [(<span class="dt">Int</span>,<span class="dt">Int</span>,<span class="dt">Int</span>)]</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>pyth <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  x <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  y <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> [<span class="dv">1</span><span class="op">..</span><span class="dv">10</span>]</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  guard (x<span class="op">*</span>x <span class="op">+</span> y<span class="op">*</span>y <span class="op">==</span> z<span class="op">*</span>z)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span> (x,y,z)</span></code></pre></div>
+<p>There are tons of inefficiencies in the above code: for us, though,
+we can look at one: the number representation. In the equation:</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>x</mi><mn>2</mn></msup><mo>+</mo><msup><mi>y</mi><mn>2</mn></msup><mo>=</mo><msup><mi>z</mi><mn>2</mn></msup></mrow><annotation encoding="application/x-tex">x^2 + y^2 = z^2</annotation></semantics></math></p>
-<p>If we know that <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math> are both odd, then <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>z</mi><annotation encoding="application/x-tex">z</annotation></semantics></math> must be even. If the calculation of the equation is expensive, this is precisely the kind of shortcut we’d want to take advantage of. Luckily, our binary numbers do just that: it is enough to scrutinise just the first bits of <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math> and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math> in order to determine the first bit of the output.</p>
-<p>After seeing that example, you may be thinking that lazy evaluation is a perfect fit for logic programming. You’re not alone! Curry <span class="citation" data-cites="Hanus16Curry">(Hanus (ed.) <a href="#ref-Hanus16Curry" role="doc-biblioref">2016</a>)</span> is a lazy, functional logic programming language, with a similar syntax to Haskell. It also uses lazy binary numbers to optimise testing.</p>
+<p>If we know that
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>
+are both odd, then
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>z</mi><annotation encoding="application/x-tex">z</annotation></semantics></math>
+must be even. If the calculation of the equation is expensive, this is
+precisely the kind of shortcut we’d want to take advantage of. Luckily,
+our binary numbers do just that: it is enough to scrutinise just the
+first bits of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>x</mi><annotation encoding="application/x-tex">x</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>y</mi><annotation encoding="application/x-tex">y</annotation></semantics></math>
+in order to determine the first bit of the output.</p>
+<p>After seeing that example, you may be thinking that lazy evaluation
+is a perfect fit for logic programming. You’re not alone! Curry <span class="citation" data-cites="Hanus16Curry">(Hanus (ed.) 2016)</span> is
+a lazy, functional logic programming language, with a similar syntax to
+Haskell. It also uses lazy binary numbers to optimise testing.</p>
 <h2 id="lazy-predicates">Lazy Predicates</h2>
-<p>In order for queries to be performed efficiently on binary numbers, we will also need a way to describe lazy <em>predicates</em> on them. A lot of these predicates are more easily expressible on the list-of-bits representation above, so we’ll be working with that representation for this bit. Not to worry, though: we can convert from the segmented representation into the list-of-bits, and <a href="https://github.com/oisdk/agda-binary/blob/fb89ba5ae3b2aa0cb95301da42c8dbf27048181b/Data/Binary/Bits.agda#L52">we can prove that the conversion is injective</a>:</p>
-<div class="sourceCode" id="cb22"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true"></a>toBits-injective <span class="ot">:</span> <span class="ot">∀</span> xs ys <span class="ot">→</span> toBits xs ≡ toBits ys <span class="ot">→</span> xs ≡ ys</span></code></pre></div>
-<p>Here’s the curious problem: since our binary numbers are expressed least-significant-bit-first, we have to go to the end before knowing which is bigger. Luckily, we can use one of my favourite Haskell tricks, involving the ordering monoid:</p>
-<div class="sourceCode" id="cb23"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true"></a><span class="kw">data</span> Ordering <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true"></a>  lt eq gt <span class="ot">:</span> Ordering</span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true"></a><span class="ot">_</span>∙<span class="ot">_</span> <span class="ot">:</span> Ordering <span class="ot">→</span> Ordering <span class="ot">→</span> Ordering</span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true"></a>lt ∙ y <span class="ot">=</span> lt</span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true"></a>eq ∙ y <span class="ot">=</span> y</span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true"></a>gt ∙ y <span class="ot">=</span> gt</span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true"></a></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true"></a>cmpBit <span class="ot">:</span> Bit <span class="ot">→</span> Bit <span class="ot">→</span> Ordering</span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true"></a>cmpBit O O <span class="ot">=</span> eq</span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true"></a>cmpBit O I <span class="ot">=</span> lt</span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true"></a>cmpBit I O <span class="ot">=</span> gt</span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true"></a>cmpBit I I <span class="ot">=</span> eq</span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true"></a></span>
-<span id="cb23-15"><a href="#cb23-15" aria-hidden="true"></a>compare <span class="ot">:</span> Bits <span class="ot">→</span> Bits <span class="ot">→</span> Ordering</span>
-<span id="cb23-16"><a href="#cb23-16" aria-hidden="true"></a>compare [] [] <span class="ot">=</span> eq</span>
-<span id="cb23-17"><a href="#cb23-17" aria-hidden="true"></a>compare [] <span class="ot">(_</span> ∷ <span class="ot">_)</span> <span class="ot">=</span> lt</span>
-<span id="cb23-18"><a href="#cb23-18" aria-hidden="true"></a>compare <span class="ot">(_</span> ∷ <span class="ot">_)</span> [] <span class="ot">=</span> gt</span>
-<span id="cb23-19"><a href="#cb23-19" aria-hidden="true"></a>compare <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> compare xs ys ∙ cmpBit x y</span></code></pre></div>
-<p>Thanks to laziness, this function first compares the length of the lists, and then does a lexicographical comparison in reverse only if the lengths are the same. This is exactly what we want for our numbers.</p>
+<p>In order for queries to be performed efficiently on binary numbers,
+we will also need a way to describe lazy <em>predicates</em> on them. A
+lot of these predicates are more easily expressible on the list-of-bits
+representation above, so we’ll be working with that representation for
+this bit. Not to worry, though: we can convert from the segmented
+representation into the list-of-bits, and <a href="https://github.com/oisdk/agda-binary/blob/fb89ba5ae3b2aa0cb95301da42c8dbf27048181b/Data/Binary/Bits.agda#L52">we
+can prove that the conversion is injective</a>:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>toBits-injective <span class="ot">:</span> <span class="ot">∀</span> xs ys <span class="ot">→</span> toBits xs ≡ toBits ys <span class="ot">→</span> xs ≡ ys</span></code></pre></div>
+<p>Here’s the curious problem: since our binary numbers are expressed
+least-significant-bit-first, we have to go to the end before knowing
+which is bigger. Luckily, we can use one of my favourite Haskell tricks,
+involving the ordering monoid:</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode agda"><code class="sourceCode agda"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> Ordering <span class="ot">:</span> <span class="dt">Set</span> <span class="kw">where</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  lt eq gt <span class="ot">:</span> Ordering</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="ot">_</span>∙<span class="ot">_</span> <span class="ot">:</span> Ordering <span class="ot">→</span> Ordering <span class="ot">→</span> Ordering</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>lt ∙ y <span class="ot">=</span> lt</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>eq ∙ y <span class="ot">=</span> y</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>gt ∙ y <span class="ot">=</span> gt</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>cmpBit <span class="ot">:</span> Bit <span class="ot">→</span> Bit <span class="ot">→</span> Ordering</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>cmpBit O O <span class="ot">=</span> eq</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>cmpBit O I <span class="ot">=</span> lt</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>cmpBit I O <span class="ot">=</span> gt</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>cmpBit I I <span class="ot">=</span> eq</span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>compare <span class="ot">:</span> Bits <span class="ot">→</span> Bits <span class="ot">→</span> Ordering</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a>compare [] [] <span class="ot">=</span> eq</span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a>compare [] <span class="ot">(_</span> ∷ <span class="ot">_)</span> <span class="ot">=</span> lt</span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>compare <span class="ot">(_</span> ∷ <span class="ot">_)</span> [] <span class="ot">=</span> gt</span>
+<span id="cb23-19"><a href="#cb23-19" aria-hidden="true" tabindex="-1"></a>compare <span class="ot">(</span>x ∷ xs<span class="ot">)</span> <span class="ot">(</span>y ∷ ys<span class="ot">)</span> <span class="ot">=</span> compare xs ys ∙ cmpBit x y</span></code></pre></div>
+<p>Thanks to laziness, this function first compares the length of the
+lists, and then does a lexicographical comparison in reverse only if the
+lengths are the same. This is exactly what we want for our numbers.</p>
 <h1 id="future-posts">Future Posts</h1>
-<p>That’s all I have for now, but I’m interested to formalise the laziness of these numbers in Agda. Usually that’s done with coinduction: I would also like to see the relationship with exact real arithmetic.</p>
-<p>I wonder if it can be combined with <span class="citation" data-cites="oconnor_applications_2016">O’Connor (<a href="#ref-oconnor_applications_2016" role="doc-biblioref">2016</a>)</span> to get some efficient proof search algorithms, or with <span class="citation" data-cites="escardo_seemingly_2014">Escardo (<a href="#ref-escardo_seemingly_2014" role="doc-biblioref">2014</a>)</span> to get more efficient exhaustive search.</p>
+<p>That’s all I have for now, but I’m interested to formalise the
+laziness of these numbers in Agda. Usually that’s done with coinduction:
+I would also like to see the relationship with exact real
+arithmetic.</p>
+<p>I wonder if it can be combined with <span class="citation" data-cites="oconnor_applications_2016">O’Connor (2016)</span> to get
+some efficient proof search algorithms, or with <span class="citation" data-cites="escardo_seemingly_2014">Escardo (2014)</span> to get more
+efficient exhaustive search.</p>
 <h1 class="unnumbered" id="references">References</h1>
-<div id="refs" class="references hanging-indent" role="doc-bibliography">
-<div id="ref-escardo_seemingly_2014">
-<p>Escardo, Martin. 2014. “Seemingly Impossible Constructive Proofs | Mathematics and Computation.” <em>Mathematics and Computation</em>. <a href="http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/">http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/</a>.</p>
+<div id="refs" class="references csl-bib-body hanging-indent" role="list">
+<div id="ref-escardo_seemingly_2014" class="csl-entry" role="listitem">
+Escardo, Martin. 2014. <span>“Seemingly impossible constructive proofs |
+<span>Mathematics</span> and <span>Computation</span>.”</span>
+<em>Mathematics and Computation</em>. <a href="http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/">http://math.andrej.com/2014/05/08/seemingly-impossible-proofs/</a>.
 </div>
-<div id="ref-Hanus16Curry">
-<p>Hanus (ed.), M. 2016. <em>Curry: An Integrated Functional Logic Language (Vers. 0.9.0)</em>. Available at http://www.curry-language.org. <a href="https://www-ps.informatik.uni-kiel.de/currywiki/">https://www-ps.informatik.uni-kiel.de/currywiki/</a>.</p>
+<div id="ref-Hanus16Curry" class="csl-entry" role="listitem">
+Hanus (ed.), M. 2016. <em>Curry: <span>An Integrated Functional Logic
+Language</span> (<span>Vers</span>. 0.9.0)</em>. Available at
+http://www.curry-language.org. <a href="https://www-ps.informatik.uni-kiel.de/currywiki/">https://www-ps.informatik.uni-kiel.de/currywiki/</a>.
 </div>
-<div id="ref-hinze_numerical_1998">
-<p>Hinze, Ralf. 1998. <em>Numerical Representations as Higher-Order Nested Datatypes</em>. Institut für Informatik III, Universität Bonn. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5">http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5</a>.</p>
+<div id="ref-hinze_numerical_1998" class="csl-entry" role="listitem">
+Hinze, Ralf. 1998. <em>Numerical <span>Representations</span> as
+<span>Higher</span>-<span>Order Nested Datatypes</span></em>.
+<span>Institut für Informatik III, Universität Bonn</span>. <a href="http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5">http://www.cs.ox.ac.uk/ralf.hinze/publications/\#R5</a>.
 </div>
-<div id="ref-oconnor_applications_2016">
-<p>O’Connor, Liam. 2016. “Applications of Applicative Proof Search.” In <em>Proceedings of the 1st International Workshop on Type-Driven Development</em>, 43–55. TyDe 2016. New York, NY, USA: ACM. doi:<a href="https://doi.org/10.1145/2976022.2976030">10.1145/2976022.2976030</a>. <a href="http://doi.acm.org/10.1145/2976022.2976030">http://doi.acm.org/10.1145/2976022.2976030</a>.</p>
+<div id="ref-oconnor_applications_2016" class="csl-entry" role="listitem">
+O’Connor, Liam. 2016. <span>“Applications of <span>Applicative Proof
+Search</span>.”</span> In <em>Proceedings of the 1st <span>International
+Workshop</span> on <span>Type</span>-<span>Driven
+Development</span></em>, 43–55. <span>TyDe</span> 2016. New York, NY,
+USA: <span>ACM</span>. doi:<a href="https://doi.org/10.1145/2976022.2976030">10.1145/2976022.2976030</a>.
+<a href="http://doi.acm.org/10.1145/2976022.2976030">http://doi.acm.org/10.1145/2976022.2976030</a>.
 </div>
-<div id="ref-okasaki_purely_1999">
-<p>Okasaki, Chris. 1999. <em>Purely Functional Data Structures</em>. Cambridge University Press.</p>
+<div id="ref-okasaki_purely_1999" class="csl-entry" role="listitem">
+Okasaki, Chris. 1999. <em>Purely <span>Functional Data
+Structures</span></em>. <span>Cambridge University Press</span>.
 </div>
 </div>
 
