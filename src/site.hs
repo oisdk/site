@@ -147,14 +147,6 @@ cssTemplateCompiler :: Compiler (Item Hakyll.Template)
 cssTemplateCompiler = cached "Hakyll.Web.Template.cssTemplateCompiler" $
     fmap (readTemplate . compressCss) <$> getResourceString
 
-
-addLinkCitations :: Pandoc -> Pandoc
-addLinkCitations (Pandoc meta a) =
-  let prevMap = unMeta meta
-      newMap = Map.insert "link-citations" (MetaBool True) prevMap
-      newMeta = Meta newMap
-  in  Pandoc newMeta a
-
 pandocOptions :: Compiler ReaderOptions
 pandocOptions = do
   item <- getUnderlying
