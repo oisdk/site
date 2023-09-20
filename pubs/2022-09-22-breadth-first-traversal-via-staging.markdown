@@ -2,7 +2,8 @@
 title: Breadth-First Traversal via Staging
 ---
 
-Presented at MPC 2022.
+Presented at [MPC 2022](https://www.macs.hw.ac.uk/mpc22/)
+([archive link](https://web.archive.org/web/20230409102549/https://www.macs.hw.ac.uk/mpc22/)).
 
 [Pdf available here.](pdfs/breadth-first-traversals-via-staging.pdf)
 

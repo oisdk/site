@@ -2,7 +2,7 @@
 title: Algebras for Weighted Search
 ---
 
-Presented at ICFP 2021.
+Presented at [ICFP 2021](https://icfp21.sigplan.org).
 
 [Pdf available here.](pdfs/algebras-for-weighted-search.pdf)
 

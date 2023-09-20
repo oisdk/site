@@ -2,7 +2,7 @@
 title: Phases in Software Architecture
 ---
 
-Presented at FUNARCH 2023.
+Presented at [FUNARCH 2023](https://icfp23.sigplan.org/home/funarch-2023).
 
 [Pdf available here.](pdfs/phases-in-software-architecture.pdf)
 
