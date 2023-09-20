@@ -1,0 +1,31 @@
+<p>Presented at MPC 2022.</p>
+<p><a href="pdfs/breadth-first-traversals-via-staging.pdf">Pdf available
+here.</a></p>
+<p>An effectful traversal of a data structure iterates over every
+element, in some predetermined order, collecting computational effects
+in the process. Depth-first effectful traversal of a tree is
+straightforward to define compositionally, since it precisely follows
+the shape of the data. What about breadth-first effectful traversal? An
+indirect route is to factorize the data structure into shape and
+contents, traverse the contents, then rebuild the data structure with
+new contents. We show that this can instead be done directly using
+staging, expressed using a construction related to free applicative
+functors. The staged traversals lend themselves well to fusion; we prove
+a novel fusion rule for effectful traversals, and use it in another
+solution to Bird’s `repmin’ problem.</p>
+<p>Bibtex:</p>
+<pre><code>@InProceedings{10.1007/978-3-031-16912-0_1,
+author=&quot;Gibbons, Jeremy
+and Kidney, Donnacha Ois{\'i}n
+and Schrijvers, Tom
+and Wu, Nicolas&quot;,
+editor=&quot;Komendantskaya, Ekaterina&quot;,
+title=&quot;Breadth-First Traversal via Staging&quot;,
+booktitle=&quot;Mathematics of Program Construction&quot;,
+year=&quot;2022&quot;,
+publisher=&quot;Springer International Publishing&quot;,
+address=&quot;Cham&quot;,
+pages=&quot;1--33&quot;,
+abstract=&quot;An effectful traversal of a data structure iterates over every element, in some predetermined order, collecting computational effects in the process. Depth-first effectful traversal of a tree is straightforward to define compositionally, since it precisely follows the shape of the data. What about breadth-first effectful traversal? An indirect route is to factorize the data structure into shape and contents, traverse the contents, then rebuild the data structure with new contents. We show that this can instead be done directly using staging, expressed using a construction related to free applicative functors. The staged traversals lend themselves well to fusion; we prove a novel fusion rule for effectful traversals, and use it in another solution to Bird's `repmin' problem.&quot;,
+isbn=&quot;978-3-031-16912-0&quot;
+}</code></pre>

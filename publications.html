@@ -25,10 +25,97 @@
             <dl class="pub-list">
     
     <hr>
+      <dt>Phases in Software Architecture — August 31, 2023</dt>
+      <dd><p>Presented at FUNARCH 2023.</p>
+<p><a href="pdfs/phases-in-software-architecture.pdf">Pdf available
+here.</a></p>
+<p>The large-scale structure of executing a computation can often be
+thought of as being separated into distinct phases. But the most natural
+form in which to specify that computation may well have a different and
+conflicting structure. For example, the computation might consist of
+gathering data from some locations, processing it, then distributing the
+results back to the same locations; it may be executed in three
+phases—gather, process, distribute—but mostly conveniently specified
+orthogonally—by location. We have recently shown that this multi-phase
+structure can be expressed as a novel applicative functor (also known as
+an idiom, or lax monoidal functor). Here we summarize the idea from the
+perspective of software architecture. At the end, we speculate about
+applications to choreography and multi-tier architecture.</p>
+<p>Bibtex:</p>
+<pre><code>@inproceedings{10.1145/3609025.3609479,
+author = {Gibbons, Jeremy and Kidney, Donnacha Ois\'{\i}n and Schrijvers, Tom and Wu, Nicolas},
+title = {Phases in Software Architecture},
+year = {2023},
+isbn = {9798400702976},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3609025.3609479},
+doi = {10.1145/3609025.3609479},
+abstract = {The large-scale structure of executing a computation can often be thought of as being separated into distinct phases. But the most natural form in which to specify that computation may well have a different and conflicting structure. For example, the computation might consist of gathering data from some locations, processing it, then distributing the results back to the same locations; it may be executed in three phases—gather, process, distribute—but mostly conveniently specified orthogonally—by location. We have recently shown that this multi-phase structure can be expressed as a novel applicative functor (also known as an idiom, or lax monoidal functor). Here we summarize the idea from the perspective of software architecture. At the end, we speculate about applications to choreography and multi-tier architecture.},
+booktitle = {Proceedings of the 1st ACM SIGPLAN International Workshop on Functional Software Architecture},
+pages = {29–33},
+numpages = {5},
+keywords = {phase separation, traversal, applicative functor, fusion, choreography, multi-tier},
+location = {Seattle, WA, USA},
+series = {FUNARCH 2023}
+}</code></pre>
+</dd>
+    
+    <hr>
+      <dt>Breadth-First Traversal via Staging — September 22, 2022</dt>
+      <dd><p>Presented at MPC 2022.</p>
+<p><a href="pdfs/breadth-first-traversals-via-staging.pdf">Pdf available
+here.</a></p>
+<p>An effectful traversal of a data structure iterates over every
+element, in some predetermined order, collecting computational effects
+in the process. Depth-first effectful traversal of a tree is
+straightforward to define compositionally, since it precisely follows
+the shape of the data. What about breadth-first effectful traversal? An
+indirect route is to factorize the data structure into shape and
+contents, traverse the contents, then rebuild the data structure with
+new contents. We show that this can instead be done directly using
+staging, expressed using a construction related to free applicative
+functors. The staged traversals lend themselves well to fusion; we prove
+a novel fusion rule for effectful traversals, and use it in another
+solution to Bird’s `repmin’ problem.</p>
+<p>Bibtex:</p>
+<pre><code>@InProceedings{10.1007/978-3-031-16912-0_1,
+author=&quot;Gibbons, Jeremy
+and Kidney, Donnacha Ois{\'i}n
+and Schrijvers, Tom
+and Wu, Nicolas&quot;,
+editor=&quot;Komendantskaya, Ekaterina&quot;,
+title=&quot;Breadth-First Traversal via Staging&quot;,
+booktitle=&quot;Mathematics of Program Construction&quot;,
+year=&quot;2022&quot;,
+publisher=&quot;Springer International Publishing&quot;,
+address=&quot;Cham&quot;,
+pages=&quot;1--33&quot;,
+abstract=&quot;An effectful traversal of a data structure iterates over every element, in some predetermined order, collecting computational effects in the process. Depth-first effectful traversal of a tree is straightforward to define compositionally, since it precisely follows the shape of the data. What about breadth-first effectful traversal? An indirect route is to factorize the data structure into shape and contents, traverse the contents, then rebuild the data structure with new contents. We show that this can instead be done directly using staging, expressed using a construction related to free applicative functors. The staged traversals lend themselves well to fusion; we prove a novel fusion rule for effectful traversals, and use it in another solution to Bird's `repmin' problem.&quot;,
+isbn=&quot;978-3-031-16912-0&quot;
+}</code></pre>
+</dd>
+    
+    <hr>
       <dt>Algebras for Weighted Search — August 19, 2021</dt>
       <dd><p>Presented at ICFP 2021.</p>
-<p><a href="pdfs/algebras-for-weighted-search">Pdf available
+<p><a href="pdfs/algebras-for-weighted-search.pdf">Pdf available
 here.</a></p>
+<p>Weighted search is an essential component of many fundamental and
+useful algorithms. Despite this, it is relatively under explored as a
+computational effect, receiving not nearly as much attention as either
+depth- or breadth-first search. This paper explores the algebraic
+underpinning of weighted search, and demonstrates how to implement it as
+a monad transformer. The development first explores breadth-first
+search, which can be expressed as a polynomial over semirings. These
+polynomials are generalised to the free semimodule monad to capture a
+wide range of applications, including probability monads, polynomial
+monads, and monads for weighted search. Finally, a monad transformer
+based on the free semimodule monad is introduced. Applying optimisations
+to this type yields an implementation of pairing heaps, which is then
+used to implement Dijkstra’s algorithm and efficient probabilistic
+sampling. The construction is formalised in Cubical Agda and implemented
+in Haskell.</p>
 <p>Bibtex:</p>
 <pre><code>@article{10.1145/3473577, 
 author = {Kidney, Donnacha Ois\'{\i}n and Wu, Nicolas}, 
@@ -47,6 +134,56 @@ month = {aug},
 articleno = {72},
 numpages = {30},
 keywords = {Haskell, monad, Agda, graph search} 
+}</code></pre>
+</dd>
+    
+    <hr>
+      <dt>Finiteness in Cubical Type Theory — September  1, 2020</dt>
+      <dd><p>Master’s thesis.</p>
+<p><a href="pdfs/masters-thesis.pdf">Pdf available here.</a></p>
+<p>This thesis will explore and explain finiteness in constructive
+mathematics: using this setting, it will also serve as an introduction
+to constructive mathematics in Cubical Agda, and some related
+topics.</p>
+<p>Bibtex:</p>
+<pre><code>@phdthesis{kidney_finiteness_2020,
+  title = {Finiteness in {{Cubical Type Theory}}},
+  author = {Kidney, Donnacha Ois{\'i}n},
+  year = {2020},
+  month = sep,
+  address = {{Cork, Ireland}},
+  url = {https://cora.ucc.ie/handle/10468/11338},
+  urldate = {2021-05-18},
+  abstract = {This thesis will explore and explain finiteness in constructive mathematics: using this setting, it will also serve as an introduction to constructive mathematics in Cubical Agda, and some related topics.},
+  copyright = {https://creativecommons.org/licenses/by-sa/4.0/},
+  langid = {english},
+  school = {University College Cork},
+  annotation = {Accepted: 2021-05-18T09:03:41Z}
+}</code></pre>
+</dd>
+    
+    <hr>
+      <dt>Automatically and Efficiently Illustrating Polynomial Equalities in Agda — April  8, 2019</dt>
+      <dd><p>BSc thesis.</p>
+<p><a href="pdfs/bsc-thesis.pdf">Pdf available here.</a></p>
+<p>We present a new library which automates the construction of
+equivalence proofs between polynomials over commutative rings and
+semirings in the programming language Agda. It is significantly faster
+than Agda’s existing solver. We use reflection to provide a sim- ple
+interface to the solver, and demonstrate how to use the constructed
+proofs to provide step-by-step solutions.</p>
+<p>Bibtex:</p>
+<pre><code>@phdthesis{kidneyAutomaticallyEfficientlyIllustrating2019,
+  type = {Bachelor Thesis},
+  title = {Automatically and {{Efficiently Illustrating Polynomial Equalities}} in {{Agda}}},
+  author = {Kidney, Donnacha Ois{\'i}n},
+  year = {2019},
+  month = apr,
+  address = {{Cork, Ireland}},
+  url = {https://doisinkidney.com/pdfs/bsc-thesis.pdf},
+  abstract = {We present a new library which automates the construction of equivalence proofs between polynomials over commutative rings and semirings in the programming language Agda. It is signi cantly faster than Agda's existing solver. We use re ection to provide a sim- ple interface to the solver, and demonstrate how to use the constructed proofs to provide step-by-step solutions.},
+  langid = {english},
+  school = {University College Cork}
 }</code></pre>
 </dd>
     
