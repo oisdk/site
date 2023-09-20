@@ -22,7 +22,7 @@ formalised in Cubical Agda and implemented in Haskell.
 
 Bibtex:
 
-```
+```tex
 @article{10.1145/3473577, 
 author = {Kidney, Donnacha Ois\'{\i}n and Wu, Nicolas}, 
 title = {Algebras for Weighted Search}, 

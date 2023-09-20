@@ -21,7 +21,7 @@ fusion rule for effectful traversals, and use it in another solution to Bird's
 
 Bibtex:
 
-```
+```tex
 @InProceedings{10.1007/978-3-031-16912-0_1,
 author="Gibbons, Jeremy
 and Kidney, Donnacha Ois{\'i}n

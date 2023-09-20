@@ -12,7 +12,7 @@ mathematics in Cubical Agda, and some related topics.
 
 Bibtex:
 
-```
+```tex
 @phdthesis{kidney_finiteness_2020,
   title = {Finiteness in {{Cubical Type Theory}}},
   author = {Kidney, Donnacha Ois{\'i}n},

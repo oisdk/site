@@ -14,7 +14,7 @@ use the constructed proofs to provide step-by-step solutions.
 
 Bibtex:
 
-```
+```tex
 @phdthesis{kidneyAutomaticallyEfficientlyIllustrating2019,
   type = {Bachelor Thesis},
   title = {Automatically and {{Efficiently Illustrating Polynomial Equalities}} in {{Agda}}},

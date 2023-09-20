@@ -20,7 +20,7 @@ applications to choreography and multi-tier architecture.
 
 Bibtex:
 
-```
+```tex
 @inproceedings{10.1145/3609025.3609479,
 author = {Gibbons, Jeremy and Kidney, Donnacha Ois\'{\i}n and Schrijvers, Tom and Wu, Nicolas},
 title = {Phases in Software Architecture},
