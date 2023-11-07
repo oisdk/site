@@ -7,8 +7,36 @@
         <description><![CDATA[Mainly writing about programming]]></description>
         <atom:link href="https://doisinkidney.com/rss.xml" rel="self"
                    type="application/rss+xml" />
-        <lastBuildDate>Mon, 17 Oct 2022 00:00:00 UT</lastBuildDate>
+        <lastBuildDate>Thu, 07 Nov 2024 00:00:00 UT</lastBuildDate>
         <item>
+    <title>POPL Paper—Algebraic Effects Meet Hoare Logic in Cubical Agda</title>
+    <link>https://doisinkidney.com/posts/2024-11-07-algebraic-free-monads.html</link>
+    <description><![CDATA[<div class="info">
+    Posted on November  7, 2024
+</div>
+<div class="info">
+    
+</div>
+<div class="info">
+    
+        Tags: <a title="All pages tagged &#39;Agda&#39;." href="/tags/Agda.html" rel="tag">Agda</a>
+    
+</div>
+
+<p>New paper: “Algebraic Effects Meet Hoare Logic in Cubical Agda”, by
+myself, <a href="https://yangzhixuan.github.io">Zhixuan Yang</a> and <a
+href="https://zenzike.com/">Nicolas Wu</a>, to be published at POPL
+2024.</p>
+<p>Zhixuan has a nice summary of it <a
+href="https://mathstodon.xyz/@zyang/111369606162039452">here</a>.</p>
+<p>The preprint is available <a
+href="../pdfs/algebraic-free-monads.pdf">here</a>.</p>
+]]></description>
+    <pubDate>Thu, 07 Nov 2024 00:00:00 UT</pubDate>
+    <guid>https://doisinkidney.com/posts/2024-11-07-algebraic-free-monads.html</guid>
+    <dc:creator>Donnacha Oisín Kidney</dc:creator>
+</item>
+<item>
     <title>Lazily Grouping in Haskell</title>
     <link>https://doisinkidney.com/posts/2022-10-17-lazy-group-on.html</link>
     <description><![CDATA[<div class="info">
