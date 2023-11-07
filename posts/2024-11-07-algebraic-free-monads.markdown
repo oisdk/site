@@ -4,8 +4,8 @@ tags: Agda
 ---
 
 New paper: "Algebraic Effects Meet Hoare Logic in Cubical Agda", by myself,
-[Zhixuan Yang](https://yangzhixuan.github.io) and [Nicolas
-Wu](https://zenzike.com/), to be published at POPL 2024.
+[Zhixuan Yang](https://yangzhixuan.github.io), and [Nicolas
+Wu](https://zenzike.com/), will be published at POPL 2024.
 
 Zhixuan has a nice summary of it
 [here](https://mathstodon.xyz/@zyang/111369606162039452).
