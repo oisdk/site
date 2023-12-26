@@ -935,7 +935,7 @@ adding it.</li>
 <p>As the paper observes, these are very similar to a
 “dependently-typed” version of the monoid methods. This seems to me to
 be very similar to the indexing stuff we were doing earlier on.</p>
-<p>The real interesting part is in the paper “Updated Monads:
+<p>The real interesting part is in the paper “Update Monads:
 Cointerpreting Directed Containers” <span class="citation"
 data-cites="ahman_update_2014">(Ahman and Uustalu 2014)</span>. This
 paper presents a variant on state monads, called “update monads”.</p>
