@@ -625,7 +625,7 @@ Directed containers are container that have three extra operations.
 As the paper observes, these are very similar to a "dependently-typed" version of the monoid methods.
 This seems to me to be very similar to the indexing stuff we were doing earlier on.
 
-The real interesting part is in the paper "Updated Monads: Cointerpreting Directed Containers" [@ahman_update_2014].
+The real interesting part is in the paper "Update Monads: Cointerpreting Directed Containers" [@ahman_update_2014].
 This paper presents a variant on state monads, called "update monads".
 
 These are monads that use a monoid action:
