@@ -2,7 +2,7 @@
 title: Algebraic Effects Meet Hoare Logic in Cubical Agda
 ---
 
-To appear, at [POPL 2024](https://popl24.sigplan.org).
+Presented at [POPL 2024](https://popl24.sigplan.org).
 
 [Pdf available here.](pdfs/algebraic-free-monads.pdf)
 
